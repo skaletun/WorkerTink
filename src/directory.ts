@@ -13,13 +13,6 @@ async function request<T>(path:string,options:RequestInit={}):Promise<T>{
 }
 
 export type SearchResult={profile:UserProfile};
-<<<<<<< HEAD
-export type RegisterResult={profile:UserProfile;token:string};
-export type RequestResult={request:FriendRequest};
-
-export function searchUser(profileId:string){return request<SearchResult>(`/profiles/${encodeURIComponent(profileId.trim().toUpperCase())}`)}
-export function registerProfile(profile:UserProfile){return request<RegisterResult>('/profiles',{method:'POST',body:JSON.stringify({profile})})}
-=======
 export type RegisterResult={profile:UserProfile;token:string;security?:{pinSet:boolean;onePassAvailable:boolean}};
 export type LoginResult={profile:UserProfile;token:string;security:{pinSet:boolean;onePassAvailable:boolean}};
 export type RequestResult={request:FriendRequest};
@@ -35,7 +28,6 @@ export function getOnePassAvailability(profileId:string){return request<{availab
 export function getOnePassLoginOptions(profileId:string){return request<Record<string,unknown>>(`/auth/onepass/login/options?profileId=${encodeURIComponent(profileId)}`,{method:'GET'})}
 export function verifyOnePassLogin(response:unknown){return request<LoginResult>('/auth/onepass/login/verify',{method:'POST',body:JSON.stringify({response})})}
 export function removeOnePass(token:string){return request<{ok:boolean}>('/auth/onepass',{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
->>>>>>> 5b4ad83 (feat: account auth with PIN and OnePass)
 export function updateProfile(profile:UserProfile,token:string){return request<SearchResult>('/profiles',{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({profile})})}
 export function sendFriendRequest(from:UserProfile,to:string,token:string){return request<RequestResult>('/friend-requests',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({from,to})})}
 export function getIncoming(profileId:string,token:string){return request<{requests:FriendRequest[]}>(`/friend-requests/incoming?userId=${encodeURIComponent(profileId)}`,{headers:{Authorization:`Bearer ${token}`}})}
@@ -49,8 +41,6 @@ export function getOutgoingPeerSessions(token:string){return request<{sessions:P
 export function answerPeerSession(id:string,answer:string,token:string){return request<{session:PeerSession}>(`/peer-sessions/${encodeURIComponent(id)}/answer`,{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({answer})})}
 
 export function getIceServers(token:string){return request<{iceServers:RTCIceServer[]}>('/webrtc/ice-servers',{headers:{Authorization:`Bearer ${token}`}})}
-<<<<<<< HEAD
-=======
 
 export type PushSubscriptionData={endpoint:string;expirationTime:number|null;keys:{p256dh:string;auth:string}};
 export function getPushPublicKey(token:string){return request<{publicKey:string}>('/push/public-key',{headers:{Authorization:`Bearer ${token}`}}).then(x=>x.publicKey)}
@@ -61,4 +51,3 @@ export function sendPushEvent(to:string,kind:'message'|'friendRequest'|'friendAc
 export function sendTestPush(token:string){return request<{ok:boolean}>('/push/test',{method:'POST',headers:{Authorization:`Bearer ${token}`}})}
 export function syncPushReminders(reminders:unknown[],token:string){return request<{ok:boolean}>('/push/reminders',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({reminders})})}
 export function deleteProfile(token:string){return request<{ok:boolean}>('/profiles',{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
->>>>>>> 5b4ad83 (feat: account auth with PIN and OnePass)

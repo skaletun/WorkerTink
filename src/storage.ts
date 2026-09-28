@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import {DEFAULT,createWTinkId,type State,type Period,type PaymentDates,type ShiftValue,type FriendRequest} from './core.ts';
-=======
 import {DEFAULT,createWTinkId,normalizeWTinkId,type State,type Period,type PaymentDates,type ShiftValue,type FriendRequest} from './core.ts';
->>>>>>> 5b4ad83 (feat: account auth with PIN and OnePass)
 
 export const STORAGE_KEY='workertink:v6';
 const LEGACY_KEYS=['workertink:v5','workertink:v4','workertink:v3','workertink:v2','workertink'] as const;
@@ -14,16 +10,11 @@ const cloneDefault=()=>structuredClone(DEFAULT);
 function migrate(raw:Record<string,unknown>):Record<string,unknown>{
  const sourceVersion=Number(raw.schemaVersion)||1;
  let next={...raw};
-<<<<<<< HEAD
- if(sourceVersion<6){
-  next={...next,schemaVersion:6};
-=======
  if(sourceVersion<7){
   next={...next,schemaVersion:8,notifications:next.notifications??DEFAULT.notifications};
  }
  if(sourceVersion<8){
   next={...next,schemaVersion:8,onePassEnabled:Boolean(next.onePassEnabled)};
->>>>>>> 5b4ad83 (feat: account auth with PIN and OnePass)
  }
  return next;
 }
@@ -37,11 +28,7 @@ export function normalizeState(input:Partial<State>|Record<string,unknown>):Stat
  const numberRecord=(value:unknown):Record<string,number>=>isRecord(value)?Object.fromEntries(Object.entries(value).filter(([k,v])=>/^\d{4}-\d{2}$/.test(k)&&Number.isFinite(Number(v))&&Number(v)>=0).map(([k,v])=>[k,Number(v)])) as Record<string,number>:{};
  const paymentRecord=(value:unknown):Record<string,PaymentDates>=>{if(!isRecord(value))return {};const out:Record<string,PaymentDates>={};for(const [k,v] of Object.entries(value)){if(!/^\d{4}-\d{2}$/.test(k)||!isRecord(v))continue;out[k]={advanceDate:isDate(v.advanceDate)?v.advanceDate:'',remainderDate:isDate(v.remainderDate)?v.remainderDate:''}}return out};
  const shiftRecord=(value:unknown):Record<string,ShiftValue>=>isRecord(value)?Object.fromEntries(Object.entries(value).filter(([k,v])=>isDate(k)&&(['day','night','full','off'] as string[]).includes(String(v))).map(([k,v])=>[k,v as ShiftValue])):{};
-<<<<<<< HEAD
- const profileValue=(value:unknown):State['profile']=>{if(!isRecord(value))return cloneDefault().profile;const rawId=typeof value.profileId==='string'?value.profileId:'';return {profileId:/^WTinkID-\d{6}$/.test(rawId)?rawId:createWTinkId(),name:typeof value.name==='string'?value.name.trim().slice(0,80):'',position:typeof value.position==='string'?value.position.trim().slice(0,120):'',avatar:typeof value.avatar==='string'&&value.avatar.startsWith('data:image/')?value.avatar:''}};
-=======
  const profileValue=(value:unknown):State['profile']=>{if(!isRecord(value))return cloneDefault().profile;const rawId=typeof value.profileId==='string'?value.profileId:'';return {profileId:normalizeWTinkId(rawId)||createWTinkId(),name:typeof value.name==='string'?value.name.trim().slice(0,80):'',position:typeof value.position==='string'?value.position.trim().slice(0,120):'',avatar:typeof value.avatar==='string'&&value.avatar.startsWith('data:image/')?value.avatar:''}};
->>>>>>> 5b4ad83 (feat: account auth with PIN and OnePass)
  const friendsRecord=(value:unknown):State['friends']=>{if(!isRecord(value))return {};const out:State['friends']={};for(const [id,v] of Object.entries(value)){if(!isRecord(v)||!isRecord(v.profile))continue;const profile=v.profile;const profileId=typeof profile.profileId==='string'?profile.profileId:id;const name=typeof profile.name==='string'?profile.name.trim().slice(0,80):'';if(!profileId||!name)continue;out[id]={profile:{profileId,name,position:typeof profile.position==='string'?profile.position.slice(0,120):'',avatar:typeof profile.avatar==='string'&&profile.avatar.startsWith('data:image/')?profile.avatar:''},addedAt:Number(v.addedAt)||Date.now(),lastSeen:Number(v.lastSeen)||Date.now()}}return out};
  const request=(value:unknown):value is FriendRequest=>{if(!isRecord(value)||!isRecord(value.from)||!isRecord(value.to))return false;const profile=(p:Record<string,unknown>):boolean=>typeof p.profileId==='string'&&/^WTinkID-\d{6}$/.test(p.profileId)&&typeof p.name==='string'&&p.name.trim().length>0;return profile(value.from)&&profile(value.to)&&typeof value.id==='string'&&Number.isFinite(Number(value.createdAt))&&['pending','accepted','declined'].includes(String(value.status))};
  const requestsRecord=(value:unknown):FriendRequest[]=>Array.isArray(value)?value.filter(request).slice(-100):[];
@@ -54,11 +41,7 @@ export function normalizeState(input:Partial<State>|Record<string,unknown>):Stat
  return {
   ...cloneDefault(),
   ...s,
-<<<<<<< HEAD
-  schemaVersion:6,
-=======
   schemaVersion:8,
->>>>>>> 5b4ad83 (feat: account auth with PIN and OnePass)
   setupComplete:Boolean(s.setupComplete),
   salary:Math.max(0,Number(s.salary)||0),
   taxRate:Math.min(100,Math.max(0,Number(s.taxRate)||0)),
@@ -85,11 +68,8 @@ export function normalizeState(input:Partial<State>|Record<string,unknown>):Stat
   friendRequestsIncoming:requestsRecord(s.friendRequestsIncoming),
   friendRequestsOutgoing:requestsRecord(s.friendRequestsOutgoing),
   chats:chatsRecord(s.chats),
-<<<<<<< HEAD
-=======
   notifications:(()=>{const n=isRecord(s.notifications)?s.notifications:{};return {enabled:n.enabled!==false,friendRequests:n.friendRequests!==false,friendAccepted:n.friendAccepted!==false,messages:n.messages!==false,shifts:n.shifts!==false,absences:n.absences!==false,payroll:n.payroll!==false}})(),
   onePassEnabled:Boolean(s.onePassEnabled),
->>>>>>> 5b4ad83 (feat: account auth with PIN and OnePass)
  };
 }
 
