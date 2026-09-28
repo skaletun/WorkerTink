@@ -40,6 +40,7 @@ function App(){
  const [state,setState]=useState<State>(loadState);const [tab,setTab]=useState<Tab>(()=>{const value=new URLSearchParams(window.location.search).get('tab');return ['calendar','pay','absence','friends','profile','settings'].includes(value||'')?value as Tab:'calendar'});const [view,setView]=useState(()=>new Date());
  useEffect(()=>{const timer=window.setTimeout(()=>setBooting(false),720);return()=>window.clearTimeout(timer)},[]);
  const [vac,setVac]=useState<PeriodDraft>({start:'',end:''});const [sick,setSick]=useState<PeriodDraft>({start:'',end:''});const [notice,setNotice]=useState('');const [editorDate,setEditorDate]=useState<string|null>(null);
+ useEffect(()=>{if(!notice)return;const timer=window.setTimeout(()=>setNotice(''),4000);return()=>window.clearTimeout(timer)},[notice]);
  useEffect(()=>{if(!saveState(state))setNotice('Не удалось сохранить профиль: хранилище браузера переполнено')},[state]);
  const directorySync=useRef('');
  useEffect(()=>{if(!directoryConfigured||!state.directoryToken||!state.profile.name)return;const signature=JSON.stringify(state.profile);if(directorySync.current===signature)return;let cancelled=false;(async()=>{try{await updateProfile(state.profile,state.directoryToken);if(!cancelled)directorySync.current=signature}catch{if(!cancelled)setNotice('Не удалось синхронизировать профиль с каталогом')}})();return()=>{cancelled=true}},[state.profile,state.directoryToken]);
