@@ -134,9 +134,16 @@ function bearer(request) {
 }
 
 async function body(request) {
+  const text = await request.text();
+
   try {
-    return await request.json();
-  } catch {
+    return JSON.parse(text);
+  } catch (error) {
+    console.error('INVALID_JSON_BODY', {
+      text,
+      error: error instanceof Error ? error.message : String(error)
+    });
+
     return {};
   }
 }
