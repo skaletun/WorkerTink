@@ -6,6 +6,8 @@ const AVATAR_MAX = 180_000;
 const TOKEN_BYTES = 32;
 const PIN_LENGTH = 6;
 const PIN_ITERATIONS = 100000;
+const DEV_WTINK_ID = 'WTINKID-214994';
+const ONLINE_WINDOW_MS = 90 * 1000;
 
 
 function json(data, status = 200, origin = '*') {
@@ -56,7 +58,8 @@ function publicProfile(row) {
     profileId: displayId(row.wtink_id),
     name: row.name,
     position: row.position,
-    avatar: row.avatar
+    avatar: row.avatar,
+    isDev: normalizeId(row.wtink_id) === DEV_WTINK_ID
   };
 }
 
@@ -146,7 +149,7 @@ async function authProfile(request, env) {
   if (!token) return null;
   const tokenHash = await sha256(token);
   return env.DB.prepare(
-    'SELECT wtink_id, name, position, avatar, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at FROM profiles WHERE token_hash = ?1'
+    'SELECT wtink_id, name, position, avatar, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE token_hash = ?1'
   ).bind(tokenHash).first();
 }
 
@@ -165,7 +168,7 @@ function cleanPushPreferences(value) {
 }
 function pushEnabledFor(preferences, kind) {
   if (!preferences || preferences.enabled === false) return false;
-  const key = kind === 'friendRequest' ? 'friendRequests' : kind === 'friendAccepted' ? 'friendAccepted' : kind === 'message' ? 'messages' : kind;
+  const key = kind === 'friendRequest' || kind === 'peerRequest' ? 'friendRequests' : kind === 'friendAccepted' ? 'friendAccepted' : kind === 'message' ? 'messages' : kind;
   return preferences[key] !== false;
 }
 async function sendPush(env, subscription, payload) {
@@ -281,7 +284,7 @@ async function handle(request, env) {
     const wtinkId = normalizeId(input?.profileId);
     const pin = String(input?.pin || '');
     if (!validId(wtinkId) || !validPin(pin)) return json({error:'INVALID_CREDENTIALS'},400,origin);
-    const row = await env.DB.prepare(`SELECT wtink_id, name, position, avatar, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until FROM profiles WHERE wtink_id = ?1`).bind(wtinkId).first();
+    const row = await env.DB.prepare(`SELECT wtink_id, name, position, avatar, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, last_seen FROM profiles WHERE wtink_id = ?1`).bind(wtinkId).first();
     if (!row) return json({error:'INVALID_CREDENTIALS'},401,origin);
     const lockedUntil = Number(row.pin_locked_until || 0);
     if (lockedUntil > Date.now()) return json({error:'PIN_LOCKED',retryAfter:Math.ceil((lockedUntil-Date.now())/1000)},429,origin);
@@ -294,9 +297,9 @@ async function handle(request, env) {
       return json({error:failed >= 5 ? 'PIN_LOCKED' : 'INVALID_CREDENTIALS',retryAfter:failed >= 5 ? 900 : 0},401,origin);
     }
     const token = randomToken();
-    await env.DB.prepare('UPDATE profiles SET token_hash = ?1, pin_failed_attempts = 0, pin_locked_until = 0, updated_at = ?2 WHERE wtink_id = ?3').bind(await sha256(token),Date.now(),wtinkId).run();
+    await env.DB.prepare('UPDATE profiles SET token_hash = ?1, pin_failed_attempts = 0, pin_locked_until = 0, updated_at = ?2, last_seen = ?2 WHERE wtink_id = ?3').bind(await sha256(token),Date.now(),wtinkId).run();
     const passkey = await env.DB.prepare('SELECT COUNT(*) AS count FROM webauthn_credentials WHERE profile_id = ?1').bind(wtinkId).first();
-    return json({profile:{profileId:displayId(row.wtink_id),name:row.name,position:row.position,avatar:row.avatar},token,security:{pinSet:true,onePassAvailable:Number(passkey?.count||0)>0}},200,origin);
+    return json({profile:publicProfile(row),token,security:{pinSet:true,onePassAvailable:Number(passkey?.count||0)>0}},200,origin);
   }
 
   if (request.method === 'GET' && path === '/auth/status') {
@@ -337,14 +340,14 @@ async function handle(request, env) {
     const now = Date.now();
     try {
       await env.DB.prepare(`
-        INSERT INTO profiles (wtink_id, name, position, avatar, token_hash, pin_hash, pin_salt, webauthn_user_id, created_at, updated_at)
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?9)
+        INSERT INTO profiles (wtink_id, name, position, avatar, token_hash, pin_hash, pin_salt, webauthn_user_id, created_at, updated_at, last_seen)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?9, ?9)
       `).bind(wtinkId, name, position, avatar, tokenHash, pinData.hash, pinData.salt, webauthnUserId, now).run();
     } catch (error) {
       if (String(error).toLowerCase().includes('unique')) return json({error: 'WTINK_ID_TAKEN'}, 409, origin);
       throw error;
     }
-    return json({profile: {profileId: displayId(wtinkId), name, position, avatar}, token, security:{pinSet:true,onePassAvailable:false}}, 201, origin);
+    return json({profile: publicProfile({wtink_id:wtinkId,name,position,avatar}), token, security:{pinSet:true,onePassAvailable:false}}, 201, origin);
   }
 
   if (request.method === 'POST' && path === '/auth/onepass/register/options') {
@@ -450,10 +453,10 @@ async function handle(request, env) {
     const now=Date.now();
     await env.DB.batch([
       env.DB.prepare('UPDATE webauthn_credentials SET counter = ?1, updated_at = ?2 WHERE id = ?3').bind(verification.authenticationInfo.newCounter,now,credential.id),
-      env.DB.prepare('UPDATE profiles SET token_hash = ?1, updated_at = ?2 WHERE wtink_id = ?3').bind(await sha256(token),now,owner.wtink_id),
+      env.DB.prepare('UPDATE profiles SET token_hash = ?1, updated_at = ?2, last_seen = ?2 WHERE wtink_id = ?3').bind(await sha256(token),now,owner.wtink_id),
       env.DB.prepare('DELETE FROM auth_challenges WHERE id = ?1').bind(challenge.id)
     ]);
-    return json({profile:{profileId:displayId(owner.wtink_id),name:owner.name,position:owner.position,avatar:owner.avatar},token,security:{pinSet:true,onePassAvailable:true}},200,origin);
+    return json({profile:publicProfile(owner),token,security:{pinSet:true,onePassAvailable:true}},200,origin);
   }
 
   if (request.method === 'DELETE' && path === '/auth/onepass') {
@@ -498,9 +501,9 @@ async function handle(request, env) {
     const avatar = cleanAvatar(raw.avatar);
     if (wtinkId !== owner.wtink_id || !name || !position) return json({error: 'INVALID_PROFILE'}, 400, origin);
     const now = Date.now();
-    await env.DB.prepare(`UPDATE profiles SET name = ?1, position = ?2, avatar = ?3, updated_at = ?4 WHERE wtink_id = ?5`)
+    await env.DB.prepare(`UPDATE profiles SET name = ?1, position = ?2, avatar = ?3, updated_at = ?4, last_seen = ?4 WHERE wtink_id = ?5`)
       .bind(name, position, avatar, now, owner.wtink_id).run();
-    return json({profile: {profileId: wtinkId, name, position, avatar}}, 200, origin);
+    return json({profile: publicProfile({wtink_id:wtinkId,name,position,avatar})}, 200, origin);
   }
 
   if (request.method === 'GET' && path === '/push/public-key') {
@@ -563,7 +566,8 @@ async function handle(request, env) {
       const bodyText = cleanText(item.body,240);
       const tag = cleanText(item.tag,80);
       if (!title || !bodyText || !tag) continue;
-      statements.push(env.DB.prepare(`INSERT INTO push_reminders(id,profile_id,kind,due_at,title,body,tag,sent_at,created_at,updated_at) VALUES(?1,?2,?3,?4,?5,?6,?7,NULL,?8,?8)`).bind(item.id,owner.wtink_id,item.kind,Math.round(dueAt),title,bodyText,tag,now));
+      const reminderId = `${owner.wtink_id}:${item.id}`.slice(0, 220);
+      statements.push(env.DB.prepare(`INSERT INTO push_reminders(id,profile_id,kind,due_at,title,body,tag,sent_at,created_at,updated_at) VALUES(?1,?2,?3,?4,?5,?6,?7,NULL,?8,?8) ON CONFLICT(id) DO UPDATE SET profile_id=excluded.profile_id,kind=excluded.kind,due_at=excluded.due_at,title=excluded.title,body=excluded.body,tag=excluded.tag,sent_at=NULL,updated_at=excluded.updated_at`).bind(reminderId,owner.wtink_id,item.kind,Math.round(dueAt),title,bodyText,tag,now));
     }
     await env.DB.batch(statements);
     return json({ok:true},200,origin);
@@ -574,6 +578,14 @@ async function handle(request, env) {
     if (!owner) return json({error:'UNAUTHORIZED'},401,origin);
     await notifyProfile(env, owner.wtink_id, 'test', {title:'WorkerTink',body:'Push-уведомления работают.',url:'./?tab=settings',tag:'workertink-test',urgency:'high'});
     return json({ok:true},200,origin);
+  }
+
+  if (request.method === 'POST' && path === '/presence/heartbeat') {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error: 'UNAUTHORIZED'}, 401, origin);
+    const now = Date.now();
+    await env.DB.prepare('UPDATE profiles SET last_seen = ?1 WHERE wtink_id = ?2').bind(now, owner.wtink_id).run();
+    return json({ok:true,lastSeen:now}, 200, origin);
   }
 
   if (request.method === 'POST' && path === '/push/events') {
@@ -723,6 +735,16 @@ async function handle(request, env) {
       VALUES (?1, ?2, ?3, ?4, 'pending', ?5, ?5, ?6)
     `).bind(id, owner.wtink_id, target, offer, now, expires).run();
     const row = await loadPeerSession(env, id);
+    await notifyProfile(env, target, 'peerRequest', {
+      title: `Входящий запрос P2P${normalizeId(owner.wtink_id) === DEV_WTINK_ID ? ' · dev' : ''}`,
+      body: `${owner.name || displayId(owner.wtink_id)}${normalizeId(owner.wtink_id) === DEV_WTINK_ID ? ' · dev' : ''} хочет подключиться к вам`,
+      url: `./?tab=friends&peerSession=${encodeURIComponent(id)}`,
+      tag: `workertink-peer-request-${id}`,
+      urgency: 'high',
+      ttl: 300,
+      type: 'peerRequest',
+      peerSessionId: id
+    });
     return json({session: peerSessionView(row)}, 201, origin);
   }
 
@@ -775,6 +797,21 @@ async function handle(request, env) {
     return json({session: peerSessionView(updated)}, 200, origin);
   }
 
+  const peerSessionAction = path.match(/^\/peer-sessions\/([^/]+)\/(decline)$/);
+  if (request.method === 'POST' && peerSessionAction) {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error: 'UNAUTHORIZED'}, 401, origin);
+    const id = decodeURIComponent(peerSessionAction[1]);
+    const row = await loadPeerSession(env, id);
+    if (!row) return json({error: 'SESSION_NOT_FOUND'}, 404, origin);
+    if (row.receiver_id !== owner.wtink_id) return json({error: 'FORBIDDEN'}, 403, origin);
+    if (row.status !== 'pending') return json({error: row.status === 'expired' ? 'SESSION_EXPIRED' : 'SESSION_NOT_PENDING'}, 409, origin);
+    await env.DB.prepare(`UPDATE peer_sessions SET status = 'cancelled', updated_at = ?1 WHERE id = ?2 AND status = 'pending'`)
+      .bind(Date.now(), id).run();
+    const updated = await loadPeerSession(env, id);
+    return json({session: peerSessionView(updated)}, 200, origin);
+  }
+
   if (request.method === 'GET' && path.startsWith('/peer-sessions/')) {
     const owner = await authProfile(request, env);
     if (!owner) return json({error: 'UNAUTHORIZED'}, 401, origin);
@@ -783,6 +820,59 @@ async function handle(request, env) {
     if (!row) return json({error: 'SESSION_NOT_FOUND'}, 404, origin);
     if (row.initiator_id !== owner.wtink_id && row.receiver_id !== owner.wtink_id) return json({error: 'FORBIDDEN'}, 403, origin);
     return json({session: peerSessionView(row)}, 200, origin);
+  }
+
+  const adminProfile = async () => {
+    const owner = await authProfile(request, env);
+    if (!owner || normalizeId(owner.wtink_id) !== DEV_WTINK_ID) return null;
+    return owner;
+  };
+
+  if (path === '/admin/overview' && request.method === 'GET') {
+    if (!(await adminProfile())) return json({error:'FORBIDDEN'}, 403, origin);
+    const [profiles, friends, pending] = await Promise.all([
+      env.DB.prepare('SELECT COUNT(*) AS count FROM profiles').first(),
+      env.DB.prepare("SELECT COUNT(*) AS count FROM friend_requests WHERE status = 'accepted'").first(),
+      env.DB.prepare("SELECT COUNT(*) AS count FROM friend_requests WHERE status = 'pending'").first()
+    ]);
+    return json({stats:{profiles:Number(profiles?.count||0),friendships:Number(friends?.count||0),pendingRequests:Number(pending?.count||0)}},200,origin);
+  }
+
+  if (path === '/admin/profiles' && request.method === 'GET') {
+    if (!(await adminProfile())) return json({error:'FORBIDDEN'}, 403, origin);
+    const url = new URL(request.url);
+    const query = normalizeId(url.searchParams.get('query') || '');
+    const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit') || 50)));
+    const pattern = `%${query}%`;
+    const rows = await env.DB.prepare(`SELECT wtink_id,name,position,avatar,created_at,updated_at,last_seen FROM profiles WHERE ?1 = '' OR wtink_id LIKE ?2 OR UPPER(name) LIKE UPPER(?2) ORDER BY updated_at DESC LIMIT ?3`).bind(query, pattern, limit).all();
+    return json({profiles:(rows.results||[]).map(row=>({...publicProfile(row),createdAt:Number(row.created_at||0),updatedAt:Number(row.updated_at||0),lastSeen:Number(row.last_seen||0),online:Number(row.last_seen||0)>=Date.now()-ONLINE_WINDOW_MS}))},200,origin);
+  }
+
+  const adminProfilePath = path.match(/^\/admin\/profiles\/([^/]+)(?:\/(revoke))?$/);
+  if (adminProfilePath && request.method === 'POST' && adminProfilePath[2] === 'revoke') {
+    if (!(await adminProfile())) return json({error:'FORBIDDEN'}, 403, origin);
+    const target = normalizeId(decodeURIComponent(adminProfilePath[1]));
+    if (!validId(target)) return json({error:'INVALID_ID'},400,origin);
+    await env.DB.prepare('UPDATE profiles SET token_hash = ?1, updated_at = ?2, last_seen = ?2 WHERE wtink_id = ?3').bind(await sha256(randomToken()),Date.now(),target).run();
+    return json({ok:true},200,origin);
+  }
+
+  if (adminProfilePath && request.method === 'DELETE') {
+    if (!(await adminProfile())) return json({error:'FORBIDDEN'}, 403, origin);
+    const target = normalizeId(decodeURIComponent(adminProfilePath[1]));
+    if (!validId(target) || target === DEV_WTINK_ID) return json({error:'FORBIDDEN'},403,origin);
+    const exists = await env.DB.prepare('SELECT wtink_id FROM profiles WHERE wtink_id = ?1').bind(target).first();
+    if (!exists) return json({error:'USER_NOT_FOUND'},404,origin);
+    await env.DB.batch([
+      env.DB.prepare('DELETE FROM friend_requests WHERE sender_id = ?1 OR receiver_id = ?1').bind(target),
+      env.DB.prepare('DELETE FROM peer_sessions WHERE initiator_id = ?1 OR receiver_id = ?1').bind(target),
+      env.DB.prepare('DELETE FROM push_subscriptions WHERE profile_id = ?1').bind(target),
+      env.DB.prepare('DELETE FROM push_reminders WHERE profile_id = ?1').bind(target),
+      env.DB.prepare('DELETE FROM auth_challenges WHERE profile_id = ?1').bind(target),
+      env.DB.prepare('DELETE FROM webauthn_credentials WHERE profile_id = ?1').bind(target),
+      env.DB.prepare('DELETE FROM profiles WHERE wtink_id = ?1').bind(target)
+    ]);
+    return json({ok:true},200,origin);
   }
 
   if (request.method === 'GET' && path === '/friends') {
@@ -794,6 +884,7 @@ async function handle(request, env) {
         CASE WHEN r.sender_id = ?1 THEN t.name ELSE s.name END AS name,
         CASE WHEN r.sender_id = ?1 THEN t.position ELSE s.position END AS position,
         CASE WHEN r.sender_id = ?1 THEN t.avatar ELSE s.avatar END AS avatar,
+        CASE WHEN r.sender_id = ?1 THEN t.last_seen ELSE s.last_seen END AS last_seen,
         r.updated_at
       FROM friend_requests r
       JOIN profiles s ON s.wtink_id = r.sender_id
@@ -802,7 +893,7 @@ async function handle(request, env) {
       ORDER BY r.updated_at DESC
       LIMIT 200
     `).bind(owner.wtink_id).all();
-    return json({friends: (rows.results || []).map(row => ({profile: publicProfile({wtink_id: row.wtink_id, name: row.name, position: row.position, avatar: row.avatar}), addedAt: Number(row.updated_at || Date.now()), lastSeen: Number(row.updated_at || Date.now())}))}, 200, origin);
+    return json({friends: (rows.results || []).map(row => ({profile: publicProfile({wtink_id: row.wtink_id, name: row.name, position: row.position, avatar: row.avatar}), addedAt: Number(row.updated_at || Date.now()), lastSeen: Number(row.last_seen || row.updated_at || 0), online: Number(row.last_seen || 0) >= Date.now() - ONLINE_WINDOW_MS}))}, 200, origin);
   }
 
   return json({error: 'NOT_FOUND'}, 404, origin);
