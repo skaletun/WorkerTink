@@ -5,7 +5,7 @@ const POSITION_MAX = 120;
 const AVATAR_MAX = 180_000;
 const TOKEN_BYTES = 32;
 const PIN_LENGTH = 6;
-const PIN_ITERATIONS = 120000;
+const PIN_ITERATIONS = 100000;
 
 
 function json(data, status = 200, origin = '*') {
