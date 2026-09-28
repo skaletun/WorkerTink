@@ -9,6 +9,10 @@ export interface UserProfile {profileId:string;name:string;position:string;avata
 export interface Friend {profile:UserProfile;addedAt:number;lastSeen:number;connected?:boolean}
 export interface FriendRequest {id:string;from:UserProfile;to:UserProfile;createdAt:number;status:'pending'|'accepted'|'declined'}
 export interface ChatMessage {id:string;from:string;at:number;type:'text'|'profile'|'note';text?:string;profile?:UserProfile;note?:{date:string;note:string;shift?:string}}
+<<<<<<< HEAD
+=======
+export interface NotificationSettings {enabled:boolean;friendRequests:boolean;friendAccepted:boolean;messages:boolean;shifts:boolean;absences:boolean;payroll:boolean}
+>>>>>>> 5b4ad83 (feat: account auth with PIN and OnePass)
 export interface State {
   schemaVersion:number;
   setupComplete:boolean;
@@ -28,13 +32,24 @@ export interface State {
   friendRequestsIncoming:FriendRequest[];
   friendRequestsOutgoing:FriendRequest[];
   chats:Record<string,ChatMessage[]>;
+<<<<<<< HEAD
+=======
+  notifications:NotificationSettings;
+  onePassEnabled:boolean;
+>>>>>>> 5b4ad83 (feat: account auth with PIN and OnePass)
 }
 export const MONTHS=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 export const DOW=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
 const pad=(n:number)=>String(n).padStart(2,'0');
 const todayYmd=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
 export const createWTinkId=()=>`WTinkID-${Math.floor(100000+Math.random()*900000)}`;
+<<<<<<< HEAD
 export const DEFAULT:State={schemaVersion:6,setupComplete:false,salary:95000,taxRate:13,stage:10,vacTotal:28,startDate:todayYmd(),scheduleType:'2/2',scheduleShift:'day',scheduleVakhtaMonths:1,schedulePairType:'day-night',vacations:[],sickLeaves:[],holidayCoeff:2,nightExtraPercent:20,advances:{},paymentDates:{},incomeHistory:{},shiftOverrides:{},shiftNotes:{},theme:'auto',profile:{profileId:'',name:'',position:'',avatar:''},directoryToken:'',friends:{},friendRequestsIncoming:[],friendRequestsOutgoing:[],chats:{}};
+=======
+export const normalizeWTinkId=(value:string)=>{const match=String(value||'').trim().match(/^WTINKID-(\d{6})$/i);return match?`WTinkID-${match[1]}`:''};
+export const canonicalWTinkId=(value:string)=>{const normalized=normalizeWTinkId(value);return normalized?normalized.toUpperCase():''};
+export const DEFAULT:State={schemaVersion:8,setupComplete:false,salary:95000,taxRate:13,stage:10,vacTotal:28,startDate:todayYmd(),scheduleType:'2/2',scheduleShift:'day',scheduleVakhtaMonths:1,schedulePairType:'day-night',vacations:[],sickLeaves:[],holidayCoeff:2,nightExtraPercent:20,advances:{},paymentDates:{},incomeHistory:{},shiftOverrides:{},shiftNotes:{},theme:'auto',profile:{profileId:'',name:'',position:'',avatar:''},directoryToken:'',friends:{},friendRequestsIncoming:[],friendRequestsOutgoing:[],chats:{},notifications:{enabled:true,friendRequests:true,friendAccepted:true,messages:true,shifts:true,absences:true,payroll:true},onePassEnabled:false};
+>>>>>>> 5b4ad83 (feat: account auth with PIN and OnePass)
 const HOLIDAYS=[[1,1,'Новогодние каникулы'],[1,2,'Новогодние каникулы'],[1,3,'Новогодние каникулы'],[1,4,'Новогодние каникулы'],[1,5,'Новогодние каникулы'],[1,6,'Новогодние каникулы'],[1,7,'Рождество Христово'],[1,8,'Новогодние каникулы'],[2,23,'День защитника Отечества'],[3,8,'Международный женский день'],[5,1,'Праздник Весны и Труда'],[5,9,'День Победы'],[6,12,'День России'],[11,4,'День народного единства']] as const;
 export const TRANSFERS:Record<number,Record<string,string>>={2025:{'2025-01-02':'2025-05-02','2025-01-03':'2025-12-31','2025-02-23':'2025-05-08','2025-03-08':'2025-06-13','2025-11-01':'2025-11-03'},2026:{'2026-01-03':'2026-01-09','2026-01-04':'2026-12-31'}};
 export const ymd=(d:Date)=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;

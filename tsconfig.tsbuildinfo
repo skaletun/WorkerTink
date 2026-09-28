@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 {"root":["./src/app.tsx","./src/core.ts","./src/directory.ts","./src/main.tsx","./src/markdown.ts","./src/p2p.ts","./src/storage.ts"],"version":"5.9.3"}
+=======
+{"root":["./src/app.tsx","./src/core.ts","./src/directory.ts","./src/main.tsx","./src/markdown.ts","./src/notifications.ts","./src/p2p.ts","./src/storage.ts","./src/vite-env.d.ts"],"version":"5.9.3"}
+>>>>>>> 5b4ad83 (feat: account auth with PIN and OnePass)

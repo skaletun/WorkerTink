@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # WorkerTink 2.8.1
+=======
+# WorkerTink 2.10.0
+>>>>>>> 5b4ad83 (feat: account auth with PIN and OnePass)
 
 **WorkerTink** — локальный PWA для рабочего календаря, смен, зарплаты, отпусков, больничных и заметок по сменам.
 
@@ -249,3 +253,20 @@ https://ВАШ-WORKER.workers.dev/health
 Полная пошаговая инструкция, включая CORS, API-токены GitHub Actions, миграции и диагностику, находится в [`directory-api/README.md`](directory-api/README.md).
 
 Для CI/CD также добавлен `.github/workflows/deploy-directory.yml`. Он применяет неприменённые D1-миграции и публикует Worker при изменениях в `directory-api/`. Для него нужны GitHub Secrets `CLOUDFLARE_API_TOKEN` и `CLOUDFLARE_ACCOUNT_ID`.
+<<<<<<< HEAD
+=======
+
+## Push-уведомления
+
+В версии 2.9.0 WorkerTink поддерживает Web Push. В настройках можно включить уведомления и отдельно управлять категориями. Сервер хранит техническую push-подписку и минимальный набор дат для доставки напоминаний; рабочие расчёты, заметки и полный календарь остаются локальными.
+
+Для production в Cloudflare Worker нужны secrets `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` и `VAPID_SUBJECT`. Дополнительные GitHub Actions secrets для VAPID не требуются, если secrets уже установлены через Wrangler: они хранятся в самом Cloudflare Worker.
+
+
+### Аккаунт и вход
+- Полная регистрация аккаунта через WTinkID + обязательный PIN из 6 цифр.
+- PIN хранится в каталоге только как криптографический хэш; после пяти неверных попыток вход временно блокируется.
+- Добавлен вход по WTinkID + PIN на новом устройстве и после выхода из аккаунта.
+- Добавлен необязательный OnePass на базе passkey/WebAuthn: включается только вручную в настройках, не предлагается во время регистрации.
+- Настройки безопасности собраны в компактном верхнем блоке; выход из аккаунта не удаляет локальные рабочие данные.
+>>>>>>> 5b4ad83 (feat: account auth with PIN and OnePass)

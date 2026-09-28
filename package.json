@@ -1,7 +1,11 @@
 {
   "name": "workertink",
   "private": true,
+<<<<<<< HEAD
   "version": "2.8.1",
+=======
+  "version": "2.10.0",
+>>>>>>> 5b4ad83 (feat: account auth with PIN and OnePass)
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -17,7 +21,12 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "vite-plugin-pwa": "^1.0.0",
+<<<<<<< HEAD
     "@vitejs/plugin-react": "^5.0.4"
+=======
+    "@vitejs/plugin-react": "^5.0.4",
+    "@simplewebauthn/browser": "^14.0.0"
+>>>>>>> 5b4ad83 (feat: account auth with PIN and OnePass)
   },
   "devDependencies": {
     "@types/react": "^19.1.10",
