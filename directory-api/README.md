@@ -287,3 +287,26 @@ WTinkID
 Без дополнительных секретов endpoint `/webrtc/ice-servers` отдаёт STUN-конфигурацию. Для более сложных NAT/Firewall можно подключить Cloudflare Realtime TURN: задайте в Worker secrets `TURN_KEY_ID` и `TURN_KEY_TOKEN`. Worker сам выдаёт короткоживущие TURN credentials браузеру; постоянный TURN-ключ в клиент не попадает.
 
 TURN нужен только когда прямой WebRTC-маршрут невозможен. Cloudflare указывает, что TURN тарифицируется по трафику; на странице FAQ Cloudflare сейчас указан бесплатный объём 1000 GB, после которого применяется $0.05/GB.
+
+## 11. Push-уведомления
+
+WorkerTink поддерживает Web Push через VAPID. В Cloudflare Worker задаются три secrets:
+
+```text
+VAPID_PUBLIC_KEY
+VAPID_PRIVATE_KEY
+VAPID_SUBJECT
+```
+
+`VAPID_PRIVATE_KEY` никогда не попадает во frontend или GitHub Pages. Frontend получает только публичный ключ через `GET /push/public-key` после авторизации.
+
+Для серверных напоминаний Worker использует Cron Trigger `*/5 * * * *`. Клиент формирует только необходимые даты/время уведомлений и отправляет их через `POST /push/reminders`; зарплата, график целиком и заметки на сервер не отправляются.
+
+Поддерживаемые push-события:
+
+- новая заявка в друзья;
+- принятие заявки;
+- новое P2P-сообщение;
+- предстоящая рабочая смена;
+- начало отпуска/больничного;
+- дата аванса/остатка.

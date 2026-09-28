@@ -1,4 +1,5 @@
-const ID_RE = /^WTINKID-\d{6}$/;
+const ID_RE = /^WTINKID-\d{6}$/i;
+const displayId = (value) => { const match = String(value || '').match(/^(?:WTINKID)-(\d{6})$/i); return match ? `WTinkID-${match[1]}` : String(value || ''); };
 const NAME_MAX = 80;
 const POSITION_MAX = 120;
 const AVATAR_MAX = 180_000;
@@ -49,7 +50,7 @@ function cleanAvatar(value) {
 function publicProfile(row) {
   if (!row) return null;
   return {
-    profileId: row.wtink_id,
+    profileId: displayId(row.wtink_id),
     name: row.name,
     position: row.position,
     avatar: row.avatar
@@ -94,6 +95,49 @@ async function authProfile(request, env) {
   return env.DB.prepare(
     'SELECT wtink_id, name, position, avatar, token_hash, created_at, updated_at FROM profiles WHERE token_hash = ?1'
   ).bind(tokenHash).first();
+}
+
+
+const DEFAULT_PUSH_PREFERENCES = {friendRequests:true,friendAccepted:true,messages:true,shifts:true,absences:true,payroll:true};
+function cleanPushPreferences(value) {
+  const input = value && typeof value === 'object' ? value : {};
+  return {
+    friendRequests: input.friendRequests !== false,
+    friendAccepted: input.friendAccepted !== false,
+    messages: input.messages !== false,
+    shifts: input.shifts !== false,
+    absences: input.absences !== false,
+    payroll: input.payroll !== false,
+  };
+}
+function pushEnabledFor(preferences, kind) {
+  if (!preferences || preferences.enabled === false) return false;
+  const key = kind === 'friendRequest' ? 'friendRequests' : kind === 'friendAccepted' ? 'friendAccepted' : kind === 'message' ? 'messages' : kind;
+  return preferences[key] !== false;
+}
+async function sendPush(env, subscription, payload) {
+  if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY || !env.VAPID_SUBJECT) return {sent:false,reason:'PUSH_NOT_CONFIGURED'};
+  const {buildPushPayload} = await import('@block65/webcrypto-web-push');
+  const pushSubscription = {endpoint:subscription.endpoint,expirationTime:subscription.expiration_time || null,keys:{p256dh:subscription.p256dh,auth:subscription.auth}};
+  const request = await buildPushPayload({data:JSON.stringify(payload),options:{ttl:payload.ttl || 3600,urgency:payload.urgency || 'normal'}}, pushSubscription, {subject:env.VAPID_SUBJECT,publicKey:env.VAPID_PUBLIC_KEY,privateKey:env.VAPID_PRIVATE_KEY});
+  const response = await fetch(subscription.endpoint, request);
+  if (response.status === 404 || response.status === 410) return {sent:false,gone:true};
+  if (!response.ok) return {sent:false,status:response.status};
+  return {sent:true};
+}
+async function notifyProfile(env, profileId, kind, payload) {
+  const rows = await env.DB.prepare('SELECT endpoint, expiration_time, p256dh, auth, preferences FROM push_subscriptions WHERE profile_id = ?1').bind(profileId).all();
+  const gone=[];
+  for (const row of rows.results || []) {
+    let preferences = DEFAULT_PUSH_PREFERENCES;
+    try { preferences = {...DEFAULT_PUSH_PREFERENCES, ...JSON.parse(row.preferences || '{}')}; } catch {}
+    if (!pushEnabledFor(preferences, kind)) continue;
+    try {
+      const result = await sendPush(env, row, payload);
+      if (result.gone) gone.push(row.endpoint);
+    } catch {}
+  }
+  if (gone.length) for (const endpoint of gone) await env.DB.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?1').bind(endpoint).run();
 }
 
 function requestView(row, from, to) {
@@ -206,6 +250,19 @@ async function handle(request, env) {
     return json({profile: {profileId: wtinkId, name, position, avatar}, token}, 201, origin);
   }
 
+  if (request.method === 'DELETE' && path === '/profiles') {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error: 'UNAUTHORIZED'}, 401, origin);
+    const now = Date.now();
+    await env.DB.batch([
+      env.DB.prepare('DELETE FROM peer_sessions WHERE initiator_id = ?1 OR receiver_id = ?1').bind(owner.wtink_id),
+      env.DB.prepare('DELETE FROM friend_requests WHERE sender_id = ?1 OR receiver_id = ?1').bind(owner.wtink_id),
+      env.DB.prepare('DELETE FROM push_subscriptions WHERE profile_id = ?1').bind(owner.wtink_id),
+      env.DB.prepare('DELETE FROM profiles WHERE wtink_id = ?1').bind(owner.wtink_id)
+    ]);
+    return json({ok: true, deletedAt: now}, 200, origin);
+  }
+
   const profileMatch = path.match(/^\/profiles\/([^/]+)$/);
   if (request.method === 'GET' && profileMatch) {
     const wtinkId = normalizeId(decodeURIComponent(profileMatch[1]));
@@ -229,6 +286,94 @@ async function handle(request, env) {
     await env.DB.prepare(`UPDATE profiles SET name = ?1, position = ?2, avatar = ?3, updated_at = ?4 WHERE wtink_id = ?5`)
       .bind(name, position, avatar, now, owner.wtink_id).run();
     return json({profile: {profileId: wtinkId, name, position, avatar}}, 200, origin);
+  }
+
+  if (request.method === 'GET' && path === '/push/public-key') {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error: 'UNAUTHORIZED'}, 401, origin);
+    if (!env.VAPID_PUBLIC_KEY) return json({error: 'PUSH_NOT_CONFIGURED'}, 503, origin);
+    return json({publicKey: env.VAPID_PUBLIC_KEY}, 200, origin);
+  }
+
+  if (request.method === 'POST' && path === '/push/subscriptions') {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error: 'UNAUTHORIZED'}, 401, origin);
+    const input = await body(request);
+    const subscription = input?.subscription || {};
+    const endpoint = typeof subscription.endpoint === 'string' ? subscription.endpoint.slice(0, 2048) : '';
+    const p256dh = typeof subscription.keys?.p256dh === 'string' ? subscription.keys.p256dh.slice(0, 256) : '';
+    const auth = typeof subscription.keys?.auth === 'string' ? subscription.keys.auth.slice(0, 256) : '';
+    if (!/^https:\/\//.test(endpoint) || !p256dh || !auth) return json({error:'INVALID_PUSH_SUBSCRIPTION'},400,origin);
+    const preferences = JSON.stringify(cleanPushPreferences(input?.preferences));
+    const now = Date.now();
+    await env.DB.prepare(`
+      INSERT INTO push_subscriptions(endpoint, profile_id, expiration_time, p256dh, auth, preferences, created_at, updated_at)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, COALESCE((SELECT created_at FROM push_subscriptions WHERE endpoint = ?1), ?7), ?7)
+      ON CONFLICT(endpoint) DO UPDATE SET profile_id = excluded.profile_id, expiration_time = excluded.expiration_time, p256dh = excluded.p256dh, auth = excluded.auth, preferences = excluded.preferences, updated_at = excluded.updated_at
+    `).bind(endpoint, owner.wtink_id, Number(subscription.expirationTime)||null, p256dh, auth, preferences, now).run();
+    return json({ok:true}, 200, origin);
+  }
+
+  if (request.method === 'DELETE' && path === '/push/subscriptions') {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error: 'UNAUTHORIZED'}, 401, origin);
+    const input = await body(request);
+    const endpoint = typeof input?.endpoint === 'string' ? input.endpoint : '';
+    await env.DB.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?1 AND profile_id = ?2').bind(endpoint, owner.wtink_id).run();
+    return json({ok:true}, 200, origin);
+  }
+
+  if (request.method === 'PUT' && path === '/push/subscriptions/preferences') {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error: 'UNAUTHORIZED'}, 401, origin);
+    const input = await body(request);
+    const endpoint = typeof input?.endpoint === 'string' ? input.endpoint : '';
+    const preferences = JSON.stringify(cleanPushPreferences(input?.preferences));
+    await env.DB.prepare('UPDATE push_subscriptions SET preferences = ?1, updated_at = ?2 WHERE endpoint = ?3 AND profile_id = ?4').bind(preferences, Date.now(), endpoint, owner.wtink_id).run();
+    return json({ok:true}, 200, origin);
+  }
+
+  if (request.method === 'POST' && path === '/push/reminders') {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error:'UNAUTHORIZED'},401,origin);
+    const input = await body(request);
+    const reminders = Array.isArray(input?.reminders) ? input.reminders.slice(0,200) : [];
+    const now = Date.now();
+    const statements = [env.DB.prepare('DELETE FROM push_reminders WHERE profile_id = ?1').bind(owner.wtink_id)];
+    for (const item of reminders) {
+      if (!item || typeof item.id !== 'string' || !['shift','absence','payroll'].includes(item.kind)) continue;
+      const dueAt = Number(item.dueAt);
+      if (!Number.isFinite(dueAt) || dueAt < now - 24*60*60*1000 || dueAt > now + 120*24*60*60*1000) continue;
+      const title = cleanText(item.title,120);
+      const bodyText = cleanText(item.body,240);
+      const tag = cleanText(item.tag,80);
+      if (!title || !bodyText || !tag) continue;
+      statements.push(env.DB.prepare(`INSERT INTO push_reminders(id,profile_id,kind,due_at,title,body,tag,sent_at,created_at,updated_at) VALUES(?1,?2,?3,?4,?5,?6,?7,NULL,?8,?8)`).bind(item.id,owner.wtink_id,item.kind,Math.round(dueAt),title,bodyText,tag,now));
+    }
+    await env.DB.batch(statements);
+    return json({ok:true},200,origin);
+  }
+
+  if (request.method === 'POST' && path === '/push/test') {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error:'UNAUTHORIZED'},401,origin);
+    await notifyProfile(env, owner.wtink_id, 'test', {title:'WorkerTink',body:'Push-уведомления работают.',url:'./?tab=settings',tag:'workertink-test',urgency:'high'});
+    return json({ok:true},200,origin);
+  }
+
+  if (request.method === 'POST' && path === '/push/events') {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error:'UNAUTHORIZED'},401,origin);
+    const input = await body(request);
+    const target = normalizeId(input?.to);
+    const kind = ['message','friendRequest','friendAccepted'].includes(String(input?.kind)) ? input.kind : '';
+    if (!validId(target) || !kind || target === owner.wtink_id) return json({error:'INVALID_PUSH_EVENT'},400,origin);
+    const friend = await env.DB.prepare(`SELECT 1 FROM friend_requests WHERE status='accepted' AND ((sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1)) LIMIT 1`).bind(owner.wtink_id,target).first();
+    if (!friend) return json({error:'NOT_FRIENDS'},403,origin);
+    const titles={message:'Новое сообщение',friendRequest:'Новая заявка в друзья',friendAccepted:'Заявка принята'};
+    const bodies={message:`Новое сообщение от ${displayId(owner.wtink_id)}`,friendRequest:`${owner.name} отправил(а) вам заявку в друзья`,friendAccepted:`${owner.name} принял(а) вашу заявку в друзья`};
+    await notifyProfile(env,target,kind,{title:titles[kind],body:bodies[kind],url:'./?tab=friends',tag:`workertink-${kind}-${owner.wtink_id}`,urgency:kind==='message'?'high':'normal'});
+    return json({ok:true},200,origin);
   }
 
   if (request.method === 'POST' && path === '/friend-requests') {
@@ -301,6 +446,7 @@ async function handle(request, env) {
     await env.DB.prepare('UPDATE friend_requests SET status = ?1, updated_at = ?2 WHERE id = ?3 AND status = \'pending\'')
       .bind(status, Date.now(), action[1]).run();
     const updated = await loadRequest(env, action[1]);
+    if (status === 'accepted') await notifyProfile(env, row.sender_id, 'friendAccepted', {title:'Заявка принята',body:`${owner.name} принял(а) вашу заявку в друзья`,url:'./?tab=friends',tag:`workertink-friend-accepted-${owner.wtink_id}`});
     return json({request: requestView(updated, profileFromJoined(updated, 's'), profileFromJoined(updated, 't'))}, 200, origin);
   }
 
@@ -447,4 +593,14 @@ async function handle(request, env) {
   return json({error: 'NOT_FOUND'}, 404, origin);
 }
 
-export default {fetch: handle};
+async function processPushReminders(env) {
+  const now = Date.now();
+  const rows = await env.DB.prepare(`SELECT id, profile_id, kind, due_at, title, body, tag FROM push_reminders WHERE sent_at IS NULL AND due_at <= ?1 ORDER BY due_at ASC LIMIT 100`).bind(now).all();
+  for (const row of rows.results || []) {
+    await notifyProfile(env, row.profile_id, row.kind, {title:row.title,body:row.body,url:'./',tag:row.tag,urgency:row.kind==='shift'?'high':'normal'});
+    await env.DB.prepare('UPDATE push_reminders SET sent_at = ?1, updated_at = ?1 WHERE id = ?2 AND sent_at IS NULL').bind(Date.now(),row.id).run();
+  }
+  await env.DB.prepare('DELETE FROM push_reminders WHERE sent_at IS NOT NULL AND sent_at < ?1').bind(now - 7*24*60*60*1000).run();
+}
+
+export default {fetch: handle, async scheduled(controller, env) { await processPushReminders(env); }};
