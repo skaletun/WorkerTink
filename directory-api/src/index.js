@@ -16,7 +16,7 @@ function json(data, status = 200, origin = '*') {
       'cache-control': 'no-store',
       'access-control-allow-origin': origin,
       'access-control-allow-headers': 'Content-Type, Authorization',
-      'access-control-allow-methods': 'GET, POST, PUT, OPTIONS',
+      'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'vary': 'Origin'
     }
   });
@@ -134,16 +134,9 @@ function bearer(request) {
 }
 
 async function body(request) {
-  const text = await request.text();
-
   try {
-    return JSON.parse(text);
-  } catch (error) {
-    console.error('INVALID_JSON_BODY', {
-      text,
-      error: error instanceof Error ? error.message : String(error)
-    });
-
+    return await request.json();
+  } catch {
     return {};
   }
 }
@@ -269,7 +262,7 @@ async function handle(request, env) {
     headers: {
       'access-control-allow-origin': origin,
       'access-control-allow-headers': 'Content-Type, Authorization',
-      'access-control-allow-methods': 'GET, POST, PUT, OPTIONS',
+      'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'access-control-max-age': '86400',
       'vary': 'Origin'
     }
