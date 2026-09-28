@@ -1,1 +1,1 @@
-{"root":["./src/App.tsx","./src/core.ts","./src/directory.ts","./src/main.tsx","./src/markdown.ts","./src/notifications.ts","./src/p2p.ts","./src/storage.ts","./src/vite-env.d.ts"],"errors":true,"version":"5.8.3"}
+{"root":["./src/App.tsx","./src/HomeView.tsx","./src/SocialView.tsx","./src/core.ts","./src/directory.ts","./src/main.tsx","./src/markdown.ts","./src/notifications.ts","./src/p2p.ts","./src/storage.ts","./src/vite-env.d.ts"],"errors":true,"version":"5.8.3"}

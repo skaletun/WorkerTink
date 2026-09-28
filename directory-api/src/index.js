@@ -55,8 +55,10 @@ function cleanAvatar(value) {
 
 function roleFlags(row) {
   const id = normalizeId(row?.wtink_id);
-  const isDev = id === DEV_WTINK_ID || Number(row?.is_dev || 0) === 1;
-  const isAdmin = id === DEV_WTINK_ID || Number(row?.is_admin || 0) === 1;
+  // Roles are canonical: only the fixed development account can be dev/admin.
+  // Persisted role columns are retained for compatibility but never grant UI/API access.
+  const isDev = id === DEV_WTINK_ID;
+  const isAdmin = id === DEV_WTINK_ID;
   return {isDev, isAdmin};
 }
 
@@ -993,7 +995,7 @@ async function handle(request, env) {
 
   const adminProfile = async () => {
     const owner = await authProfile(request, env);
-    if (!owner || (normalizeId(owner.wtink_id) !== DEV_WTINK_ID && Number(owner.is_admin || 0) !== 1)) return null;
+    if (!owner || !roleFlags(owner).isAdmin) return null;
     return owner;
   };
 

@@ -17,8 +17,11 @@ assert.match(api,/admin\/overview/);
 assert.ok(api.includes("peerSessionAction = path.match"));
 assert.match(api,/status = 'cancelled'/);
 assert.match(api,/function roleFlags\(row\)/);
+assert.match(api,/const isDev = id === DEV_WTINK_ID;/);
+assert.match(api,/const isAdmin = id === DEV_WTINK_ID;/);
+assert.match(api,/if \(!owner \|\| !roleFlags\(owner\)\.isAdmin\) return null;/);
+
 assert.match(api,/const id = normalizeId\(row\?\.wtink_id\)/);
-assert.match(api,/normalizeId\(owner\.wtink_id\) !== DEV_WTINK_ID && Number\(owner\.is_admin \|\| 0\) !== 1/);
 assert.match(api,/SELECT wtink_id,name,position,avatar,is_dev,is_admin FROM profiles WHERE wtink_id = \?1/);
 assert.match(api,/s\.is_dev AS s_is_dev, s\.is_admin AS s_is_admin/);
 assert.match(api,/t\.is_dev AS t_is_dev, t\.is_admin AS t_is_admin/);
@@ -39,5 +42,6 @@ assert.match(app,/peer-in-app-notice/);
 
 const repair=fs.readFileSync(path.join(root,'directory-api/migrations/0009_dev_role_repair.sql'),'utf8');
 assert.match(repair,/WTINKID-214994/);
-assert.match(repair,/is_dev = 1/);
-assert.match(repair,/is_admin = 1/);
+assert.match(repair,/ELSE 0 END/);
+assert.match(repair,/is_dev = CASE/);
+assert.match(repair,/is_admin = CASE/);
