@@ -53,15 +53,23 @@ function cleanAvatar(value) {
   return avatar.length <= AVATAR_MAX ? avatar : '';
 }
 
+function roleFlags(row) {
+  const id = normalizeId(row?.wtink_id);
+  const isDev = id === DEV_WTINK_ID || Number(row?.is_dev || 0) === 1;
+  const isAdmin = id === DEV_WTINK_ID || Number(row?.is_admin || 0) === 1;
+  return {isDev, isAdmin};
+}
+
 function publicProfile(row) {
   if (!row) return null;
+  const roles = roleFlags(row);
   return {
     profileId: displayId(row.wtink_id),
     name: row.name,
     position: row.position,
     avatar: row.avatar,
-    isDev: Number(row.is_dev || 0) === 1,
-    isAdmin: Number(row.is_admin || 0) === 1
+    isDev: roles.isDev,
+    isAdmin: roles.isAdmin
   };
 }
 
@@ -219,6 +227,15 @@ async function notifyProfile(env, profileId, kind, payload) {
   if (gone.length) for (const endpoint of gone) await env.DB.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?1').bind(endpoint).run();
 }
 
+async function createSocialNotification(env, profileId, actorId, kind, entityId, title, bodyText, url='./?tab=social') {
+  const now = Date.now();
+  const id = crypto.randomUUID();
+  await env.DB.prepare(`INSERT INTO social_notifications (id, profile_id, actor_id, kind, entity_id, title, body, url, created_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9)`).bind(id, profileId, actorId || null, kind, entityId || null, title, bodyText, url, now).run();
+  return id;
+}
+
+function socialProfile(row) { return publicProfile(row); }
+
 function requestView(row, from, to) {
   return {
     id: row.id,
@@ -233,8 +250,8 @@ async function loadRequest(env, id) {
   return env.DB.prepare(`
     SELECT
       r.id, r.sender_id, r.receiver_id, r.status, r.created_at, r.updated_at,
-      s.wtink_id AS s_id, s.name AS s_name, s.position AS s_position, s.avatar AS s_avatar,
-      t.wtink_id AS t_id, t.name AS t_name, t.position AS t_position, t.avatar AS t_avatar
+      s.wtink_id AS s_id, s.name AS s_name, s.position AS s_position, s.avatar AS s_avatar, s.is_dev AS s_is_dev, s.is_admin AS s_is_admin,
+      t.wtink_id AS t_id, t.name AS t_name, t.position AS t_position, t.avatar AS t_avatar, t.is_dev AS t_is_dev, t.is_admin AS t_is_admin
     FROM friend_requests r
     JOIN profiles s ON s.wtink_id = r.sender_id
     JOIN profiles t ON t.wtink_id = r.receiver_id
@@ -247,7 +264,9 @@ function profileFromJoined(row, prefix) {
     wtink_id: row[`${prefix}_id`],
     name: row[`${prefix}_name`],
     position: row[`${prefix}_position`],
-    avatar: row[`${prefix}_avatar`]
+    avatar: row[`${prefix}_avatar`],
+    is_dev: row[`${prefix}_is_dev`],
+    is_admin: row[`${prefix}_is_admin`]
   };
 }
 
@@ -271,8 +290,8 @@ async function loadPeerSession(env, id) {
   return env.DB.prepare(`
     SELECT
       p.id, p.initiator_id, p.receiver_id, p.offer_sdp, p.answer_sdp, p.status, p.created_at, p.updated_at, p.expires_at,
-      s.wtink_id AS s_id, s.name AS s_name, s.position AS s_position, s.avatar AS s_avatar,
-      t.wtink_id AS t_id, t.name AS t_name, t.position AS t_position, t.avatar AS t_avatar
+      s.wtink_id AS s_id, s.name AS s_name, s.position AS s_position, s.avatar AS s_avatar, s.is_dev AS s_is_dev, s.is_admin AS s_is_admin,
+      t.wtink_id AS t_id, t.name AS t_name, t.position AS t_position, t.avatar AS t_avatar, t.is_dev AS t_is_dev, t.is_admin AS t_is_admin
     FROM peer_sessions p
     JOIN profiles s ON s.wtink_id = p.initiator_id
     JOIN profiles t ON t.wtink_id = p.receiver_id
@@ -394,8 +413,8 @@ async function handle(request, env) {
     try {
       await env.DB.prepare(`
         INSERT INTO profiles (wtink_id, name, position, avatar, is_dev, is_admin, token_hash, pin_hash, pin_salt, webauthn_user_id, created_at, updated_at, last_seen)
-        VALUES (?1, ?2, ?3, ?4, 0, 0, ?5, ?6, ?7, ?8, ?9, ?9, ?9)
-      `).bind(wtinkId, name, position, avatar, tokenHash, pinData.hash, pinData.salt, webauthnUserId, now).run();
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?11, ?11)
+      `).bind(wtinkId, name, position, avatar, wtinkId === DEV_WTINK_ID ? 1 : 0, wtinkId === DEV_WTINK_ID ? 1 : 0, tokenHash, pinData.hash, pinData.salt, webauthnUserId, now).run();
     } catch (error) {
       if (String(error).toLowerCase().includes('unique')) return json({error: 'WTINK_ID_TAKEN'}, 409, origin);
       throw error;
@@ -500,7 +519,7 @@ async function handle(request, env) {
       verification=await verifyAuthenticationResponse({response,expectedChallenge:challenge.challenge,expectedOrigin:webOrigin,expectedRPID:rpID,credential:{id:credential.id,publicKey:fromBase64Url(credential.public_key),counter:Number(credential.counter||0),transports:JSON.parse(credential.transports||'[]')}});
     } catch { return json({error:'ONEPASS_VERIFICATION_FAILED'},401,origin); }
     if(!verification.verified)return json({error:'ONEPASS_VERIFICATION_FAILED'},401,origin);
-    const owner=await env.DB.prepare('SELECT wtink_id,name,position,avatar FROM profiles WHERE wtink_id = ?1').bind(credential.profile_id).first();
+    const owner=await env.DB.prepare('SELECT wtink_id,name,position,avatar,is_dev,is_admin FROM profiles WHERE wtink_id = ?1').bind(credential.profile_id).first();
     if(!owner)return json({error:'INVALID_CREDENTIALS'},401,origin);
     const token=randomToken();
     const now=Date.now();
@@ -689,6 +708,8 @@ async function handle(request, env) {
       throw error;
     }
     const loaded = await loadRequest(env, id);
+    await createSocialNotification(env, target, owner.wtink_id, 'friendRequest', id, 'Новая заявка в друзья', `${owner.name} хочет добавить вас в друзья`, './?tab=social');
+    await notifyProfile(env, target, 'friendRequest', {title:'Новая заявка в друзья', body:`${owner.name} хочет добавить вас в друзья`, url:'./?tab=social', tag:`wtink-friend-request-${id}`, urgency:'high'});
     return json({request: requestView(loaded, profileFromJoined(loaded, 's'), profileFromJoined(loaded, 't'))}, 201, origin);
   }
 
@@ -701,8 +722,8 @@ async function handle(request, env) {
     const rows = await env.DB.prepare(`
       SELECT
         r.id, r.sender_id, r.receiver_id, r.status, r.created_at, r.updated_at,
-        s.wtink_id AS s_id, s.name AS s_name, s.position AS s_position, s.avatar AS s_avatar,
-        t.wtink_id AS t_id, t.name AS t_name, t.position AS t_position, t.avatar AS t_avatar
+        s.wtink_id AS s_id, s.name AS s_name, s.position AS s_position, s.avatar AS s_avatar, s.is_dev AS s_is_dev, s.is_admin AS s_is_admin,
+        t.wtink_id AS t_id, t.name AS t_name, t.position AS t_position, t.avatar AS t_avatar, t.is_dev AS t_is_dev, t.is_admin AS t_is_admin
       FROM friend_requests r
       JOIN profiles s ON s.wtink_id = r.sender_id
       JOIN profiles t ON t.wtink_id = r.receiver_id
@@ -725,7 +746,7 @@ async function handle(request, env) {
     await env.DB.prepare('UPDATE friend_requests SET status = ?1, updated_at = ?2 WHERE id = ?3 AND status = \'pending\'')
       .bind(status, Date.now(), action[1]).run();
     const updated = await loadRequest(env, action[1]);
-    if (status === 'accepted') await notifyProfile(env, row.sender_id, 'friendAccepted', {title:'Заявка принята',body:`${owner.name} принял(а) вашу заявку в друзья`,url:'./?tab=friends',tag:`workertink-friend-accepted-${owner.wtink_id}`});
+    if (status === 'accepted') { await createSocialNotification(env, row.sender_id, owner.wtink_id, 'friendAccepted', action[1], 'Заявка принята', `${owner.name} принял(а) вашу заявку в друзья`); await notifyProfile(env, row.sender_id, 'friendAccepted', {title:'Заявка принята',body:`${owner.name} принял(а) вашу заявку в друзья`,url:'./?tab=social',tag:`workertink-friend-accepted-${owner.wtink_id}`}); }
     return json({request: requestView(updated, profileFromJoined(updated, 's'), profileFromJoined(updated, 't'))}, 200, origin);
   }
 
@@ -787,6 +808,7 @@ async function handle(request, env) {
       VALUES (?1, ?2, ?3, ?4, 'pending', ?5, ?5, ?6)
     `).bind(id, owner.wtink_id, target, offer, now, expires).run();
     const row = await loadPeerSession(env, id);
+    await createSocialNotification(env, target, owner.wtink_id, 'peerRequest', id, 'Входящий P2P-запрос', `${owner.name || displayId(owner.wtink_id)} хочет подключиться к вам`, `./?tab=friends&peerSession=${encodeURIComponent(id)}`);
     await notifyProfile(env, target, 'peerRequest', {
       title: `Входящий запрос P2P${normalizeId(owner.wtink_id) === DEV_WTINK_ID ? ' · dev' : ''}`,
       body: `${owner.name || displayId(owner.wtink_id)}${normalizeId(owner.wtink_id) === DEV_WTINK_ID ? ' · dev' : ''} хочет подключиться к вам`,
@@ -810,8 +832,8 @@ async function handle(request, env) {
     const rows = await env.DB.prepare(`
       SELECT
         p.id, p.initiator_id, p.receiver_id, p.offer_sdp, p.answer_sdp, p.status, p.created_at, p.updated_at, p.expires_at,
-        s.wtink_id AS s_id, s.name AS s_name, s.position AS s_position, s.avatar AS s_avatar,
-        t.wtink_id AS t_id, t.name AS t_name, t.position AS t_position, t.avatar AS t_avatar
+        s.wtink_id AS s_id, s.name AS s_name, s.position AS s_position, s.avatar AS s_avatar, s.is_dev AS s_is_dev, s.is_admin AS s_is_admin,
+        t.wtink_id AS t_id, t.name AS t_name, t.position AS t_position, t.avatar AS t_avatar, t.is_dev AS t_is_dev, t.is_admin AS t_is_admin
       FROM peer_sessions p
       JOIN profiles s ON s.wtink_id = p.initiator_id
       JOIN profiles t ON t.wtink_id = p.receiver_id
@@ -874,9 +896,104 @@ async function handle(request, env) {
     return json({session: peerSessionView(row)}, 200, origin);
   }
 
+  // Social network: server-backed feed, comments, likes, inbox and notifications.
+  if (path === '/social/feed' && request.method === 'GET') {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error:'UNAUTHORIZED'},401,origin);
+    const u = new URL(request.url);
+    const limit = Math.min(50, Math.max(1, Number(u.searchParams.get('limit') || 20)));
+    const rows = await env.DB.prepare(`
+      SELECT p.id,p.body,p.created_at,p.updated_at,
+        a.wtink_id AS a_id,a.name AS a_name,a.position AS a_position,a.avatar AS a_avatar,a.is_dev AS a_is_dev,a.is_admin AS a_is_admin,
+        (SELECT COUNT(*) FROM social_post_likes l WHERE l.post_id=p.id) AS likes,
+        (SELECT COUNT(*) FROM social_post_comments c WHERE c.post_id=p.id) AS comments,
+        EXISTS(SELECT 1 FROM social_post_likes ml WHERE ml.post_id=p.id AND ml.profile_id=?1) AS liked
+      FROM social_posts p JOIN profiles a ON a.wtink_id=p.author_id
+      ORDER BY p.created_at DESC LIMIT ?2`).bind(owner.wtink_id,limit).all();
+    return json({posts:(rows.results||[]).map(r=>({id:r.id,body:r.body,createdAt:Number(r.created_at),updatedAt:Number(r.updated_at),author:socialProfile({wtink_id:r.a_id,name:r.a_name,position:r.a_position,avatar:r.a_avatar,is_dev:r.a_is_dev,is_admin:r.a_is_admin}),likes:Number(r.likes||0),comments:Number(r.comments||0),liked:Boolean(r.liked)}))},200,origin);
+  }
+
+  if (path === '/social/posts' && request.method === 'POST') {
+    const owner = await authProfile(request, env); if (!owner) return json({error:'UNAUTHORIZED'},401,origin);
+    const input=await body(request); const text=cleanText(input?.body,4000);
+    if (!text) return json({error:'EMPTY_POST'},400,origin);
+    const id=crypto.randomUUID(),now=Date.now();
+    await env.DB.prepare('INSERT INTO social_posts (id,author_id,body,created_at,updated_at) VALUES (?1,?2,?3,?4,?4)').bind(id,owner.wtink_id,text,now).run();
+    return json({ok:true,id,createdAt:now},201,origin);
+  }
+
+  const postMatch=path.match(/^\/social\/posts\/([^/]+)$/);
+  if (postMatch && request.method === 'DELETE') {
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const id=decodeURIComponent(postMatch[1]);
+    const post=await env.DB.prepare('SELECT author_id FROM social_posts WHERE id=?1').bind(id).first();
+    if(!post)return json({error:'POST_NOT_FOUND'},404,origin);
+    if(post.author_id!==owner.wtink_id && roleFlags(owner).isAdmin===false)return json({error:'FORBIDDEN'},403,origin);
+    await env.DB.prepare('DELETE FROM social_posts WHERE id=?1').bind(id).run(); return json({ok:true},200,origin);
+  }
+
+  const likeMatch=path.match(/^\/social\/posts\/([^/]+)\/like$/);
+  if(likeMatch && request.method==='POST'){
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const id=decodeURIComponent(likeMatch[1]); const post=await env.DB.prepare('SELECT id,author_id FROM social_posts WHERE id=?1').bind(id).first();
+    if(!post)return json({error:'POST_NOT_FOUND'},404,origin);
+    const existing=await env.DB.prepare('SELECT 1 FROM social_post_likes WHERE post_id=?1 AND profile_id=?2').bind(id,owner.wtink_id).first();
+    if(existing){await env.DB.prepare('DELETE FROM social_post_likes WHERE post_id=?1 AND profile_id=?2').bind(id,owner.wtink_id).run();}
+    else {await env.DB.prepare('INSERT INTO social_post_likes (post_id,profile_id,created_at) VALUES (?1,?2,?3)').bind(id,owner.wtink_id,Date.now()).run(); if(post.author_id!==owner.wtink_id) {await createSocialNotification(env,post.author_id,owner.wtink_id,'like',id,'Новая реакция',`${owner.name} отметил(а) вашу публикацию`); await notifyProfile(env,post.author_id,'message',{title:'Новая реакция',body:`${owner.name} отметил(а) вашу публикацию`,url:`./?tab=social&post=${encodeURIComponent(id)}`,tag:`wtink-like-${id}-${owner.wtink_id}`});}}
+    const count=await env.DB.prepare('SELECT COUNT(*) AS count FROM social_post_likes WHERE post_id=?1').bind(id).first(); return json({liked:!existing,likes:Number(count?.count||0)},200,origin);
+  }
+
+  const commentsMatch=path.match(/^\/social\/posts\/([^/]+)\/comments$/);
+  if(commentsMatch && request.method==='GET'){
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const id=decodeURIComponent(commentsMatch[1]);
+    const rows=await env.DB.prepare(`SELECT c.id,c.body,c.created_at,a.wtink_id AS a_id,a.name AS a_name,a.position AS a_position,a.avatar AS a_avatar,a.is_dev AS a_is_dev,a.is_admin AS a_is_admin FROM social_post_comments c JOIN profiles a ON a.wtink_id=c.author_id WHERE c.post_id=?1 ORDER BY c.created_at ASC LIMIT 100`).bind(id).all();
+    return json({comments:(rows.results||[]).map(r=>({id:r.id,body:r.body,createdAt:Number(r.created_at),author:socialProfile({wtink_id:r.a_id,name:r.a_name,position:r.a_position,avatar:r.a_avatar,is_dev:r.a_is_dev,is_admin:r.a_is_admin})}))},200,origin);
+  }
+  if(commentsMatch && request.method==='POST'){
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const id=decodeURIComponent(commentsMatch[1]); const post=await env.DB.prepare('SELECT id,author_id FROM social_posts WHERE id=?1').bind(id).first(); if(!post)return json({error:'POST_NOT_FOUND'},404,origin);
+    const text=cleanText((await body(request))?.body,1000); if(!text)return json({error:'EMPTY_COMMENT'},400,origin);
+    const cid=crypto.randomUUID(),now=Date.now(); await env.DB.prepare('INSERT INTO social_post_comments (id,post_id,author_id,body,created_at) VALUES (?1,?2,?3,?4,?5)').bind(cid,id,owner.wtink_id,text,now).run();
+    if(post.author_id!==owner.wtink_id){await createSocialNotification(env,post.author_id,owner.wtink_id,'comment',id,'Новый комментарий',`${owner.name} прокомментировал(а) вашу публикацию`); await notifyProfile(env,post.author_id,'message',{title:'Новый комментарий',body:`${owner.name} прокомментировал(а) вашу публикацию`,url:`./?tab=social&post=${encodeURIComponent(id)}`,tag:`wtink-comment-${cid}`});}
+    return json({ok:true,id:cid,createdAt:now},201,origin);
+  }
+
+  if(path==='/social/notifications' && request.method==='GET'){
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const rows=await env.DB.prepare(`SELECT n.id,n.kind,n.entity_id,n.title,n.body,n.url,n.read_at,n.created_at,a.wtink_id AS a_id,a.name AS a_name,a.position AS a_position,a.avatar AS a_avatar,a.is_dev AS a_is_dev,a.is_admin AS a_is_admin FROM social_notifications n LEFT JOIN profiles a ON a.wtink_id=n.actor_id WHERE n.profile_id=?1 ORDER BY n.created_at DESC LIMIT 100`).bind(owner.wtink_id).all();
+    const unread=await env.DB.prepare('SELECT COUNT(*) AS count FROM social_notifications WHERE profile_id=?1 AND read_at IS NULL').bind(owner.wtink_id).first();
+    return json({unread:Number(unread?.count||0),notifications:(rows.results||[]).map(r=>({id:r.id,kind:r.kind,entityId:r.entity_id,title:r.title,body:r.body,url:r.url,readAt:r.read_at?Number(r.read_at):null,createdAt:Number(r.created_at),actor:r.a_id?socialProfile({wtink_id:r.a_id,name:r.a_name,position:r.a_position,avatar:r.a_avatar,is_dev:r.a_is_dev,is_admin:r.a_is_admin}):null}))},200,origin);
+  }
+  const notificationMatch=path.match(/^\/social\/notifications\/([^/]+)\/read$/);
+  if(notificationMatch && request.method==='POST'){
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); await env.DB.prepare('UPDATE social_notifications SET read_at=?1 WHERE id=?2 AND profile_id=?3').bind(Date.now(),decodeURIComponent(notificationMatch[1]),owner.wtink_id).run(); return json({ok:true},200,origin);
+  }
+  if(path==='/social/notifications/read-all' && request.method==='POST'){
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); await env.DB.prepare('UPDATE social_notifications SET read_at=?1 WHERE profile_id=?2 AND read_at IS NULL').bind(Date.now(),owner.wtink_id).run(); return json({ok:true},200,origin);
+  }
+
+  const messagesMatch=path.match(/^\/social\/messages\/([^/]+)$/);
+  if(messagesMatch && request.method==='GET'){
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const target=normalizeId(decodeURIComponent(messagesMatch[1]));
+    const friend=await env.DB.prepare(`SELECT 1 FROM friend_requests WHERE status='accepted' AND ((sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1)) LIMIT 1`).bind(owner.wtink_id,target).first(); if(!friend)return json({error:'NOT_FRIENDS'},403,origin);
+    const rows=await env.DB.prepare(`SELECT id,sender_id,receiver_id,body,created_at,read_at FROM social_messages WHERE (sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1) ORDER BY created_at ASC LIMIT 500`).bind(owner.wtink_id,target).all();
+    await env.DB.prepare('UPDATE social_messages SET read_at=?1 WHERE receiver_id=?2 AND sender_id=?3 AND read_at IS NULL').bind(Date.now(),owner.wtink_id,target).run();
+    return json({messages:(rows.results||[]).map(r=>({id:r.id,from:displayId(r.sender_id),to:displayId(r.receiver_id),body:r.body,createdAt:Number(r.created_at),readAt:r.read_at?Number(r.read_at):null}))},200,origin);
+  }
+  if(path==='/social/messages' && request.method==='POST'){
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const input=await body(request); const target=normalizeId(input?.to); const text=cleanText(input?.body,4000);
+    if(!validId(target)||!text||target===owner.wtink_id)return json({error:'INVALID_MESSAGE'},400,origin);
+    const friend=await env.DB.prepare(`SELECT 1 FROM friend_requests WHERE status='accepted' AND ((sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1)) LIMIT 1`).bind(owner.wtink_id,target).first(); if(!friend)return json({error:'NOT_FRIENDS'},403,origin);
+    const id=crypto.randomUUID(),now=Date.now(); await env.DB.prepare('INSERT INTO social_messages (id,sender_id,receiver_id,body,created_at) VALUES (?1,?2,?3,?4,?5)').bind(id,owner.wtink_id,target,text,now).run();
+    await createSocialNotification(env,target,owner.wtink_id,'message',id,'Новое сообщение',`${owner.name}: ${text.slice(0,120)}`,'./?tab=social');
+    await notifyProfile(env,target,'message',{title:`Сообщение от ${owner.name}`,body:text.slice(0,120),url:'./?tab=social',tag:`wtink-message-${id}`,urgency:'high'});
+    return json({ok:true,message:{id,from:displayId(owner.wtink_id),to:displayId(target),body:text,createdAt:now,readAt:null}},201,origin);
+  }
+
   const adminProfile = async () => {
     const owner = await authProfile(request, env);
-    if (!owner || Number(owner.is_admin || 0) !== 1) return null;
+    if (!owner || (normalizeId(owner.wtink_id) !== DEV_WTINK_ID && Number(owner.is_admin || 0) !== 1)) return null;
     return owner;
   };
 
