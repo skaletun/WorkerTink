@@ -12,7 +12,7 @@ if(existsSync(DATA_FILE)){try{db=JSON.parse(await readFile(DATA_FILE,'utf8'))||e
 if(!db.profiles)db.profiles={};if(!db.requests)db.requests={};
 let writeQueue=Promise.resolve();
 const persist=()=>{writeQueue=writeQueue.then(()=>writeFile(DATA_FILE,JSON.stringify(db,null,2),'utf8')).catch(()=>{});return writeQueue};
-const json=(res,status,payload)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':CORS_ORIGIN,'Access-Control-Allow-Headers':'Content-Type, Authorization','Access-Control-Allow-Methods':'GET,POST,PUT,OPTIONS','Cache-Control':'no-store'});res.end(JSON.stringify(payload))};
+const json=(res,status,payload)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':CORS_ORIGIN,'Access-Control-Allow-Headers':'Content-Type, Authorization','Access-Control-Allow-Methods':'GET,POST,PUT,DELETE,OPTIONS','Cache-Control':'no-store'});res.end(JSON.stringify(payload))};
 const body=async req=>{const chunks=[];for await(const chunk of req)chunks.push(chunk);if(!chunks.length)return{};return JSON.parse(Buffer.concat(chunks).toString('utf8'))};
 const cleanProfile=p=>({profileId:String(p?.profileId||'').trim().toUpperCase(),name:String(p?.name||'').trim().slice(0,80),position:String(p?.position||'').trim().slice(0,120),avatar:typeof p?.avatar==='string'&&p.avatar.startsWith('data:image/')?p.avatar:''});
 const authToken=req=>String(req.headers.authorization||'').replace(/^Bearer\s+/i,'').trim();
@@ -23,7 +23,7 @@ const requestView=r=>({id:r.id,from:publicProfile(db.profiles[r.from]),to:public
 const okId=id=>/^WTINKID-\d{6}$/.test(String(id||'').trim().toUpperCase());
 
 const server=http.createServer(async(req,res)=>{
- if(req.method==='OPTIONS'){res.writeHead(204,{'Access-Control-Allow-Origin':CORS_ORIGIN,'Access-Control-Allow-Headers':'Content-Type, Authorization','Access-Control-Allow-Methods':'GET,POST,PUT,OPTIONS'});return res.end()}
+ if(req.method==='OPTIONS'){res.writeHead(204,{'Access-Control-Allow-Origin':CORS_ORIGIN,'Access-Control-Allow-Headers':'Content-Type, Authorization','Access-Control-Allow-Methods':'GET,POST,PUT,DELETE,OPTIONS'});return res.end()}
  try{
   const url=new URL(req.url||'/',`http://${req.headers.host||'localhost'}`);const path=url.pathname;
   if(req.method==='GET'&&path==='/health')return json(res,200,{ok:true,profiles:Object.keys(db.profiles).length});

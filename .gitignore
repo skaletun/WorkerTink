@@ -6,3 +6,5 @@ dist
 npm-debug.log*
 
 server/data.json
+.wrangler
+*.tsbuildinfo
