@@ -4,8 +4,9 @@ import {addSocialComment,createSocialPost,deleteSocialPost,getSocialComments,get
 
 type Props={token:string;profile:UserProfile;onNotice:(text:string)=>void;initialPostId?:string};
 type Section='feed'|'messages'|'notifications'|'people';
-const dev=(p:UserProfile)=>p.profileId.toUpperCase()==='WTINKID-214994';
-function Name({p}:{p:UserProfile}){return <span className="social-name">{p.name}<b className="dev-badge" hidden={!dev(p)}>dev</b></span>}
+const DEV_WTINK_ID='WTinkID-214994';
+const dev=(p:UserProfile)=>p.profileId.trim().toUpperCase()===DEV_WTINK_ID.toUpperCase();
+function Name({p}:{p:UserProfile}){return <span className="social-name">{p.name}{dev(p)&&<b className="dev-badge">dev</b>}</span>}
 function Avatar({p}:{p:UserProfile}){return p.avatar?<img className="social-avatar" src={p.avatar} alt=""/>:<span className="social-avatar social-avatar-fallback">{(p.name||'?').slice(0,1).toUpperCase()}</span>}
 function ago(ts:number){const s=Math.max(1,Math.floor((Date.now()-ts)/1000));if(s<60)return `${s} с`;if(s<3600)return `${Math.floor(s/60)} мин`;if(s<86400)return `${Math.floor(s/3600)} ч`;return new Date(ts).toLocaleDateString('ru-RU')}
 
