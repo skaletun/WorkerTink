@@ -1,3 +1,15 @@
+## 2.7.0 — 2026-09-28
+
+### WTinkID и заявки в друзья
+- Короткий публичный ID профиля вида `WTinkID-592391` вместо длинного технического идентификатора.
+- Поиск пользователя по WTinkID.
+- Отправка заявок в друзья без ручного обмена приглашениями.
+- Входящие «Заявки в друзья»: принять / отклонить.
+- «Исходящие заявки» со статусами ожидания, принятия и отклонения.
+- Добавлена миграция storage до schema v6.
+- Добавлен отдельный минимальный Directory API (`server/index.mjs`) для каталога и заявок.
+- P2P-чат и передача заметок/профилей остаются отдельным прямым WebRTC-каналом.
+
 # Changelog
 
 ## 2.6.1 — 2026-09-28
@@ -48,3 +60,18 @@
 - Rewrote README to match the actual product and its limitations.
 - GitHub Pages workflow now runs the test suite before production build.
 - Added regression coverage for night premiums, extra shifts, income ordering, vacation holidays and storage migration.
+
+## 2.7.1
+
+### Cloudflare Directory API
+- Production Directory API перенесён на Cloudflare Workers + D1.
+- Добавлена SQL-схема и версионируемые D1-миграции.
+- Профили хранятся в D1 только с SHA-256 хешем directory-токена.
+- Добавлена проверка владельца профиля при изменении данных.
+- Заявки защищены от дублей и одновременных встречных pending-заявок через уникальный pair key.
+- Добавлены `/health` и `/friends`.
+- Добавлена поддержка CORS с возможностью ограничения точным origin GitHub Pages.
+- Добавлен GitHub Actions workflow для автоматического деплоя Directory API и миграций.
+- Старый Node.js + JSON API сохранён только как legacy/local fallback.
+- При коллизии шестизначного WTinkID клиент автоматически генерирует новый ID и повторяет регистрацию.
+- Обновлена документация по Cloudflare + D1.

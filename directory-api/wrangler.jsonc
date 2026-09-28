@@ -1,0 +1,18 @@
+{
+  "$schema": "https://developers.cloudflare.com/workers/wrangler/config-schema.json",
+  "name": "workertink-directory",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-28",
+  "workers_dev": true,
+  "vars": {
+    "ALLOWED_ORIGIN": "*"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "workertink-directory",
+      "database_id": "542ba37a-f43f-460d-98a2-af0cbba568a9",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
