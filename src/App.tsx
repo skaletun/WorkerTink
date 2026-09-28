@@ -44,7 +44,7 @@ function App(){
  if(!state.setupComplete)return <SetupWizard state={state} setState={setState}/>;
  const heading=tab==='calendar'?'Ваш график':tab==='pay'?'Зарплата':tab==='absence'?'Отпуск и больничные':tab==='friends'?'Друзья и чат':tab==='profile'?'Ваш профиль':'Настройки';
  const kicker=tab==='calendar'?'Рабочий календарь':tab==='pay'?'Финансы':tab==='absence'?'Периоды отсутствия':tab==='friends'?'Прямое P2P-соединение':tab==='profile'?'Личная карточка':'Параметры профиля';
- return <div className="app-shell"><aside className="sidebar"><div className="brand"><img src="./icon.svg" alt=""/><div><b>WorkerTink</b><span>Рабочий ритм под контролем</span></div></div><div className="mini-profile" onClick={()=>navigate('profile')} role="button" tabIndex={0}><Avatar profile={state.profile} size="sm"/><span><b>{state.profile.name}</b><small>{state.profile.position||'Профиль'}</small></span></div><div className="side-label">Рабочее пространство</div><nav className="side-nav">{navItems.map(([id,label,sub])=><button key={id} className={tab===id?'active':''} aria-current={tab===id?'page':undefined} onClick={()=>navigate(id)}><i><Icon name={id}/></i><span><b>{label}</b><small>{sub}</small></span></button>)}</nav><div className="sidebar-bottom"><div className="privacy"><span className="status-dot"/><div><b>P2P для сообщений</b><small>Чаты и заметки идут напрямую между устройствами</small></div></div><div className="version">WorkerTink · 2.8.0</div></div></aside>
+ return <div className="app-shell"><aside className="sidebar"><div className="brand"><img src="./icon.svg" alt=""/><div><b>WorkerTink</b><span>Рабочий ритм под контролем</span></div></div><div className="mini-profile" onClick={()=>navigate('profile')} role="button" tabIndex={0}><Avatar profile={state.profile} size="sm"/><span><b>{state.profile.name}</b><small>{state.profile.position||'Профиль'}</small></span></div><div className="side-label">Рабочее пространство</div><nav className="side-nav">{navItems.map(([id,label,sub])=><button key={id} className={tab===id?'active':''} aria-current={tab===id?'page':undefined} onClick={()=>navigate(id)}><i><Icon name={id}/></i><span><b>{label}</b><small>{sub}</small></span></button>)}</nav><div className="sidebar-bottom"><div className="privacy"><span className="status-dot"/><div><b>P2P для сообщений</b><small>Чаты и заметки идут напрямую между устройствами</small></div></div><div className="version">WorkerTink · 2.8.1</div></div></aside>
  <main className="content"><header className="topbar"><div><p className="kicker">{kicker}</p><h1>{heading}</h1></div><div className="top-actions"><button className="top-profile" onClick={()=>navigate('profile')} title="Открыть профиль"><Avatar profile={state.profile} size="sm"/></button><Button quiet onClick={()=>{setView(new Date());navigate('calendar')}}>Сегодня</Button>{tab!=='settings'&&<Button primary onClick={()=>navigate('settings')}>Настроить</Button>}</div></header>
  <div className="tab-stage" key={tab}>
  {tab==='calendar'&&<CalendarView state={state} view={view} days={monthDays} calc={calc} shiftMonth={n=>setView(new Date(view.getFullYear(),view.getMonth()+n,1))} onPay={()=>navigate('pay')} onAbsence={()=>navigate('absence')} onEdit={setEditorDate}/>}
@@ -77,11 +77,14 @@ function ProfileView({state,setState,onNotice}:{state:State;setState:Dispatch<Se
 }
 
 function FriendsView({state,setState,onNotice}:{state:State;setState:Dispatch<SetStateAction<State>>;onNotice:(s:string)=>void}){
- const connections=useRef(new Map<string,{pc:RTCPeerConnection;channel:RTCDataChannel|null}>());
- const pendingOffers=useRef(new Map<string,{sessionId:string;pc:RTCPeerConnection;channel:RTCDataChannel}>());
- const processingIncoming=useRef(new Set<string>());
+ type PeerEntry={sessionId:string;pc:RTCPeerConnection;channel:RTCDataChannel|null;role:'initiator'|'receiver';answerApplied:boolean};
+ const peers=useRef(new Map<string,PeerEntry>());
+ const busyPeers=useRef(new Set<string>());
+ const retryTimers=useRef(new Map<string,number>());
+ const selectedRef=useRef('');
+ const pollBusy=useRef(false);
+ const mounted=useRef(true);
  const iceServers=useRef<RTCIceServer[]|undefined>(undefined);
- const loadIceServers=async()=>{if(iceServers.current)return iceServers.current;try{const result=await getIceServers(state.directoryToken);iceServers.current=result.iceServers;return result.iceServers}catch{return undefined}};
  const [selected,setSelected]=useState('');
  const [status,setStatus]=useState('');
  const [text,setText]=useState('');
@@ -93,65 +96,166 @@ function FriendsView({state,setState,onNotice}:{state:State;setState:Dispatch<Se
  const [friendTab,setFriendTab]=useState<'friends'|'incoming'|'outgoing'>('friends');
  const own=state.profile;
 
+ useEffect(()=>{selectedRef.current=selected},[selected]);
  useEffect(()=>{if(!selected){const first=Object.keys(state.friends)[0]||'';if(first)setSelected(first)}},[selected,state.friends]);
- useEffect(()=>()=>{connections.current.forEach(c=>c.pc.close());pendingOffers.current.forEach(p=>p.pc.close());connections.current.clear();pendingOffers.current.clear()},[]);
+
+ const setSelectedStatus=(friendId:string,message:string)=>{if(selectedRef.current===friendId&&mounted.current)setStatus(message)};
+ const loadIceServers=async()=>{
+  if(iceServers.current)return iceServers.current;
+  try{const result=await getIceServers(state.directoryToken);iceServers.current=Array.isArray(result.iceServers)&&result.iceServers.length?result.iceServers:undefined;return iceServers.current}
+  catch{return undefined}
+ };
  const pushMessage=(peer:string,message:ChatMessage)=>setState(s=>({...s,chats:{...s.chats,[peer]:[...(s.chats[peer]||[]),message].slice(-500)}}));
  const activateFriend=(profile:UserProfile)=>{setState(s=>({...s,friends:{...s.friends,[profile.profileId]:{profile,addedAt:s.friends[profile.profileId]?.addedAt||Date.now(),lastSeen:Date.now()}},chats:{...s.chats,[profile.profileId]:s.chats[profile.profileId]||[]}}));setSelected(profile.profileId)};
- const receive=(peer:string,payload:PeerPayload)=>{if(payload.type==='hello'){activateFriend(payload.profile);setSelected(payload.profileId);setStatus('Онлайн');return}if(payload.type==='chat')pushMessage(payload.message.from,{id:payload.message.id,from:payload.message.from,at:payload.message.at,type:'text',text:payload.message.text});if(payload.type==='profile')pushMessage(payload.message.from,{id:payload.message.id,from:payload.message.from,at:payload.message.at,type:'profile',profile:payload.message.profile});if(payload.type==='note')pushMessage(payload.message.from,{id:payload.message.id,from:payload.message.from,at:payload.message.at,type:'note',note:{date:payload.message.date,note:payload.message.note,shift:payload.message.shift}})};
- const wire=(key:string,pc:RTCPeerConnection,channel:RTCDataChannel)=>{connections.current.set(key,{pc,channel});channel.onopen=()=>{setStatus('Онлайн');sendPayload(channel,{type:'hello',profileId:own.profileId,profile:own})};channel.onclose=()=>{connections.current.delete(key);if(selected===key)setStatus('Соединение закрыто')};channel.onmessage=e=>{try{receive(key,JSON.parse(String(e.data)) as PeerPayload)}catch{}};pc.onconnectionstatechange=()=>{if(pc.connectionState==='failed'||pc.connectionState==='closed'){connections.current.delete(key);if(selected===key)setStatus('Не удалось установить P2P-соединение')}else if(pc.connectionState==='connected'&&selected===key)setStatus('Онлайн')};};
- const connectAutomatically=async(friendId:string)=>{
-  if(!friendId||!state.directoryToken)return;
-  const existing=connections.current.get(friendId);if(existing?.channel?.readyState==='open'){setStatus('Онлайн');return}
-  if(pendingOffers.current.has(friendId)){setStatus('Подключаемся…');return}
-  if(own.profileId>friendId){setStatus('Ожидаем автоматическое подключение…');return}
-  setStatus('Устанавливаем защищённое P2P-соединение…');
+ const receive=(peer:string,payload:PeerPayload)=>{
+  if(payload.type==='hello'){activateFriend(payload.profile);setSelected(payload.profileId);setStatus('Онлайн');return}
+  if(payload.type==='chat')pushMessage(payload.message.from,{id:payload.message.id,from:payload.message.from,at:payload.message.at,type:'text',text:payload.message.text});
+  if(payload.type==='profile')pushMessage(payload.message.from,{id:payload.message.id,from:payload.message.from,at:payload.message.at,type:'profile',profile:payload.message.profile});
+  if(payload.type==='note')pushMessage(payload.message.from,{id:payload.message.id,from:payload.message.from,at:payload.message.at,type:'note',note:{date:payload.message.date,note:payload.message.note,shift:payload.message.shift}})
+ };
+ const clearRetry=(friendId:string)=>{const timer=retryTimers.current.get(friendId);if(timer)window.clearTimeout(timer);retryTimers.current.delete(friendId)};
+ const closePeer=(friendId:string,reason='')=>{
+  clearRetry(friendId);
+  const entry=peers.current.get(friendId);
+  if(entry){try{entry.channel?.close()}catch{}try{entry.pc.close()}catch{}peers.current.delete(friendId)}
+  busyPeers.current.delete(friendId);
+  if(reason)setSelectedStatus(friendId,reason);
+ };
+ const wire=(key:string,entry:PeerEntry,channel:RTCDataChannel)=>{
+  entry.channel=channel;
+  peers.current.set(key,entry);
+  channel.onopen=()=>{
+   busyPeers.current.delete(key);clearRetry(key);setSelectedStatus(key,'Онлайн');
+   sendPayload(channel,{type:'hello',profileId:own.profileId,profile:own});
+  };
+  if(channel.readyState==='open'){
+   busyPeers.current.delete(key);clearRetry(key);setSelectedStatus(key,'Онлайн');
+   sendPayload(channel,{type:'hello',profileId:own.profileId,profile:own});
+  }
+  channel.onclose=()=>{
+   if(peers.current.get(key)?.pc===entry.pc){peers.current.delete(key);busyPeers.current.delete(key)}
+   setSelectedStatus(key,'Соединение закрыто');
+  };
+  channel.onerror=()=>setSelectedStatus(key,'Ошибка канала');
+  channel.onmessage=e=>{try{receive(key,JSON.parse(String(e.data)) as PeerPayload)}catch{}};
+  entry.pc.oniceconnectionstatechange=()=>{
+   console.debug('[WorkerTink P2P]',key,'iceConnectionState=',entry.pc.iceConnectionState);
+   if(entry.pc.iceConnectionState==='failed'){
+    closePeer(key,'Не удалось установить P2P-соединение');
+    if(selectedRef.current===key)scheduleRetry(key);
+   }
+  };
+  entry.pc.onconnectionstatechange=()=>{
+   console.debug('[WorkerTink P2P]',key,'connectionState=',entry.pc.connectionState);
+   if(entry.pc.connectionState==='connected')setSelectedStatus(key,'Онлайн');
+   if(entry.pc.connectionState==='failed'||entry.pc.connectionState==='closed'){
+    closePeer(key,'Соединение потеряно');
+    if(selectedRef.current===key)scheduleRetry(key);
+   }
+  };
+ };
+ const scheduleRetry=(friendId:string)=>{
+  if(!state.directoryToken||selectedRef.current!==friendId||retryTimers.current.has(friendId))return;
+  const timer=window.setTimeout(()=>{retryTimers.current.delete(friendId);void connectAutomatically(friendId,true)},4000);
+  retryTimers.current.set(friendId,timer);
+ };
+ const waitForChannel=async(getChannel:()=>RTCDataChannel|null,timeout=15000)=>{
+  const started=Date.now();
+  while(Date.now()-started<timeout){const channel=getChannel();if(channel)return channel;await new Promise(r=>window.setTimeout(r,100));}
+  return null;
+ };
+ const connectAutomatically=async(friendId:string,force=false)=>{
+  if(!friendId||!state.directoryToken||!own.profileId)return;
+  const existing=peers.current.get(friendId);
+  if(existing?.channel?.readyState==='open'){setSelectedStatus(friendId,'Онлайн');return}
+  if(busyPeers.current.has(friendId)){setSelectedStatus(friendId,'Подключаемся…');return}
+  if(!force&&own.profileId>friendId){setSelectedStatus(friendId,'Ожидаем автоматическое подключение…');return}
+  if(own.profileId>friendId){setSelectedStatus(friendId,'Ожидаем подключения коллеги…');return}
+  busyPeers.current.add(friendId);clearRetry(friendId);setSelectedStatus(friendId,'Устанавливаем защищённое P2P-соединение…');
+  let pc:RTCPeerConnection|null=null;
   try{
    const result=await createOfferDescription(payload=>receive(friendId,payload),await loadIceServers());
+   pc=result.pc;
+   const entry:PeerEntry={sessionId:'',pc,channel:result.channel,role:'initiator',answerApplied:false};
+   peers.current.set(friendId,entry);
    const created=await createPeerSession(friendId,result.sdp,state.directoryToken);
-   pendingOffers.current.set(friendId,{sessionId:created.session.id,pc:result.pc,channel:result.channel});
-   result.pc.onconnectionstatechange=()=>{if(result.pc.connectionState==='failed'||result.pc.connectionState==='closed'){pendingOffers.current.delete(friendId);connections.current.delete(friendId);if(selected===friendId)setStatus('Соединение не установлено. Нажмите «Подключиться» ещё раз.')}else if(result.pc.connectionState==='connected'&&selected===friendId)setStatus('Онлайн')};
-   result.channel.onopen=()=>{pendingOffers.current.delete(friendId);wire(friendId,result.pc,result.channel)};
-  }catch(error){setStatus(String(error).includes('NOT_FRIENDS')?'Сначала примите заявку в друзья':'Не удалось начать P2P-соединение')}
+   entry.sessionId=created.session.id;
+   console.debug('[WorkerTink P2P]',friendId,'offer session=',entry.sessionId);
+   result.channel.onopen=()=>wire(friendId,entry,result.channel);
+   result.channel.onclose=()=>{if(peers.current.get(friendId)?.pc===pc)closePeer(friendId,'Соединение закрыто')};
+   setSelectedStatus(friendId,'Ожидаем ответ второго устройства…');
+  }catch(error){
+   if(pc)try{pc.close()}catch{}
+   peers.current.delete(friendId);busyPeers.current.delete(friendId);
+   const message=String(error);
+   setSelectedStatus(friendId,message.includes('NOT_FRIENDS')?'Сначала примите заявку в друзья':'Не удалось начать P2P-соединение');
+   if(selectedRef.current===friendId)scheduleRetry(friendId);
+  }
  };
  const pollPeerSessions=async()=>{
-  if(!directoryConfigured||!state.directoryToken||!own.profileId)return;
+  if(pollBusy.current||!directoryConfigured||!state.directoryToken||!own.profileId)return;
+  pollBusy.current=true;
   try{
    const [incoming,outgoing]=await Promise.all([getIncomingPeerSessions(state.directoryToken),getOutgoingPeerSessions(state.directoryToken)]);
    for(const session of outgoing.sessions){
-    const friendId=session.to.profileId;const pending=pendingOffers.current.get(friendId);
-    if(pending&&session.status==='answered'&&session.answer){try{await applyAnswerSdp(pending.pc,session.answer)}catch{pending.pc.close();pendingOffers.current.delete(friendId)}}
-    if(session.status==='expired'&&pending){pending.pc.close();pendingOffers.current.delete(friendId)}
+    const friendId=session.to.profileId;
+    const entry=peers.current.get(friendId);
+    if(!entry||entry.role!=='initiator'||entry.sessionId!==session.id)continue;
+    if(session.status==='answered'&&session.answer&&!entry.answerApplied){
+     entry.answerApplied=true;
+     try{
+      console.debug('[WorkerTink P2P]',friendId,'applying answer');
+      await applyAnswerSdp(entry.pc,session.answer);
+      setSelectedStatus(friendId,'Проверяем P2P-соединение…');
+     }catch(error){
+      console.debug('[WorkerTink P2P] answer failed',error);
+      closePeer(friendId,'Ответ WebRTC не принят');
+      if(selectedRef.current===friendId)scheduleRetry(friendId);
+     }
+    }
    }
-   for(const session of incoming.sessions){
+   const latestIncoming=new Map<string,typeof incoming.sessions[number]>();
+   for(const session of incoming.sessions){const friendId=session.from.profileId;if(!latestIncoming.has(friendId))latestIncoming.set(friendId,session)}
+   for(const session of latestIncoming.values()){
     const friendId=session.from.profileId;
-    if(own.profileId<=friendId||processingIncoming.current.has(session.id)||connections.current.get(friendId)?.channel?.readyState==='open')continue;
-    processingIncoming.current.add(session.id);
+    if(own.profileId<=friendId)continue;
+    const existing=peers.current.get(friendId);
+    if(existing?.channel?.readyState==='open')continue;
+    if(busyPeers.current.has(friendId))continue;
+    busyPeers.current.add(friendId);setSelectedStatus(friendId,'Получаем приглашение…');
     try{
-      const result=await acceptOfferDescription(session.offer,payload=>receive(friendId,payload),await loadIceServers());
-      await answerPeerSession(session.id,result.sdp,state.directoryToken);
-      const wait=window.setInterval(()=>{const channel=result.getChannel();if(channel){window.clearInterval(wait);wire(friendId,result.pc,channel)}},100);
-      window.setTimeout(()=>window.clearInterval(wait),10000);
-    }catch{processingIncoming.current.delete(session.id)}
+     const result=await acceptOfferDescription(session.offer,payload=>receive(friendId,payload),await loadIceServers());
+     const entry:PeerEntry={sessionId:session.id,pc:result.pc,channel:null,role:'receiver',answerApplied:true};
+     peers.current.set(friendId,entry);
+     const answer=result.sdp;
+     await answerPeerSession(session.id,answer,state.directoryToken);
+     console.debug('[WorkerTink P2P]',friendId,'answer sent session=',session.id);
+     const channel=await waitForChannel(result.getChannel);
+     if(!channel)throw new Error('DATA_CHANNEL_TIMEOUT');
+     wire(friendId,entry,channel);
+     setSelectedStatus(friendId,'Ожидаем установления P2P…');
+    }catch(error){
+     console.debug('[WorkerTink P2P] incoming failed',error);
+     const current=peers.current.get(friendId);if(current?.sessionId===session.id)closePeer(friendId,'Не удалось принять P2P-приглашение');else busyPeers.current.delete(friendId);
+    }
    }
-  }catch{/* temporary directory/network failure; next poll retries */}
+  }catch(error){console.debug('[WorkerTink P2P] signaling poll failed',error)}
+  finally{pollBusy.current=false}
  };
- useEffect(()=>{pollPeerSessions();const timer=window.setInterval(pollPeerSessions,2000);return()=>window.clearInterval(timer)},[own.profileId,state.directoryToken,selected]);
- useEffect(()=>{if(selected)connectAutomatically(selected)},[selected,state.directoryToken]);
+ useEffect(()=>{mounted.current=true;let cancelled=false;const loop=async()=>{while(!cancelled){await pollPeerSessions();await new Promise(r=>window.setTimeout(r,2000))}};void loop();return()=>{cancelled=true;mounted.current=false;retryTimers.current.forEach(t=>window.clearTimeout(t));retryTimers.current.clear();peers.current.forEach(entry=>{try{entry.channel?.close()}catch{}try{entry.pc.close()}catch{}});peers.current.clear();busyPeers.current.clear()};},[own.profileId,state.directoryToken]);
+ useEffect(()=>{if(selected)void connectAutomatically(selected)},[selected,state.directoryToken]);
  const syncRequests=async()=>{if(!directoryConfigured||!state.directoryToken)return;try{const [incoming,outgoing]=await Promise.all([getIncoming(own.profileId,state.directoryToken),getOutgoing(own.profileId,state.directoryToken)]);setState(s=>({...s,friendRequestsIncoming:incoming.requests.filter(r=>r.status==='pending'),friendRequestsOutgoing:outgoing.requests}));const accepted=[...incoming.requests,...outgoing.requests].filter(r=>r.status==='accepted');accepted.forEach(r=>activateFriend(r.from.profileId===own.profileId?r.to:r.from))}catch{}};
  useEffect(()=>{syncRequests();const timer=window.setInterval(syncRequests,15000);return()=>window.clearInterval(timer)},[own.profileId,state.directoryToken]);
  const doSearch=async()=>{const value=search.trim().toUpperCase();if(!/^WTINKID-\d{6}$/.test(value)){setFound(null);onNotice('Введите WTinkID в формате WTinkID-592391');return}if(value===own.profileId){onNotice('Это ваш собственный WTinkID');return}setSearching(true);try{const result=await searchUser(value);setFound(result.profile)}catch(error){setFound(null);onNotice(String(error).includes('USER_NOT_FOUND')?'Пользователь с таким WTinkID не найден':'Не удалось выполнить поиск WTinkID')}finally{setSearching(false)}};
  const requestFriend=async(profile:UserProfile)=>{if(!directoryConfigured||!state.directoryToken){onNotice('Каталог друзей не настроен');return}try{const result=await sendFriendRequest(own,profile.profileId,state.directoryToken);setState(s=>({...s,friendRequestsOutgoing:[...s.friendRequestsOutgoing,result.request]}));setFound(null);setSearch('');onNotice('Заявка отправлена')}catch(error){const code=String(error);onNotice(code.includes('REQUEST_EXISTS')?'Заявка уже существует':code.includes('ALREADY_FRIENDS')?'Вы уже друзья':code.includes('USER_NOT_FOUND')?'Пользователь не найден':'Не удалось отправить заявку')}};
  const respond=async(id:string,action:'accept'|'decline')=>{try{const result=await respondFriendRequest(id,action,state.directoryToken);setState(s=>({...s,friendRequestsIncoming:s.friendRequestsIncoming.filter(r=>r.id!==id)}));if(action==='accept')activateFriend(result.request.from);onNotice(action==='accept'?'Заявка принята':'Заявка отклонена')}catch{onNotice('Не удалось обработать заявку')}};
- const selectedProfile=state.friends[selected]?.profile;const messages=state.chats[selected]||[];const connected=Boolean(connections.current.get(selected)?.channel?.readyState==='open');
- const sendText=()=>{const value=text.trim();if(!value||!selected)return;const channel=connections.current.get(selected)?.channel||null;const msg=makeChat(own.profileId,value);if(!sendPayload(channel,msg)){onNotice('Соединение ещё устанавливается');connectAutomatically(selected);return}pushMessage(selected,{...msg.message,type:'text'} as ChatMessage);setText('')};
- const sendOwnProfile=()=>{if(!selected)return;const msg=makeProfile(own.profileId,own.profileId,own);if(!sendPayload(connections.current.get(selected)?.channel||null,msg)){onNotice('Соединение ещё устанавливается');return}pushMessage(selected,{...msg.message,type:'profile'})};
- const sendNote=()=>{if(!selected||!noteDate||!state.shiftNotes[noteDate])return;const msg=makeNote(own.profileId,noteDate,state.shiftNotes[noteDate],shiftLabel(getShift(state,new Date(`${noteDate}T12:00:00`))));if(!sendPayload(connections.current.get(selected)?.channel||null,msg)){onNotice('Соединение ещё устанавливается');return}pushMessage(selected,{id:msg.message.id,from:msg.message.from,at:msg.message.at,type:'note',note:{date:msg.message.date,note:msg.message.note,shift:msg.message.shift}});setShowNotePicker(false);setNoteDate('')};
- return <section className="friends-page"><div className="friends-toolbar"><div><span className="eyebrow">WTinkID · P2P</span><h2>Друзья</h2><p>Найдите коллегу по WTinkID. После принятия заявки WorkerTink сам установит P2P-соединение — без кодов и ручного обмена.</p></div></div>
- <div className="friends-discovery"><div className="search-box"><div><span className="eyebrow">Поиск пользователя</span><b>Добавить по WTinkID</b><small>Например: WTinkID-592391</small></div><div className="search-row"><input value={search} onChange={e=>setSearch(e.target.value.toUpperCase())} placeholder="WTinkID-592391" maxLength={14} onKeyDown={e=>{if(e.key==='Enter')doSearch()}}/><Button primary onClick={doSearch} disabled={searching}>{searching?'Поиск…':'Найти'}</Button></div>{found&&<div className="search-result"><Avatar profile={found} size="md"/><div><b>{found.name}</b><span>{found.position||'Должность не указана'}</span><small>{found.profileId}</small></div><Button primary onClick={()=>requestFriend(found)}>Отправить заявку</Button></div>}{!directoryConfigured&&<div className="directory-warning">Каталог WTinkID не подключён. Для поиска и заявок нужен API-каталог.</div>}</div></div>
- <div className="friend-tabs"><button className={friendTab==='friends'?'active':''} onClick={()=>setFriendTab('friends')}>Друзья <b>{Object.keys(state.friends).length}</b></button><button className={friendTab==='incoming'?'active':''} onClick={()=>setFriendTab('incoming')}>Заявки в друзья <b>{state.friendRequestsIncoming.length}</b></button><button className={friendTab==='outgoing'?'active':''} onClick={()=>setFriendTab('outgoing')}>Исходящие заявки <b>{state.friendRequestsOutgoing.length}</b></button></div>
- {friendTab!=='friends'?<RequestList type={friendTab} state={state} onRespond={respond}/>:<div className="friends-layout"><aside className="friends-list-card"><div className="friends-list-head"><b>{Object.keys(state.friends).length} друзей</b><span>{connected?'● онлайн':'○ офлайн'}</span></div>{Object.values(state.friends).map(friend=><button key={friend.profile.profileId} className={selected===friend.profile.profileId?'friend-item active':'friend-item'} onClick={()=>setSelected(friend.profile.profileId)}><Avatar profile={friend.profile} size="sm"/><span><b>{friend.profile.name}</b><small>{friend.profile.position}</small></span><i>{state.chats[friend.profile.profileId]?.length||0}</i></button>)}{!Object.keys(state.friends).length&&<div className="friends-empty">Пока нет друзей.<br/>Найдите коллегу по WTinkID выше.</div>}</aside><div className="chat-card">{selectedProfile?<><header className="chat-head"><Avatar profile={selectedProfile} size="md"/><div><b>{selectedProfile.name}</b><span>{selectedProfile.position||'Коллега'} · {connected?'P2P онлайн':status||'подключение…'}</span></div><Button primary={!connected} quiet={connected} onClick={()=>connectAutomatically(selected)}>{connected?'Подключено':'Подключиться'}</Button></header><div className="chat-body">{messages.length?messages.map(m=><ChatBubble key={m.id} message={m} own={m.from===own.profileId} onActivate={p=>activateFriend(p)} onApplyNote={n=>setState(s=>({...s,shiftNotes:{...s.shiftNotes,[n.date]:n.note}}))}/>):<div className="chat-empty"><div>✦</div><b>{connected?'Начните разговор':'Подключаемся…'}</b><span>{connected?'Профиль и заметки можно отправлять прямо из чата.':'После принятия заявки соединение устанавливается автоматически. Вам не нужно копировать коды.'}</span></div>}</div><div className="chat-compose"><div className="chat-tools"><button onClick={sendOwnProfile} disabled={!connected}>Профиль</button><button onClick={()=>setShowNotePicker(v=>!v)} disabled={!connected}>Заметка</button></div>{showNotePicker&&<div className="note-picker"><select value={noteDate} onChange={e=>setNoteDate(e.target.value)}><option value="">Выберите дату</option>{Object.keys(state.shiftNotes).filter(d=>state.shiftNotes[d]?.trim()).sort().reverse().map(d=><option key={d} value={d}>{d}</option>)}</select><Button primary disabled={!noteDate} onClick={sendNote}>Отправить заметку</Button></div>}<div className="chat-input"><input value={text} placeholder={connected?'Напишите сообщение…':'Подключение…'} disabled={!connected} onChange={e=>setText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')sendText()}}/><Button primary onClick={sendText} disabled={!connected||!text.trim()}>Отправить</Button></div></div></>:<div className="chat-empty large"><div className="chat-orb">↗</div><b>Выберите друга</b><span>После принятия заявки выберите контакт. WebRTC-соединение установится автоматически.</span></div>}</div></div>}
- </section>
+ const selectedProfile=state.friends[selected]?.profile;const messages=state.chats[selected]||[];const connected=Boolean(peers.current.get(selected)?.channel?.readyState==='open');
+ const sendText=()=>{const value=text.trim();if(!value||!selected)return;const channel=peers.current.get(selected)?.channel||null;const msg=makeChat(own.profileId,value);if(!sendPayload(channel,msg)){onNotice('Соединение ещё устанавливается');void connectAutomatically(selected);return}pushMessage(selected,{...msg.message,type:'text'} as ChatMessage);setText('')};
+ const sendOwnProfile=()=>{if(!selected)return;const msg=makeProfile(own.profileId,own.profileId,own);if(!sendPayload(peers.current.get(selected)?.channel||null,msg)){onNotice('Соединение ещё устанавливается');return}pushMessage(selected,{...msg.message,type:'profile'})};
+ const sendNote=()=>{if(!selected||!noteDate||!state.shiftNotes[noteDate])return;const msg=makeNote(own.profileId,noteDate,state.shiftNotes[noteDate],shiftLabel(getShift(state,new Date(`${noteDate}T12:00:00`))));if(!sendPayload(peers.current.get(selected)?.channel||null,msg)){onNotice('Соединение ещё устанавливается');return}pushMessage(selected,{id:msg.message.id,from:msg.message.from,at:msg.message.at,type:'note',note:{date:msg.message.date,note:msg.message.note,shift:msg.message.shift}});setShowNotePicker(false)};
+ return <section className="friends-page"><div className="friends-discovery"><div className="search-box"><div><span className="eyebrow">Поиск пользователя</span><b>Добавить по WTinkID</b><small>Например: WTinkID-592391</small></div><div className="search-row"><input value={search} onChange={e=>setSearch(e.target.value.toUpperCase())} placeholder="WTinkID-592391" maxLength={14} onKeyDown={e=>{if(e.key==='Enter')doSearch()}}/><Button primary onClick={doSearch} disabled={searching}>{searching?'Поиск…':'Найти'}</Button></div>{found&&<div className="search-result"><Avatar profile={found} size="md"/><div><b>{found.name}</b><span>{found.position||'Должность не указана'}</span><small>{found.profileId}</small></div><Button primary onClick={()=>requestFriend(found)}>Отправить заявку</Button></div>}{!directoryConfigured&&<div className="directory-warning">Каталог WTinkID не подключён. Для поиска и заявок нужен API-каталог.</div>}</div></div><div className="friends-tabs"><button className={friendTab==='friends'?'active':''} onClick={()=>setFriendTab('friends')}>Друзья</button><button className={friendTab==='incoming'?'active':''} onClick={()=>setFriendTab('incoming')}>Входящие {state.friendRequestsIncoming.length?`· ${state.friendRequestsIncoming.length}`:''}</button><button className={friendTab==='outgoing'?'active':''} onClick={()=>setFriendTab('outgoing')}>Исходящие</button></div>{friendTab!=='friends'?<RequestList type={friendTab} state={state} onRespond={respond}/>:<div className="friends-layout"><aside className="friends-list-card"><div className="friends-list-head"><b>{Object.keys(state.friends).length} друзей</b><span>{connected?'● онлайн':'○ офлайн'}</span></div>{Object.values(state.friends).map(friend=><button key={friend.profile.profileId} className={selected===friend.profile.profileId?'friend-item active':'friend-item'} onClick={()=>setSelected(friend.profile.profileId)}><Avatar profile={friend.profile} size="sm"/><span><b>{friend.profile.name}</b><small>{friend.profile.position}</small></span><i>{state.chats[friend.profile.profileId]?.length||0}</i></button>)}{!Object.keys(state.friends).length&&<div className="friends-empty">Пока нет друзей.<br/>Найдите коллегу по WTinkID выше.</div>}</aside><div className="chat-card">{selectedProfile?<><header className="chat-head"><Avatar profile={selectedProfile} size="md"/><div><b>{selectedProfile.name}</b><span>{selectedProfile.position||'Коллега'} · {connected?'P2P онлайн':status||'подключение…'}</span></div><Button primary={!connected} quiet={connected} onClick={()=>void connectAutomatically(selected,true)}>{connected?'Подключено':'Подключиться'}</Button></header><div className="chat-body">{messages.length?messages.map(m=><ChatBubble key={m.id} message={m} own={m.from===own.profileId} onActivate={p=>activateFriend(p)} onApplyNote={n=>setState(s=>({...s,shiftNotes:{...s.shiftNotes,[n.date]:n.note}}))}/>):<div className="chat-empty"><div>✦</div><b>{connected?'Начните разговор':'Подключаемся…'}</b><span>{connected?'Профиль и заметки можно отправлять прямо из чата.':'После принятия заявки соединение устанавливается автоматически. Вам не нужно копировать коды.'}</span></div>}</div><div className="chat-compose"><div className="chat-tools"><button onClick={sendOwnProfile} disabled={!connected}>Профиль</button><button onClick={()=>setShowNotePicker(v=>!v)} disabled={!connected}>Заметка</button></div>{showNotePicker&&<div className="note-picker"><select value={noteDate} onChange={e=>setNoteDate(e.target.value)}><option value="">Выберите дату</option>{Object.keys(state.shiftNotes).filter(d=>state.shiftNotes[d]?.trim()).sort().reverse().map(d=><option key={d} value={d}>{d}</option>)}</select><Button primary disabled={!noteDate} onClick={sendNote}>Отправить заметку</Button></div>}<div className="chat-input"><input value={text} placeholder={connected?'Напишите сообщение…':'Подключение…'} disabled={!connected} onChange={e=>setText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')sendText()}}/><Button primary onClick={sendText} disabled={!connected||!text.trim()}>Отправить</Button></div></div></>:<div className="chat-empty large"><div className="chat-orb">↗</div><b>Выберите друга</b><span>После принятия заявки выберите контакт. WebRTC-соединение установится автоматически.</span></div>}</div></div>}</section>;
 }
+
 function RequestList({type,state,onRespond}:{type:'incoming'|'outgoing';state:State;onRespond:(id:string,action:'accept'|'decline')=>void}){const list=type==='incoming'?state.friendRequestsIncoming:state.friendRequestsOutgoing;return <div className="requests-page"><div className="requests-card"><div className="requests-head"><div><span className="eyebrow">{type==='incoming'?'Входящие':'Исходящие'}</span><h3>{type==='incoming'?'Заявки в друзья':'Отправленные заявки'}</h3></div><span>{list.length}</span></div>{list.length?list.map(r=>{const profile=type==='incoming'?r.from:r.to;return <div className="request-item" key={r.id}><Avatar profile={profile} size="md"/><div><b>{profile.name}</b><small>{profile.position||'Должность не указана'}</small><span>{profile.profileId} · {new Date(r.createdAt).toLocaleDateString('ru-RU')}</span></div>{type==='incoming'?<div className="request-actions"><Button primary onClick={()=>onRespond(r.id,'accept')}>Принять</Button><Button quiet onClick={()=>onRespond(r.id,'decline')}>Отклонить</Button></div>:<span className={`request-status ${r.status}`}>{r.status==='accepted'?'Принято':r.status==='declined'?'Отклонено':'Ожидает ответа'}</span>}</div>}) : <div className="friends-empty">{type==='incoming'?'Здесь появятся новые заявки от коллег.':'Здесь будут заявки, которые вы отправили другим пользователям.'}</div>}</div></div>}
 
 function ChatBubble({message,own,onActivate,onApplyNote}:{message:ChatMessage;own:boolean;onActivate:(p:UserProfile)=>void;onApplyNote:(n:{date:string;note:string})=>void}){

@@ -348,6 +348,14 @@ async function handle(request, env) {
     const now = Date.now();
     const expires = now + 5 * 60 * 1000;
     await env.DB.prepare(`UPDATE peer_sessions SET status = 'expired', updated_at = ?1 WHERE expires_at < ?1 AND status = 'pending'`).bind(now).run();
+    // A new connection attempt supersedes every older signaling session for this pair.
+    // This prevents stale answers/offers from racing with the current WebRTC handshake.
+    await env.DB.prepare(`
+      UPDATE peer_sessions
+      SET status = 'cancelled', updated_at = ?1
+      WHERE status IN ('pending','answered')
+        AND ((initiator_id = ?2 AND receiver_id = ?3) OR (initiator_id = ?3 AND receiver_id = ?2))
+    `).bind(now, owner.wtink_id, target).run();
     const id = crypto.randomUUID();
     await env.DB.prepare(`
       INSERT INTO peer_sessions (id, initiator_id, receiver_id, offer_sdp, status, created_at, updated_at, expires_at)
@@ -392,8 +400,16 @@ async function handle(request, env) {
     const input = await body(request);
     const answer = typeof input?.answer === 'string' ? input.answer.slice(0, 200000) : '';
     if (!answer) return json({error: 'INVALID_ANSWER'}, 400, origin);
-    await env.DB.prepare(`UPDATE peer_sessions SET answer_sdp = ?1, status = 'answered', updated_at = ?2 WHERE id = ?3 AND status = 'pending'`)
-      .bind(answer, Date.now(), id).run();
+    const updatedAt = Date.now();
+    const result = await env.DB.prepare(`UPDATE peer_sessions SET answer_sdp = ?1, status = 'answered', updated_at = ?2 WHERE id = ?3 AND status = 'pending'`)
+      .bind(answer, updatedAt, id).run();
+    if (!result.meta?.changes) {
+      const current = await loadPeerSession(env, id);
+      if (!current) return json({error: 'SESSION_NOT_FOUND'}, 404, origin);
+      if (current.receiver_id !== owner.wtink_id) return json({error: 'FORBIDDEN'}, 403, origin);
+      if (current.status === 'answered' && current.answer_sdp === answer) return json({session: peerSessionView(current)}, 200, origin);
+      return json({error: current.status === 'cancelled' ? 'SESSION_CANCELLED' : 'SESSION_NOT_PENDING'}, 409, origin);
+    }
     const updated = await loadPeerSession(env, id);
     return json({session: peerSessionView(updated)}, 200, origin);
   }
