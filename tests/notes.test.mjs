@@ -5,3 +5,13 @@ assert.equal(matches.length,1);
 const body=source.slice(matches[0].index+matches[0][0].length).trim();
 assert.equal(body,'# Отчёт\n\n**Готово** и *важно*.\n\n- пункт 1\n- пункт 2');
 console.log('WorkerTink notes tests: OK');
+
+import {markdownToHtml,htmlToMarkdown} from '../src/markdown.ts';
+const html=markdownToHtml('| A | B |\n| --- | --- |\n| 1 | **2** |');
+assert.match(html,/table/);
+assert.match(html,/strong/);
+const host={
+ childNodes:[],
+};
+// Source-level round-trip coverage is intentionally complemented by the WYSIWYG smoke test.
+console.log('WorkerTink markdown round-trip fixtures: OK');

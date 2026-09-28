@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {DEFAULT,calcMonth,getScheduledShift} from '../src/core.ts';
+import {DEFAULT,calcMonth,getScheduledShift,avgIncome,vacationCalendarDays} from '../src/core.ts';
 
 const base={...DEFAULT,startDate:'2026-09-01',scheduleType:'5/2',taxRate:0,salary:100000};
 const normal=calcMonth(base,2026,8);
@@ -80,3 +80,26 @@ assert.deepEqual(calcMonth(dated,2026,10).paymentDates,{advanceDate:'2026-11-15'
 const explicitOctober={...dated,paymentDates:{...dated.paymentDates,'2026-10':{advanceDate:'2026-10-14',remainderDate:'2026-10-29'}}};
 assert.deepEqual(calcMonth(explicitOctober,2026,10).paymentDates,{advanceDate:'2026-11-14',remainderDate:'2026-11-29'});
 console.log('WorkerTink 2/2 day-night and payment-date inheritance tests: OK');
+
+// Ночные смены дают отдельную настраиваемую доплату, не меняя базовый оклад.
+const nightPayState={...base,startDate:'2026-09-01',scheduleType:'2/2',schedulePairType:'day-night',salary:100000,taxRate:0,nightExtraPercent:20};
+const nightPay=calcMonth(nightPayState,2026,8);
+assert.ok(nightPay.nightWork>0);
+assert.ok(nightPay.nightExtra>0);
+assert.equal(nightPay.base,100000);
+
+// Ручная смена в изначально выходной день считается отдельной сменой, а не ломает знаменатель оклада.
+const extraShift=calcMonth({...base,startDate:'2026-09-01',scheduleType:'5/2',salary:100000,taxRate:0,shiftOverrides:{'2026-09-06':'day'}},2026,8);
+assert.equal(extraShift.scheduled,normal.scheduled);
+assert.ok(extraShift.extraPay>0);
+assert.equal(extraShift.base,normal.base);
+
+// История доходов выбирается хронологически, а не по порядку ключей объекта.
+const incomeState={...base,incomeHistory:{'2026-01':100,'2026-03':300,'2026-02':200,'2026-04':400}};
+assert.equal(Math.round(avgIncome(incomeState,3)),300);
+assert.equal(Math.round(avgIncome(incomeState,3,'2026-04')),200);
+
+// Отпуск: федеральный праздник внутри периода не расходует день отпуска.
+const vacationPeriod={start:'2026-05-01',end:'2026-05-03'};
+assert.equal(vacationCalendarDays(base,vacationPeriod),2);
+console.log('WorkerTink payroll edge-case tests: OK');

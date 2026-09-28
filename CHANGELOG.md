@@ -1,82 +1,30 @@
 # Changelog
 
-## 2.4.0 — WYSIWYG-редактор заметок
+## 2.5.0
 
-- Редактор заметок смен переведён из схемы «текст + отдельный предпросмотр» в единый визуальный WYSIWYG-редактор.
-- Форматирование отображается непосредственно во время ввода, без отдельного окна предпросмотра.
-- Markdown по-прежнему является форматом хранения и экспорта.
-- Добавлено редактирование Markdown-таблиц непосредственно в визуальном редакторе.
-- Горячие клавиши ПК сохранены для жирного, курсива, ссылок, списков и кода.
-- Панель форматирования на мобильных устройствах остаётся постоянно доступной и горизонтально прокручиваемой.
-- Исправлена читаемость текста быстрых действий в тёмной теме.
-- Исправлено переполнение надписи «Выходной» в узких ячейках календаря.
+### Calculation core
+- Reworked shift-hour accounting: planned hours, manual extra shifts and actual work are separated.
+- Added configurable night-shift premium with a 20% default.
+- Holiday premium is now calculated from worked hours, including 24-hour `full` shifts.
+- Manual work added to a scheduled day off is treated as an extra paid shift instead of changing the monthly salary denominator.
+- Income history is sorted chronologically before averaging.
+- `7/0` now uses the configured 1–6 month continuous work period; after the selected period the schedule becomes `off` until a new start date is configured.
+- Dates before `startDate` remain outside the schedule and payroll.
 
-## 2.3.9 — Исправление циклов смен
+### Storage
+- Introduced schema version `4`.
+- Added normalization for imported JSON as well as normal loads.
+- Added migration handling for legacy `v2`/`v3` storage keys.
+- Invalid storage is copied to a recovery snapshot when possible before falling back to defaults.
 
-- Исправлен график 2/2: теперь всегда две рабочие смены + два выходных.
-- Для пары Д/Н последовательность теперь `День → Ночь → Выходной → Выходной`.
-- Д/Д: `День → День → Выходной → Выходной`.
-- Н/Н: `Ночь → Ночь → Выходной → Выходной`.
-- Исправлен 7/0: график больше не создаёт ошибочный период отдыха после вахты; 7/0 остаётся непрерывной работой без выходных.
-- Добавлены регрессионные проверки всех графиков 5/2, 4/1, 3/2, 3/1, 6/1, 2/2 и 7/0.
+### Vacation and absence
+- Vacation usage in the overview now excludes non-working federal holidays from the used vacation-day count.
 
-## 2.3.8
-- Live Markdown preview directly inside the shift note editor.
-- Markdown table insertion and table rendering in preview.
-- Desktop formatting hotkeys: Ctrl/Cmd+B, I, K, Shift+7, Shift+8, Shift+X.
-- Mobile iOS-style visible formatting toolbar with horizontal scrolling.
-- Removed the separate preview toggle from shift notes editor.
+### Notes
+- Moved Markdown/WYSIWYG conversion logic out of `App.tsx` into `src/markdown.ts`.
+- Preserved the inline WYSIWYG editor, mobile toolbar and Markdown table support.
 
-## 2.3.6
-- Исправлен расчёт зарплаты в неполном первом месяце: оклад пропорционален сменам относительно полного месяца по графику.
-- До даты выхода календарь больше не показывает рабочие смены: дни помечаются как «До начала».
-
-2.3.5 — День/ночь и перенос дат выплат
-
-- Исправлено расписание 2/2 «День / Ночь»: после двух дневных смен календарь теперь корректно показывает две ночные смены.
-- Исправлена генерация цикла 2/2: ночные смены больше не превращаются в выходные.
-- Даты аванса и остатка сохраняются по месяцу и автоматически наследуются последующими месяцами.
-- При переносе дата сдвигается на соответствующий месяц с безопасным ограничением дня до последнего дня целевого месяца.
-- Если для конкретного месяца задана собственная дата, она имеет приоритет и становится новой точкой наследования для следующих месяцев.
-- Добавлены регрессионные тесты для 2/2 День/Ночь и наследования дат выплат.
-
-
-## 2.3.4 — Зарплата с даты выхода и стандартный аванс
-
-- Зарплата не начисляется до даты выхода.
-- В месяце выхода расчёт начинается с даты выхода и учитывает только доступную часть графика.
-- Стаж используется для процента оплаты больничного: 60% / 80% / 100%.
-- Аванс по умолчанию равен 50% указанного оклада.
-- Ручная сумма аванса сохраняется отдельно для каждого месяца и заменяет значение по умолчанию.
-- Остаток считается как разница между суммой на руки и авансом.
-
-## 2.3.4 — Годовой финансовый итог
-
-- Добавлен полноценный годовой расчёт дохода.
-- Годовой итог учитывает все 12 месячных расчётов: график смен, ручные изменения смен, праздничные дни и коэффициент, отпуск, больничный, отпускные, больничные выплаты и НДФЛ.
-- Добавлены годовые суммы начислений, дохода на руки, НДФЛ, базовой части, праздничных доплат, отпускных и больничных.
-- Добавлены годовые итоги по сменам, праздничным сменам, дням отпуска и больничного.
-- Добавлена помесячная таблица: начислено, НДФЛ, на руки, аванс и остаток.
-- Добавлена навигация по годам.
-- Средний доход на руки рассчитывается как годовой итог / 12.
-
-## 2.3.2 — Вахта: День / Ночь / Сутки
-
-- Добавлен тип вахтовой смены «Сутки» (`full`).
-- Выбор доступен в мастере, настройках и редакторе смен для графика 7/0.
-- Генератор календаря и расчётное ядро сохраняют и обрабатывают тип `full`.
-- Добавлена визуальная маркировка «Сутки» в календаре и легенде.
-
-## 2.3.1 — Motion polish
-
-- Добавлена загрузочная анимация.
-- Добавлены переходы вкладок, модальных окон и уведомлений.
-- Добавлена поддержка `prefers-reduced-motion`.
-
-## 2.3.0
-
-- Полный переработанный расчётный и UX-контур.
-- Ручной аванс и даты выплат.
-- Приветственный мастер.
-- Редактирование смен и Markdown-заметки.
-- Импорт/экспорт заметок в Markdown.
+### Documentation / CI
+- Rewrote README to match the actual product and its limitations.
+- GitHub Pages workflow now runs the test suite before production build.
+- Added regression coverage for night premiums, extra shifts, income ordering, vacation holidays and storage migration.
