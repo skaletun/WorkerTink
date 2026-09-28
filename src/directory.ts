@@ -23,3 +23,11 @@ export function sendFriendRequest(from:UserProfile,to:string,token:string){retur
 export function getIncoming(profileId:string,token:string){return request<{requests:FriendRequest[]}>(`/friend-requests/incoming?userId=${encodeURIComponent(profileId)}`,{headers:{Authorization:`Bearer ${token}`}})}
 export function getOutgoing(profileId:string,token:string){return request<{requests:FriendRequest[]}>(`/friend-requests/outgoing?userId=${encodeURIComponent(profileId)}`,{headers:{Authorization:`Bearer ${token}`}})}
 export function respondFriendRequest(id:string,action:'accept'|'decline',token:string){return request<RequestResult>(`/friend-requests/${encodeURIComponent(id)}/${action}`,{method:'POST',headers:{Authorization:`Bearer ${token}`}})}
+
+export type PeerSession={id:string;from:UserProfile;to:UserProfile;offer:string;answer:string|null;status:'pending'|'answered'|'expired'|'cancelled';createdAt:number;updatedAt:number;expiresAt:number};
+export function createPeerSession(target:string,offer:string,token:string){return request<{session:PeerSession}>('/peer-sessions',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({to:target,offer})})}
+export function getIncomingPeerSessions(token:string){return request<{sessions:PeerSession[]}>(`/peer-sessions/incoming`,{headers:{Authorization:`Bearer ${token}`}})}
+export function getOutgoingPeerSessions(token:string){return request<{sessions:PeerSession[]}>(`/peer-sessions/outgoing`,{headers:{Authorization:`Bearer ${token}`}})}
+export function answerPeerSession(id:string,answer:string,token:string){return request<{session:PeerSession}>(`/peer-sessions/${encodeURIComponent(id)}/answer`,{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({answer})})}
+
+export function getIceServers(token:string){return request<{iceServers:RTCIceServer[]}>('/webrtc/ice-servers',{headers:{Authorization:`Bearer ${token}`}})}

@@ -128,6 +128,35 @@ function profileFromJoined(row, prefix) {
   };
 }
 
+
+function peerSessionView(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    from: profileFromJoined(row, 's'),
+    to: profileFromJoined(row, 't'),
+    offer: row.offer_sdp,
+    answer: row.answer_sdp || null,
+    status: row.status,
+    createdAt: Number(row.created_at),
+    updatedAt: Number(row.updated_at),
+    expiresAt: Number(row.expires_at)
+  };
+}
+
+async function loadPeerSession(env, id) {
+  return env.DB.prepare(`
+    SELECT
+      p.id, p.initiator_id, p.receiver_id, p.offer_sdp, p.answer_sdp, p.status, p.created_at, p.updated_at, p.expires_at,
+      s.wtink_id AS s_id, s.name AS s_name, s.position AS s_position, s.avatar AS s_avatar,
+      t.wtink_id AS t_id, t.name AS t_name, t.position AS t_position, t.avatar AS t_avatar
+    FROM peer_sessions p
+    JOIN profiles s ON s.wtink_id = p.initiator_id
+    JOIN profiles t ON t.wtink_id = p.receiver_id
+    WHERE p.id = ?1
+  `).bind(id).first();
+}
+
 async function handle(request, env) {
   const origin = corsOrigin(request, env);
   if (!origin) return corsError(request, env);
@@ -273,6 +302,110 @@ async function handle(request, env) {
       .bind(status, Date.now(), action[1]).run();
     const updated = await loadRequest(env, action[1]);
     return json({request: requestView(updated, profileFromJoined(updated, 's'), profileFromJoined(updated, 't'))}, 200, origin);
+  }
+
+
+  const peerSessionPath = path.match(/^\/peer-sessions\/([^/]+)\/answer$/);
+
+  if (request.method === 'GET' && path === '/webrtc/ice-servers') {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error: 'UNAUTHORIZED'}, 401, origin);
+    const fallback = [
+      {urls: 'stun:stun.cloudflare.com:3478'},
+      {urls: 'stun:stun.l.google.com:19302'},
+      {urls: 'stun:stun1.l.google.com:19302'}
+    ];
+    if (!env.TURN_KEY_ID || !env.TURN_KEY_TOKEN) return json({iceServers: fallback}, 200, origin);
+    try {
+      const response = await fetch(`https://rtc.live.cloudflare.com/v1/turn/keys/${encodeURIComponent(env.TURN_KEY_ID)}/credentials/generate-ice-servers`, {
+        method: 'POST',
+        headers: {'Authorization': `Bearer ${env.TURN_KEY_TOKEN}`, 'Content-Type': 'application/json'},
+        body: JSON.stringify({ttl: 3600})
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !Array.isArray(data?.iceServers)) return json({iceServers: fallback}, 200, origin);
+      const iceServers = data.iceServers.filter((server) => server && server.urls && server.username && server.credential);
+      return json({iceServers: [...fallback, ...iceServers]}, 200, origin);
+    } catch {
+      return json({iceServers: fallback}, 200, origin);
+    }
+  }
+
+  if (request.method === 'POST' && path === '/peer-sessions') {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error: 'UNAUTHORIZED'}, 401, origin);
+    const input = await body(request);
+    const target = normalizeId(input?.to);
+    const offer = typeof input?.offer === 'string' ? input.offer.slice(0, 200000) : '';
+    if (!validId(target) || !offer) return json({error: 'INVALID_SESSION'}, 400, origin);
+    if (target === owner.wtink_id) return json({error: 'SELF_SESSION'}, 400, origin);
+    const friend = await env.DB.prepare(`
+      SELECT 1 FROM friend_requests
+      WHERE status = 'accepted' AND ((sender_id = ?1 AND receiver_id = ?2) OR (sender_id = ?2 AND receiver_id = ?1))
+      LIMIT 1
+    `).bind(owner.wtink_id, target).first();
+    if (!friend) return json({error: 'NOT_FRIENDS'}, 403, origin);
+    const now = Date.now();
+    const expires = now + 5 * 60 * 1000;
+    await env.DB.prepare(`UPDATE peer_sessions SET status = 'expired', updated_at = ?1 WHERE expires_at < ?1 AND status = 'pending'`).bind(now).run();
+    const id = crypto.randomUUID();
+    await env.DB.prepare(`
+      INSERT INTO peer_sessions (id, initiator_id, receiver_id, offer_sdp, status, created_at, updated_at, expires_at)
+      VALUES (?1, ?2, ?3, ?4, 'pending', ?5, ?5, ?6)
+    `).bind(id, owner.wtink_id, target, offer, now, expires).run();
+    const row = await loadPeerSession(env, id);
+    return json({session: peerSessionView(row)}, 201, origin);
+  }
+
+  if (request.method === 'GET' && (path === '/peer-sessions/incoming' || path === '/peer-sessions/outgoing')) {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error: 'UNAUTHORIZED'}, 401, origin);
+    const now = Date.now();
+    await env.DB.prepare(`UPDATE peer_sessions SET status = 'expired', updated_at = ?1 WHERE expires_at < ?1 AND status = 'pending'`).bind(now).run();
+    const incoming = path.endsWith('/incoming');
+    const column = incoming ? 'receiver_id' : 'initiator_id';
+    const rows = await env.DB.prepare(`
+      SELECT
+        p.id, p.initiator_id, p.receiver_id, p.offer_sdp, p.answer_sdp, p.status, p.created_at, p.updated_at, p.expires_at,
+        s.wtink_id AS s_id, s.name AS s_name, s.position AS s_position, s.avatar AS s_avatar,
+        t.wtink_id AS t_id, t.name AS t_name, t.position AS t_position, t.avatar AS t_avatar
+      FROM peer_sessions p
+      JOIN profiles s ON s.wtink_id = p.initiator_id
+      JOIN profiles t ON t.wtink_id = p.receiver_id
+      WHERE p.${column} = ?1 AND p.status IN ('pending','answered') AND p.expires_at >= ?2
+      ORDER BY p.created_at DESC LIMIT 20
+    `).bind(owner.wtink_id, now).all();
+    return json({sessions: (rows.results || []).map(peerSessionView)}, 200, origin);
+  }
+
+  if (request.method === 'POST' && peerSessionPath) {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error: 'UNAUTHORIZED'}, 401, origin);
+    const id = decodeURIComponent(peerSessionPath[1]);
+    const row = await loadPeerSession(env, id);
+    if (!row) return json({error: 'SESSION_NOT_FOUND'}, 404, origin);
+    if (row.receiver_id !== owner.wtink_id) return json({error: 'FORBIDDEN'}, 403, origin);
+    if (row.expires_at < Date.now()) {
+      await env.DB.prepare(`UPDATE peer_sessions SET status = 'expired', updated_at = ?1 WHERE id = ?2`).bind(Date.now(), id).run();
+      return json({error: 'SESSION_EXPIRED'}, 410, origin);
+    }
+    const input = await body(request);
+    const answer = typeof input?.answer === 'string' ? input.answer.slice(0, 200000) : '';
+    if (!answer) return json({error: 'INVALID_ANSWER'}, 400, origin);
+    await env.DB.prepare(`UPDATE peer_sessions SET answer_sdp = ?1, status = 'answered', updated_at = ?2 WHERE id = ?3 AND status = 'pending'`)
+      .bind(answer, Date.now(), id).run();
+    const updated = await loadPeerSession(env, id);
+    return json({session: peerSessionView(updated)}, 200, origin);
+  }
+
+  if (request.method === 'GET' && path.startsWith('/peer-sessions/')) {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error: 'UNAUTHORIZED'}, 401, origin);
+    const id = decodeURIComponent(path.split('/').pop() || '');
+    const row = await loadPeerSession(env, id);
+    if (!row) return json({error: 'SESSION_NOT_FOUND'}, 404, origin);
+    if (row.initiator_id !== owner.wtink_id && row.receiver_id !== owner.wtink_id) return json({error: 'FORBIDDEN'}, 403, origin);
+    return json({session: peerSessionView(row)}, 200, origin);
   }
 
   if (request.method === 'GET' && path === '/friends') {
