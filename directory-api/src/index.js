@@ -60,7 +60,8 @@ function publicProfile(row) {
     name: row.name,
     position: row.position,
     avatar: row.avatar,
-    isDev: normalizeId(row.wtink_id) === DEV_WTINK_ID
+    isDev: Number(row.is_dev || 0) === 1,
+    isAdmin: Number(row.is_admin || 0) === 1
   };
 }
 
@@ -86,6 +87,27 @@ function base64Url(bytes) {
   let binary = '';
   for (const byte of bytes) binary += String.fromCharCode(byte);
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+async function setupCryptoKey(env) {
+  const secret = String(env.SETUP_ENCRYPTION_KEY || '');
+  if (!secret) throw new Error('SETUP_ENCRYPTION_KEY_NOT_CONFIGURED');
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(secret));
+  return crypto.subtle.importKey('raw', digest, {name:'AES-GCM'}, false, ['encrypt','decrypt']);
+}
+
+async function encryptSetup(env, value) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await setupCryptoKey(env);
+  const plaintext = new TextEncoder().encode(JSON.stringify(value));
+  const ciphertext = await crypto.subtle.encrypt({name:'AES-GCM',iv}, key, plaintext);
+  return {ciphertext:base64Url(new Uint8Array(ciphertext)), iv:base64Url(iv)};
+}
+
+async function decryptSetup(env, ciphertext, iv) {
+  const key = await setupCryptoKey(env);
+  const plaintext = await crypto.subtle.decrypt({name:'AES-GCM',iv:fromBase64Url(iv)}, key, fromBase64Url(ciphertext));
+  return JSON.parse(new TextDecoder().decode(plaintext));
 }
 
 function fromBase64Url(value) {
@@ -150,7 +172,7 @@ async function authProfile(request, env) {
   if (!token) return null;
   const tokenHash = await sha256(token);
   return env.DB.prepare(
-    'SELECT wtink_id, name, position, avatar, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE token_hash = ?1'
+    'SELECT wtink_id, name, position, avatar, is_dev, is_admin, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE token_hash = ?1'
   ).bind(tokenHash).first();
 }
 
@@ -285,7 +307,7 @@ async function handle(request, env) {
     const wtinkId = normalizeId(input?.profileId);
     const pin = String(input?.pin || '');
     if (!validId(wtinkId) || !validPin(pin)) return json({error:'INVALID_CREDENTIALS'},400,origin);
-    const row = await env.DB.prepare(`SELECT wtink_id, name, position, avatar, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, last_seen FROM profiles WHERE wtink_id = ?1`).bind(wtinkId).first();
+    const row = await env.DB.prepare(`SELECT wtink_id, name, position, avatar, is_dev, is_admin, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, last_seen FROM profiles WHERE wtink_id = ?1`).bind(wtinkId).first();
     if (!row) return json({error:'INVALID_CREDENTIALS'},401,origin);
     const lockedUntil = Number(row.pin_locked_until || 0);
     if (lockedUntil > Date.now()) return json({error:'PIN_LOCKED',retryAfter:Math.ceil((lockedUntil-Date.now())/1000)},429,origin);
@@ -300,14 +322,44 @@ async function handle(request, env) {
     const token = randomToken();
     await env.DB.prepare('UPDATE profiles SET token_hash = ?1, pin_failed_attempts = 0, pin_locked_until = 0, updated_at = ?2, last_seen = ?2 WHERE wtink_id = ?3').bind(await sha256(token),Date.now(),wtinkId).run();
     const passkey = await env.DB.prepare('SELECT COUNT(*) AS count FROM webauthn_credentials WHERE profile_id = ?1').bind(wtinkId).first();
-    return json({profile:publicProfile(row),token,security:{pinSet:true,onePassAvailable:Number(passkey?.count||0)>0}},200,origin);
+    const setupRow = await env.DB.prepare('SELECT setup_ciphertext, setup_iv FROM account_setup WHERE wtink_id = ?1').bind(wtinkId).first();
+    let setup = null;
+    if (setupRow) setup = await decryptSetup(env, setupRow.setup_ciphertext, setupRow.setup_iv);
+    return json({profile:publicProfile(row),token,setup,security:{pinSet:true,onePassAvailable:Number(passkey?.count||0)>0}},200,origin);
   }
 
   if (request.method === 'GET' && path === '/auth/status') {
     const owner = await authProfile(request, env);
     if (!owner) return json({error:'UNAUTHORIZED'},401,origin);
     const passkey = await env.DB.prepare('SELECT COUNT(*) AS count FROM webauthn_credentials WHERE profile_id = ?1').bind(owner.wtink_id).first();
-    return json({security:{pinSet:Boolean(owner.pin_hash),onePassAvailable:Number(passkey?.count||0)>0}},200,origin);
+    const setupRow = await env.DB.prepare('SELECT setup_ciphertext, setup_iv FROM account_setup WHERE wtink_id = ?1').bind(owner.wtink_id).first();
+    let setup = null;
+    if (setupRow) setup = await decryptSetup(env, setupRow.setup_ciphertext, setupRow.setup_iv);
+    return json({profile:publicProfile(owner),setup,security:{pinSet:Boolean(owner.pin_hash),onePassAvailable:Number(passkey?.count||0)>0}},200,origin);
+  }
+
+  if (request.method === 'GET' && path === '/account/setup') {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error:'UNAUTHORIZED'},401,origin);
+    const row = await env.DB.prepare('SELECT setup_ciphertext, setup_iv, updated_at FROM account_setup WHERE wtink_id = ?1').bind(owner.wtink_id).first();
+    if (!row) return json({configured:false,setup:null},200,origin);
+    return json({configured:true,setup:await decryptSetup(env,row.setup_ciphertext,row.setup_iv),updatedAt:Number(row.updated_at||0)},200,origin);
+  }
+
+  if (request.method === 'PUT' && path === '/account/setup') {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error:'UNAUTHORIZED'},401,origin);
+    const input = await body(request);
+    const setup = input?.setup;
+    if (!setup || typeof setup !== 'object') return json({error:'INVALID_SETUP'},400,origin);
+    const allowed = ['salary','taxRate','stage','vacTotal','startDate','scheduleType','scheduleShift','scheduleVakhtaMonths','schedulePairType','holidayCoeff','nightExtraPercent'];
+    const clean = Object.fromEntries(allowed.map(key => [key, setup[key]]));
+    if (!Number.isFinite(Number(clean.salary)) || Number(clean.salary) < 0 || !Number.isFinite(Number(clean.taxRate)) || Number(clean.taxRate) < 0 || Number(clean.taxRate) > 100 || !Number.isFinite(Number(clean.stage)) || Number(clean.stage) < 0 || !Number.isFinite(Number(clean.vacTotal)) || Number(clean.vacTotal) < 0 || !/^\d{4}-\d{2}-\d{2}$/.test(String(clean.startDate||'')) || !['5/2','4/1','3/2','3/1','6/1','2/2','7/0'].includes(String(clean.scheduleType)) || !['day','night','full'].includes(String(clean.scheduleShift)) || !Number.isFinite(Number(clean.scheduleVakhtaMonths)) || Number(clean.scheduleVakhtaMonths) < 1 || Number(clean.scheduleVakhtaMonths) > 6 || !['day-day','day-night','night-night'].includes(String(clean.schedulePairType)) || !Number.isFinite(Number(clean.holidayCoeff)) || !Number.isFinite(Number(clean.nightExtraPercent))) return json({error:'INVALID_SETUP'},400,origin);
+    clean.salary=Number(clean.salary); clean.taxRate=Number(clean.taxRate); clean.stage=Number(clean.stage); clean.vacTotal=Number(clean.vacTotal); clean.scheduleVakhtaMonths=Number(clean.scheduleVakhtaMonths); clean.holidayCoeff=Number(clean.holidayCoeff); clean.nightExtraPercent=Number(clean.nightExtraPercent);
+    const encrypted = await encryptSetup(env, clean);
+    const now = Date.now();
+    await env.DB.prepare(`INSERT INTO account_setup (wtink_id, setup_ciphertext, setup_iv, updated_at) VALUES (?1,?2,?3,?4) ON CONFLICT(wtink_id) DO UPDATE SET setup_ciphertext=excluded.setup_ciphertext, setup_iv=excluded.setup_iv, updated_at=excluded.updated_at`).bind(owner.wtink_id,encrypted.ciphertext,encrypted.iv,now).run();
+    return json({ok:true,configured:true,setup:clean,updatedAt:now},200,origin);
   }
 
   if (request.method === 'PUT' && path === '/auth/pin') {
@@ -341,8 +393,8 @@ async function handle(request, env) {
     const now = Date.now();
     try {
       await env.DB.prepare(`
-        INSERT INTO profiles (wtink_id, name, position, avatar, token_hash, pin_hash, pin_salt, webauthn_user_id, created_at, updated_at, last_seen)
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?9, ?9)
+        INSERT INTO profiles (wtink_id, name, position, avatar, is_dev, is_admin, token_hash, pin_hash, pin_salt, webauthn_user_id, created_at, updated_at, last_seen)
+        VALUES (?1, ?2, ?3, ?4, 0, 0, ?5, ?6, ?7, ?8, ?9, ?9, ?9)
       `).bind(wtinkId, name, position, avatar, tokenHash, pinData.hash, pinData.salt, webauthnUserId, now).run();
     } catch (error) {
       if (String(error).toLowerCase().includes('unique')) return json({error: 'WTINK_ID_TAKEN'}, 409, origin);
@@ -486,7 +538,7 @@ async function handle(request, env) {
   if (request.method === 'GET' && profileMatch) {
     const wtinkId = normalizeId(decodeURIComponent(profileMatch[1]));
     if (!validId(wtinkId)) return json({error: 'USER_NOT_FOUND'}, 404, origin);
-    const row = await env.DB.prepare('SELECT wtink_id, name, position, avatar FROM profiles WHERE wtink_id = ?1').bind(wtinkId).first();
+    const row = await env.DB.prepare('SELECT wtink_id, name, position, avatar, is_dev, is_admin FROM profiles WHERE wtink_id = ?1').bind(wtinkId).first();
     if (!row) return json({error: 'USER_NOT_FOUND'}, 404, origin);
     return json({profile: publicProfile(row)}, 200, origin);
   }
@@ -504,7 +556,7 @@ async function handle(request, env) {
     const now = Date.now();
     await env.DB.prepare(`UPDATE profiles SET name = ?1, position = ?2, avatar = ?3, updated_at = ?4, last_seen = ?4 WHERE wtink_id = ?5`)
       .bind(name, position, avatar, now, owner.wtink_id).run();
-    return json({profile: publicProfile({wtink_id:wtinkId,name,position,avatar})}, 200, origin);
+    return json({profile: publicProfile({...owner,wtink_id:wtinkId,name,position,avatar})}, 200, origin);
   }
 
   if (request.method === 'GET' && path === '/push/public-key') {
@@ -610,7 +662,7 @@ async function handle(request, env) {
     const target = normalizeId(input?.to);
     if (!validId(target)) return json({error: 'USER_NOT_FOUND'}, 404, origin);
     if (target === owner.wtink_id) return json({error: 'SELF_REQUEST'}, 400, origin);
-    const targetProfile = await env.DB.prepare('SELECT wtink_id, name, position, avatar FROM profiles WHERE wtink_id = ?1').bind(target).first();
+    const targetProfile = await env.DB.prepare('SELECT wtink_id, name, position, avatar, is_dev, is_admin FROM profiles WHERE wtink_id = ?1').bind(target).first();
     if (!targetProfile) return json({error: 'USER_NOT_FOUND'}, 404, origin);
 
     const existing = await env.DB.prepare(`
@@ -824,7 +876,7 @@ async function handle(request, env) {
 
   const adminProfile = async () => {
     const owner = await authProfile(request, env);
-    if (!owner || normalizeId(owner.wtink_id) !== DEV_WTINK_ID) return null;
+    if (!owner || Number(owner.is_admin || 0) !== 1) return null;
     return owner;
   };
 
@@ -844,7 +896,7 @@ async function handle(request, env) {
     const query = normalizeId(url.searchParams.get('query') || '');
     const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit') || 50)));
     const pattern = `%${query}%`;
-    const rows = await env.DB.prepare(`SELECT wtink_id,name,position,avatar,created_at,updated_at,last_seen FROM profiles WHERE ?1 = '' OR wtink_id LIKE ?2 OR UPPER(name) LIKE UPPER(?2) ORDER BY updated_at DESC LIMIT ?3`).bind(query, pattern, limit).all();
+    const rows = await env.DB.prepare(`SELECT wtink_id,name,position,avatar,is_dev,is_admin,created_at,updated_at,last_seen FROM profiles WHERE ?1 = '' OR wtink_id LIKE ?2 OR UPPER(name) LIKE UPPER(?2) ORDER BY updated_at DESC LIMIT ?3`).bind(query, pattern, limit).all();
     return json({profiles:(rows.results||[]).map(row=>({...publicProfile(row),createdAt:Number(row.created_at||0),updatedAt:Number(row.updated_at||0),lastSeen:Number(row.last_seen||0),online:Number(row.last_seen||0)>=Date.now()-ONLINE_WINDOW_MS}))},200,origin);
   }
 
@@ -884,6 +936,8 @@ async function handle(request, env) {
         CASE WHEN r.sender_id = ?1 THEN t.name ELSE s.name END AS name,
         CASE WHEN r.sender_id = ?1 THEN t.position ELSE s.position END AS position,
         CASE WHEN r.sender_id = ?1 THEN t.avatar ELSE s.avatar END AS avatar,
+        CASE WHEN r.sender_id = ?1 THEN t.is_dev ELSE s.is_dev END AS is_dev,
+        CASE WHEN r.sender_id = ?1 THEN t.is_admin ELSE s.is_admin END AS is_admin,
         CASE WHEN r.sender_id = ?1 THEN t.last_seen ELSE s.last_seen END AS last_seen,
         r.updated_at
       FROM friend_requests r
@@ -893,7 +947,7 @@ async function handle(request, env) {
       ORDER BY r.updated_at DESC
       LIMIT 200
     `).bind(owner.wtink_id).all();
-    return json({friends: (rows.results || []).map(row => ({profile: publicProfile({wtink_id: row.wtink_id, name: row.name, position: row.position, avatar: row.avatar}), addedAt: Number(row.updated_at || Date.now()), lastSeen: Number(row.last_seen || row.updated_at || 0), online: Number(row.last_seen || 0) >= Date.now() - ONLINE_WINDOW_MS}))}, 200, origin);
+    return json({friends: (rows.results || []).map(row => ({profile: publicProfile({wtink_id: row.wtink_id, name: row.name, position: row.position, avatar: row.avatar, is_dev: row.is_dev, is_admin: row.is_admin}), addedAt: Number(row.updated_at || Date.now()), lastSeen: Number(row.last_seen || row.updated_at || 0), online: Number(row.last_seen || 0) >= Date.now() - ONLINE_WINDOW_MS}))}, 200, origin);
   }
 
   return json({error: 'NOT_FOUND'}, 404, origin);

@@ -317,3 +317,13 @@ VAPID_SUBJECT
 WorkerTink Directory now supports account authentication with a mandatory six-digit PIN and optional OnePass passkeys. PINs are salted and PBKDF2-derived; repeated failed attempts temporarily lock the account. OnePass is based on WebAuthn and is intentionally enabled only from account settings after PIN login.
 
 Apply migration `0005_auth.sql` before using the new auth endpoints. For WebAuthn on GitHub Pages, the Worker derives the RP ID from the browser `Origin`; optional `WEBAUTHN_RP_ID` and `WEBAUTHN_ORIGIN` variables can override this.
+
+## Шифрование настроек мастера
+
+Настройки мастера сохраняются в D1 только в зашифрованном виде (AES-GCM). Перед первым деплоем версии с миграцией `0008_account_setup.sql` задайте секрет Worker:
+
+```powershell
+npx wrangler secret put SETUP_ENCRYPTION_KEY
+```
+
+Используйте длинный случайный секрет и не добавляйте его в Git. Этот же секрет должен оставаться неизменным для последующих деплоев, иначе ранее сохранённые настройки нельзя будет расшифровать.
