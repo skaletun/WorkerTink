@@ -7,10 +7,42 @@ export function markdownCells(line:string){return line.trim().replace(/^\|/,'').
 export function inlineMd(s:string){return s.replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/__([^_]+)__/g,'<strong>$1</strong>').replace(/\*([^*]+)\*/g,'<em>$1</em>').replace(/_([^_]+)_/g,'<em>$1</em>').replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,'<a href="$2" target="_blank" rel="noreferrer">$1</a>')}
 export function markdownTableToHtml(rows:string[]){
  const header=markdownCells(rows[0]);const body=rows.slice(2).map(markdownCells);let out='<div class="md-table-wrap"><table><thead><tr>';
- header.forEach(cell=>{out+=`<th>${inlineMd(safeInline(cell))}</th>`});out+='</tr></thead>';
- if(body.length){out+='<tbody>';body.forEach(row=>{out+='<tr>';header.forEach((_,i)=>{out+=`<td>${inlineMd(safeInline(row[i]??''))}</td>`});out+='</tr>'});out+='</tbody>'}
+ header.forEach(cell=>{out+=`<th>${inlineMd(safeInline(cell))}</th>`});out+='</tr></thead><tbody>';
+ body.forEach(row=>{out+='<tr>';header.forEach((_,i)=>{out+=`<td>${inlineMd(safeInline(row[i]??''))}</td>`});out+='</tr>'});
+ // The final empty row is an editor-only input buffer. It is deliberately kept in the DOM,
+ // but htmlToMarkdown removes it from the stored Markdown and recreates it on the next load.
+ out+=`<tr>${header.map(()=>'<td><br></td>').join('')}</tr></tbody>`;
  return out+'</table></div>';
 }
+
+const tableRowIsBlank=(row:HTMLTableRowElement)=>Array.from(row.cells).every(cell=>(cell.textContent||'').replace(/\u00a0/g,'').trim()==='');
+export function ensureTableInputRow(table:HTMLTableElement){
+ const tbody=table.tBodies[0]??table.createTBody();
+ if(!tbody.rows.length){
+  const row=tbody.insertRow();for(let i=0;i<table.rows[0]?.cells.length||1;i++){const cell=row.insertCell();cell.innerHTML='<br>'}
+  return row;
+ }
+ const last=tbody.rows[tbody.rows.length-1];
+ if(!tableRowIsBlank(last)){
+  const row=tbody.insertRow();for(let i=0;i<table.rows[0]?.cells.length||1;i++){const cell=row.insertCell();cell.innerHTML='<br>'}
+  return row;
+ }
+ // Keep a trailing input row even if the user erased its contents.
+ return last;
+}
+export function ensureEditorTables(root:HTMLElement){root.querySelectorAll('table').forEach(table=>ensureTableInputRow(table as HTMLTableElement));}
+export function addTableRow(table:HTMLTableElement){
+ const tbody=table.tBodies[0]??table.createTBody();const inputRow=tbody.rows[tbody.rows.length-1];const row=tbody.insertRow(Math.max(0,tbody.rows.length-1));
+ for(let i=0;i<table.rows[0]?.cells.length||1;i++){const cell=row.insertCell();cell.innerHTML='<br>'}
+ if(inputRow&&tableRowIsBlank(inputRow))ensureTableInputRow(table);return row;
+}
+export function addTableColumn(table:HTMLTableElement){
+ const header=table.tHead?.rows[0]??table.rows[0];if(!header)return;
+ const index=header.cells.length;const head=header.insertCell();head.outerHTML=`<th>Заголовок ${index+1}</th>`;
+ const tbody=table.tBodies[0]??table.createTBody();Array.from(tbody.rows).forEach(row=>{const cell=row.insertCell();cell.innerHTML='<br>'});ensureTableInputRow(table);
+}
+export function removeTable(table:HTMLTableElement){table.closest('.md-table-wrap')?.remove()??table.remove();}
+
 export function markdownToHtml(markdown:string){
  const lines=markdown.split('\n');let html='',inCode=false,code='';
  for(let i=0;i<lines.length;i++){
@@ -50,7 +82,9 @@ export function htmlToMarkdown(root:HTMLElement){
   if(tag==='hr'){out.push('---','');return}
   if(tag==='div'&&el.querySelector('table')){Array.from(el.children).forEach(walk);return}
   if(tag==='table'){
-   const rows=Array.from(el.querySelectorAll('tr')).map(tr=>Array.from(tr.children).map(c=>inline(c).trim()));
+   const trNodes=Array.from(el.querySelectorAll('tr'));
+   const rows=trNodes.map(tr=>Array.from(tr.children).map(c=>inline(c).trim()));
+   while(rows.length>1&&Array.from(trNodes[rows.length-1]?.children||[]).every(c=>(c.textContent||'').replace(/\u00a0/g,'').trim()===''))rows.pop();
    if(rows.length){out.push(`| ${rows[0].join(' | ')} |`);out.push(`| ${rows[0].map(()=> '---').join(' | ')} |`);rows.slice(1).forEach(r=>out.push(`| ${r.join(' | ')} |`));out.push('')}
    return;
   }

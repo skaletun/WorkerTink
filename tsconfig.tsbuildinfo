@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/core.ts","./src/main.tsx","./src/markdown.ts","./src/storage.ts"],"version":"5.9.3"}
+{"root":["./src/App.tsx","./src/core.ts","./src/main.tsx","./src/markdown.ts","./src/p2p.ts","./src/storage.ts"],"errors":true,"version":"5.8.3"}
