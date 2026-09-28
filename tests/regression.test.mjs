@@ -1,0 +1,82 @@
+import assert from 'node:assert/strict';
+import {DEFAULT,calcMonth,getScheduledShift} from '../src/core.ts';
+
+const base={...DEFAULT,startDate:'2026-09-01',scheduleType:'5/2',taxRate:0,salary:100000};
+const normal=calcMonth(base,2026,8);
+const vacation=calcMonth({...base,vacations:[{start:'2026-09-07',end:'2026-09-11'}]},2026,8);
+assert.ok(vacation.vacDays>0);
+assert.ok(vacation.base<normal.base);
+assert.ok(vacation.vacPay>0);
+const sick=calcMonth({...base,sickLeaves:[{start:'2026-09-07',end:'2026-09-09'}]},2026,8);
+assert.equal(sick.sickDays,3);
+assert.ok(sick.base<normal.base);
+const manual=calcMonth({...base,advances:{'2026-09':25000},paymentDates:{'2026-09':{advanceDate:'2026-09-15',remainderDate:'2026-10-05'}}},2026,8);
+assert.equal(manual.advance,25000);
+assert.equal(manual.remainder,manual.net-25000);
+assert.equal(manual.paymentDates.remainderDate,'2026-10-05');
+console.log('WorkerTink regression tests: OK');
+
+
+// Зарплата не начисляется до даты выхода, а в месяце выхода считается только с этой даты.
+const lateStart={...base,startDate:'2026-09-15'};
+const beforeStart=calcMonth(lateStart,2026,7);
+assert.equal(beforeStart.net,0);
+const afterStart=calcMonth(lateStart,2026,8);
+assert.ok(afterStart.work>0);
+assert.ok(afterStart.work < normal.work);
+// Неполный первый месяц оплачивается пропорционально полному числу смен месяца.
+// Дата выхода — произвольная пользовательская дата, а не фиксированное значение.
+for(const startDate of ['2026-09-03','2026-09-15','2026-09-22','2026-09-28']){
+ const partialStart={...base,startDate,scheduleType:'5/2',salary:100000,taxRate:0};
+ const fullSeptember=calcMonth({...partialStart,startDate:'2026-09-01'},2026,8);
+ const partialSeptember=calcMonth(partialStart,2026,8);
+ assert.equal(partialSeptember.base,Math.round(100000*partialSeptember.work/partialSeptember.scheduled));
+ if(partialSeptember.work<partialSeptember.scheduled) assert.ok(partialSeptember.base<100000,`Если часть смен до выхода пропущена, оклад должен быть уменьшен: ${startDate}`);
+}
+// Если дата выхода — первое число месяца, месяц считается полностью.
+const firstDay=calcMonth({...base,startDate:'2026-09-01',scheduleType:'5/2',salary:100000,taxRate:0},2026,8);
+assert.equal(firstDay.base,100000);
+
+// По умолчанию аванс равен половине указанного оклада и доступен для ручного переопределения.
+const defaultAdvance=calcMonth({...base,salary:100000,advances:{}},2026,8);
+assert.equal(defaultAdvance.advance,Math.min(defaultAdvance.net,50000));
+assert.equal(defaultAdvance.advanceIsCustom,false);
+const customAdvance=calcMonth({...base,salary:100000,advances:{'2026-09':30000}},2026,8);
+assert.equal(customAdvance.advance,30000);
+assert.equal(customAdvance.advanceIsCustom,true);
+assert.equal(customAdvance.advance+customAdvance.remainder,customAdvance.net);
+console.log('WorkerTink start-date and default-advance tests: OK');
+
+// 2/2 всегда сохраняет два рабочих дня + два выходных.
+// Для Д/Н смены внутри рабочей пары: День, Ночь, затем два выходных.
+const dayNight={...base,startDate:'2026-09-01',scheduleType:'2/2',schedulePairType:'day-night'};
+const sequence=[1,2,3,4,5,6,7,8].map(day=>getScheduledShift(dayNight,new Date(2026,8,day)));
+assert.deepEqual(sequence,['day','night','off','off','day','night','off','off']);
+
+const dayDay={...base,startDate:'2026-09-01',scheduleType:'2/2',schedulePairType:'day-day'};
+assert.deepEqual([1,2,3,4,5,6,7,8].map(day=>getScheduledShift(dayDay,new Date(2026,8,day))),['day','day','off','off','day','day','off','off']);
+
+const nightNight={...base,startDate:'2026-09-01',scheduleType:'2/2',schedulePairType:'night-night'};
+assert.deepEqual([1,2,3,4,5,6,7,8].map(day=>getScheduledShift(nightNight,new Date(2026,8,day))),['night','night','off','off','night','night','off','off']);
+
+// Проверяем все остальные циклические графики: количество рабочих и выходных
+// дней в одном полном цикле должно соответствовать названию графика.
+for(const [type,expected] of [['5/2', ['day','day','day','day','day','off','off']],['4/1',['day','day','day','day','off']],['3/2',['day','day','day','off','off']],['3/1',['day','day','day','off']],['6/1',['day','day','day','day','day','day','off']]]){
+ const state={...base,startDate:'2026-09-01',scheduleType:type};
+ assert.deepEqual(Array.from({length:expected.length},(_,i)=>getScheduledShift(state,new Date(2026,8,1+i))),expected,type);
+}
+
+// 7/0 не должен внезапно превращаться в цикл "вахта / такой же отдых": выходных в цикле нет.
+const vakhta={...base,startDate:'2026-09-01',scheduleType:'7/0',scheduleShift:'day',scheduleVakhtaMonths:3};
+assert.deepEqual(Array.from({length:14},(_,i)=>getScheduledShift(vakhta,new Date(2026,8,1+i))),Array(14).fill('day'));
+
+// Даты выплат наследуются от последнего явно заданного месяца и автоматически сдвигаются на месяц.
+const dated={...base,paymentDates:{
+  '2026-09':{advanceDate:'2026-09-15',remainderDate:'2026-09-30'}
+}};
+assert.deepEqual(calcMonth(dated,2026,8).paymentDates,{advanceDate:'2026-09-15',remainderDate:'2026-09-30'});
+assert.deepEqual(calcMonth(dated,2026,9).paymentDates,{advanceDate:'2026-10-15',remainderDate:'2026-10-30'});
+assert.deepEqual(calcMonth(dated,2026,10).paymentDates,{advanceDate:'2026-11-15',remainderDate:'2026-11-30'});
+const explicitOctober={...dated,paymentDates:{...dated.paymentDates,'2026-10':{advanceDate:'2026-10-14',remainderDate:'2026-10-29'}}};
+assert.deepEqual(calcMonth(explicitOctober,2026,10).paymentDates,{advanceDate:'2026-11-14',remainderDate:'2026-11-29'});
+console.log('WorkerTink 2/2 day-night and payment-date inheritance tests: OK');

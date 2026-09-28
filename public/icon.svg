@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-labelledby="title desc">
+  <title id="title">WorkerTink</title>
+  <desc id="desc">Геометрическая иконка WorkerTink: календарь и отметка смены.</desc>
+  <rect width="192" height="192" rx="44" fill="#111827"/>
+  <rect x="42" y="46" width="108" height="104" rx="22" fill="#F8FAFC"/>
+  <path d="M42 75h108" stroke="#CBD5E1" stroke-width="8"/>
+  <path d="M68 36v24M124 36v24" stroke="#F8FAFC" stroke-width="12" stroke-linecap="round"/>
+  <rect x="60" y="91" width="22" height="22" rx="6" fill="#2563EB"/>
+  <rect x="89" y="91" width="22" height="22" rx="6" fill="#E5E7EB"/>
+  <rect x="118" y="91" width="22" height="22" rx="6" fill="#E5E7EB"/>
+  <path d="M64 128l11 10 23-24" fill="none" stroke="#16A34A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
