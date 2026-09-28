@@ -7,7 +7,8 @@ const TOKEN_BYTES = 32;
 const PIN_LENGTH = 6;
 const PIN_ITERATIONS = 100000;
 const DEV_WTINK_ID = 'WTINKID-214994';
-const ONLINE_WINDOW_MS = 90 * 1000;
+const ONLINE_WINDOW_MS = 75 * 1000;
+const PEER_SESSION_TTL_MS = 30 * 1000;
 
 
 function json(data, status = 200, origin = '*') {
@@ -566,8 +567,7 @@ async function handle(request, env) {
       const bodyText = cleanText(item.body,240);
       const tag = cleanText(item.tag,80);
       if (!title || !bodyText || !tag) continue;
-      const reminderId = `${owner.wtink_id}:${item.id}`.slice(0, 220);
-      statements.push(env.DB.prepare(`INSERT INTO push_reminders(id,profile_id,kind,due_at,title,body,tag,sent_at,created_at,updated_at) VALUES(?1,?2,?3,?4,?5,?6,?7,NULL,?8,?8) ON CONFLICT(id) DO UPDATE SET profile_id=excluded.profile_id,kind=excluded.kind,due_at=excluded.due_at,title=excluded.title,body=excluded.body,tag=excluded.tag,sent_at=NULL,updated_at=excluded.updated_at`).bind(reminderId,owner.wtink_id,item.kind,Math.round(dueAt),title,bodyText,tag,now));
+      statements.push(env.DB.prepare(`INSERT INTO push_reminders(id,profile_id,kind,due_at,title,body,tag,sent_at,created_at,updated_at) VALUES(?1,?2,?3,?4,?5,?6,?7,NULL,?8,?8)`).bind(item.id,owner.wtink_id,item.kind,Math.round(dueAt),title,bodyText,tag,now));
     }
     await env.DB.batch(statements);
     return json({ok:true},200,origin);
@@ -719,7 +719,7 @@ async function handle(request, env) {
     `).bind(owner.wtink_id, target).first();
     if (!friend) return json({error: 'NOT_FRIENDS'}, 403, origin);
     const now = Date.now();
-    const expires = now + 5 * 60 * 1000;
+    const expires = now + PEER_SESSION_TTL_MS;
     await env.DB.prepare(`UPDATE peer_sessions SET status = 'expired', updated_at = ?1 WHERE expires_at < ?1 AND status = 'pending'`).bind(now).run();
     // A new connection attempt supersedes every older signaling session for this pair.
     // This prevents stale answers/offers from racing with the current WebRTC handshake.
@@ -741,7 +741,7 @@ async function handle(request, env) {
       url: `./?tab=friends&peerSession=${encodeURIComponent(id)}`,
       tag: `workertink-peer-request-${id}`,
       urgency: 'high',
-      ttl: 300,
+      ttl: 30,
       type: 'peerRequest',
       peerSessionId: id
     });
