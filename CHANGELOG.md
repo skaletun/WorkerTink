@@ -1,3 +1,27 @@
+# WorkerTink 2.12.0
+
+- WorkerTink Community: feed, likes, comments, messages, notifications, presence.
+- Server-backed social data in D1.
+- Internal notifications for friends and P2P.
+- Home dashboard with salary forecast, vacation planner, sick simulator and what-if.
+- Encrypted local backup (AES-GCM + PBKDF2).
+- Smart calendar insights, annual statistics, security/PWA/admin guidance.
+
+# 2.11.0
+
+## Account setup persistence
+- Master setup data is persisted per account in D1.
+- Setup data is encrypted at rest with AES-GCM using the `SETUP_ENCRYPTION_KEY` Worker secret.
+- Existing accounts with saved setup skip the setup wizard after login.
+- Login/auth status restores the encrypted setup into the local app state over HTTPS.
+
+
+## 2.11.0 — P2P TTL и presence
+
+- P2P-запросы автоматически истекают через 30 секунд, если их не принять и не отклонить.
+- Push для P2P-запроса имеет TTL 30 секунд.
+- Модальное окно входящего P2P-запроса автоматически закрывается по истечении 30 секунд.
+- Heartbeat presence выполняется каждые 20 секунд, список друзей обновляет статусы каждые 10 секунд.
 ## 2.11.0 — 2026-09-28
 
 ### Надёжность и инфраструктура

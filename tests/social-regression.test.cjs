@@ -1,0 +1,14 @@
+const fs=require('fs');
+const path=require('path');
+const root=path.resolve(__dirname,'..');
+const api=fs.readFileSync(path.join(root,'directory-api/src/index.js'),'utf8');
+const dir=fs.readFileSync(path.join(root,'src/directory.ts'),'utf8');
+const social=fs.readFileSync(path.join(root,'src/SocialView.tsx'),'utf8');
+const home=fs.readFileSync(path.join(root,'src/HomeView.tsx'),'utf8');
+const migration=fs.readFileSync(path.join(root,'directory-api/migrations/0010_social_network.sql'),'utf8');
+for(const x of ['/social/feed','/social/posts','/social/notifications','/social/messages']) if(!api.includes(x)) throw new Error(`missing API route ${x}`);
+for(const x of ['social_posts','social_post_likes','social_post_comments','social_notifications','social_messages']) if(!migration.includes(x)) throw new Error(`missing table ${x}`);
+for(const x of ['getSocialFeed','createSocialPost','toggleSocialLike','addSocialComment','getSocialNotifications','sendSocialMessage']) if(!dir.includes(x)) throw new Error(`missing client API ${x}`);
+for(const x of ['Лента','Сообщения','Уведомления','Люди']) if(!social.includes(x)) throw new Error(`missing social section ${x}`);
+for(const x of ['Salary Forecast','Vacation Planner','Sick Simulator','What If?','Encrypted Backup']) if(!home.includes(x)) throw new Error(`missing enhancement ${x}`);
+console.log('WorkerTink social regression tests: OK');

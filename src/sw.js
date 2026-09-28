@@ -13,16 +13,24 @@ self.addEventListener('push', event => {
     badge: './icon-192.png',
     tag: payload.tag || undefined,
     renotify: true,
-    data: {url: payload.url || './'}
+    data: {url: payload.url || './', type: payload.type || '', peerSessionId: payload.peerSessionId || ''}
   }));
 });
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  const target = new URL(event.notification.data?.url || './', self.location.href).href;
-  event.waitUntil(self.clients.matchAll({type:'window', includeUncontrolled:true}).then(clients => {
+  const data = event.notification.data || {};
+  const target = new URL(data.url || './', self.location.href).href;
+  event.waitUntil(self.clients.matchAll({type:'window', includeUncontrolled:true}).then(async clients => {
     const same = clients.find(client => client.url.startsWith(self.location.origin));
-    if (same) { same.focus(); try { same.navigate(target); } catch {} return; }
+    if (same) {
+      try {
+        same.postMessage({type:'workertink:peer-request', peerSessionId:data.peerSessionId || ''});
+      } catch {}
+      await same.focus();
+      try { await same.navigate(target); } catch {}
+      return;
+    }
     return self.clients.openWindow(target);
   }));
 });
