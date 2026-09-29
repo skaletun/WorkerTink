@@ -7,7 +7,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
     "ALLOWED_ORIGIN": "*",
-    "WEBAUTHN_ORIGIN": "https://skaletun.github.io/WorkerTink",
+    "WEBAUTHN_ORIGIN": "https://skaletun.github.io",
     "WEBAUTHN_RP_ID": "skaletun.github.io"
   },
   "triggers": {
