@@ -209,7 +209,7 @@ async function verifyPin(pin, hash, salt) {
 function webAuthnOrigin(request, env) {
   const requestOrigin=String(request.headers.get('Origin')||'').replace(/\/$/,'');
   if(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(requestOrigin)) return requestOrigin;
-  return String(env.WEBAUTHN_ORIGIN || requestOrigin || 'https://skaletun.github.io/WorkerTink').replace(/\/$/, '');
+  return String(env.WEBAUTHN_ORIGIN || requestOrigin || 'https://skaletun.github.io').replace(/\/$/, '');
 }
 
 function webAuthnRpId(request, env) {
