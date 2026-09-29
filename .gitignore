@@ -13,6 +13,12 @@ directory-api/node_modules/
 *.tsbuildinfo
 
 # Electron / electron-builder artifacts
+# Keep desktop build resources (icons are source assets, not generated output)
+!/build/
+!/build/icons/
+!/build/icons/icon.png
+!/build/icons/icon.ico
+
 /release/
 /electron-dist/
 *.AppImage

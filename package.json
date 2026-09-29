@@ -13,10 +13,10 @@
     "directory:dev": "npm --prefix directory-api run dev",
     "directory:deploy": "npm --prefix directory-api run deploy",
     "desktop:dev": "electron electron/main.cjs",
-    "desktop:pack": "electron-builder --dir",
-    "desktop:win": "electron-builder --win nsis portable",
-    "desktop:mac": "electron-builder --mac dmg zip",
-    "desktop:linux": "electron-builder --linux AppImage deb",
+    "desktop:pack": "electron-builder --publish never --dir",
+    "desktop:win": "electron-builder --publish never --win nsis portable",
+    "desktop:mac": "electron-builder --publish never --mac dmg zip",
+    "desktop:linux": "electron-builder --publish never --linux AppImage deb",
     "desktop": "electron-builder"
   },
   "dependencies": {
@@ -33,5 +33,10 @@
     "vite": "^7.1.5",
     "electron": "^44.4.5",
     "electron-builder": "^26.15.3"
+  },
+  "description": "WorkerTink — Work OS, social network and desktop app for work schedules, teams, chats and workplace tools.",
+  "author": {
+    "name": "WorkerTink",
+    "email": "support@workertink.app"
   }
 }
