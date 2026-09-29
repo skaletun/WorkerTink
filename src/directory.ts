@@ -14,7 +14,7 @@ async function request<T>(path:string,options:RequestInit={}):Promise<T>{
 
 export type SearchResult={profile:UserProfile};
 export type DirectoryFriend={profile:UserProfile;addedAt:number;lastSeen:number;online:boolean};
-export type AdminProfile={profile:UserProfile;createdAt:number;updatedAt:number;lastSeen:number;online:boolean};
+export type AdminProfile=UserProfile & {createdAt:number;updatedAt:number;lastSeen:number;online:boolean};
 export type RegisterResult={profile:UserProfile;token:string;security?:{pinSet:boolean;onePassAvailable:boolean}};
 export type SetupData={salary:number;taxRate:number;stage:number;vacTotal:number;startDate:string;scheduleType:State['scheduleType'];scheduleShift:State['scheduleShift'];scheduleVakhtaMonths:number;schedulePairType:State['schedulePairType'];holidayCoeff:number;nightExtraPercent:number};
 export type LoginResult={profile:UserProfile;token:string;setup:SetupData|null;security:{pinSet:boolean;onePassAvailable:boolean}};
@@ -79,3 +79,13 @@ export function readSocialNotification(id:string,token:string){return request<{o
 export function readAllSocialNotifications(token:string){return request<{ok:boolean}>('/social/notifications/read-all',{method:'POST',headers:{Authorization:`Bearer ${token}`}})}
 export function getSocialMessages(profileId:string,token:string){return request<{messages:SocialMessage[]}>(`/social/messages/${encodeURIComponent(profileId)}`,{headers:{Authorization:`Bearer ${token}`}})}
 export function sendSocialMessage(to:string,body:string,token:string){return request<{ok:boolean;message:SocialMessage}>('/social/messages',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({to,body})})}
+
+export type ChatKey={profileId:string;publicKey:JsonWebKey;updatedAt:number};
+export type ChatServerMessage={id:string;from:string;to:string;body:string;kind:'text'|'voice'|'image'|'video';mime?:string|null;name?:string|null;createdAt:number;readAt:number|null};
+export function putChatKey(publicKey:JsonWebKey,token:string){return request<{ok:boolean;key:ChatKey}>('/chat/keys',{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({publicKey})})}
+export function getChatKey(profileId:string,token:string){return request<{key:ChatKey}>(`/chat/keys/${encodeURIComponent(profileId)}`,{headers:{Authorization:`Bearer ${token}`}})}
+export function getChatMessages(profileId:string,token:string){return request<{messages:ChatServerMessage[]}>(`/chat/messages/${encodeURIComponent(profileId)}`,{headers:{Authorization:`Bearer ${token}`}})}
+export function sendChatMessage(to:string,body:string,kind:'text'|'voice'|'image'|'video',token:string,mime?:string,name?:string){return request<{ok:boolean;message:ChatServerMessage}>('/chat/messages',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({to,body,kind,mime,name})})}
+export function startQrLogin(publicKey:JsonWebKey){return request<{session:string;secret:string;publicKey:JsonWebKey;expiresAt:number}>('/auth/qr/start',{method:'POST',body:JSON.stringify({publicKey})})}
+export function pollQrLogin(session:string,secret:string){return request<{status:'pending'|'approved'|'expired';profile?:UserProfile;token?:string;setup?:SetupData|null;security?:{pinSet:boolean;onePassAvailable:boolean};transfer?:{iv:string;data:string;peerPublicKey:JsonWebKey}}>(`/auth/qr/poll?session=${encodeURIComponent(session)}&secret=${encodeURIComponent(secret)}`)}
+export function approveQrLogin(session:string,secret:string,transfer:{iv:string;data:string;peerPublicKey:JsonWebKey},token:string){return request<{ok:boolean}>('/auth/qr/approve',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({session,secret,transfer})})}

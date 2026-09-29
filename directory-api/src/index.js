@@ -181,9 +181,11 @@ async function authProfile(request, env) {
   const token = bearer(request);
   if (!token) return null;
   const tokenHash = await sha256(token);
-  return env.DB.prepare(
-    'SELECT wtink_id, name, position, avatar, is_dev, is_admin, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE token_hash = ?1'
-  ).bind(tokenHash).first();
+  const direct = await env.DB.prepare('SELECT wtink_id, name, position, avatar, is_dev, is_admin, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE token_hash = ?1').bind(tokenHash).first();
+  if (direct) return direct;
+  const session = await env.DB.prepare('SELECT profile_id FROM auth_sessions WHERE token_hash = ?1 AND expires_at > ?2').bind(tokenHash,Date.now()).first();
+  if (!session) return null;
+  return env.DB.prepare('SELECT wtink_id, name, position, avatar, is_dev, is_admin, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE wtink_id = ?1').bind(session.profile_id).first();
 }
 
 
@@ -540,6 +542,60 @@ async function handle(request, env) {
     return json({ok:true},200,origin);
   }
 
+  if (request.method === 'PUT' && path === '/chat/keys') {
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const input=await body(request); const publicKey=input?.publicKey;
+    if(!publicKey||publicKey.kty!=='EC'||publicKey.crv!=='P-256'||typeof publicKey.x!=='string'||typeof publicKey.y!=='string')return json({error:'INVALID_CHAT_KEY'},400,origin);
+    const now=Date.now();
+    await env.DB.prepare(`INSERT INTO chat_device_keys(profile_id,public_key,updated_at) VALUES (?1,?2,?3) ON CONFLICT(profile_id) DO UPDATE SET public_key=excluded.public_key,updated_at=excluded.updated_at`).bind(owner.wtink_id,JSON.stringify(publicKey),now).run();
+    return json({ok:true,key:{profileId:displayId(owner.wtink_id),publicKey,updatedAt:now}},200,origin);
+  }
+  const chatKeyMatch=path.match(/^\/chat\/keys\/([^/]+)$/);
+  if(chatKeyMatch&&request.method==='GET'){
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const target=normalizeId(decodeURIComponent(chatKeyMatch[1]));
+    if(!validId(target))return json({error:'INVALID_ID'},400,origin);
+    const friend=await env.DB.prepare(`SELECT 1 FROM friend_requests WHERE status='accepted' AND ((sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1)) LIMIT 1`).bind(owner.wtink_id,target).first();
+    if(!friend)return json({error:'NOT_FRIENDS'},403,origin);
+    const row=await env.DB.prepare('SELECT public_key,updated_at FROM chat_device_keys WHERE profile_id=?1').bind(target).first();
+    if(!row)return json({error:'CHAT_KEY_NOT_READY'},404,origin);
+    return json({key:{profileId:displayId(target),publicKey:JSON.parse(row.public_key),updatedAt:Number(row.updated_at)}},200,origin);
+  }
+  if(request.method==='POST'&&path==='/auth/qr/start'){
+    const input=await body(request); const publicKey=input?.publicKey;
+    if(!publicKey||publicKey.kty!=='EC'||publicKey.crv!=='P-256'||typeof publicKey.x!=='string'||typeof publicKey.y!=='string')return json({error:'INVALID_QR_KEY'},400,origin);
+    const session=crypto.randomUUID(),secret=randomToken(),now=Date.now(),expiresAt=now+2*60*1000;
+    await env.DB.prepare(`INSERT INTO qr_login_sessions(id,secret_hash,pc_public_key,status,expires_at,created_at) VALUES (?1,?2,?3,'pending',?4,?5)`).bind(session,await sha256(secret),JSON.stringify(publicKey),expiresAt,now).run();
+    return json({session,secret,publicKey,expiresAt},201,origin);
+  }
+  if(request.method==='GET'&&path==='/auth/qr/poll'){
+    const session=String(url.searchParams.get('session')||''),secret=String(url.searchParams.get('secret')||'');
+    if(!session||!secret)return json({error:'INVALID_QR_SESSION'},400,origin);
+    const row=await env.DB.prepare('SELECT * FROM qr_login_sessions WHERE id=?1').bind(session).first();
+    if(!row)return json({status:'expired'},200,origin);
+    if(Number(row.expires_at)<Date.now()){await env.DB.prepare("UPDATE qr_login_sessions SET status='expired' WHERE id=?1").bind(session).run();return json({status:'expired'},200,origin)}
+    if(await sha256(secret)!==row.secret_hash)return json({error:'INVALID_QR_SESSION'},403,origin);
+    if(row.status!=='approved')return json({status:row.status},200,origin);
+    const profile=await env.DB.prepare('SELECT wtink_id,name,position,avatar,is_dev,is_admin,pin_hash FROM profiles WHERE wtink_id=?1').bind(row.profile_id).first();
+    if(!profile)return json({status:'expired'},200,origin);
+    const setupRow=await env.DB.prepare('SELECT setup_ciphertext,setup_iv FROM account_setup WHERE wtink_id=?1').bind(row.profile_id).first();
+    const setup=setupRow?await decryptSetup(env,setupRow.setup_ciphertext,setupRow.setup_iv):null;
+    const passkey=await env.DB.prepare('SELECT COUNT(*) AS count FROM webauthn_credentials WHERE profile_id=?1').bind(row.profile_id).first();
+    return json({status:'approved',profile:publicProfile(profile),token:row.login_token,setup,security:{pinSet:Boolean(profile.pin_hash),onePassAvailable:Number(passkey?.count||0)>0},transfer:{iv:row.transfer_iv,data:row.transfer_data,peerPublicKey:JSON.parse(row.transfer_peer_public_key)}},200,origin);
+  }
+  if(request.method==='POST'&&path==='/auth/qr/approve'){
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const input=await body(request),session=String(input?.session||''),secret=String(input?.secret||''),transfer=input?.transfer;
+    if(!session||!secret||!transfer?.iv||!transfer?.data||!transfer?.peerPublicKey)return json({error:'INVALID_QR_APPROVAL'},400,origin);
+    const row=await env.DB.prepare('SELECT id,secret_hash,status,expires_at FROM qr_login_sessions WHERE id=?1').bind(session).first();
+    if(!row||row.status!=='pending'||Number(row.expires_at)<Date.now()||await sha256(secret)!==row.secret_hash)return json({error:'INVALID_QR_SESSION'},403,origin);
+    const token=randomToken(),now=Date.now(),tokenHash=await sha256(token);
+    await env.DB.batch([
+      env.DB.prepare('INSERT INTO auth_sessions(token_hash,profile_id,created_at,expires_at) VALUES (?1,?2,?3,?4)').bind(tokenHash,owner.wtink_id,now,now+30*24*60*60*1000),
+      env.DB.prepare(`UPDATE qr_login_sessions SET status='approved',profile_id=?1,transfer_iv=?2,transfer_data=?3,transfer_peer_public_key=?4,login_token=?5 WHERE id=?6`).bind(owner.wtink_id,String(transfer.iv),String(transfer.data),JSON.stringify(transfer.peerPublicKey),token,session)
+    ]);
+    return json({ok:true},200,origin);
+  }
+
   if (request.method === 'DELETE' && path === '/profiles') {
     const owner = await authProfile(request, env);
     if (!owner) return json({error: 'UNAUTHORIZED'}, 401, origin);
@@ -549,6 +605,7 @@ async function handle(request, env) {
       env.DB.prepare('DELETE FROM friend_requests WHERE sender_id = ?1 OR receiver_id = ?1').bind(owner.wtink_id),
       env.DB.prepare('DELETE FROM push_subscriptions WHERE profile_id = ?1').bind(owner.wtink_id),
       env.DB.prepare('DELETE FROM auth_challenges WHERE profile_id = ?1').bind(owner.wtink_id),
+      env.DB.prepare('DELETE FROM auth_sessions WHERE profile_id = ?1').bind(owner.wtink_id),
       env.DB.prepare('DELETE FROM webauthn_credentials WHERE profile_id = ?1').bind(owner.wtink_id),
       env.DB.prepare('DELETE FROM profiles WHERE wtink_id = ?1').bind(owner.wtink_id)
     ]);
@@ -975,22 +1032,22 @@ async function handle(request, env) {
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); await env.DB.prepare('UPDATE social_notifications SET read_at=?1 WHERE profile_id=?2 AND read_at IS NULL').bind(Date.now(),owner.wtink_id).run(); return json({ok:true},200,origin);
   }
 
-  const messagesMatch=path.match(/^\/social\/messages\/([^/]+)$/);
+  const messagesMatch=path.match(/^\/(?:social\/|chat\/)messages\/([^/]+)$/);
   if(messagesMatch && request.method==='GET'){
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const target=normalizeId(decodeURIComponent(messagesMatch[1]));
     const friend=await env.DB.prepare(`SELECT 1 FROM friend_requests WHERE status='accepted' AND ((sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1)) LIMIT 1`).bind(owner.wtink_id,target).first(); if(!friend)return json({error:'NOT_FRIENDS'},403,origin);
-    const rows=await env.DB.prepare(`SELECT id,sender_id,receiver_id,body,created_at,read_at FROM social_messages WHERE (sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1) ORDER BY created_at ASC LIMIT 500`).bind(owner.wtink_id,target).all();
+    const rows=await env.DB.prepare(`SELECT id,sender_id,receiver_id,body,kind,mime,name,created_at,read_at FROM social_messages WHERE (sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1) ORDER BY created_at ASC LIMIT 500`).bind(owner.wtink_id,target).all();
     await env.DB.prepare('UPDATE social_messages SET read_at=?1 WHERE receiver_id=?2 AND sender_id=?3 AND read_at IS NULL').bind(Date.now(),owner.wtink_id,target).run();
-    return json({messages:(rows.results||[]).map(r=>({id:r.id,from:displayId(r.sender_id),to:displayId(r.receiver_id),body:r.body,createdAt:Number(r.created_at),readAt:r.read_at?Number(r.read_at):null}))},200,origin);
+    return json({messages:(rows.results||[]).map(r=>({id:r.id,from:displayId(r.sender_id),to:displayId(r.receiver_id),body:r.body,kind:r.kind||'text',mime:r.mime||null,name:r.name||null,createdAt:Number(r.created_at),readAt:r.read_at?Number(r.read_at):null}))},200,origin);
   }
-  if(path==='/social/messages' && request.method==='POST'){
-    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const input=await body(request); const target=normalizeId(input?.to); const text=cleanText(input?.body,4000);
+  if((path==='/social/messages'||path==='/chat/messages') && request.method==='POST'){
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const input=await body(request); const target=normalizeId(input?.to); const text=cleanText(input?.body,12000000); const kind=['text','voice','image','video'].includes(String(input?.kind))?String(input.kind):'text'; const mime=typeof input?.mime==='string'?String(input.mime).slice(0,120):null; const name=typeof input?.name==='string'?String(input.name).slice(0,160):null;
     if(!validId(target)||!text||target===owner.wtink_id)return json({error:'INVALID_MESSAGE'},400,origin);
     const friend=await env.DB.prepare(`SELECT 1 FROM friend_requests WHERE status='accepted' AND ((sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1)) LIMIT 1`).bind(owner.wtink_id,target).first(); if(!friend)return json({error:'NOT_FRIENDS'},403,origin);
-    const id=crypto.randomUUID(),now=Date.now(); await env.DB.prepare('INSERT INTO social_messages (id,sender_id,receiver_id,body,created_at) VALUES (?1,?2,?3,?4,?5)').bind(id,owner.wtink_id,target,text,now).run();
-    await createSocialNotification(env,target,owner.wtink_id,'message',id,'Новое сообщение',`${owner.name}: ${text.slice(0,120)}`,'./?tab=social');
-    await notifyProfile(env,target,'message',{title:`Сообщение от ${owner.name}`,body:text.slice(0,120),url:'./?tab=social',tag:`wtink-message-${id}`,urgency:'high'});
-    return json({ok:true,message:{id,from:displayId(owner.wtink_id),to:displayId(target),body:text,createdAt:now,readAt:null}},201,origin);
+    const id=crypto.randomUUID(),now=Date.now(); await env.DB.prepare('INSERT INTO social_messages (id,sender_id,receiver_id,body,kind,mime,name,created_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8)').bind(id,owner.wtink_id,target,text,kind,mime,name,now).run();
+    await createSocialNotification(env,target,owner.wtink_id,'message',id,'Новое сообщение',`${owner.name}: ${kind==='text'?text.slice(0,120):'Вложение'}`,'./?tab=friends');
+    await notifyProfile(env,target,'message',{title:`Сообщение от ${owner.name}`,body:kind==='text'?text.slice(0,120):'Новое зашифрованное вложение',url:'./?tab=friends',tag:`wtink-message-${id}`,urgency:'high'});
+    return json({ok:true,message:{id,from:displayId(owner.wtink_id),to:displayId(target),body:text,kind,mime,name,createdAt:now,readAt:null}},201,origin);
   }
 
   const adminProfile = async () => {
@@ -1040,6 +1097,7 @@ async function handle(request, env) {
       env.DB.prepare('DELETE FROM push_subscriptions WHERE profile_id = ?1').bind(target),
       env.DB.prepare('DELETE FROM push_reminders WHERE profile_id = ?1').bind(target),
       env.DB.prepare('DELETE FROM auth_challenges WHERE profile_id = ?1').bind(target),
+      env.DB.prepare('DELETE FROM auth_sessions WHERE profile_id = ?1').bind(target),
       env.DB.prepare('DELETE FROM webauthn_credentials WHERE profile_id = ?1').bind(target),
       env.DB.prepare('DELETE FROM profiles WHERE wtink_id = ?1').bind(target)
     ]);

@@ -1,4 +1,18 @@
-# WorkerTink 2.12.0
+# Changelog
+
+## 2.14.0 — E2E Chat, QR Login & mobile shell
+
+- fixed developer settings crash caused by the flat `/admin/profiles` response shape;
+- fixed mobile bottom navigation as a fixed safe-area bar;
+- removed P2P chat UI from Friends and the Messages section from Community;
+- added encrypted friend chat using ECDH P-256 + AES-GCM;
+- added encrypted photo/video attachments and voice messages with recording animation;
+- added QR desktop login approved from an authenticated mobile device;
+- QR login uses separate server auth sessions and does not terminate the mobile session;
+- added migration `0012_chat_e2ee_qr.sql`;
+- added regression coverage for protected chat and QR/auth endpoints.
+
+WorkerTink 2.12.0
 
 - WorkerTink Community: feed, likes, comments, messages, notifications, presence.
 - Server-backed social data in D1.
