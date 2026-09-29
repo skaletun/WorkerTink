@@ -550,7 +550,7 @@ async function handle(request, env) {
     });
     const now=Date.now();
     await env.DB.batch([
-      env.DB.prepare('DELETE FROM auth_challenges WHERE profile_id = ?1 AND kind = ?2 AND expires_at <= ?3').bind(owner.wtink_id,'onepass_register',now),
+      env.DB.prepare('DELETE FROM auth_challenges WHERE profile_id = ?1 AND kind = ?2').bind(owner.wtink_id,'onepass_register'),
       env.DB.prepare('INSERT INTO auth_challenges(id,profile_id,kind,challenge,expires_at,created_at) VALUES (?1,?2,?3,?4,?5,?6)').bind(crypto.randomUUID(),owner.wtink_id,'onepass_register',options.challenge,now+5*60*1000,now)
     ]);
     return json(options,200,origin);
@@ -572,8 +572,26 @@ async function handle(request, env) {
     let verification;
     try {
       verification = await verifyRegistrationResponse({response,expectedChallenge:challenge.challenge,expectedOrigin:webOrigin,expectedRPID:rpID});
-    } catch { return json({error:'ONEPASS_VERIFICATION_FAILED'},400,origin); }
-    if (!verification.verified || !verification.registrationInfo) return json({error:'ONEPASS_VERIFICATION_FAILED'},400,origin);
+    } catch (error) {
+      console.error('[ONEPASS REGISTER] verification failed', {
+        name: error instanceof Error ? error.name : typeof error,
+        message: error instanceof Error ? error.message : String(error),
+        rpID,
+        webOrigin,
+        responseId: response?.id || null
+      });
+      return json({error:'ONEPASS_VERIFICATION_FAILED'},400,origin);
+    }
+    if (!verification.verified || !verification.registrationInfo) {
+      console.error('[ONEPASS REGISTER] verification returned unverified', {
+        verified: Boolean(verification?.verified),
+        hasRegistrationInfo: Boolean(verification?.registrationInfo),
+        rpID,
+        webOrigin,
+        responseId: response?.id || null
+      });
+      return json({error:'ONEPASS_VERIFICATION_FAILED'},400,origin);
+    }
     const {credential,credentialDeviceType,credentialBackedUp}=verification.registrationInfo;
     if(!credential?.id || !credential?.publicKey) return json({error:'ONEPASS_CREDENTIAL_INVALID'},400,origin);
     const now=Date.now();
