@@ -3,7 +3,8 @@ const enc=new TextEncoder();
 const dec=new TextDecoder();
 
 type StoredIdentity={privateKey:JsonWebKey;publicKey:JsonWebKey};
-export type ChatEnvelope={v:1;kind:'text'|'voice'|'image'|'video'|'note';iv:string;data:string;name?:string;mime?:string};
+export type ChatEnvelope={v:1;kind:'text'|'voice'|'image'|'video'|'note';iv:string;data:string;name?:string;mime?:string;mediaId?:string;size?:number};
+export type EncryptedChatMedia={iv:string;ciphertext:ArrayBuffer};
 
 const b64=(bytes:ArrayBuffer|Uint8Array)=>{const a=new Uint8Array(bytes);let s='';for(const b of a)s+=String.fromCharCode(b);return btoa(s)};
 const unb64=(value:string)=>{const s=atob(value);const a=new Uint8Array(s.length);for(let i=0;i<s.length;i++)a[i]=s.charCodeAt(i);return a};
@@ -27,6 +28,18 @@ async function derive(profileId:string,peerPublicKey:JsonWebKey){
  const privateKey=await crypto.subtle.importKey('jwk',own.privateKey,{name:'ECDH',namedCurve:'P-256'},false,['deriveKey']);
  const publicKey=await crypto.subtle.importKey('jwk',peerPublicKey,{name:'ECDH',namedCurve:'P-256'},false,[]);
  return crypto.subtle.deriveKey({name:'ECDH',public:publicKey},privateKey,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+
+export async function encryptChatMedia(profileId:string,peerPublicKey:JsonWebKey,payload:{kind:'voice'|'image'|'video';blob:ArrayBuffer}):Promise<EncryptedChatMedia>{
+ const key=await derive(profileId,peerPublicKey);
+ const iv=crypto.getRandomValues(new Uint8Array(12));
+ const ciphertext=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,payload.blob);
+ return {iv:b64(iv),ciphertext};
+}
+
+export async function decryptChatMedia(profileId:string,peerPublicKey:JsonWebKey,iv:string,ciphertext:ArrayBuffer):Promise<ArrayBuffer>{
+ const key=await derive(profileId,peerPublicKey);
+ return crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(iv)},key,ciphertext);
 }
 
 export async function encryptChat(profileId:string,peerPublicKey:JsonWebKey,payload:{kind:ChatEnvelope['kind'];text?:string;blob?:ArrayBuffer;name?:string;mime?:string}):Promise<ChatEnvelope>{

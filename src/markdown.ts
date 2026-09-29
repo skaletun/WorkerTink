@@ -34,12 +34,12 @@ export function ensureEditorTables(root:HTMLElement){root.querySelectorAll('tabl
 export function addTableRow(table:HTMLTableElement){
  const tbody=table.tBodies[0]??table.createTBody();const inputRow=tbody.rows[tbody.rows.length-1];const row=tbody.insertRow(Math.max(0,tbody.rows.length-1));
  for(let i=0;i<table.rows[0]?.cells.length||1;i++){const cell=row.insertCell();cell.innerHTML='<br>'}
- if(inputRow&&tableRowIsBlank(inputRow))ensureTableInputRow(table);return row;
+ return row;
 }
 export function addTableColumn(table:HTMLTableElement){
  const header=table.tHead?.rows[0]??table.rows[0];if(!header)return;
  const index=header.cells.length;const head=header.insertCell();head.outerHTML=`<th>Заголовок ${index+1}</th>`;
- const tbody=table.tBodies[0]??table.createTBody();Array.from(tbody.rows).forEach(row=>{const cell=row.insertCell();cell.innerHTML='<br>'});ensureTableInputRow(table);
+ const tbody=table.tBodies[0]??table.createTBody();Array.from(tbody.rows).forEach(row=>{const cell=row.insertCell();cell.innerHTML='<br>'});
 }
 export function removeTable(table:HTMLTableElement){table.closest('.md-table-wrap')?.remove()??table.remove();}
 

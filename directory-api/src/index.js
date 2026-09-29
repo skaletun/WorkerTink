@@ -25,6 +25,25 @@ function json(data, status = 200, origin = '*') {
   });
 }
 
+function binary(data, status = 200, origin = '*', contentType = 'application/octet-stream') {
+  return new Response(data, {status, headers: {'content-type': contentType, 'cache-control': 'no-store', 'access-control-allow-origin': origin, 'access-control-allow-headers': 'Content-Type, Authorization', 'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS', 'vary': 'Origin'}});
+}
+
+function bytesToBase64(bytes) {
+  let binary = '';
+  const view = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  const step = 0x8000;
+  for (let i = 0; i < view.length; i += step) binary += String.fromCharCode(...view.subarray(i, i + step));
+  return btoa(binary);
+}
+
+function base64ToBytes(value) {
+  const binary = atob(String(value || ''));
+  const out = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) out[i] = binary.charCodeAt(i);
+  return out;
+}
+
 function corsOrigin(request, env) {
   const configured = String(env.ALLOWED_ORIGIN || '*').trim();
   if (configured === '*') return '*';
@@ -464,6 +483,7 @@ async function handle(request, env) {
     if (!owner) return json({error:'UNAUTHORIZED'},401,origin);
     const input = await body(request);
     const response = input?.response;
+    const deviceName = cleanText(input?.deviceName, 120) || 'Устройство';
     if (!response?.id) return json({error:'INVALID_ONEPASS_RESPONSE'},400,origin);
     const challenge = await env.DB.prepare(`SELECT id, challenge FROM auth_challenges WHERE profile_id = ?1 AND kind = 'onepass_register' AND expires_at > ?2 ORDER BY created_at DESC LIMIT 1`).bind(owner.wtink_id,Date.now()).first();
     if (!challenge) return json({error:'ONEPASS_CHALLENGE_EXPIRED'},410,origin);
@@ -478,10 +498,17 @@ async function handle(request, env) {
     const {credential,credentialDeviceType,credentialBackedUp}=verification.registrationInfo;
     const now=Date.now();
     await env.DB.batch([
-      env.DB.prepare(`INSERT OR REPLACE INTO webauthn_credentials(id,profile_id,user_id,public_key,counter,device_type,backed_up,transports,created_at,updated_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?9)`).bind(credential.id,owner.wtink_id,owner.webauthn_user_id || owner.wtink_id,base64Url(credential.publicKey),credential.counter,credentialDeviceType,credentialBackedUp?1:0,JSON.stringify(credential.transports||[]),now),
+      env.DB.prepare(`INSERT OR REPLACE INTO webauthn_credentials(id,profile_id,user_id,public_key,counter,device_type,backed_up,transports,device_name,created_at,updated_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?9)`).bind(credential.id,owner.wtink_id,owner.webauthn_user_id || owner.wtink_id,base64Url(credential.publicKey),credential.counter,credentialDeviceType,credentialBackedUp?1:0,JSON.stringify(credential.transports||[]),deviceName,now),
       env.DB.prepare('DELETE FROM auth_challenges WHERE id = ?1').bind(challenge.id)
     ]);
     return json({ok:true},200,origin);
+  }
+
+  if (request.method === 'GET' && path === '/auth/onepass') {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error:'UNAUTHORIZED'},401,origin);
+    const rows = await env.DB.prepare('SELECT id, device_type, backed_up, transports, device_name, created_at, updated_at FROM webauthn_credentials WHERE profile_id = ?1 ORDER BY created_at DESC').bind(owner.wtink_id).all();
+    return json({devices:(rows.results||[]).map(r=>({id:r.id,deviceType:r.device_type||'singleDevice',backedUp:Boolean(r.backed_up),transports:JSON.parse(r.transports||'[]'),deviceName:r.device_name||'Устройство',createdAt:Number(r.created_at||0),updatedAt:Number(r.updated_at||0)}))},200,origin);
   }
 
   if (request.method === 'GET' && path === '/auth/onepass/available') {
@@ -539,6 +566,16 @@ async function handle(request, env) {
     return json({profile:publicProfile(owner),token,security:{pinSet:true,onePassAvailable:true}},200,origin);
   }
 
+  const onePassDeleteMatch = path.match(/^\/auth\/onepass\/([^/]+)$/);
+  if (onePassDeleteMatch && request.method === 'DELETE') {
+    const owner=await authProfile(request,env);
+    if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const credentialId=decodeURIComponent(onePassDeleteMatch[1]);
+    const row=await env.DB.prepare('SELECT id FROM webauthn_credentials WHERE id=?1 AND profile_id=?2').bind(credentialId,owner.wtink_id).first();
+    if(!row)return json({error:'ONEPASS_DEVICE_NOT_FOUND'},404,origin);
+    await env.DB.prepare('DELETE FROM webauthn_credentials WHERE id=?1').bind(credentialId).run();
+    return json({ok:true},200,origin);
+  }
   if (request.method === 'DELETE' && path === '/auth/onepass') {
     const owner=await authProfile(request,env);
     if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
@@ -1043,6 +1080,47 @@ async function handle(request, env) {
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); await env.DB.prepare('UPDATE social_notifications SET read_at=?1 WHERE profile_id=?2 AND read_at IS NULL').bind(Date.now(),owner.wtink_id).run(); return json({ok:true},200,origin);
   }
 
+  const chatMediaChunkMatch = path.match(/^\/chat\/media\/([^/]+)\/(\d+)$/);
+  if (chatMediaChunkMatch && request.method === 'PUT') {
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const mediaId=decodeURIComponent(chatMediaChunkMatch[1]); const index=Number(chatMediaChunkMatch[2]);
+    const media=await env.DB.prepare('SELECT id,sender_id,total_chunks,complete FROM chat_media WHERE id=?1').bind(mediaId).first();
+    if(!media||normalizeId(media.sender_id)!==normalizeId(owner.wtink_id))return json({error:'MEDIA_NOT_FOUND'},404,origin);
+    if(Number(media.complete))return json({error:'MEDIA_COMPLETE'},409,origin);
+    if(!Number.isInteger(index)||index<0||index>=Number(media.total_chunks))return json({error:'INVALID_MEDIA_CHUNK'},400,origin);
+    const bytes=new Uint8Array(await request.arrayBuffer()); if(!bytes.length||bytes.length>600000)return json({error:'INVALID_MEDIA_CHUNK'},400,origin);
+    await env.DB.prepare('INSERT OR REPLACE INTO chat_media_chunks(media_id,chunk_index,data,created_at) VALUES (?1,?2,?3,?4)').bind(mediaId,index,bytesToBase64(bytes),Date.now()).run();
+    const count=await env.DB.prepare('SELECT COUNT(*) AS count FROM chat_media_chunks WHERE media_id=?1').bind(mediaId).first();
+    await env.DB.prepare('UPDATE chat_media SET uploaded_chunks=?1 WHERE id=?2').bind(Number(count?.count||0),mediaId).run();
+    return json({ok:true,index},200,origin);
+  }
+
+  const chatMediaAction = path.match(/^\/chat\/media\/([^/]+)(?:\/(complete))?$/);
+  if (chatMediaAction && request.method === 'POST' && chatMediaAction[2] === 'complete') {
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const mediaId=decodeURIComponent(chatMediaAction[1]);
+    const media=await env.DB.prepare('SELECT id,sender_id,total_chunks,uploaded_chunks FROM chat_media WHERE id=?1').bind(mediaId).first();
+    if(!media||normalizeId(media.sender_id)!==normalizeId(owner.wtink_id))return json({error:'MEDIA_NOT_FOUND'},404,origin);
+    if(Number(media.uploaded_chunks)!==Number(media.total_chunks))return json({error:'MEDIA_INCOMPLETE'},409,origin);
+    await env.DB.prepare('UPDATE chat_media SET complete=1,completed_at=?1 WHERE id=?2').bind(Date.now(),mediaId).run(); return json({ok:true},200,origin);
+  }
+  if (chatMediaAction && request.method === 'GET' && !chatMediaAction[2]) {
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const mediaId=decodeURIComponent(chatMediaAction[1]);
+    const media=await env.DB.prepare('SELECT id,sender_id,receiver_id,mime,size,total_chunks,complete FROM chat_media WHERE id=?1').bind(mediaId).first();
+    if(!media||!Number(media.complete))return json({error:'MEDIA_NOT_FOUND'},404,origin);
+    const participant=normalizeId(media.sender_id)===normalizeId(owner.wtink_id)||normalizeId(media.receiver_id)===normalizeId(owner.wtink_id); if(!participant)return json({error:'FORBIDDEN'},403,origin);
+    const rows=await env.DB.prepare('SELECT chunk_index,data FROM chat_media_chunks WHERE media_id=?1 ORDER BY chunk_index ASC').bind(mediaId).all();
+    const parts=(rows.results||[]).map(r=>base64ToBytes(r.data)); const total=parts.reduce((n,p)=>n+p.length,0); const out=new Uint8Array(total); let offset=0; for(const part of parts){out.set(part,offset);offset+=part.length;}
+    return binary(out,200,origin,media.mime||'application/octet-stream');
+  }
+  if (path === '/chat/media/init' && request.method === 'POST') {
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const input=await body(request); const target=normalizeId(input?.to); const kind=String(input?.kind||''); const size=Number(input?.size||0);
+    if(!validId(target)||target===owner.wtink_id||!['voice','image','video'].includes(kind)||!Number.isFinite(size)||size<=0||size>20*1024*1024)return json({error:'MEDIA_TOO_LARGE'},400,origin);
+    const friend=await env.DB.prepare(`SELECT 1 FROM friend_requests WHERE status='accepted' AND ((sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1)) LIMIT 1`).bind(owner.wtink_id,target).first(); if(!friend)return json({error:'NOT_FRIENDS'},403,origin);
+    const id=crypto.randomUUID(),chunkSize=524288,totalChunks=Math.ceil(size/chunkSize),now=Date.now();
+    await env.DB.prepare('INSERT INTO chat_media(id,sender_id,receiver_id,kind,mime,name,iv,size,chunk_size,total_chunks,created_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)').bind(id,owner.wtink_id,target,kind,cleanText(input?.mime,120),cleanText(input?.name,160),cleanText(input?.iv,80),size,chunkSize,totalChunks,now).run();
+    return json({id,chunkSize,totalChunks},201,origin);
+  }
+
   const messagesMatch=path.match(/^\/(?:social\/|chat\/)messages\/([^/]+)$/);
   if(messagesMatch && request.method==='GET'){
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const target=normalizeId(decodeURIComponent(messagesMatch[1]));
@@ -1096,6 +1174,23 @@ async function handle(request, env) {
     return json({stats:{profiles:Number(profiles?.count||0),friendships:Number(friends?.count||0),pendingRequests:Number(pending?.count||0)}},200,origin);
   }
 
+  const adminDetailMatch = path.match(/^\/admin\/profiles\/([^/]+)$/);
+  if (adminDetailMatch && request.method === 'GET') {
+    if (!(await adminProfile())) return json({error:'FORBIDDEN'},403,origin);
+    const target=normalizeId(decodeURIComponent(adminDetailMatch[1]));
+    const profile=await env.DB.prepare('SELECT wtink_id,name,position,avatar,is_dev,is_admin,created_at,updated_at,last_seen FROM profiles WHERE wtink_id=?1').bind(target).first();
+    if(!profile)return json({error:'USER_NOT_FOUND'},404,origin);
+    const [friends,requests,devices,blocked,media,deviceRows]=await Promise.all([
+      env.DB.prepare("SELECT COUNT(*) AS count FROM friend_requests WHERE status='accepted' AND (sender_id=?1 OR receiver_id=?1)").bind(target).first(),
+      env.DB.prepare("SELECT COUNT(*) AS count FROM friend_requests WHERE status='pending' AND (sender_id=?1 OR receiver_id=?1)").bind(target).first(),
+      env.DB.prepare('SELECT COUNT(*) AS count FROM webauthn_credentials WHERE profile_id=?1').bind(target).first(),
+      env.DB.prepare('SELECT COUNT(*) AS count FROM blocked_profiles WHERE profile_id=?1 OR blocked_id=?1').bind(target).first(),
+      env.DB.prepare('SELECT COUNT(*) AS count FROM chat_media WHERE sender_id=?1 OR receiver_id=?1').bind(target).first(),
+      env.DB.prepare('SELECT id,device_name,device_type,backed_up,created_at,updated_at FROM webauthn_credentials WHERE profile_id=?1 ORDER BY updated_at DESC').bind(target).all()
+    ]);
+    return json({profile:{...publicProfile(profile),createdAt:Number(profile.created_at||0),updatedAt:Number(profile.updated_at||0),lastSeen:Number(profile.last_seen||0),online:Number(profile.last_seen||0)>=Date.now()-ONLINE_WINDOW_MS},stats:{friends:Number(friends?.count||0),requests:Number(requests?.count||0),onePass:Number(devices?.count||0),blocks:Number(blocked?.count||0),media:Number(media?.count||0)},devices:(deviceRows.results||[]).map(r=>({id:r.id,deviceName:r.device_name||'Устройство',deviceType:r.device_type||'singleDevice',backedUp:Boolean(r.backed_up),createdAt:Number(r.created_at||0),updatedAt:Number(r.updated_at||0)}))},200,origin);
+  }
+
   if (path === '/admin/profiles' && request.method === 'GET') {
     if (!(await adminProfile())) return json({error:'FORBIDDEN'}, 403, origin);
     const url = new URL(request.url);
@@ -1111,7 +1206,11 @@ async function handle(request, env) {
     if (!(await adminProfile())) return json({error:'FORBIDDEN'}, 403, origin);
     const target = normalizeId(decodeURIComponent(adminProfilePath[1]));
     if (!validId(target)) return json({error:'INVALID_ID'},400,origin);
-    await env.DB.prepare('UPDATE profiles SET token_hash = ?1, updated_at = ?2, last_seen = ?2 WHERE wtink_id = ?3').bind(await sha256(randomToken()),Date.now(),target).run();
+    const revokedTokenHash=await sha256(randomToken()); const revokedAt=Date.now();
+    await env.DB.batch([
+      env.DB.prepare('UPDATE profiles SET token_hash = ?1, updated_at = ?2, last_seen = ?2 WHERE wtink_id = ?3').bind(revokedTokenHash,revokedAt,target),
+      env.DB.prepare('DELETE FROM auth_sessions WHERE profile_id = ?1').bind(target)
+    ]);
     return json({ok:true},200,origin);
   }
 
@@ -1170,4 +1269,4 @@ async function processPushReminders(env) {
   await env.DB.prepare('DELETE FROM push_reminders WHERE sent_at IS NOT NULL AND sent_at < ?1').bind(now - 7*24*60*60*1000).run();
 }
 
-export default {fetch: handle, async scheduled(controller, env) { await processPushReminders(env); }};
+export default {fetch: async (request, env, ctx) => { try { return await handle(request, env, ctx); } catch (error) { const origin = corsOrigin(request, env) || '*'; return json({error:'INTERNAL_ERROR'},500,origin); } }, async scheduled(controller, env) { await processPushReminders(env); }};
