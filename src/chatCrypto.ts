@@ -96,6 +96,26 @@ export async function getChatIdentityMatching(profileId:string,expectedPublicKey
  throw new Error('E2E_IDENTITY_MISMATCH');
 }
 
+export async function getChatIdentityCandidates(profileId:string):Promise<StoredIdentity[]>{
+ const id=canonicalId(profileId);if(!id)throw new Error('E2E_PROFILE_ID_REQUIRED');
+ const out:StoredIdentity[]=[];const seen=new Set<string>();
+ const add=(identity:StoredIdentity|null)=>{if(!identity)return;const marker=JSON.stringify(identity.publicKey);if(!seen.has(marker)){seen.add(marker);out.push(identity)}};
+ add(await vaultGet(id));for(const candidate of localCandidates(id))add(candidate);
+ if(!out.length)add(await getChatIdentity(id));
+ return out;
+}
+async function deriveWithIdentity(identity:StoredIdentity,peerPublicKey:JsonWebKey){
+ const privateKey=await crypto.subtle.importKey('jwk',identity.privateKey,{name:'ECDH',namedCurve:'P-256'},false,['deriveKey']);
+ const publicKey=await crypto.subtle.importKey('jwk',peerPublicKey,{name:'ECDH',namedCurve:'P-256'},false,[]);
+ return crypto.subtle.deriveKey({name:'ECDH',public:publicKey},privateKey,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+export async function decryptChatWithIdentity(identity:StoredIdentity,peerPublicKey:JsonWebKey,envelope:ChatEnvelope):Promise<{kind:ChatEnvelope['kind'];text?:string;blob?:ArrayBuffer;name?:string;mime?:string}>{
+ const key=await deriveWithIdentity(identity,peerPublicKey);
+ const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(envelope.iv)},key,unb64(envelope.data));
+ if(envelope.kind==='text'||envelope.kind==='note'){const parsed=JSON.parse(dec.decode(plain)) as {text?:string};return {kind:envelope.kind,text:parsed.text??''}}
+ return {kind:envelope.kind,blob:plain,name:envelope.name,mime:envelope.mime};
+}
+
 export async function importChatIdentity(profileId:string,identity:StoredIdentity){
  if(!isIdentity(identity))throw new Error('E2E_IDENTITY_INVALID');
  await vaultPut(profileId,identity);localPut(profileId,identity);return identity;
