@@ -68,3 +68,5 @@ jobs:
           name: WorkerTink v3.0.0
           files: android/app/build/outputs/apk/release/app-release-unsigned.apk
           fail_on_unmatched_files: true
+
+# Android CI enabled for WorkerTink 3.0.0.
