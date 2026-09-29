@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-# ─────────────────────────────────────────────────────────────
-# WorkerTink 3.0.0 — Git ignore
-# ─────────────────────────────────────────────────────────────
+# WorkerTink 3.0.0
 
 # Dependencies
 node_modules/
@@ -38,7 +35,6 @@ directory-api/node_modules/
 # Environment files / local secrets
 .env
 .env.*
-!.env.example
 !.env.*.example
 
 # Local server/runtime data
@@ -73,15 +69,7 @@ test-results/
 *.orig
 *.rej
 *~
-=======
-node_modules
-dist
->>>>>>> e1a2435 (Critical fixes)
+
 .DS_Store
 .vscode
 .idea
-npm-debug.log*
-
-server/data.json
-.wrangler
-*.tsbuildinfo
