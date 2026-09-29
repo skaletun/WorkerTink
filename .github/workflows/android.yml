@@ -49,29 +49,29 @@ jobs:
       - name: Sync web assets
         run: npx cap sync android
 
-      - name: Build release APK
+      - name: Build installable debug APK
         working-directory: android
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleDebug
 
       - name: Verify APK
         shell: bash
         run: |
           set -euo pipefail
-          test -f android/app/build/outputs/apk/release/app-release-unsigned.apk
-          ls -lh android/app/build/outputs/apk/release/app-release-unsigned.apk
+          test -f android/app/build/outputs/apk/debug/app-debug.apk
+          ls -lh android/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: workertink-android-v3.0.0
-          path: android/app/build/outputs/apk/release/app-release-unsigned.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Publish APK to v3.0.0 Release
+      - name: Publish installable APK to v3.0.0 Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v3.0.0
           name: WorkerTink v3.0.0
-          files: android/app/build/outputs/apk/release/app-release-unsigned.apk
+          files: android/app/build/outputs/apk/debug/app-debug.apk
           fail_on_unmatched_files: true
 
 # Android CI enabled for WorkerTink 3.0.0.
