@@ -1,0 +1,15 @@
+import {useEffect,useMemo,useState} from 'react';
+import {getSocialNotifications,readAllSocialNotifications,readSocialNotification,type SocialNotification} from './directory';
+
+type Props={token:string;onNotice:(message:string)=>void};
+const icon=(kind:string)=>kind.includes('message')?'💬':kind.includes('friend')?'👥':kind.includes('event')?'📅':kind.includes('channel')?'🏢':kind.includes('shift')?'🔄':kind.includes('pay')?'💰':'🔔';
+const ago=(ts:number)=>{const d=Math.max(0,Date.now()-ts);if(d<60000)return 'только что';if(d<3600000)return `${Math.floor(d/60000)} мин назад`;if(d<86400000)return `${Math.floor(d/3600000)} ч назад`;return new Date(ts).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})};
+export default function NotificationsView({token,onNotice}:Props){
+ const [items,setItems]=useState<SocialNotification[]>([]);const [loading,setLoading]=useState(true);const [filter,setFilter]=useState<'all'|'unread'>('all');
+ const load=async()=>{try{setLoading(true);const r=await getSocialNotifications(token);setItems(r.notifications)}catch{onNotice('Не удалось загрузить уведомления')}finally{setLoading(false)}};
+ useEffect(()=>{void load();const timer=window.setInterval(()=>void load(),30000);return()=>window.clearInterval(timer)},[token]);
+ const visible=useMemo(()=>filter==='unread'?items.filter(x=>!x.readAt):items,[items,filter]);
+ const read=async(id:string)=>{try{await readSocialNotification(id,token);setItems(xs=>xs.map(x=>x.id===id?{...x,readAt:Date.now()}:x))}catch{onNotice('Не удалось отметить уведомление')}};
+ const readAll=async()=>{try{await readAllSocialNotifications(token);setItems(xs=>xs.map(x=>({...x,readAt:x.readAt||Date.now()})))}catch{onNotice('Не удалось отметить уведомления')}};
+ return <section className="notifications-page"><div className="page-intro"><span className="eyebrow">NOTIFICATION CENTER</span><h2>Уведомления</h2><p>В одном месте — сообщения, заявки, события, корпоративные приглашения и рабочие изменения.</p></div><div className="notification-toolbar"><div><button className={filter==='all'?'active':''} onClick={()=>setFilter('all')}>Все</button><button className={filter==='unread'?'active':''} onClick={()=>setFilter('unread')}>Непрочитанные</button></div><div><button onClick={()=>void load()}>Обновить</button><button className="primary" onClick={()=>void readAll()}>Прочитать всё</button></div></div>{loading&&!items.length?<div className="network-empty">Загружаем уведомления…</div>:<div className="notification-list">{visible.map(n=><article className={`notification-card ${n.readAt?'read':'unread'}`} key={n.id} onClick={()=>!n.readAt&&void read(n.id)}><div className="notification-icon">{icon(n.kind)}</div><div className="notification-body"><div><b>{n.title}</b><time>{ago(n.createdAt)}</time></div><p>{n.body}</p>{n.actor&&<small>{n.actor.name}{n.actor.position?` · ${n.actor.position}`:''}</small>}</div>{!n.readAt&&<span className="notification-dot"/>}</article>)}{!visible.length&&<div className="network-empty">Новых уведомлений нет.</div>}</div>}</section>
+}

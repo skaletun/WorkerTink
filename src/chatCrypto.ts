@@ -3,7 +3,7 @@ const enc=new TextEncoder();
 const dec=new TextDecoder();
 
 type StoredIdentity={privateKey:JsonWebKey;publicKey:JsonWebKey};
-export type ChatEnvelope={v:1;kind:'text'|'voice'|'image'|'video'|'note';iv:string;data:string;name?:string;mime?:string;mediaId?:string;size?:number};
+export type ChatEnvelope={v:1;kind:'text'|'voice'|'image'|'video'|'file'|'note';iv:string;data:string;name?:string;mime?:string;mediaId?:string;size?:number;caption?:string};
 export type EncryptedChatMedia={iv:string;ciphertext:ArrayBuffer};
 
 const b64=(bytes:ArrayBuffer|Uint8Array)=>{const a=new Uint8Array(bytes);let s='';for(const b of a)s+=String.fromCharCode(b);return btoa(s)};
@@ -30,7 +30,7 @@ async function derive(profileId:string,peerPublicKey:JsonWebKey){
  return crypto.subtle.deriveKey({name:'ECDH',public:publicKey},privateKey,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
 }
 
-export async function encryptChatMedia(profileId:string,peerPublicKey:JsonWebKey,payload:{kind:'voice'|'image'|'video';blob:ArrayBuffer}):Promise<EncryptedChatMedia>{
+export async function encryptChatMedia(profileId:string,peerPublicKey:JsonWebKey,payload:{kind:'voice'|'image'|'video'|'file';blob:ArrayBuffer}):Promise<EncryptedChatMedia>{
  const key=await derive(profileId,peerPublicKey);
  const iv=crypto.getRandomValues(new Uint8Array(12));
  const ciphertext=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,payload.blob);
@@ -53,7 +53,7 @@ export async function encryptChat(profileId:string,peerPublicKey:JsonWebKey,payl
 export async function decryptChat(profileId:string,peerPublicKey:JsonWebKey,envelope:ChatEnvelope):Promise<{kind:ChatEnvelope['kind'];text?:string;blob?:ArrayBuffer;name?:string;mime?:string}>{
  const key=await derive(profileId,peerPublicKey);
  const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(envelope.iv)},key,unb64(envelope.data));
- if(envelope.kind==='text'){const parsed=JSON.parse(dec.decode(plain)) as {text?:string};return {kind:'text',text:parsed.text??''}}
+ if(envelope.kind==='text'||envelope.kind==='note'){const parsed=JSON.parse(dec.decode(plain)) as {text?:string};return {kind:envelope.kind,text:parsed.text??''}}
  return {kind:envelope.kind,blob:plain,name:envelope.name,mime:envelope.mime};
 }
 
@@ -81,3 +81,49 @@ export async function decryptKeyTransfer(privateKey:CryptoKey,peerPublicJwk:Json
 
 export const blobToArrayBuffer=(blob:Blob)=>blob.arrayBuffer();
 export async function importIdentityPrivateKey(identity:StoredIdentity){return crypto.subtle.importKey('jwk',identity.privateKey,{name:'ECDH',namedCurve:'P-256'},false,['deriveKey'])}
+
+
+export type GroupKeyPacket={iv:string;data:string};
+export async function generateGroupKey(){
+  const key=await crypto.subtle.generateKey({name:'AES-GCM',length:256},true,['encrypt','decrypt']);
+  return key;
+}
+export async function exportGroupKey(key:CryptoKey){return crypto.subtle.exportKey('raw',key)}
+export async function importGroupKey(raw:ArrayBuffer){return crypto.subtle.importKey('raw',raw,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+export async function encryptGroupKeyForMember(profileId:string,peerPublicKey:JsonWebKey,groupKey:CryptoKey):Promise<GroupKeyPacket>{
+  const own=await getChatIdentity(profileId);
+  const privateKey=await crypto.subtle.importKey('jwk',own.privateKey,{name:'ECDH',namedCurve:'P-256'},false,['deriveKey']);
+  const peer=await crypto.subtle.importKey('jwk',peerPublicKey,{name:'ECDH',namedCurve:'P-256'},false,[]);
+  const wrappingKey=await crypto.subtle.deriveKey({name:'ECDH',public:peer},privateKey,{name:'AES-GCM',length:256},false,['encrypt']);
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const raw=await exportGroupKey(groupKey);
+  const data=await crypto.subtle.encrypt({name:'AES-GCM',iv},wrappingKey,raw);
+  return {iv:b64(iv),data:b64(data)};
+}
+export async function decryptGroupKeyForSelf(profileId:string,peerPublicKey:JsonWebKey,packet:GroupKeyPacket){
+  const own=await getChatIdentity(profileId);
+  const privateKey=await crypto.subtle.importKey('jwk',own.privateKey,{name:'ECDH',namedCurve:'P-256'},false,['deriveKey']);
+  const peer=await crypto.subtle.importKey('jwk',peerPublicKey,{name:'ECDH',namedCurve:'P-256'},false,[]);
+  const wrappingKey=await crypto.subtle.deriveKey({name:'ECDH',public:peer},privateKey,{name:'AES-GCM',length:256},false,['decrypt']);
+  const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(packet.iv)},wrappingKey,unb64(packet.data));
+  return importGroupKey(raw);
+}
+export async function encryptGroupEnvelope(groupKey:CryptoKey,kind:ChatEnvelope['kind'],text?:string,blob?:ArrayBuffer,name?:string,mime?:string,meta?:Record<string,unknown>):Promise<ChatEnvelope&{meta?:Record<string,unknown>}>{
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const plain=blob??enc.encode(JSON.stringify({text:text??'',meta:meta??{}})).buffer;
+  const data=await crypto.subtle.encrypt({name:'AES-GCM',iv},groupKey,plain);
+  return {v:1,kind,iv:b64(iv),data:b64(data),name,mime,meta};
+}
+export async function decryptGroupEnvelope(groupKey:CryptoKey,envelope:ChatEnvelope&{meta?:Record<string,unknown>}):Promise<{kind:ChatEnvelope['kind'];text?:string;blob?:ArrayBuffer;name?:string;mime?:string;meta?:Record<string,unknown>}>{
+  const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(envelope.iv)},groupKey,unb64(envelope.data));
+  if(envelope.kind==='text'||envelope.kind==='note'){const parsed=JSON.parse(dec.decode(plain)) as {text?:string;meta?:Record<string,unknown>};return {kind:envelope.kind,text:parsed.text??'',meta:parsed.meta};}
+  return {kind:envelope.kind,blob:plain,name:envelope.name,mime:envelope.mime,meta:envelope.meta};
+}
+export async function encryptGroupMedia(groupKey:CryptoKey,blob:ArrayBuffer):Promise<EncryptedChatMedia>{
+ const iv=crypto.getRandomValues(new Uint8Array(12));
+ const ciphertext=await crypto.subtle.encrypt({name:'AES-GCM',iv},groupKey,blob);
+ return {iv:b64(iv),ciphertext};
+}
+export async function decryptGroupMedia(groupKey:CryptoKey,iv:string,ciphertext:ArrayBuffer){
+ return crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(iv)},groupKey,ciphertext);
+}

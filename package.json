@@ -1,7 +1,7 @@
 {
   "name": "workertink",
   "private": true,
-  "version": "2.19.0",
+  "version": "3.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +11,13 @@
     "api": "node server/index.mjs",
     "directory:install": "npm --prefix directory-api install",
     "directory:dev": "npm --prefix directory-api run dev",
-    "directory:deploy": "npm --prefix directory-api run deploy"
+    "directory:deploy": "npm --prefix directory-api run deploy",
+    "desktop:dev": "electron electron/main.cjs",
+    "desktop:pack": "electron-builder --dir",
+    "desktop:win": "electron-builder --win nsis portable",
+    "desktop:mac": "electron-builder --mac dmg zip",
+    "desktop:linux": "electron-builder --linux AppImage deb",
+    "desktop": "electron-builder"
   },
   "dependencies": {
     "react": "^19.1.1",
@@ -24,6 +30,8 @@
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "typescript": "^5.8.3",
-    "vite": "^7.1.5"
+    "vite": "^7.1.5",
+    "electron": "^44.4.5",
+    "electron-builder": "^26.15.3"
   }
 }

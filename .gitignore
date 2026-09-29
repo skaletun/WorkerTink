@@ -1,10 +1,109 @@
-node_modules
-dist
-.DS_Store
-.vscode
-.idea
-npm-debug.log*
+# ─────────────────────────────────────────────────────────────
+# WorkerTink 3.0.0 — Git ignore
+# ─────────────────────────────────────────────────────────────
 
-server/data.json
-.wrangler
+# Dependencies
+node_modules/
+directory-api/node_modules/
+
+# Build output / Vite / TypeScript
+/dist/
+/.vite/
+.vite/
 *.tsbuildinfo
+
+# Electron / electron-builder artifacts
+/release/
+/electron-dist/
+*.AppImage
+*.deb
+*.dmg
+*.pkg
+*.exe
+*.msi
+*.blockmap
+
+# Cloudflare Wrangler / local development
+.wrangler/
+.dev.vars
+.dev.vars.*
+
+# Environment files / local secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Local server/runtime data
+server/data.json
+server/data.*.json
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+
+# Logs / debug output
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Coverage / test artifacts
+coverage/
+.nyc_output/
+.vitest/
+playwright-report/
+test-results/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*.orig
+*.rej
+*~
+.DS_Store
+Thumbs.db
+
+# IDE / editor settings
+.vscode/
+.idea/
+*.iml
+*.code-workspace
+
+# OS metadata
+.AppleDouble
+.LSOverride
+Icon?
+Desktop.ini
+
+# Package-manager caches / local state
+.npm/
+.pnpm-store/
+.yarn/
+.yarn-cache/
+.yarn-integrity
+
+# Local archives / exported builds
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+
+# Local certificates / private keys
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Optional local-only overrides
+*.local
+*.local.*
+
+# Keep the project examples/templates tracked
+!.env.example
+!.env.*.example

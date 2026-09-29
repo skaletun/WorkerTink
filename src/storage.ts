@@ -68,7 +68,7 @@ export function normalizeState(input:Partial<State>|Record<string,unknown>):Stat
   friendRequestsIncoming:requestsRecord(s.friendRequestsIncoming),
   friendRequestsOutgoing:requestsRecord(s.friendRequestsOutgoing),
   chats:chatsRecord(s.chats),
-  notifications:(()=>{const n=isRecord(s.notifications)?s.notifications:{};return {enabled:n.enabled!==false,friendRequests:n.friendRequests!==false,friendAccepted:n.friendAccepted!==false,messages:n.messages!==false,shifts:n.shifts!==false,absences:n.absences!==false,payroll:n.payroll!==false}})(),
+  notifications:(()=>{const n=isRecord(s.notifications)?s.notifications:{};return {enabled:n.enabled!==false,friendRequests:n.friendRequests!==false,friendAccepted:n.friendAccepted!==false,messages:n.messages!==false,groupMessages:n.groupMessages!==false,channelInvites:n.channelInvites!==false,social:n.social!==false,events:n.events!==false,shifts:n.shifts!==false,absences:n.absences!==false,payroll:n.payroll!==false}})(),
   onePassEnabled:Boolean(s.onePassEnabled),
  };
 }

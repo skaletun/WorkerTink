@@ -5,6 +5,10 @@ export type NotificationSettings = {
   friendRequests:boolean;
   friendAccepted:boolean;
   messages:boolean;
+  groupMessages:boolean;
+  channelInvites:boolean;
+  social:boolean;
+  events:boolean;
   shifts:boolean;
   absences:boolean;
   payroll:boolean;
@@ -15,6 +19,10 @@ export const DEFAULT_NOTIFICATION_SETTINGS:NotificationSettings={
   friendRequests:true,
   friendAccepted:true,
   messages:true,
+  groupMessages:true,
+  channelInvites:true,
+  social:true,
+  events:true,
   shifts:true,
   absences:true,
   payroll:true,

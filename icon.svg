@@ -1,12 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-labelledby="title desc">
-  <title id="title">WorkerTink</title>
-  <desc id="desc">Геометрическая иконка WorkerTink: календарь и отметка смены.</desc>
-  <rect width="192" height="192" rx="44" fill="#111827"/>
-  <rect x="42" y="46" width="108" height="104" rx="22" fill="#F8FAFC"/>
-  <path d="M42 75h108" stroke="#CBD5E1" stroke-width="8"/>
-  <path d="M68 36v24M124 36v24" stroke="#F8FAFC" stroke-width="12" stroke-linecap="round"/>
-  <rect x="60" y="91" width="22" height="22" rx="6" fill="#2563EB"/>
-  <rect x="89" y="91" width="22" height="22" rx="6" fill="#E5E7EB"/>
-  <rect x="118" y="91" width="22" height="22" rx="6" fill="#E5E7EB"/>
-  <path d="M64 128l11 10 23-24" fill="none" stroke="#16A34A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="108" fill="#1557D6"/><path d="M128 175V120c0-18 15-33 33-33h190c18 0 33 15 33 33v55" fill="none" stroke="#fff" stroke-width="24" stroke-linecap="round"/><path d="M128 120h256" stroke="#fff" stroke-width="24" stroke-linecap="round"/><path d="M164 122v-28M348 122V94" stroke="#fff" stroke-width="24" stroke-linecap="round"/><g fill="#FFB72B"><rect x="164" y="140" width="28" height="28" rx="7"/><rect x="207" y="140" width="28" height="28" rx="7"/><rect x="250" y="140" width="28" height="28" rx="7"/><rect x="293" y="140" width="28" height="28" rx="7"/><rect x="164" y="181" width="28" height="28" rx="7"/></g><path d="M92 330l66 88 76-111 51 73 48-65" fill="none" stroke="#fff" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/><path d="M300 315h92l-25 28h-42v82l-28 20v-102h-42z" fill="#FFB72B"/><circle cx="408" cy="252" r="28" fill="#fff"/><path d="M372 306c8-25 26-39 51-39 25 0 42 14 50 39" fill="#fff"/><circle cx="455" cy="263" r="21" fill="#FFB72B"/><path d="M74 393c52 47 114 71 182 71h82c70 0 128-25 177-73" fill="none" stroke="#FFB72B" stroke-width="12" stroke-linecap="round"/><circle cx="76" cy="393" r="14" fill="#FFB72B"/><circle cx="256" cy="464" r="14" fill="#FFB72B"/><circle cx="438" cy="391" r="14" fill="#FFB72B"/></svg>

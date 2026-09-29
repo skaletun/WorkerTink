@@ -1,0 +1,52 @@
+appId: com.workertink.desktop
+productName: WorkerTink
+copyright: Copyright © 2026 WorkerTink
+asar: true
+files:
+  - electron/**
+  - build/icons/icon.png
+  - build/icons/icon.ico
+extraMetadata:
+  main: electron/main.cjs
+directories:
+  output: release
+  buildResources: build
+win:
+  icon: build/icons/icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: WorkerTink
+  installerIcon: build/icons/icon.ico
+  uninstallerIcon: build/icons/icon.ico
+  installerLanguages:
+    - ru_RU
+    - en_US
+  language: 1049
+  include: electron/installer.nsh
+  artifactName: WorkerTink-${version}-Setup-${arch}.${ext}
+portable:
+  artifactName: WorkerTink-${version}-Portable-${arch}.${ext}
+mac:
+  icon: build/icons/icon.png
+  category: public.app-category.business
+  target:
+    - dmg
+    - zip
+linux:
+  icon: build/icons/icon.png
+  category: Office
+  target:
+    - AppImage
+    - deb
