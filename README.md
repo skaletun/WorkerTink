@@ -43,6 +43,40 @@ WorkerTink учитывает периоды отсутствия и испол�
 ### 📱 PWA + 💻 ПК
 WorkerTink можно установить как приложение на телефон или компьютер. Поддерживается вход на ПК по QR-коду с телефона и OnePass/passkey.
 
+## 🚀 Быстрый старт
+
+```bash
+npm install
+npm run dev
+```
+
+Production build:
+
+```bash
+npm run build
+```
+
+Для Directory API:
+
+```bash
+npm --prefix directory-api install
+npm --prefix directory-api run dev
+```
+
+Применить миграции D1:
+
+```bash
+cd directory-api
+npx wrangler d1 migrations apply workertink-directory --remote
+cd ..
+```
+
+Деплой API:
+
+```bash
+npm --prefix directory-api run deploy
+```
+
 ## 🧭 Как устроено приложение
 
 **Главная** — быстрый обзор рабочего дня.  

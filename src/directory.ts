@@ -14,6 +14,7 @@ async function request<T>(path:string,options:RequestInit={}):Promise<T>{
 
 export type SearchResult={profile:UserProfile};
 export type DirectoryFriend={profile:UserProfile;addedAt:number;lastSeen:number;online:boolean};
+export type ChatMute={peerId:string;mutedUntil:number|null};
 export type AdminProfile=UserProfile & {createdAt:number;updatedAt:number;lastSeen:number;online:boolean};
 export type RegisterResult={profile:UserProfile;token:string;security?:{pinSet:boolean;onePassAvailable:boolean}};
 export type SetupData={salary:number;taxRate:number;stage:number;vacTotal:number;startDate:string;scheduleType:State['scheduleType'];scheduleShift:State['scheduleShift'];scheduleVakhtaMonths:number;schedulePairType:State['schedulePairType'];holidayCoeff:number;nightExtraPercent:number};
@@ -81,11 +82,18 @@ export function getSocialMessages(profileId:string,token:string){return request<
 export function sendSocialMessage(to:string,body:string,token:string){return request<{ok:boolean;message:SocialMessage}>('/social/messages',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({to,body})})}
 
 export type ChatKey={profileId:string;publicKey:JsonWebKey;updatedAt:number};
-export type ChatServerMessage={id:string;from:string;to:string;body:string;kind:'text'|'voice'|'image'|'video';mime?:string|null;name?:string|null;createdAt:number;readAt:number|null};
+export type ChatServerMessage={id:string;from:string;to:string;body:string;kind:'text'|'voice'|'image'|'video'|'note';mime?:string|null;name?:string|null;createdAt:number;readAt:number|null;editedAt?:number|null;deletedAt?:number|null;replyToId?:string|null;replyPreview?:string|null;noteDate?:string|null;noteShift?:string|null;deletedForMe?:boolean};
 export function putChatKey(publicKey:JsonWebKey,token:string){return request<{ok:boolean;key:ChatKey}>('/chat/keys',{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({publicKey})})}
 export function getChatKey(profileId:string,token:string){return request<{key:ChatKey}>(`/chat/keys/${encodeURIComponent(profileId)}`,{headers:{Authorization:`Bearer ${token}`}})}
 export function getChatMessages(profileId:string,token:string){return request<{messages:ChatServerMessage[]}>(`/chat/messages/${encodeURIComponent(profileId)}`,{headers:{Authorization:`Bearer ${token}`}})}
-export function sendChatMessage(to:string,body:string,kind:'text'|'voice'|'image'|'video',token:string,mime?:string,name?:string){return request<{ok:boolean;message:ChatServerMessage}>('/chat/messages',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({to,body,kind,mime,name})})}
+export function sendChatMessage(to:string,body:string,kind:'text'|'voice'|'image'|'video'|'note',token:string,mime?:string,name?:string,replyToId?:string,replyPreview?:string,noteDate?:string,noteShift?:string){return request<{ok:boolean;message:ChatServerMessage}>('/chat/messages',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({to,body,kind,mime,name,replyToId,replyPreview,noteDate,noteShift})})}
+export function deleteChatMessage(id:string,mode:'me'|'both',token:string){return request<{ok:boolean}>(`/chat/messages/${encodeURIComponent(id)}/${mode}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
+export function editChatMessage(id:string,body:string,token:string){return request<{ok:boolean;message:ChatServerMessage}>(`/chat/messages/${encodeURIComponent(id)}`,{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({body})})}
+export function setChatMute(peerId:string,mutedUntil:number|null,token:string){return request<{ok:boolean;mute:ChatMute}>('/chat/mute',{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({peerId,mutedUntil})})}
+export function getChatMute(peerId:string,token:string){return request<{mute:ChatMute}>(`/chat/mute/${encodeURIComponent(peerId)}`,{headers:{Authorization:`Bearer ${token}`}})}
+export function removeFriend(profileId:string,token:string){return request<{ok:boolean}>(`/friends/${encodeURIComponent(profileId)}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
+export function blockProfile(profileId:string,token:string){return request<{ok:boolean}>(`/friends/${encodeURIComponent(profileId)}/block`,{method:'POST',headers:{Authorization:`Bearer ${token}`}})}
+export function unblockProfile(profileId:string,token:string){return request<{ok:boolean}>(`/friends/${encodeURIComponent(profileId)}/block`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
 export function startQrLogin(publicKey:JsonWebKey){return request<{session:string;secret:string;publicKey:JsonWebKey;expiresAt:number}>('/auth/qr/start',{method:'POST',body:JSON.stringify({publicKey})})}
 export function pollQrLogin(session:string,secret:string){return request<{status:'pending'|'approved'|'expired';profile?:UserProfile;token?:string;setup?:SetupData|null;security?:{pinSet:boolean;onePassAvailable:boolean};transfer?:{iv:string;data:string;peerPublicKey:JsonWebKey}}>(`/auth/qr/poll?session=${encodeURIComponent(session)}&secret=${encodeURIComponent(secret)}`)}
 export function approveQrLogin(session:string,secret:string,transfer:{iv:string;data:string;peerPublicKey:JsonWebKey},token:string){return request<{ok:boolean}>('/auth/qr/approve',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({session,secret,transfer})})}

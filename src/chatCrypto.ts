@@ -3,7 +3,7 @@ const enc=new TextEncoder();
 const dec=new TextDecoder();
 
 type StoredIdentity={privateKey:JsonWebKey;publicKey:JsonWebKey};
-export type ChatEnvelope={v:1;kind:'text'|'voice'|'image'|'video';iv:string;data:string;name?:string;mime?:string};
+export type ChatEnvelope={v:1;kind:'text'|'voice'|'image'|'video'|'note';iv:string;data:string;name?:string;mime?:string};
 
 const b64=(bytes:ArrayBuffer|Uint8Array)=>{const a=new Uint8Array(bytes);let s='';for(const b of a)s+=String.fromCharCode(b);return btoa(s)};
 const unb64=(value:string)=>{const s=atob(value);const a=new Uint8Array(s.length);for(let i=0;i<s.length;i++)a[i]=s.charCodeAt(i);return a};
