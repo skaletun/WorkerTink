@@ -1,0 +1,70 @@
+name: Build WorkerTink Android
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - 'capacitor.config.ts'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install web dependencies
+        run: npm install
+
+      - name: Install Capacitor 8
+        run: npm install --no-save @capacitor/core@8 @capacitor/cli@8 @capacitor/android@8
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Generate Android project
+        run: npx cap add android
+
+      - name: Sync web assets
+        run: npx cap sync android
+
+      - name: Build release APK
+        working-directory: android
+        run: ./gradlew assembleRelease
+
+      - name: Verify APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f android/app/build/outputs/apk/release/app-release-unsigned.apk
+          ls -lh android/app/build/outputs/apk/release/app-release-unsigned.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: workertink-android-v3.0.0
+          path: android/app/build/outputs/apk/release/app-release-unsigned.apk
+
+      - name: Publish APK to v3.0.0 Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v3.0.0
+          name: WorkerTink v3.0.0
+          files: android/app/build/outputs/apk/release/app-release-unsigned.apk
+          fail_on_unmatched_files: true
