@@ -45,37 +45,7 @@ WorkerTink можно установить как приложение на те
 
 ## 🚀 Быстрый старт
 
-```bash
-npm install
-npm run dev
-```
-
-Production build:
-
-```bash
-npm run build
-```
-
-Для Directory API:
-
-```bash
-npm --prefix directory-api install
-npm --prefix directory-api run dev
-```
-
-Применить миграции D1:
-
-```bash
-cd directory-api
-npx wrangler d1 migrations apply workertink-directory --remote
-cd ..
-```
-
-Деплой API:
-
-```bash
-npm --prefix directory-api run deploy
-```
+[WorkerTink App](https://skaletun.github.io/WorkerTink/)
 
 ## 🧭 Как устроено приложение
 
