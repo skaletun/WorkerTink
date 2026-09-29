@@ -13,19 +13,11 @@
     "directory:dev": "npm --prefix directory-api run dev",
     "directory:deploy": "npm --prefix directory-api run deploy",
     "desktop:dev": "electron electron/main.cjs",
-<<<<<<< HEAD
-    "desktop:pack": "electron-builder --publish never --dir",
-    "desktop:win": "electron-builder --publish never --win nsis portable",
-    "desktop:mac": "electron-builder --publish never --mac dmg zip",
-    "desktop:linux": "electron-builder --publish never --linux AppImage deb",
-    "desktop": "electron-builder"
-=======
     "desktop:pack": "electron-builder --dir --publish never",
     "desktop:win": "electron-builder --win nsis portable --publish never",
     "desktop:mac": "electron-builder --mac dmg zip --publish never",
     "desktop:linux": "electron-builder --linux AppImage deb --publish never",
     "desktop": "electron-builder --publish never"
->>>>>>> e1a2435 (Critical fixes)
   },
   "dependencies": {
     "react": "^19.1.1",
