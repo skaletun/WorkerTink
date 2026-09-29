@@ -146,6 +146,17 @@ function fromBase64Url(value) {
   return Uint8Array.from(binary, char => char.charCodeAt(0));
 }
 
+function webAuthnClientChallenge(response) {
+  try {
+    const raw = response?.response?.clientDataJSON;
+    if (!raw) return '';
+    const json = JSON.parse(new TextDecoder().decode(fromBase64Url(raw)));
+    return typeof json?.challenge === 'string' ? json.challenge : '';
+  } catch {
+    return '';
+  }
+}
+
 function validPin(value) {
   return /^\d{6}$/.test(String(value || ''));
 }
@@ -196,15 +207,27 @@ async function body(request) {
   }
 }
 
+const AUTH_SESSION_TTL = 30 * 24 * 60 * 60 * 1000;
+
+async function createAuthSession(env, profileId, token, now = Date.now(), deviceName = 'Устройство') {
+  const tokenHash = await sha256(token);
+  const sessionId = crypto.randomUUID();
+  await env.DB.prepare('INSERT OR REPLACE INTO auth_sessions(token_hash,profile_id,created_at,expires_at,session_id,device_name,last_seen) VALUES (?1,?2,?3,?4,?5,?6,?3)')
+    .bind(tokenHash, profileId, now, now + AUTH_SESSION_TTL, sessionId, cleanText(deviceName, 120) || 'Устройство').run();
+  return {tokenHash, sessionId};
+}
+
 async function authProfile(request, env) {
   const token = bearer(request);
   if (!token) return null;
   const tokenHash = await sha256(token);
-  const direct = await env.DB.prepare('SELECT wtink_id, name, position, avatar, is_dev, is_admin, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE token_hash = ?1').bind(tokenHash).first();
-  if (direct) return direct;
-  const session = await env.DB.prepare('SELECT profile_id FROM auth_sessions WHERE token_hash = ?1 AND expires_at > ?2').bind(tokenHash,Date.now()).first();
-  if (!session) return null;
-  return env.DB.prepare('SELECT wtink_id, name, position, avatar, is_dev, is_admin, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE wtink_id = ?1').bind(session.profile_id).first();
+  const session = await env.DB.prepare('SELECT profile_id,session_id,device_name FROM auth_sessions WHERE token_hash = ?1 AND expires_at > ?2').bind(tokenHash,Date.now()).first();
+  if (session) {
+    await env.DB.prepare('UPDATE auth_sessions SET last_seen = ?1 WHERE token_hash = ?2').bind(Date.now(), tokenHash).run();
+    return env.DB.prepare('SELECT wtink_id, name, position, avatar, is_dev, is_admin, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE wtink_id = ?1').bind(session.profile_id).first();
+  }
+  // Backward compatibility for the original single-token sessions.
+  return env.DB.prepare('SELECT wtink_id, name, position, avatar, is_dev, is_admin, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE token_hash = ?1').bind(tokenHash).first();
 }
 
 
@@ -366,12 +389,37 @@ async function handle(request, env) {
       return json({error:failed >= 5 ? 'PIN_LOCKED' : 'INVALID_CREDENTIALS',retryAfter:failed >= 5 ? 900 : 0},401,origin);
     }
     const token = randomToken();
-    await env.DB.prepare('UPDATE profiles SET token_hash = ?1, pin_failed_attempts = 0, pin_locked_until = 0, updated_at = ?2, last_seen = ?2 WHERE wtink_id = ?3').bind(await sha256(token),Date.now(),wtinkId).run();
+    const now = Date.now();
+    const deviceName = cleanText(input?.deviceName, 120) || 'Устройство';
+    const session = await createAuthSession(env, wtinkId, token, now, deviceName);
+    await env.DB.prepare('UPDATE profiles SET pin_failed_attempts = 0, pin_locked_until = 0, updated_at = ?1, last_seen = ?1 WHERE wtink_id = ?2').bind(now,wtinkId).run();
     const passkey = await env.DB.prepare('SELECT COUNT(*) AS count FROM webauthn_credentials WHERE profile_id = ?1').bind(wtinkId).first();
     const setupRow = await env.DB.prepare('SELECT setup_ciphertext, setup_iv FROM account_setup WHERE wtink_id = ?1').bind(wtinkId).first();
     let setup = null;
     if (setupRow) setup = await decryptSetup(env, setupRow.setup_ciphertext, setupRow.setup_iv);
-    return json({profile:publicProfile(row),token,setup,security:{pinSet:true,onePassAvailable:Number(passkey?.count||0)>0}},200,origin);
+    return json({profile:publicProfile(row),token,sessionId:session.sessionId,deviceName,setup,security:{pinSet:true,onePassAvailable:Number(passkey?.count||0)>0}},200,origin);
+  }
+
+  if (request.method === 'GET' && path === '/auth/sessions') {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error:'UNAUTHORIZED'},401,origin);
+    const token = bearer(request);
+    const tokenHash = await sha256(token);
+    const rows = await env.DB.prepare('SELECT session_id, device_name, created_at, expires_at, last_seen, token_hash FROM auth_sessions WHERE profile_id = ?1 AND expires_at > ?2 AND session_id IS NOT NULL ORDER BY last_seen DESC').bind(owner.wtink_id, Date.now()).all();
+    return json({sessions:(rows.results||[]).map(r=>({sessionId:r.session_id,deviceName:r.device_name||'Устройство',createdAt:Number(r.created_at||0),expiresAt:Number(r.expires_at||0),lastSeen:Number(r.last_seen||r.created_at||0),current:r.token_hash===tokenHash}))},200,origin);
+  }
+
+  const authSessionMatch=path.match(/^\/auth\/sessions\/([^/]+)$/);
+  if (authSessionMatch && request.method === 'DELETE') {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error:'UNAUTHORIZED'},401,origin);
+    const sessionId=decodeURIComponent(authSessionMatch[1]);
+    const currentHash=await sha256(bearer(request));
+    const row=await env.DB.prepare('SELECT token_hash FROM auth_sessions WHERE session_id = ?1 AND profile_id = ?2').bind(sessionId,owner.wtink_id).first();
+    if(!row)return json({error:'SESSION_NOT_FOUND'},404,origin);
+    if(row.token_hash===currentHash)return json({error:'CURRENT_SESSION'},409,origin);
+    await env.DB.prepare('DELETE FROM auth_sessions WHERE session_id = ?1 AND profile_id = ?2').bind(sessionId,owner.wtink_id).run();
+    return json({ok:true},200,origin);
   }
 
   if (request.method === 'GET' && path === '/auth/status') {
@@ -446,7 +494,8 @@ async function handle(request, env) {
       if (String(error).toLowerCase().includes('unique')) return json({error: 'WTINK_ID_TAKEN'}, 409, origin);
       throw error;
     }
-    return json({profile: publicProfile({wtink_id:wtinkId,name,position,avatar}), token, security:{pinSet:true,onePassAvailable:false}}, 201, origin);
+    const session = await createAuthSession(env, wtinkId, token, now, String(input?.deviceName || 'Устройство'));
+    return json({profile: publicProfile({wtink_id:wtinkId,name,position,avatar}), token, sessionId:session.sessionId, security:{pinSet:true,onePassAvailable:false}}, 201, origin);
   }
 
   if (request.method === 'POST' && path === '/auth/onepass/register/options') {
@@ -456,7 +505,6 @@ async function handle(request, env) {
     const rpID = webAuthnRpId(request,env);
     const webOrigin = webAuthnOrigin(request,env);
     if (!rpID || !webOrigin) return json({error:'WEBAUTHN_ORIGIN_REQUIRED'},400,origin);
-    const credentials = await env.DB.prepare('SELECT id, transports FROM webauthn_credentials WHERE profile_id = ?1').bind(owner.wtink_id).all();
     const webauthnUserId = owner.webauthn_user_id || randomToken();
     if (!owner.webauthn_user_id) await env.DB.prepare('UPDATE profiles SET webauthn_user_id = ?1 WHERE wtink_id = ?2').bind(webauthnUserId,owner.wtink_id).run();
     const options = await generateRegistrationOptions({
@@ -467,12 +515,12 @@ async function handle(request, env) {
       userDisplayName:owner.name,
       attestationType:'none',
       supportedAlgorithmIDs:[-7,-257],
-      excludeCredentials:(credentials.results||[]).map(item=>({id:item.id,transports:JSON.parse(item.transports||'[]')})),
-      authenticatorSelection:{residentKey:'required',userVerification:'preferred',authenticatorAttachment:'platform'}
+      authenticatorSelection:{residentKey:'preferred',userVerification:'preferred'},
+      excludeCredentials:(await env.DB.prepare('SELECT id,transports FROM webauthn_credentials WHERE profile_id = ?1').bind(owner.wtink_id).all()).results.map(item=>({id:item.id,transports:JSON.parse(item.transports||'[]')}))
     });
     const now=Date.now();
     await env.DB.batch([
-      env.DB.prepare('DELETE FROM auth_challenges WHERE profile_id = ?1 AND kind = ?2').bind(owner.wtink_id,'onepass_register'),
+      env.DB.prepare('DELETE FROM auth_challenges WHERE profile_id = ?1 AND kind = ?2 AND expires_at <= ?3').bind(owner.wtink_id,'onepass_register',now),
       env.DB.prepare('INSERT INTO auth_challenges(id,profile_id,kind,challenge,expires_at,created_at) VALUES (?1,?2,?3,?4,?5,?6)').bind(crypto.randomUUID(),owner.wtink_id,'onepass_register',options.challenge,now+5*60*1000,now)
     ]);
     return json(options,200,origin);
@@ -485,7 +533,8 @@ async function handle(request, env) {
     const response = input?.response;
     const deviceName = cleanText(input?.deviceName, 120) || 'Устройство';
     if (!response?.id) return json({error:'INVALID_ONEPASS_RESPONSE'},400,origin);
-    const challenge = await env.DB.prepare(`SELECT id, challenge FROM auth_challenges WHERE profile_id = ?1 AND kind = 'onepass_register' AND expires_at > ?2 ORDER BY created_at DESC LIMIT 1`).bind(owner.wtink_id,Date.now()).first();
+    const clientChallenge = webAuthnClientChallenge(response);
+    const challenge = await env.DB.prepare(`SELECT id, challenge FROM auth_challenges WHERE profile_id = ?1 AND kind = 'onepass_register' AND challenge = ?2 AND expires_at > ?3 LIMIT 1`).bind(owner.wtink_id,clientChallenge,Date.now()).first();
     if (!challenge) return json({error:'ONEPASS_CHALLENGE_EXPIRED'},410,origin);
     const {verifyRegistrationResponse} = await import('@simplewebauthn/server');
     const rpID = webAuthnRpId(request,env);
@@ -532,7 +581,7 @@ async function handle(request, env) {
     const options=await generateAuthenticationOptions({rpID,userVerification:'preferred',allowCredentials:(credentials.results||[]).map(item=>({id:item.id,transports:JSON.parse(item.transports||'[]')}))});
     const now=Date.now();
     await env.DB.batch([
-      env.DB.prepare('DELETE FROM auth_challenges WHERE profile_id = ?1 AND kind = ?2').bind(wtinkId,'onepass_login'),
+      env.DB.prepare('DELETE FROM auth_challenges WHERE profile_id = ?1 AND kind = ?2 AND expires_at <= ?3').bind(wtinkId,'onepass_login',now),
       env.DB.prepare('INSERT INTO auth_challenges(id,profile_id,kind,challenge,expires_at,created_at) VALUES (?1,?2,?3,?4,?5,?6)').bind(crypto.randomUUID(),wtinkId,'onepass_login',options.challenge,now+5*60*1000,now)
     ]);
     return json(options,200,origin);
@@ -544,7 +593,8 @@ async function handle(request, env) {
     if(!response?.id)return json({error:'INVALID_ONEPASS_RESPONSE'},400,origin);
     const credential=await env.DB.prepare(`SELECT id, profile_id, user_id, public_key, counter, transports FROM webauthn_credentials WHERE id = ?1`).bind(response.id).first();
     if(!credential)return json({error:'INVALID_CREDENTIALS'},401,origin);
-    const challenge=await env.DB.prepare(`SELECT id, challenge FROM auth_challenges WHERE profile_id = ?1 AND kind = 'onepass_login' AND expires_at > ?2 ORDER BY created_at DESC LIMIT 1`).bind(credential.profile_id,Date.now()).first();
+    const clientChallenge=webAuthnClientChallenge(response);
+    const challenge=await env.DB.prepare(`SELECT id, challenge FROM auth_challenges WHERE profile_id = ?1 AND kind = 'onepass_login' AND challenge = ?2 AND expires_at > ?3 LIMIT 1`).bind(credential.profile_id,clientChallenge,Date.now()).first();
     if(!challenge)return json({error:'ONEPASS_CHALLENGE_EXPIRED'},410,origin);
     const {verifyAuthenticationResponse}=await import('@simplewebauthn/server');
     const rpID=webAuthnRpId(request,env);
@@ -558,12 +608,13 @@ async function handle(request, env) {
     if(!owner)return json({error:'INVALID_CREDENTIALS'},401,origin);
     const token=randomToken();
     const now=Date.now();
+    const session=await createAuthSession(env,owner.wtink_id,token,now,String(input?.deviceName||'OnePass устройство'));
     await env.DB.batch([
       env.DB.prepare('UPDATE webauthn_credentials SET counter = ?1, updated_at = ?2 WHERE id = ?3').bind(verification.authenticationInfo.newCounter,now,credential.id),
-      env.DB.prepare('UPDATE profiles SET token_hash = ?1, updated_at = ?2, last_seen = ?2 WHERE wtink_id = ?3').bind(await sha256(token),now,owner.wtink_id),
+      env.DB.prepare('UPDATE profiles SET updated_at = ?1, last_seen = ?1 WHERE wtink_id = ?2').bind(now,owner.wtink_id),
       env.DB.prepare('DELETE FROM auth_challenges WHERE id = ?1').bind(challenge.id)
     ]);
-    return json({profile:publicProfile(owner),token,security:{pinSet:true,onePassAvailable:true}},200,origin);
+    return json({profile:publicProfile(owner),token,sessionId:session.sessionId,deviceName:String(input?.deviceName||'OnePass устройство'),security:{pinSet:true,onePassAvailable:true}},200,origin);
   }
 
   const onePassDeleteMatch = path.match(/^\/auth\/onepass\/([^/]+)$/);
@@ -631,9 +682,17 @@ async function handle(request, env) {
     if(!row||row.status!=='pending'||Number(row.expires_at)<Date.now()||await sha256(secret)!==row.secret_hash)return json({error:'INVALID_QR_SESSION'},403,origin);
     const token=randomToken(),now=Date.now(),tokenHash=await sha256(token);
     await env.DB.batch([
-      env.DB.prepare('INSERT INTO auth_sessions(token_hash,profile_id,created_at,expires_at) VALUES (?1,?2,?3,?4)').bind(tokenHash,owner.wtink_id,now,now+30*24*60*60*1000),
+      env.DB.prepare('INSERT INTO auth_sessions(token_hash,profile_id,created_at,expires_at,session_id,device_name,last_seen) VALUES (?1,?2,?3,?4,?5,?6,?3)').bind(tokenHash,owner.wtink_id,now,now+AUTH_SESSION_TTL,crypto.randomUUID(),'QR-подключение',now),
       env.DB.prepare(`UPDATE qr_login_sessions SET status='approved',profile_id=?1,transfer_iv=?2,transfer_data=?3,transfer_peer_public_key=?4,login_token=?5 WHERE id=?6`).bind(owner.wtink_id,String(transfer.iv),String(transfer.data),JSON.stringify(transfer.peerPublicKey),token,session)
     ]);
+    return json({ok:true},200,origin);
+  }
+
+  if (request.method === 'DELETE' && path === '/auth/session') {
+    const token = bearer(request);
+    if (!token) return json({error:'UNAUTHORIZED'},401,origin);
+    const tokenHash = await sha256(token);
+    await env.DB.prepare('DELETE FROM auth_sessions WHERE token_hash = ?1').bind(tokenHash).run();
     return json({ok:true},200,origin);
   }
 

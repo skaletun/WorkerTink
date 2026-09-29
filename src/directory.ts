@@ -23,16 +23,19 @@ export type RequestResult={request:FriendRequest};
 
 export function searchUser(profileId:string){return request<SearchResult>(`/profiles/${encodeURIComponent(profileId.trim().toUpperCase())}`)}
 export function registerProfile(profile:UserProfile,pin:string){return request<RegisterResult>('/profiles',{method:'POST',body:JSON.stringify({profile,pin})})}
-export function loginAccount(profileId:string,pin:string){return request<LoginResult>('/auth/login',{method:'POST',body:JSON.stringify({profileId,pin})})}
+export function loginAccount(profileId:string,pin:string,deviceName?:string){return request<LoginResult>('/auth/login',{method:'POST',body:JSON.stringify({profileId,pin,deviceName:deviceName||((navigator as any).userAgentData?.platform||navigator.platform||'Устройство')})})}
 export function saveAccountSetup(setup:SetupData,token:string){return request<{ok:boolean;configured:boolean;setup:SetupData}>('/account/setup',{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({setup})})}
 export function getAccountSetup(token:string){return request<{configured:boolean;setup:SetupData|null}>('/account/setup',{headers:{Authorization:`Bearer ${token}`}})}
 export function setAccountPin(pin:string,token:string){return request<{ok:boolean}>('/auth/pin',{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({pin})})}
+export type AuthSession={sessionId:string;deviceName:string;createdAt:number;expiresAt:number;lastSeen:number;current:boolean};
+export function getAuthSessions(token:string){return request<{sessions:AuthSession[]}>('/auth/sessions',{headers:{Authorization:`Bearer ${token}`}})}
+export function revokeAuthSession(sessionId:string,token:string){return request<{ok:boolean}>(`/auth/sessions/${encodeURIComponent(sessionId)}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
 export function getAuthStatus(token:string){return request<{profile:UserProfile;setup:SetupData|null;security:{pinSet:boolean;onePassAvailable:boolean}}>('/auth/status',{headers:{Authorization:`Bearer ${token}`}})}
 export function getOnePassOptions(token:string){return request<Record<string,unknown>>('/auth/onepass/register/options',{method:'POST',headers:{Authorization:`Bearer ${token}`}})}
 export function verifyOnePassRegistration(response:unknown,token:string,deviceName?:string){return request<{ok:boolean}>('/auth/onepass/register/verify',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({response,deviceName})})}
 export function getOnePassAvailability(profileId:string){return request<{available:boolean}>(`/auth/onepass/available?profileId=${encodeURIComponent(profileId)}`,{method:'GET'}).then(x=>x.available)}
 export function getOnePassLoginOptions(profileId:string){return request<Record<string,unknown>>(`/auth/onepass/login/options?profileId=${encodeURIComponent(profileId)}`,{method:'GET'})}
-export function verifyOnePassLogin(response:unknown){return request<LoginResult>('/auth/onepass/login/verify',{method:'POST',body:JSON.stringify({response})})}
+export function verifyOnePassLogin(response:unknown,deviceName?:string){return request<LoginResult>('/auth/onepass/login/verify',{method:'POST',body:JSON.stringify({response,deviceName:deviceName||((navigator as any).userAgentData?.platform||navigator.platform||'OnePass устройство')})})}
 export type OnePassDevice={id:string;deviceType:string;backedUp:boolean;transports:string[];deviceName:string;createdAt:number;updatedAt:number};
 export function getOnePassDevices(token:string){return request<{devices:OnePassDevice[]}>('/auth/onepass',{headers:{Authorization:`Bearer ${token}`}})}
 export function removeOnePassDevice(id:string,token:string){return request<{ok:boolean}>(`/auth/onepass/${encodeURIComponent(id)}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
@@ -67,6 +70,7 @@ export function updatePushPreferences(endpoint:string,preferences:unknown,token:
 export function sendPushEvent(to:string,kind:'message'|'friendRequest'|'friendAccepted',token:string){return request<{ok:boolean}>('/push/events',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({to,kind})})}
 export function sendTestPush(token:string){return request<{ok:boolean}>('/push/test',{method:'POST',headers:{Authorization:`Bearer ${token}`}})}
 export function syncPushReminders(reminders:unknown[],token:string){return request<{ok:boolean}>('/push/reminders',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({reminders})})}
+export function logoutSession(token:string){return request<{ok:boolean}>('/auth/session',{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
 export function deleteProfile(token:string){return request<{ok:boolean}>('/profiles',{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
 
 export type SocialPost={id:string;body:string;createdAt:number;updatedAt:number;author:UserProfile;likes:number;comments:number;liked:boolean};

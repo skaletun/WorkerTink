@@ -1,7 +1,7 @@
 # WorkerTink Directory API — legacy Node.js
 
 Небольшой legacy-сервер-каталог для локальной разработки. Для production используйте `directory-api/` на Cloudflare Workers + D1.
-Он **не хранит чаты и заметки**: они остаются в P2P/localStorage.
+Он **не хранит чаты и заметки**: они остаются в local signaling/localStorage.
 
 ## Запуск
 
