@@ -217,6 +217,10 @@ async function sendPush(env, subscription, payload) {
   return {sent:true};
 }
 async function notifyProfile(env, profileId, kind, payload) {
+  if (kind === 'message' && payload?.actorId) {
+    const mute = await env.DB.prepare('SELECT muted_until FROM chat_mutes WHERE profile_id=?1 AND peer_id=?2').bind(profileId, normalizeId(payload.actorId)).first();
+    if (mute && (Number(mute.muted_until) === 0 || Number(mute.muted_until) > Date.now())) return {sent:false,reason:'CHAT_MUTED'};
+  }
   const rows = await env.DB.prepare('SELECT endpoint, expiration_time, p256dh, auth, preferences FROM push_subscriptions WHERE profile_id = ?1').bind(profileId).all();
   const gone=[];
   for (const row of rows.results || []) {
@@ -836,6 +840,13 @@ async function handle(request, env) {
     }
   }
 
+  const friendAction=path.match(/^\/friends\/([^/]+)(?:\/(block))?$/);
+  if(friendAction && request.method==='DELETE' && !friendAction[2]){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const target=normalizeId(decodeURIComponent(friendAction[1]));await env.DB.prepare(`DELETE FROM friend_requests WHERE status='accepted' AND ((sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1))`).bind(owner.wtink_id,target).run();return json({ok:true},200,origin)}
+  if(friendAction && request.method==='POST' && friendAction[2]){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const target=normalizeId(decodeURIComponent(friendAction[1]));await env.DB.prepare('INSERT OR REPLACE INTO blocked_profiles(profile_id,blocked_id,created_at) VALUES (?1,?2,?3)').bind(owner.wtink_id,target,Date.now()).run();await env.DB.prepare(`DELETE FROM friend_requests WHERE (sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1)`).bind(owner.wtink_id,target).run();return json({ok:true},200,origin)}
+  if(friendAction && request.method==='DELETE' && friendAction[2]){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const target=normalizeId(decodeURIComponent(friendAction[1]));await env.DB.prepare('DELETE FROM blocked_profiles WHERE profile_id=?1 AND blocked_id=?2').bind(owner.wtink_id,target).run();return json({ok:true},200,origin)}
+  if(path==='/chat/mute' && request.method==='PUT'){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const input=await body(request);const target=normalizeId(input?.peerId);let until=input?.mutedUntil===null?null:Number(input?.mutedUntil||0);if(until===0)until=0;if(!validId(target))return json({error:'INVALID_ID'},400,origin);await env.DB.prepare('INSERT OR REPLACE INTO chat_mutes(profile_id,peer_id,muted_until,updated_at) VALUES (?1,?2,?3,?4)').bind(owner.wtink_id,target,until,Date.now()).run();return json({ok:true,mute:{peerId:displayId(target),mutedUntil:until}},200,origin)}
+  const muteMatch=path.match(/^\/chat\/mute\/([^/]+)$/); if(muteMatch&&request.method==='GET'){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const target=normalizeId(decodeURIComponent(muteMatch[1]));const row=await env.DB.prepare('SELECT muted_until FROM chat_mutes WHERE profile_id=?1 AND peer_id=?2').bind(owner.wtink_id,target).first();const until=row?.muted_until===null?null:Number(row?.muted_until||0);return json({mute:{peerId:displayId(target),mutedUntil:until}},200,origin)}
+
   if (request.method === 'POST' && path === '/peer-sessions') {
     const owner = await authProfile(request, env);
     if (!owner) return json({error: 'UNAUTHORIZED'}, 401, origin);
@@ -1036,18 +1047,37 @@ async function handle(request, env) {
   if(messagesMatch && request.method==='GET'){
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const target=normalizeId(decodeURIComponent(messagesMatch[1]));
     const friend=await env.DB.prepare(`SELECT 1 FROM friend_requests WHERE status='accepted' AND ((sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1)) LIMIT 1`).bind(owner.wtink_id,target).first(); if(!friend)return json({error:'NOT_FRIENDS'},403,origin);
-    const rows=await env.DB.prepare(`SELECT id,sender_id,receiver_id,body,kind,mime,name,created_at,read_at FROM social_messages WHERE (sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1) ORDER BY created_at ASC LIMIT 500`).bind(owner.wtink_id,target).all();
-    await env.DB.prepare('UPDATE social_messages SET read_at=?1 WHERE receiver_id=?2 AND sender_id=?3 AND read_at IS NULL').bind(Date.now(),owner.wtink_id,target).run();
-    return json({messages:(rows.results||[]).map(r=>({id:r.id,from:displayId(r.sender_id),to:displayId(r.receiver_id),body:r.body,kind:r.kind||'text',mime:r.mime||null,name:r.name||null,createdAt:Number(r.created_at),readAt:r.read_at?Number(r.read_at):null}))},200,origin);
+    const now=Date.now();
+    await env.DB.prepare('UPDATE social_messages SET read_at=?1 WHERE receiver_id=?2 AND sender_id=?3 AND read_at IS NULL AND deleted_at IS NULL').bind(now,owner.wtink_id,target).run();
+    const rows=await env.DB.prepare(`SELECT m.id,m.sender_id,m.receiver_id,m.body,m.kind,mime,name,m.created_at,m.read_at,m.edited_at,m.deleted_at,m.reply_to_id,m.reply_preview,m.note_date,m.note_shift,CASE WHEN d.message_id IS NULL THEN 0 ELSE 1 END AS deleted_for_me FROM social_messages m LEFT JOIN social_message_deletions d ON d.message_id=m.id AND d.profile_id=?1 WHERE (m.sender_id=?1 AND m.receiver_id=?2) OR (m.sender_id=?2 AND m.receiver_id=?1) ORDER BY m.created_at ASC LIMIT 500`).bind(owner.wtink_id,target).all();
+    return json({messages:(rows.results||[]).map(r=>({id:r.id,from:displayId(r.sender_id),to:displayId(r.receiver_id),body:r.body,kind:r.kind||'text',mime:r.mime||null,name:r.name||null,createdAt:Number(r.created_at),readAt:r.read_at?Number(r.read_at):null,editedAt:r.edited_at?Number(r.edited_at):null,deletedAt:r.deleted_at?Number(r.deleted_at):null,replyToId:r.reply_to_id||null,replyPreview:r.reply_preview||null,noteDate:r.note_date||null,noteShift:r.note_shift||null,deletedForMe:Boolean(r.deleted_for_me)}))},200,origin);
+  }
+  const messageAction=path.match(/^\/chat\/messages\/([^/]+)(?:\/(me|both))?$/);
+  if(messageAction && request.method==='PUT' && !messageAction[2]){
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const id=decodeURIComponent(messageAction[1]); const input=await body(request); const text=cleanText(input?.body,12000);
+    const row=await env.DB.prepare('SELECT id,sender_id,receiver_id,kind,created_at FROM social_messages WHERE id=?1').bind(id).first(); if(!row)return json({error:'MESSAGE_NOT_FOUND'},404,origin);
+    if(normalizeId(row.sender_id)!==normalizeId(owner.wtink_id)||row.kind!=='text')return json({error:'EDIT_NOT_ALLOWED'},403,origin); if(!text)return json({error:'INVALID_MESSAGE'},400,origin);
+    const now=Date.now(); await env.DB.prepare('UPDATE social_messages SET body=?1,edited_at=?2 WHERE id=?3').bind(text,now,id).run();
+    return json({ok:true,message:{id,from:displayId(row.sender_id),to:displayId(row.receiver_id),body:text,kind:'text',createdAt:Number(row.created_at),readAt:null,editedAt:now,deletedAt:null}},200,origin);
+  }
+  if(messageAction && request.method==='DELETE'){
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const id=decodeURIComponent(messageAction[1]); const mode=messageAction[2]||'me'; const row=await env.DB.prepare('SELECT sender_id,receiver_id FROM social_messages WHERE id=?1').bind(id).first(); if(!row)return json({error:'MESSAGE_NOT_FOUND'},404,origin);
+    const isParticipant=normalizeId(row.sender_id)===normalizeId(owner.wtink_id)||normalizeId(row.receiver_id)===normalizeId(owner.wtink_id); if(!isParticipant)return json({error:'FORBIDDEN'},403,origin);
+    if(mode==='both'){if(normalizeId(row.sender_id)!==normalizeId(owner.wtink_id))return json({error:'ONLY_SENDER_CAN_DELETE_BOTH'},403,origin); await env.DB.prepare('UPDATE social_messages SET deleted_at=?1,body=\'\',edited_at=NULL WHERE id=?2').bind(Date.now(),id).run();}
+    else await env.DB.prepare('INSERT OR REPLACE INTO social_message_deletions(message_id,profile_id,deleted_at) VALUES (?1,?2,?3)').bind(id,owner.wtink_id,Date.now()).run();
+    return json({ok:true},200,origin);
   }
   if((path==='/social/messages'||path==='/chat/messages') && request.method==='POST'){
-    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const input=await body(request); const target=normalizeId(input?.to); const text=cleanText(input?.body,12000000); const kind=['text','voice','image','video'].includes(String(input?.kind))?String(input.kind):'text'; const mime=typeof input?.mime==='string'?String(input.mime).slice(0,120):null; const name=typeof input?.name==='string'?String(input.name).slice(0,160):null;
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const input=await body(request); const target=normalizeId(input?.to); const text=cleanText(input?.body,28000000); const kind=['text','voice','image','video','note'].includes(String(input?.kind))?String(input.kind):'text'; const mime=typeof input?.mime==='string'?String(input.mime).slice(0,120):null; const name=typeof input?.name==='string'?String(input.name).slice(0,160):null; const replyToId=typeof input?.replyToId==='string'?String(input.replyToId).slice(0,80):null; const replyPreview=cleanText(input?.replyPreview,500); const noteDate=cleanText(input?.noteDate,20); const noteShift=cleanText(input?.noteShift,80);
     if(!validId(target)||!text||target===owner.wtink_id)return json({error:'INVALID_MESSAGE'},400,origin);
+    const blocked=await env.DB.prepare('SELECT 1 FROM blocked_profiles WHERE (profile_id=?1 AND blocked_id=?2) OR (profile_id=?2 AND blocked_id=?1) LIMIT 1').bind(owner.wtink_id,target).first(); if(blocked)return json({error:'BLOCKED'},403,origin);
     const friend=await env.DB.prepare(`SELECT 1 FROM friend_requests WHERE status='accepted' AND ((sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1)) LIMIT 1`).bind(owner.wtink_id,target).first(); if(!friend)return json({error:'NOT_FRIENDS'},403,origin);
+    if(replyToId){const replyRow=await env.DB.prepare('SELECT 1 FROM social_messages WHERE id=?1 AND ((sender_id=?2 AND receiver_id=?3) OR (sender_id=?3 AND receiver_id=?2))').bind(replyToId,owner.wtink_id,target).first();if(!replyRow)return json({error:'INVALID_REPLY'},400,origin)}
     const id=crypto.randomUUID(),now=Date.now(); await env.DB.prepare('INSERT INTO social_messages (id,sender_id,receiver_id,body,kind,mime,name,created_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8)').bind(id,owner.wtink_id,target,text,kind,mime,name,now).run();
-    await createSocialNotification(env,target,owner.wtink_id,'message',id,'Новое сообщение',`${owner.name}: ${kind==='text'?text.slice(0,120):'Вложение'}`,'./?tab=friends');
-    await notifyProfile(env,target,'message',{title:`Сообщение от ${owner.name}`,body:kind==='text'?text.slice(0,120):'Новое зашифрованное вложение',url:'./?tab=friends',tag:`wtink-message-${id}`,urgency:'high'});
-    return json({ok:true,message:{id,from:displayId(owner.wtink_id),to:displayId(target),body:text,kind,mime,name,createdAt:now,readAt:null}},201,origin);
+    await env.DB.prepare('UPDATE social_messages SET reply_to_id=?1,reply_preview=?2,note_date=?3,note_shift=?4 WHERE id=?5').bind(replyToId,replyPreview,noteDate,noteShift,id).run();
+    await createSocialNotification(env,target,owner.wtink_id,'message',id,'Новое сообщение',`${owner.name}: ${kind==='text'?text.slice(0,120):kind==='note'?'Заметка смены':'Вложение'}`,'./?tab=chat');
+    await notifyProfile(env,target,'message',{actorId:owner.wtink_id,title:`Сообщение от ${owner.name}`,body:kind==='text'?text.slice(0,120):kind==='note'?'Заметка смены':'Новое зашифрованное вложение',url:'./?tab=chat',tag:`wtink-message-${id}`,urgency:'high'});
+    return json({ok:true,message:{id,from:displayId(owner.wtink_id),to:displayId(target),body:text,kind,mime,name,createdAt:now,readAt:null,editedAt:null,deletedAt:null,replyToId,replyPreview,noteDate,noteShift}},201,origin);
   }
 
   const adminProfile = async () => {
