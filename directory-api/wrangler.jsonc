@@ -6,7 +6,9 @@
   "workers_dev": true,
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
-    "ALLOWED_ORIGIN": "*"
+    "ALLOWED_ORIGIN": "*",
+    "WEBAUTHN_ORIGIN": "https://skaletun.github.io/WorkerTink",
+    "WEBAUTHN_RP_ID": "skaletun.github.io"
   },
   "triggers": {
     "crons": ["*/5 * * * *"]

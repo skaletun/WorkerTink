@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # ─────────────────────────────────────────────────────────────
 # WorkerTink 3.0.0 — Git ignore
 # ─────────────────────────────────────────────────────────────
@@ -72,44 +73,15 @@ test-results/
 *.orig
 *.rej
 *~
+=======
+node_modules
+dist
+>>>>>>> e1a2435 (Critical fixes)
 .DS_Store
-Thumbs.db
+.vscode
+.idea
+npm-debug.log*
 
-# IDE / editor settings
-.vscode/
-.idea/
-*.iml
-*.code-workspace
-
-# OS metadata
-.AppleDouble
-.LSOverride
-Icon?
-Desktop.ini
-
-# Package-manager caches / local state
-.npm/
-.pnpm-store/
-.yarn/
-.yarn-cache/
-.yarn-integrity
-
-# Local archives / exported builds
-*.zip
-*.tar
-*.tar.gz
-*.tgz
-
-# Local certificates / private keys
-*.pem
-*.key
-*.p12
-*.pfx
-
-# Optional local-only overrides
-*.local
-*.local.*
-
-# Keep the project examples/templates tracked
-!.env.example
-!.env.*.example
+server/data.json
+.wrangler
+*.tsbuildinfo

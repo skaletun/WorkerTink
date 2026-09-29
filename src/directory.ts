@@ -96,6 +96,7 @@ export type ChatKey={profileId:string;publicKey:JsonWebKey;updatedAt:number};
 export type ChatServerMessage={id:string;from:string;to:string;body:string;kind:'text'|'voice'|'image'|'video'|'file'|'note';mime?:string|null;name?:string|null;createdAt:number;readAt:number|null;editedAt?:number|null;deletedAt?:number|null;replyToId?:string|null;replyPreview?:string|null;noteDate?:string|null;noteShift?:string|null;deletedForMe?:boolean};
 export function putChatKey(publicKey:JsonWebKey,token:string){return request<{ok:boolean;key:ChatKey}>('/chat/keys',{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({publicKey})})}
 export function getChatKey(profileId:string,token:string){return request<{key:ChatKey}>(`/chat/keys/${encodeURIComponent(profileId)}`,{headers:{Authorization:`Bearer ${token}`}})}
+export function getOwnChatKey(token:string){return request<{key:ChatKey}>('/chat/keys/me',{headers:{Authorization:`Bearer ${token}`}})}
 export function getChatMessages(profileId:string,token:string){return request<{messages:ChatServerMessage[]}>(`/chat/messages/${encodeURIComponent(profileId)}`,{headers:{Authorization:`Bearer ${token}`}})}
 export function sendChatMessage(to:string,body:string,kind:'text'|'voice'|'image'|'video'|'file'|'note',token:string,mime?:string,name?:string,replyToId?:string,replyPreview?:string,noteDate?:string,noteShift?:string){return request<{ok:boolean;message:ChatServerMessage}>('/chat/messages',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({to,body,kind,mime,name,replyToId,replyPreview,noteDate,noteShift})})}
 export async function uploadChatMedia(to:string,kind:'voice'|'image'|'video'|'file',payload:{iv:string;ciphertext:ArrayBuffer;mime?:string;name?:string;size:number;groupId?:string},token:string){
@@ -119,13 +120,15 @@ export function pollQrLogin(session:string,secret:string){return request<{status
 export function approveQrLogin(session:string,secret:string,transfer:{iv:string;data:string;peerPublicKey:JsonWebKey},token:string){return request<{ok:boolean}>('/auth/qr/approve',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({session,secret,transfer})})}
 
 
-export type GroupChat={id:string;name:string;description:string;avatar:string;ownerId:string;members:number;role:string;createdAt:number};
+export type GroupChat={id:string;name:string;description:string;avatar:string;ownerId:string;visibility:'public'|'private';members:number;role:string;createdAt:number};
 export type GroupChatMember={profile:UserProfile;role:string;joinedAt:number};
 export type GroupChatDetail={group:GroupChat;members:GroupChatMember[];key:{iv:string;data:string}|null};
 export type GroupChatMessage=ChatServerMessage;
 export function getChatGroups(token:string){return request<{groups:GroupChat[]}>('/chat/groups',{headers:{Authorization:`Bearer ${token}`}})}
-export function createChatGroup(name:string,description:string,token:string){return request<{group:GroupChat}>('/chat/groups',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({name,description})})}
+export function createChatGroup(name:string,description:string,visibility:'public'|'private',token:string){return request<{group:GroupChat}>('/chat/groups',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({name,description,visibility})})}
 export function getChatGroup(id:string,token:string){return request<GroupChatDetail>(`/chat/groups/${encodeURIComponent(id)}`,{headers:{Authorization:`Bearer ${token}`}})}
+export function getChatGroupLink(id:string,token:string){return request<{group:GroupChat & {joined:boolean}}>(`/chat/groups/link/${encodeURIComponent(id)}`,{headers:{Authorization:`Bearer ${token}`}})}
+export function joinChatGroup(id:string,token:string){return request<{ok:boolean}>(`/chat/groups/${encodeURIComponent(id)}/join`,{method:'POST',headers:{Authorization:`Bearer ${token}`}})}
 export function putChatGroupKey(id:string,packet:{iv:string;data:string},token:string){return request<{ok:boolean}>(`/chat/groups/${encodeURIComponent(id)}/keys`,{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(packet)})}
 export function addChatGroupMember(id:string,profileId:string,token:string){return request<{ok:boolean;profile:UserProfile;role:string}>(`/chat/groups/${encodeURIComponent(id)}/members`,{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({profileId})})}
 export function removeChatGroupMember(id:string,profileId:string,token:string){return request<{ok:boolean}>(`/chat/groups/${encodeURIComponent(id)}/members`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({profileId})})}
@@ -135,13 +138,15 @@ export function sendChatGroupMessage(id:string,body:string,kind:ChatServerMessag
 export function deleteChatGroupMessage(id:string,mode:'me'|'both',token:string){return request<{ok:boolean}>(`/chat/groups/messages/${encodeURIComponent(id)}/${mode}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
 export function clearChatGroup(id:string,token:string){return request<{ok:boolean;count:number}>(`/chat/groups/${encodeURIComponent(id)}/clear`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
 
-export type CompanyChannel={id:string;name:string;slug:string;description:string;companyName:string;ownerId:string;members:number;roleId:string|null;createdAt:number};
+export type CompanyChannel={id:string;name:string;slug:string;description:string;companyName:string;ownerId:string;visibility:'public'|'private';members:number;roleId:string|null;createdAt:number};
 export type ChannelRole={id:string;name:string;permissions:Record<string,boolean>};
 export type ChannelPost={id:string;body:string;createdAt:number;updatedAt:number;author:UserProfile};
 export type CompanyInvite={id:string;channelId:string;channelName:string;companyName:string;createdAt:number;sender:UserProfile};
 export function getCompanyChannels(token:string){return request<{channels:CompanyChannel[]}>('/company/channels',{headers:{Authorization:`Bearer ${token}`}})}
 export function getCompanyInvites(token:string){return request<{invites:CompanyInvite[]}>('/company/invites',{headers:{Authorization:`Bearer ${token}`}})}
-export function createCompanyChannel(input:{name:string;companyName:string;description?:string;slug?:string},token:string){return request<{channel:CompanyChannel}>('/company/channels',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(input)})}
+export function createCompanyChannel(input:{name:string;companyName:string;description?:string;slug?:string;visibility?:'public'|'private'},token:string){return request<{channel:CompanyChannel}>('/company/channels',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(input)})}
+export function getCompanyChannelLink(slug:string,token:string){return request<{channel:CompanyChannel & {joined:boolean}}>(`/company/channels/link/${encodeURIComponent(slug)}`,{headers:{Authorization:`Bearer ${token}`}})}
+export function joinCompanyChannel(id:string,token:string){return request<{ok:boolean}>(`/company/channels/${encodeURIComponent(id)}/join`,{method:'POST',headers:{Authorization:`Bearer ${token}`}})}
 export function inviteCompanyChannel(channelId:string,profileId:string,token:string){return request<{ok:boolean;id:string}>(`/company/channels/${encodeURIComponent(channelId)}/invite`,{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({profileId})})}
 export function respondCompanyInvite(id:string,action:'accept'|'decline',token:string){return request<{ok:boolean}>(`/company/invites/${encodeURIComponent(id)}/${action}`,{method:'POST',headers:{Authorization:`Bearer ${token}`}})}
 export function getCompanyChannelPosts(channelId:string,token:string){return request<{posts:ChannelPost[]}>(`/company/channels/${encodeURIComponent(channelId)}/posts`,{headers:{Authorization:`Bearer ${token}`}})}
@@ -160,6 +165,8 @@ export function getNetworkHome(token:string){return request<NetworkHome>('/netwo
 export function searchNetworkPeople(query:string,token:string){return request<{people:NetworkPerson[]}>(`/network/people?query=${encodeURIComponent(query)}`,{headers:{Authorization:`Bearer ${token}`}})}
 export function getNetworkGroups(token:string){return request<{groups:NetworkGroup[]}>('/network/groups',{headers:{Authorization:`Bearer ${token}`}})}
 export function createNetworkGroup(input:{name:string;description:string;visibility:'public'|'private'},token:string){return request<{group:NetworkGroup}>('/network/groups',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(input)})}
+export type NetworkGroupDetail={group:NetworkGroup;members:{profile:UserProfile;role:string}[]};
+export function getNetworkGroup(idOrSlug:string,token:string){return request<NetworkGroupDetail>(`/network/groups/${encodeURIComponent(idOrSlug)}`,{headers:{Authorization:`Bearer ${token}`}})}
 export function joinNetworkGroup(id:string,token:string){return request<{ok:boolean}>(`/network/groups/${encodeURIComponent(id)}/join`,{method:'POST',headers:{Authorization:`Bearer ${token}`}})}
 export function leaveNetworkGroup(id:string,token:string){return request<{ok:boolean}>(`/network/groups/${encodeURIComponent(id)}/join`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
 export function createNetworkEvent(input:{title:string;description:string;kind:string;startsAt:number;endsAt?:number|null;location?:string;groupId?:string|null},token:string){return request<{event:NetworkEvent}>('/network/events',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(input)})}

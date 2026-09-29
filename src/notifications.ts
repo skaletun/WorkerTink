@@ -1,4 +1,5 @@
 import {directoryConfigured, getPushPublicKey, savePushSubscription, removePushSubscription, updatePushPreferences} from './directory';
+import {isElectronDesktop, requestDesktopNotificationPermission} from './desktop';
 
 export type NotificationSettings = {
   enabled:boolean;
@@ -53,18 +54,31 @@ export async function getPushPermission(){
 }
 
 export async function enablePush(token:string,settings:NotificationSettings){
+  if(isElectronDesktop && !('PushManager' in window)) {
+    const permission=await requestDesktopNotificationPermission();
+    if(permission!=='granted') throw new Error(permission==='denied'?'PUSH_PERMISSION_DENIED':'PUSH_PERMISSION_DISMISSED');
+    return null;
+  }
   if(!directoryConfigured||!token)throw new Error('PUSH_NOT_CONFIGURED');
   if(!pushSupported())throw new Error('PUSH_UNSUPPORTED');
   const permission=Notification.permission==='granted'? 'granted' : await Notification.requestPermission();
   if(permission!=='granted')throw new Error(permission==='denied'?'PUSH_PERMISSION_DENIED':'PUSH_PERMISSION_DISMISSED');
-  const registration=await navigator.serviceWorker.ready;
-  const publicKey=await getPushPublicKey(token);
-  let subscription=await registration.pushManager.getSubscription();
-  if(!subscription){
-    subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:base64UrlToUint8Array(publicKey)});
+  try {
+    const registration=await navigator.serviceWorker.ready;
+    const publicKey=await getPushPublicKey(token);
+    let subscription=await registration.pushManager.getSubscription();
+    if(!subscription){
+      subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:base64UrlToUint8Array(publicKey)});
+    }
+    await savePushSubscription(serializeSubscription(subscription),settings,token);
+    return subscription;
+  } catch(error) {
+    if(isElectronDesktop){
+      const permission=await requestDesktopNotificationPermission();
+      if(permission==='granted') return null;
+    }
+    throw error;
   }
-  await savePushSubscription(serializeSubscription(subscription),settings,token);
-  return subscription;
 }
 
 export async function disablePush(token:string){
@@ -78,6 +92,8 @@ export async function disablePush(token:string){
 }
 
 export async function syncPushPreferences(token:string,settings:NotificationSettings){
+  if(isElectronDesktop && !('PushManager' in window)) return;
+
   if(!directoryConfigured||!token)return;
   const registration=await navigator.serviceWorker.ready.catch(()=>null);
   const subscription=registration?await registration.pushManager.getSubscription().catch(()=>null):null;

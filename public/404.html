@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WorkerTink</title></head>
+<body><script>
+(function(){
+  var path=location.pathname, search=location.search, hash=location.hash;
+  var base='/WorkerTink/';
+  var target=base+'?wtRoute='+encodeURIComponent(path+(search||'')+(hash||''));
+  location.replace(target);
+})();
+</script></body></html>

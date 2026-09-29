@@ -207,7 +207,9 @@ async function verifyPin(pin, hash, salt) {
 }
 
 function webAuthnOrigin(request, env) {
-  return String(request.headers.get('Origin') || env.WEBAUTHN_ORIGIN || '').replace(/\/$/, '');
+  const requestOrigin=String(request.headers.get('Origin')||'').replace(/\/$/,'');
+  if(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(requestOrigin)) return requestOrigin;
+  return String(env.WEBAUTHN_ORIGIN || requestOrigin || 'https://skaletun.github.io/WorkerTink').replace(/\/$/, '');
 }
 
 function webAuthnRpId(request, env) {
@@ -573,11 +575,16 @@ async function handle(request, env) {
     } catch { return json({error:'ONEPASS_VERIFICATION_FAILED'},400,origin); }
     if (!verification.verified || !verification.registrationInfo) return json({error:'ONEPASS_VERIFICATION_FAILED'},400,origin);
     const {credential,credentialDeviceType,credentialBackedUp}=verification.registrationInfo;
+    if(!credential?.id || !credential?.publicKey) return json({error:'ONEPASS_CREDENTIAL_INVALID'},400,origin);
     const now=Date.now();
-    await env.DB.batch([
-      env.DB.prepare(`INSERT OR REPLACE INTO webauthn_credentials(id,profile_id,user_id,public_key,counter,device_type,backed_up,transports,device_name,created_at,updated_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?10)`).bind(credential.id,owner.wtink_id,owner.webauthn_user_id || owner.wtink_id,base64Url(credential.publicKey),credential.counter,credentialDeviceType,credentialBackedUp?1:0,JSON.stringify(credential.transports||[]),deviceName,now,now),
-      env.DB.prepare('DELETE FROM auth_challenges WHERE id = ?1').bind(challenge.id)
-    ]);
+    try {
+      await env.DB.batch([
+        env.DB.prepare(`INSERT OR REPLACE INTO webauthn_credentials(id,profile_id,user_id,public_key,counter,device_type,backed_up,transports,device_name,created_at,updated_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?10)`).bind(credential.id,owner.wtink_id,owner.webauthn_user_id || owner.wtink_id,base64Url(credential.publicKey),credential.counter,credentialDeviceType,credentialBackedUp?1:0,JSON.stringify(credential.transports||[]),deviceName,now,now),
+        env.DB.prepare('DELETE FROM auth_challenges WHERE id = ?1').bind(challenge.id)
+      ]);
+    } catch(error) {
+      return json({error:'ONEPASS_STORAGE_FAILED',detail:String(error).slice(0,220)},500,origin);
+    }
     return json({ok:true},200,origin);
   }
 
@@ -667,15 +674,28 @@ async function handle(request, env) {
     const input=await body(request); const publicKey=input?.publicKey;
     if(!publicKey||publicKey.kty!=='EC'||publicKey.crv!=='P-256'||typeof publicKey.x!=='string'||typeof publicKey.y!=='string')return json({error:'INVALID_CHAT_KEY'},400,origin);
     const now=Date.now();
-    await env.DB.prepare(`INSERT INTO chat_device_keys(profile_id,public_key,updated_at) VALUES (?1,?2,?3) ON CONFLICT(profile_id) DO UPDATE SET public_key=excluded.public_key,updated_at=excluded.updated_at`).bind(owner.wtink_id,JSON.stringify(publicKey),now).run();
+    const existing=await env.DB.prepare('SELECT public_key,updated_at FROM chat_device_keys WHERE profile_id=?1').bind(owner.wtink_id).first();
+    const incoming=JSON.stringify(publicKey);
+    if(existing && String(existing.public_key)!==incoming){
+      return json({error:'CHAT_KEY_ROTATION_BLOCKED',key:{profileId:displayId(owner.wtink_id),publicKey:JSON.parse(existing.public_key),updatedAt:Number(existing.updated_at||0)}},409,origin);
+    }
+    await env.DB.prepare(`INSERT INTO chat_device_keys(profile_id,public_key,updated_at) VALUES (?1,?2,?3) ON CONFLICT(profile_id) DO UPDATE SET updated_at=excluded.updated_at`).bind(owner.wtink_id,incoming,now).run();
     return json({ok:true,key:{profileId:displayId(owner.wtink_id),publicKey,updatedAt:now}},200,origin);
+  }
+  if(request.method==='GET'&&path==='/chat/keys/me'){
+    const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const row=await env.DB.prepare('SELECT public_key,updated_at FROM chat_device_keys WHERE profile_id=?1').bind(owner.wtink_id).first();
+    if(!row)return json({error:'CHAT_KEY_NOT_READY'},404,origin);
+    return json({key:{profileId:displayId(owner.wtink_id),publicKey:JSON.parse(row.public_key),updatedAt:Number(row.updated_at||0)}},200,origin);
   }
   const chatKeyMatch=path.match(/^\/chat\/keys\/([^/]+)$/);
   if(chatKeyMatch&&request.method==='GET'){
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const target=normalizeId(decodeURIComponent(chatKeyMatch[1]));
     if(!validId(target))return json({error:'INVALID_ID'},400,origin);
+    const isSelf=target===normalizeId(owner.wtink_id);
+    const groupMember=await env.DB.prepare('SELECT 1 FROM chat_group_members WHERE group_id IN (SELECT group_id FROM chat_group_members WHERE profile_id=?1) AND profile_id=?2 LIMIT 1').bind(owner.wtink_id,target).first();
     const friend=await env.DB.prepare(`SELECT 1 FROM friend_requests WHERE status='accepted' AND ((sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1)) LIMIT 1`).bind(owner.wtink_id,target).first();
-    if(!friend)return json({error:'NOT_FRIENDS'},403,origin);
+    if(!isSelf&&!friend&&!groupMember)return json({error:'NOT_FRIENDS'},403,origin);
     const row=await env.DB.prepare('SELECT public_key,updated_at FROM chat_device_keys WHERE profile_id=?1').bind(target).first();
     if(!row)return json({error:'CHAT_KEY_NOT_READY'},404,origin);
     return json({key:{profileId:displayId(target),publicKey:JSON.parse(row.public_key),updatedAt:Number(row.updated_at)}},200,origin);
@@ -1273,20 +1293,35 @@ async function handle(request, env) {
   // 2.22 group chats and corporate invite-only channels.
   if(path==='/chat/groups' && request.method==='GET'){
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
-    const rows=await env.DB.prepare(`SELECT g.id,g.name,g.description,g.avatar,g.owner_id,g.created_at,
+    const rows=await env.DB.prepare(`SELECT g.id,g.name,g.description,g.avatar,g.owner_id,g.visibility,g.created_at,
       (SELECT COUNT(*) FROM chat_group_members m WHERE m.group_id=g.id) AS members,
       (SELECT role FROM chat_group_members m2 WHERE m2.group_id=g.id AND m2.profile_id=?1) AS role
       FROM chat_groups g JOIN chat_group_members me ON me.group_id=g.id AND me.profile_id=?1 ORDER BY g.updated_at DESC`).bind(owner.wtink_id).all();
-    return json({groups:(rows.results||[]).map(r=>({id:r.id,name:r.name,description:r.description,avatar:r.avatar||'',ownerId:displayId(r.owner_id),members:Number(r.members||0),role:r.role,createdAt:Number(r.created_at)}))},200,origin);
+    return json({groups:(rows.results||[]).map(r=>({id:r.id,name:r.name,description:r.description,avatar:r.avatar||'',ownerId:displayId(r.owner_id),visibility:r.visibility==='public'?'public':'private',members:Number(r.members||0),role:r.role,createdAt:Number(r.created_at)}))},200,origin);
   }
   if(path==='/chat/groups' && request.method==='POST'){
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const input=await body(request); const name=cleanText(input?.name,80); const description=cleanText(input?.description,300); if(!name)return json({error:'INVALID_GROUP'},400,origin);
-    const id=crypto.randomUUID(),now=Date.now(); await env.DB.batch([env.DB.prepare('INSERT INTO chat_groups(id,name,description,owner_id,created_at,updated_at) VALUES(?1,?2,?3,?4,?5,?5)').bind(id,name,description,owner.wtink_id,now),env.DB.prepare("INSERT INTO chat_group_members(group_id,profile_id,role,joined_at) VALUES(?1,?2,'owner',?3)").bind(id,owner.wtink_id,now)]); return json({group:{id,name,description,ownerId:displayId(owner.wtink_id),members:1,role:'owner',createdAt:now}},201,origin);
+    const visibility=input?.visibility==='public'?'public':'private'; const id=crypto.randomUUID(),now=Date.now(); await env.DB.batch([env.DB.prepare('INSERT INTO chat_groups(id,name,description,owner_id,visibility,created_at,updated_at) VALUES(?1,?2,?3,?4,?5,?6,?6)').bind(id,name,description,owner.wtink_id,visibility,now),env.DB.prepare("INSERT INTO chat_group_members(group_id,profile_id,role,joined_at) VALUES(?1,?2,'owner',?3)").bind(id,owner.wtink_id,now)]); return json({group:{id,name,description,ownerId:displayId(owner.wtink_id),visibility,members:1,role:'owner',createdAt:now}},201,origin);
+  }
+  const groupLinkMatch=path.match(/^\/chat\/groups\/link\/([^/]+)$/);
+  if(groupLinkMatch && request.method==='GET'){
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const id=decodeURIComponent(groupLinkMatch[1]);
+    const g=await env.DB.prepare('SELECT id,name,description,avatar,owner_id,visibility,created_at FROM chat_groups WHERE id=?1').bind(id).first(); if(!g)return json({error:'GROUP_NOT_FOUND'},404,origin);
+    const member=await env.DB.prepare('SELECT role FROM chat_group_members WHERE group_id=?1 AND profile_id=?2').bind(id,owner.wtink_id).first();
+    return json({group:{id:g.id,name:g.name,description:g.description,avatar:g.avatar||'',ownerId:displayId(g.owner_id),visibility:g.visibility==='public'?'public':'private',createdAt:Number(g.created_at),joined:Boolean(member),role:member?.role||null}},200,origin);
+  }
+  const groupJoinMatch=path.match(/^\/chat\/groups\/([^/]+)\/join$/);
+  if(groupJoinMatch && request.method==='POST'){
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const id=decodeURIComponent(groupJoinMatch[1]);
+    const group=await env.DB.prepare('SELECT id,visibility FROM chat_groups WHERE id=?1').bind(id).first(); if(!group)return json({error:'GROUP_NOT_FOUND'},404,origin);
+    if(group.visibility!=='public')return json({error:'INVITE_REQUIRED'},403,origin);
+    await env.DB.prepare("INSERT OR IGNORE INTO chat_group_members(group_id,profile_id,role,joined_at) VALUES(?1,?2,'member',?3)").bind(id,owner.wtink_id,Date.now()).run();
+    return json({ok:true},200,origin);
   }
   const groupMatch=path.match(/^\/chat\/groups\/([^/]+)$/);
   if(groupMatch && request.method==='GET'){
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const id=decodeURIComponent(groupMatch[1]); const member=await env.DB.prepare('SELECT role FROM chat_group_members WHERE group_id=?1 AND profile_id=?2').bind(id,owner.wtink_id).first(); if(!member)return json({error:'NOT_GROUP_MEMBER'},403,origin);
-    const [g, members, keys]=await Promise.all([env.DB.prepare('SELECT id,name,description,avatar,owner_id,created_at FROM chat_groups WHERE id=?1').bind(id).first(),env.DB.prepare('SELECT m.profile_id,m.role,m.joined_at,p.name,p.position,p.avatar,p.username,p.is_dev,p.is_admin FROM chat_group_members m JOIN profiles p ON p.wtink_id=m.profile_id WHERE m.group_id=?1 ORDER BY m.joined_at ASC').bind(id).all(),env.DB.prepare('SELECT iv,data,updated_at FROM chat_group_keys WHERE group_id=?1 AND profile_id=?2').bind(id,owner.wtink_id).first()]); if(!g)return json({error:'GROUP_NOT_FOUND'},404,origin); return json({group:{id:g.id,name:g.name,description:g.description,avatar:g.avatar||'',ownerId:displayId(g.owner_id),createdAt:Number(g.created_at),role:member.role},members:(members.results||[]).map(r=>({profile:publicProfile({wtink_id:r.profile_id,name:r.name,position:r.position,avatar:r.avatar,username:r.username,is_dev:r.is_dev,is_admin:r.is_admin}),role:r.role,joinedAt:Number(r.joined_at)})),key:keys?{iv:keys.iv,data:keys.data}:null},200,origin);
+    const [g, members, keys]=await Promise.all([env.DB.prepare('SELECT id,name,description,avatar,owner_id,visibility,created_at FROM chat_groups WHERE id=?1').bind(id).first(),env.DB.prepare('SELECT m.profile_id,m.role,m.joined_at,p.name,p.position,p.avatar,p.username,p.is_dev,p.is_admin FROM chat_group_members m JOIN profiles p ON p.wtink_id=m.profile_id WHERE m.group_id=?1 ORDER BY m.joined_at ASC').bind(id).all(),env.DB.prepare('SELECT iv,data,updated_at FROM chat_group_keys WHERE group_id=?1 AND profile_id=?2').bind(id,owner.wtink_id).first()]); if(!g)return json({error:'GROUP_NOT_FOUND'},404,origin); return json({group:{id:g.id,name:g.name,description:g.description,avatar:g.avatar||'',ownerId:displayId(g.owner_id),visibility:g.visibility==='public'?'public':'private',createdAt:Number(g.created_at),role:member.role},members:(members.results||[]).map(r=>({profile:publicProfile({wtink_id:r.profile_id,name:r.name,position:r.position,avatar:r.avatar,username:r.username,is_dev:r.is_dev,is_admin:r.is_admin}),role:r.role,joinedAt:Number(r.joined_at)})),key:keys?{iv:keys.iv,data:keys.data}:null},200,origin);
   }
   const groupMemberMatch=path.match(/^\/chat\/groups\/([^/]+)\/members$/);
   if(groupMemberMatch && request.method==='POST'){
@@ -1318,10 +1353,26 @@ async function handle(request, env) {
 
   if(path==='/company/invites' && request.method==='GET'){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const rows=await env.DB.prepare(`SELECT i.id,i.channel_id,i.created_at,c.name,c.company_name,p.wtink_id AS sender_id,p.name AS sender_name,p.position AS sender_position,p.avatar AS sender_avatar,p.username AS sender_username,p.is_dev AS sender_dev,p.is_admin AS sender_admin FROM company_channel_invites i JOIN company_channels c ON c.id=i.channel_id JOIN profiles p ON p.wtink_id=i.invited_by WHERE i.invited_profile_id=?1 AND i.status='pending' ORDER BY i.created_at DESC`).bind(owner.wtink_id).all();return json({invites:(rows.results||[]).map(r=>({id:r.id,channelId:r.channel_id,channelName:r.name,companyName:r.company_name,createdAt:Number(r.created_at),sender:publicProfile({wtink_id:r.sender_id,name:r.sender_name,position:r.sender_position,avatar:r.sender_avatar,username:r.sender_username,is_dev:r.sender_dev,is_admin:r.sender_admin})}))},200,origin)}
 
-  if(path==='/company/channels' && request.method==='GET'){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const rows=await env.DB.prepare(`SELECT c.id,c.name,c.slug,c.description,c.company_name,c.owner_id,c.created_at,(SELECT COUNT(*) FROM company_channel_members m WHERE m.channel_id=c.id) members,(SELECT role_id FROM company_channel_members m2 WHERE m2.channel_id=c.id AND m2.profile_id=?1) role_id FROM company_channels c JOIN company_channel_members me ON me.channel_id=c.id AND me.profile_id=?1 ORDER BY c.updated_at DESC`).bind(owner.wtink_id).all();return json({channels:(rows.results||[]).map(r=>({id:r.id,name:r.name,slug:r.slug,description:r.description,companyName:r.company_name,ownerId:displayId(r.owner_id),members:Number(r.members||0),roleId:r.role_id||null,createdAt:Number(r.created_at)}))},200,origin)}
-  if(path==='/company/channels' && request.method==='POST'){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const input=await body(request);const name=cleanText(input?.name,100),companyName=cleanText(input?.companyName,120),description=cleanText(input?.description,500);if(!name||!companyName)return json({error:'INVALID_CHANNEL'},400,origin);let slug=(cleanText(input?.slug,60)||name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')).slice(0,60)||`channel-${Date.now()}`;let suffix=0,base=slug;while(await env.DB.prepare('SELECT 1 FROM company_channels WHERE slug=?1').bind(slug).first()){suffix++;slug=`${base}-${suffix}`;}const id=crypto.randomUUID(),roleId=crypto.randomUUID(),employeeRoleId=crypto.randomUUID(),now=Date.now();const perms=JSON.stringify({post:true,invite:true,manageMembers:true,manageRoles:true,deletePosts:true});await env.DB.batch([env.DB.prepare('INSERT INTO company_channels(id,name,slug,description,company_name,owner_id,created_at,updated_at) VALUES(?1,?2,?3,?4,?5,?6,?7,?7)').bind(id,name,slug,description,companyName,owner.wtink_id,now),env.DB.prepare('INSERT INTO company_channel_roles(id,channel_id,name,permissions,created_at) VALUES(?1,?2,?3,?4,?5)').bind(roleId,id,'Владелец',perms,now),env.DB.prepare('INSERT INTO company_channel_roles(id,channel_id,name,permissions,created_at) VALUES(?1,?2,?3,?4,?5)').bind(employeeRoleId,id,'Сотрудник',JSON.stringify({post:true}),now),env.DB.prepare('INSERT INTO company_channel_members(channel_id,profile_id,role_id,joined_at) VALUES(?1,?2,?3,?4)').bind(id,owner.wtink_id,roleId,now)]);return json({channel:{id,name,slug,description,companyName,ownerId:displayId(owner.wtink_id),roleId,members:1}},201,origin)}
+  if(path==='/company/channels' && request.method==='GET'){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const rows=await env.DB.prepare(`SELECT c.id,c.name,c.slug,c.description,c.company_name,c.owner_id,c.visibility,c.created_at,(SELECT COUNT(*) FROM company_channel_members m WHERE m.channel_id=c.id) members,(SELECT role_id FROM company_channel_members m2 WHERE m2.channel_id=c.id AND m2.profile_id=?1) role_id FROM company_channels c JOIN company_channel_members me ON me.channel_id=c.id AND me.profile_id=?1 ORDER BY c.updated_at DESC`).bind(owner.wtink_id).all();return json({channels:(rows.results||[]).map(r=>({id:r.id,name:r.name,slug:r.slug,description:r.description,companyName:r.company_name,ownerId:displayId(r.owner_id),visibility:r.visibility==='public'?'public':'private',members:Number(r.members||0),roleId:r.role_id||null,createdAt:Number(r.created_at)}))},200,origin)}
+  if(path==='/company/channels' && request.method==='POST'){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const input=await body(request);const name=cleanText(input?.name,100),companyName=cleanText(input?.companyName,120),description=cleanText(input?.description,500),visibility=input?.visibility==='public'?'public':'private';if(!name||!companyName)return json({error:'INVALID_CHANNEL'},400,origin);let slug=(cleanText(input?.slug,60)||name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')).slice(0,60)||`channel-${Date.now()}`;let suffix=0,base=slug;while(await env.DB.prepare('SELECT 1 FROM company_channels WHERE slug=?1').bind(slug).first()){suffix++;slug=`${base}-${suffix}`;}const id=crypto.randomUUID(),roleId=crypto.randomUUID(),employeeRoleId=crypto.randomUUID(),now=Date.now();const perms=JSON.stringify({post:true,invite:true,manageMembers:true,manageRoles:true,deletePosts:true});await env.DB.batch([env.DB.prepare('INSERT INTO company_channels(id,name,slug,description,company_name,owner_id,visibility,created_at,updated_at) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?8)').bind(id,name,slug,description,companyName,owner.wtink_id,visibility,now),env.DB.prepare('INSERT INTO company_channel_roles(id,channel_id,name,permissions,created_at) VALUES(?1,?2,?3,?4,?5)').bind(roleId,id,'Владелец',perms,now),env.DB.prepare('INSERT INTO company_channel_roles(id,channel_id,name,permissions,created_at) VALUES(?1,?2,?3,?4,?5)').bind(employeeRoleId,id,'Сотрудник',JSON.stringify({post:true}),now),env.DB.prepare('INSERT INTO company_channel_members(channel_id,profile_id,role_id,joined_at) VALUES(?1,?2,?3,?4)').bind(id,owner.wtink_id,roleId,now)]);return json({channel:{id,name,slug,description,companyName,ownerId:displayId(owner.wtink_id),visibility,roleId,members:1}},201,origin)}
   const channelInvite=path.match(/^\/company\/channels\/([^/]+)\/invite$/);if(channelInvite&&request.method==='POST'){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const id=decodeURIComponent(channelInvite[1]);const member=await env.DB.prepare(`SELECT m.role_id,r.permissions FROM company_channel_members m JOIN company_channel_roles r ON r.id=m.role_id WHERE m.channel_id=?1 AND m.profile_id=?2`).bind(id,owner.wtink_id).first();if(!member||!JSON.parse(member.permissions||'{}').invite)return json({error:'FORBIDDEN'},403,origin);const target=normalizeId((await body(request))?.profileId);if(!validId(target))return json({error:'INVALID_PROFILE'},400,origin);const exists=await env.DB.prepare('SELECT 1 FROM profiles WHERE wtink_id=?1').bind(target).first();if(!exists)return json({error:'USER_NOT_FOUND'},404,origin);const iid=crypto.randomUUID();await env.DB.prepare('INSERT INTO company_channel_invites(id,channel_id,invited_profile_id,invited_by,created_at) VALUES(?1,?2,?3,?4,?5)').bind(iid,id,target,owner.wtink_id,Date.now()).run();await createSocialNotification(env,target,owner.wtink_id,'channelInvite',iid,'Приглашение в корпоративный канал','Вас пригласили в рабочий канал','./?tab=social');await notifyProfile(env,target,'channelInvite',{actorId:owner.wtink_id,title:'Приглашение в корпоративный канал',body:`${owner.name} приглашает вас в канал`,url:'./?tab=social',tag:`wtink-channel-invite-${iid}`,urgency:'high'});return json({ok:true,id:iid},201,origin)}
   const channelInviteAction=path.match(/^\/company\/invites\/([^/]+)\/(accept|decline)$/);if(channelInviteAction&&request.method==='POST'){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const inviteId=decodeURIComponent(channelInviteAction[1]);const invite=await env.DB.prepare('SELECT id,channel_id,status FROM company_channel_invites WHERE id=?1 AND invited_profile_id=?2').bind(inviteId,owner.wtink_id).first();if(!invite||invite.status!=='pending')return json({error:'INVITE_NOT_FOUND'},404,origin);const role=await env.DB.prepare("SELECT id FROM company_channel_roles WHERE channel_id=?1 AND name='Сотрудник' LIMIT 1").bind(invite.channel_id).first();if(channelInviteAction[2]==='accept'){let roleId=role?.id;if(!roleId){roleId=crypto.randomUUID();await env.DB.prepare('INSERT INTO company_channel_roles(id,channel_id,name,permissions,created_at) VALUES(?1,?2,\'Сотрудник\',\'{\"post\":true}\',?3)').bind(roleId,invite.channel_id,Date.now()).run();}await env.DB.prepare('INSERT OR REPLACE INTO company_channel_members(channel_id,profile_id,role_id,joined_at) VALUES(?1,?2,?3,?4)').bind(invite.channel_id,owner.wtink_id,roleId,Date.now()).run();}await env.DB.prepare('UPDATE company_channel_invites SET status=?1,responded_at=?2 WHERE id=?3').bind(channelInviteAction[2]==='accept'?'accepted':'declined',Date.now(),inviteId).run();return json({ok:true},200,origin)}
+  const companyLinkMatch=path.match(/^\/company\/channels\/link\/([^/]+)$/);
+  if(companyLinkMatch && request.method==='GET'){
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const slug=decodeURIComponent(companyLinkMatch[1]);
+    const c=await env.DB.prepare('SELECT id,name,slug,description,company_name,owner_id,visibility,created_at FROM company_channels WHERE slug=?1').bind(slug).first(); if(!c)return json({error:'CHANNEL_NOT_FOUND'},404,origin);
+    const member=await env.DB.prepare('SELECT role_id FROM company_channel_members WHERE channel_id=?1 AND profile_id=?2').bind(c.id,owner.wtink_id).first();
+    return json({channel:{id:c.id,name:c.name,slug:c.slug,description:c.description,companyName:c.company_name,ownerId:displayId(c.owner_id),visibility:c.visibility==='public'?'public':'private',createdAt:Number(c.created_at),joined:Boolean(member),roleId:member?.role_id||null}},200,origin);
+  }
+  const companyJoinMatch=path.match(/^\/company\/channels\/([^/]+)\/join$/);
+  if(companyJoinMatch && request.method==='POST'){
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const id=decodeURIComponent(companyJoinMatch[1]);
+    const channel=await env.DB.prepare('SELECT id,visibility FROM company_channels WHERE id=?1').bind(id).first(); if(!channel)return json({error:'CHANNEL_NOT_FOUND'},404,origin);
+    if(channel.visibility!=='public')return json({error:'INVITE_REQUIRED'},403,origin);
+    const role=await env.DB.prepare("SELECT id FROM company_channel_roles WHERE channel_id=?1 AND name='Сотрудник' LIMIT 1").bind(id).first(); if(!role)return json({error:'ROLE_NOT_READY'},409,origin);
+    await env.DB.prepare('INSERT OR IGNORE INTO company_channel_members(channel_id,profile_id,role_id,joined_at) VALUES(?1,?2,?3,?4)').bind(id,owner.wtink_id,role.id,Date.now()).run();
+    return json({ok:true},200,origin);
+  }
   const channelPosts=path.match(/^\/company\/channels\/([^/]+)\/posts$/);if(channelPosts&&request.method==='GET'){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const id=decodeURIComponent(channelPosts[1]);const member=await env.DB.prepare('SELECT 1 FROM company_channel_members WHERE channel_id=?1 AND profile_id=?2').bind(id,owner.wtink_id).first();if(!member)return json({error:'FORBIDDEN'},403,origin);const rows=await env.DB.prepare(`SELECT p.id,p.body,p.created_at,p.updated_at,a.wtink_id,a.name,a.position,a.avatar,a.username,a.is_dev,a.is_admin FROM company_channel_posts p JOIN profiles a ON a.wtink_id=p.author_id WHERE p.channel_id=?1 ORDER BY p.created_at DESC LIMIT 100`).bind(id).all();return json({posts:(rows.results||[]).map(r=>({id:r.id,body:r.body,createdAt:Number(r.created_at),updatedAt:Number(r.updated_at),author:publicProfile({wtink_id:r.wtink_id,name:r.name,position:r.position,avatar:r.avatar,username:r.username,is_dev:r.is_dev,is_admin:r.is_admin})}))},200,origin)}
   if(channelPosts&&request.method==='POST'){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const id=decodeURIComponent(channelPosts[1]);const member=await env.DB.prepare(`SELECT r.permissions FROM company_channel_members m JOIN company_channel_roles r ON r.id=m.role_id WHERE m.channel_id=?1 AND m.profile_id=?2`).bind(id,owner.wtink_id).first();if(!member||!JSON.parse(member.permissions||'{}').post)return json({error:'FORBIDDEN'},403,origin);const bodyText=cleanText((await body(request))?.body,12000);if(!bodyText)return json({error:'EMPTY_POST'},400,origin);const pid=crypto.randomUUID(),now=Date.now();await env.DB.prepare('INSERT INTO company_channel_posts(id,channel_id,author_id,body,created_at,updated_at) VALUES(?1,?2,?3,?4,?5,?5)').bind(pid,id,owner.wtink_id,bodyText,now).run();return json({ok:true,id:pid,createdAt:now},201,origin)}
   const channelRoles=path.match(/^\/company\/channels\/([^/]+)\/roles$/);if(channelRoles&&request.method==='GET'){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const rows=await env.DB.prepare('SELECT id,name,permissions,created_at FROM company_channel_roles WHERE channel_id=?1 ORDER BY created_at ASC').bind(decodeURIComponent(channelRoles[1])).all();return json({roles:(rows.results||[]).map(r=>({id:r.id,name:r.name,permissions:JSON.parse(r.permissions||'{}')}))},200,origin)}
@@ -1394,6 +1445,16 @@ async function handle(request, env) {
     const unique=`${slug}-${crypto.randomUUID().slice(0,6)}`; const id=crypto.randomUUID(),now=Date.now();
     await env.DB.batch([env.DB.prepare('INSERT INTO social_groups(id,name,slug,description,owner_id,visibility,created_at,updated_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?7)').bind(id,name,unique,description,owner.wtink_id,visibility,now),env.DB.prepare('INSERT INTO social_group_members(group_id,profile_id,role,created_at) VALUES (?1,?2,?3,?4)').bind(id,owner.wtink_id,'owner',now)]);
     return json({group:{id,name,slug:unique,description,visibility,owner:publicProfile(owner),members:1,joined:true,role:'owner',createdAt:now}},201,origin);
+  }
+  const networkGroupDetail=path.match(/^\/network\/groups\/([^/]+)$/);
+  if(networkGroupDetail && request.method==='GET'){
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const key=decodeURIComponent(networkGroupDetail[1]);
+    const g=await env.DB.prepare(`SELECT g.id,g.name,g.slug,g.description,g.visibility,g.created_at,g.owner_id,p.name AS o_name,p.position AS o_position,p.avatar AS o_avatar,p.is_dev AS o_is_dev,p.is_admin AS o_is_admin FROM social_groups g JOIN profiles p ON p.wtink_id=g.owner_id WHERE g.id=?1 OR g.slug=?1 LIMIT 1`).bind(key).first();
+    if(!g)return json({error:'GROUP_NOT_FOUND'},404,origin);
+    const member=await env.DB.prepare('SELECT role FROM social_group_members WHERE group_id=?1 AND profile_id=?2').bind(g.id,owner.wtink_id).first();
+    if(g.visibility==='private'&&!member)return json({error:'INVITE_REQUIRED'},403,origin);
+    const rows=await env.DB.prepare(`SELECT gm.role,gm.created_at,p.wtink_id,p.name,p.position,p.avatar,p.username,p.is_dev,p.is_admin FROM social_group_members gm JOIN profiles p ON p.wtink_id=gm.profile_id WHERE gm.group_id=?1 ORDER BY gm.created_at ASC LIMIT 200`).bind(g.id).all();
+    return json({group:{id:g.id,name:g.name,slug:g.slug,description:g.description,visibility:g.visibility,owner:socialProfile({wtink_id:g.owner_id,name:g.o_name,position:g.o_position,avatar:g.o_avatar,is_dev:g.o_is_dev,is_admin:g.o_is_admin}),members:(rows.results||[]).length,joined:Boolean(member),role:member?.role||null,createdAt:Number(g.created_at||0)},members:(rows.results||[]).map(r=>({role:r.role,profile:socialProfile({wtink_id:r.wtink_id,name:r.name,position:r.position,avatar:r.avatar,username:r.username,is_dev:r.is_dev,is_admin:r.is_admin})}))},200,origin);
   }
   const groupJoin=path.match(/^\/network\/groups\/([^/]+)\/join$/);
   if(groupJoin && (request.method==='POST'||request.method==='DELETE')){

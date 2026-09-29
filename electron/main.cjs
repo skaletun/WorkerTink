@@ -1,4 +1,4 @@
-const {app, BrowserWindow, shell, session, Menu, nativeImage} = require('electron');
+const {app, BrowserWindow, shell, session, Menu, nativeImage, ipcMain, Notification} = require('electron');
 const path = require('path');
 
 const APP_ID = 'com.workertink.desktop';
@@ -35,7 +35,8 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      spellcheck: true
+      spellcheck: true,
+      preload: path.join(__dirname, 'preload.cjs')
     }
   });
 
@@ -64,9 +65,18 @@ function createWindow() {
   mainWindow.loadURL(PRODUCTION_URL);
 }
 
+ipcMain.on('workertink:notify', (_event, payload) => {
+  if (!Notification.isSupported()) return;
+  const notification = new Notification({title: String(payload?.title || 'WorkerTink'), body: String(payload?.body || '')});
+  notification.on('click', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) { mainWindow.show(); mainWindow.focus(); if (payload?.url) { try { mainWindow.loadURL(new URL(payload.url, PRODUCTION_URL).toString()); } catch {} } }
+  });
+  notification.show();
+});
+
 app.whenReady().then(() => {
   session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
-    const allowed = ['notifications', 'media', 'clipboard-read', 'clipboard-write'];
+    const allowed = ['notifications', 'media', 'clipboard-read', 'clipboard-write', 'fullscreen', 'pointerLock'];
     callback(allowed.includes(permission));
   });
   Menu.setApplicationMenu(null);

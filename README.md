@@ -91,3 +91,7 @@ npm test
 npm run build
 ```
 
+
+### Desktop notifications
+
+Desktop uses the production GitHub Pages frontend. When Chromium/Electron cannot create a Web Push subscription, WorkerTink falls back to the native Electron notification bridge while polling the notification center for new events.
