@@ -1446,6 +1446,19 @@ async function handle(request, env) {
     await env.DB.batch([env.DB.prepare('INSERT INTO social_groups(id,name,slug,description,owner_id,visibility,created_at,updated_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?7)').bind(id,name,unique,description,owner.wtink_id,visibility,now),env.DB.prepare('INSERT INTO social_group_members(group_id,profile_id,role,created_at) VALUES (?1,?2,?3,?4)').bind(id,owner.wtink_id,'owner',now)]);
     return json({group:{id,name,slug:unique,description,visibility,owner:publicProfile(owner),members:1,joined:true,role:'owner',createdAt:now}},201,origin);
   }
+  const networkGroupUpdate=path.match(/^\/network\/groups\/([^/]+)$/);
+  if(networkGroupUpdate && request.method==='PUT'){
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const id=decodeURIComponent(networkGroupUpdate[1]); const group=await env.DB.prepare('SELECT id,owner_id FROM social_groups WHERE id=?1').bind(id).first();
+    if(!group)return json({error:'GROUP_NOT_FOUND'},404,origin); if(group.owner_id!==owner.wtink_id && !roleFlags(owner).isAdmin)return json({error:'FORBIDDEN'},403,origin);
+    const input=await body(request); const name=cleanText(input?.name,80),description=cleanText(input?.description,500),visibility=input?.visibility==='private'?'private':'public';
+    if(name.length<2)return json({error:'INVALID_GROUP_NAME'},400,origin);
+    await env.DB.prepare('UPDATE social_groups SET name=?1,description=?2,visibility=?3,updated_at=?4 WHERE id=?5').bind(name,description,visibility,Date.now(),id).run();
+    const row=await env.DB.prepare(`SELECT g.id,g.name,g.slug,g.description,g.visibility,g.created_at,g.owner_id,p.name AS o_name,p.position AS o_position,p.avatar AS o_avatar,p.username AS o_username,p.is_dev AS o_is_dev,p.is_admin AS o_is_admin,
+      (SELECT COUNT(*) FROM social_group_members gm WHERE gm.group_id=g.id) AS members FROM social_groups g JOIN profiles p ON p.wtink_id=g.owner_id WHERE g.id=?1`).bind(id).first();
+    return json({group:{id:row.id,name:row.name,slug:row.slug,description:row.description,visibility:row.visibility,owner:socialProfile({wtink_id:row.owner_id,name:row.o_name,position:row.o_position,avatar:row.o_avatar,username:row.o_username,is_dev:row.o_is_dev,is_admin:row.o_is_admin}),members:Number(row.members||0),joined:true,role:'owner',createdAt:Number(row.created_at||0)}},200,origin);
+  }
+
   const networkGroupDetail=path.match(/^\/network\/groups\/([^/]+)$/);
   if(networkGroupDetail && request.method==='GET'){
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const key=decodeURIComponent(networkGroupDetail[1]);
