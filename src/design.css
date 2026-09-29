@@ -570,3 +570,55 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}
 }
+
+
+/* Mobile breakpoint policy
+   Desktop/tablet keep the full desktop information architecture.
+   Only phones switch to the mobile navigation/composition. */
+@media (min-width:768px){
+  .app-shell{display:grid!important;grid-template-columns:252px minmax(0,1fr)!important}
+  .sidebar{display:flex!important;width:252px!important}
+  .sidebar .brand div,.sidebar .mini-profile span,.sidebar .side-label,
+  .sidebar .side-nav span,.sidebar .privacy div,.sidebar .version{display:block!important}
+  .side-nav button{grid-template-columns:34px minmax(0,1fr)!important;place-items:initial!important}
+  .content{padding-left:34px!important;padding-right:34px!important;padding-bottom:56px!important}
+  .mobile-nav{display:none!important}
+}
+@media (min-width:768px) and (max-width:1100px){
+  .app-shell{grid-template-columns:252px minmax(0,1fr)!important}
+  .sidebar{width:252px!important;padding:14px 10px!important}
+  .brand{justify-content:flex-start!important;padding:0 9px!important}
+  .brand div,.mini-profile span,.side-label,.side-nav span,.privacy div,.version{display:block!important}
+  .mini-profile{justify-content:flex-start!important;padding:8px!important}
+  .side-nav button{grid-template-columns:34px minmax(0,1fr)!important;place-items:initial!important}
+  .sidebar-bottom{display:block!important}
+  .content{padding-left:24px!important;padding-right:24px!important}
+  .network-grid{grid-template-columns:minmax(0,1fr) 280px!important}
+  .network-rail{display:block!important}
+  .dashboard-kpis{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+  .enhance-grid{grid-template-columns:repeat(12,minmax(0,1fr))!important}
+  .enhance-card{grid-column:span 4!important}
+  .enhance-card:nth-child(1),.enhance-card:nth-child(6){grid-column:span 6!important}
+  .chat-shell-v2{grid-template-columns:300px minmax(0,1fr)!important}
+}
+
+/* Phone-only UI */
+@media (max-width:767px){
+  .app-shell{display:block!important}
+  .sidebar{display:none!important}
+  .content{padding:0 10px 76px!important}
+  .mobile-nav{display:grid!important}
+}
+@media (max-width:767px) and (min-width:621px){
+  .content{padding:0 16px 76px!important}
+  .topbar{min-height:64px!important}
+  .dashboard-hero{align-items:flex-start!important;flex-direction:column!important}
+  .dashboard-actions{width:100%!important}
+  .dashboard-actions .btn{flex:1!important}
+  .dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .enhance-grid{grid-template-columns:1fr!important}
+  .enhance-card,.enhance-card:nth-child(1),.enhance-card:nth-child(6){grid-column:auto!important}
+  .mini-timeline{overflow:auto!important;grid-template-columns:repeat(7,76px)!important}
+  .network-hero h1{font-size:28px!important}
+  .chat-shell-v2{grid-template-columns:250px minmax(0,1fr)!important;height:calc(100dvh - 136px)!important;min-height:500px!important}
+}
