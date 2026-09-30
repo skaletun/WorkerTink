@@ -133,7 +133,7 @@ function calcMonthGross(state:State,year:number,month:number):GrossCalc{
      if(isHoliday(d)){holidayWork++;holidayWorkHours+=hours}
    }
  }
- const scheduledSafe=Math.max(1,scheduled),scheduledHoursSafe=Math.max(1,scheduledHours),hourValue=state.salary/scheduledHoursSafe;
+ const scheduledSafe=Math.max(1,scheduled),scheduledHoursSafe=Math.max(1,scheduledHours),rateHours=scheduledHours>0?scheduledHours:state.scheduleType==='7/0'?Math.max(1,end.getDate()*shiftHours(state,state.scheduleShift)):1,hourValue=state.salary/rateHours;
  const base=Math.round(state.salary*plannedWorkHours/scheduledHoursSafe);
  const extraPay=Math.round(hourValue*extraWorkHours);
  const holidayExtra=Math.round(hourValue*holidayWorkHours*Math.max(0,state.holidayCoeff-1));
