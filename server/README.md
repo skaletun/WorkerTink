@@ -1,26 +1,11 @@
-# WorkerTink Directory API — legacy Node.js
+# Legacy JSON API
 
-Небольшой legacy-сервер-каталог для локальной разработки. Для production используйте `directory-api/` на Cloudflare Workers + D1.
-Он **не хранит чаты и заметки**: они остаются в local signaling/localStorage.
+Этот Node.js сервер сохранён только как исторический fallback. Production WTinker использует Cloudflare Workers + D1 Directory API.
 
-## Запуск
+Для локальной разработки используйте из корня репозитория:
 
 ```bash
-node server/index.mjs
+npm run directory:dev
 ```
 
-По умолчанию API слушает `http://localhost:8787`.
-
-Для GitHub Pages задайте:
-
-```text
-VITE_WTINK_DIRECTORY_URL=https://ВАШ-API-ДОМЕН
-```
-
-### Переменные сервера
-
-- `PORT` — порт, по умолчанию `8787`.
-- `WTINK_DATA_FILE` — путь к JSON-файлу базы, по умолчанию `server/data.json`.
-- `CORS_ORIGIN` — разрешённый origin, по умолчанию `*`.
-
-В production рекомендуется заменить JSON-хранилище на постоянную БД и ограничить CORS доменом WorkerTink.
+Скрипт `npm run api` также запускает Directory API, чтобы локальная проверка совпадала с production-кодом.
