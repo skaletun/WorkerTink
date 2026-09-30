@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {DEFAULT,calcMonth,calcYear,getScheduledShift,avgIncome,vacationCalendarDays,vacationUsedDays,isValidYmd,sickPayForDays} from '../src/core.ts';
+import {DEFAULT,calcMonth,calcYear,getScheduledShift,avgIncome,vacationCalendarDays,vacationUsedDays,vacationProjectedUsedDays,isValidYmd,sickPayForDays} from '../src/core.ts';
 
 const base={...DEFAULT,startDate:'2026-09-01',scheduleType:'5/2',taxRate:0,salary:100000};
 const normal=calcMonth(base,2026,8);
@@ -119,6 +119,7 @@ assert.equal(overlapCalc.vacDays,3);
 // Остаток отпуска считает объединение периодов, а не сумму пересекающихся диапазонов.
 const overlappingVacations={...base,vacations:[{start:'2026-09-07',end:'2026-09-11'},{start:'2026-09-09',end:'2026-09-15'}]};
 assert.equal(vacationUsedDays(overlappingVacations),9);
+assert.equal(vacationProjectedUsedDays({...base,vacations:[{start:'2026-09-07',end:'2026-09-11'}]},{start:'2026-09-10',end:'2026-09-15'}),9);
 
 // Больничный симулятор использует тот же расчётный путь и ограничения, что и месячный payroll.
 const sickState={...base,salary:100000,taxRate:0,stage:10};
