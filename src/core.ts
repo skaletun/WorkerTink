@@ -69,8 +69,15 @@ export function vacationUsedDays(state:State){const days=new Set<string>();for(c
 function monthIndex(year:number,month:number){return year*12+month}
 function historyValue(state:State,index:number){const y=Math.floor(index/12),m=((index%12)+12)%12,key=monthKey(y,m),value=state.incomeHistory[key];return Number.isFinite(value)&&value>=0?value:state.salary}
 export function avgIncome(state:State,months=12,throughMonth?:string){
- const through=throughMonth&&/^\d{4}-\d{2}$/.test(throughMonth)?(()=>{const [y,m]=throughMonth.split('-').map(Number);return monthIndex(y,m-1)})():monthIndex(new Date().getFullYear(),new Date().getMonth());
- const count=Math.max(1,Math.floor(months));let sum=0;for(let i=count;i>=1;i--)sum+=historyValue(state,through-i);return sum/count;
+ const upper=throughMonth&&/^\d{4}-\d{2}$/.test(throughMonth)?throughMonth:'9999-12';
+ const entries=Object.entries(state.incomeHistory).filter(([key,v])=>/^\d{4}-\d{2}$/.test(key)&&Number.isFinite(v)&&v>=0&&key<upper).sort(([a],[b])=>a.localeCompare(b));
+ const take=entries.slice(-Math.max(1,Math.floor(months))).map(([,v])=>v);
+ return take.length?take.reduce((a,b)=>a+b,0)/take.length:state.salary;
+}
+function payrollAverageMonthlyIncome(state:State,months:number,throughMonth:string){
+ const [y,m]=throughMonth.split('-').map(Number),through=monthIndex(y,m-1),count=Math.max(1,Math.floor(months));let sum=0;
+ for(let i=count;i>=1;i--)sum+=historyValue(state,through-i);
+ return sum/count;
 }
 
 function shiftHours(state:State,shift:ShiftValue){return shift==='full'?(state.scheduleType==='7/0'?24:8):shift==='off'?0:8}
@@ -78,7 +85,7 @@ function periodSet(periods:Period[],start:Date,end:Date){const out=new Set<strin
 function sickRateForStage(stage:number){return stage<8?(stage<5?.6:.8):1}
 export function sickPayForDays(state:State,year:number,month:number,days:number){
  const safeDays=Math.max(0,Math.floor(Number(days)||0));if(!safeDays)return 0;
- const end=new Date(year,month+1,0),dailyBase=avgIncome(state,24,monthKey(year,month))*24/730*sickRateForStage(state.stage);
+ const end=new Date(year,month+1,0),dailyBase=payrollAverageMonthlyIncome(state,24,monthKey(year,month))*24/730*sickRateForStage(state.stage);
  const minDaily=year===2026?27093/end.getDate():0;
  const maxDaily=year===2026?6827.40:Infinity;
  return Math.round(Math.min(maxDaily,Math.max(minDaily,dailyBase))*safeDays);
@@ -113,7 +120,7 @@ function calcMonthGross(state:State,year:number,month:number):GrossCalc{
  const extraPay=Math.round(hourValue*extraWorkHours);
  const holidayExtra=Math.round(hourValue*holidayWorkHours*Math.max(0,state.holidayCoeff-1));
  const nightExtra=Math.round(hourValue*nightWork*8*Math.max(0,state.nightExtraPercent)/100);
- const vacPay=Math.round(avgIncome(state,12,monthKey(year,month))/29.3*vacDays);
+ const vacPay=Math.round(payrollAverageMonthlyIncome(state,12,monthKey(year,month))/29.3*vacDays);
  const sickPay=sickPayForDays(state,year,month,sickDays);
  return {year,month,work,nightWork,holidayWork,vacDays,sickDays,base,extraPay,holidayExtra,nightExtra,vacPay,sickPay,gross:base+extraPay+holidayExtra+nightExtra+vacPay+sickPay,sickRate,scheduled:scheduledSafe,scheduledHours:scheduledHoursSafe,workHours,plannedWorkHours,extraWorkHours};
 }
