@@ -560,7 +560,10 @@ async function handle(request, env) {
     const banner = cleanBanner(raw.banner);
     const requestedUsername = cleanUsername(raw.username);
     const pin = String(input?.pin || '');
+    const privacyPolicyVersion = cleanText(input?.privacyPolicyVersion, 20);
+    const termsVersion = cleanText(input?.termsVersion, 20);
     if (!validId(wtinkId) || !name || !position || !validPin(pin) || (raw.username && !requestedUsername)) return json({error: !validPin(pin) ? 'INVALID_PIN' : 'INVALID_USERNAME'}, 400, origin);
+    if (privacyPolicyVersion !== '1.0' || termsVersion !== '1.0') return json({error:'RULES_ACCEPTANCE_REQUIRED'},400,origin);
 
     const existing = await env.DB.prepare('SELECT wtink_id FROM profiles WHERE wtink_id = ?1').bind(wtinkId).first();
     if (existing) return json({error: 'WTINK_ID_TAKEN'}, 409, origin);
@@ -573,15 +576,15 @@ async function handle(request, env) {
     const username = await uniqueUsername(env, requestedUsername);
     try {
       await env.DB.prepare(`
-        INSERT INTO profiles (wtink_id, name, position, avatar, banner, username, is_dev, is_admin, token_hash, pin_hash, pin_salt, webauthn_user_id, created_at, updated_at, last_seen)
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?13, ?13)
-      `).bind(wtinkId, name, position, avatar, banner, username, wtinkId === DEV_WTINK_ID ? 1 : 0, wtinkId === DEV_WTINK_ID ? 1 : 0, tokenHash, pinData.hash, pinData.salt, webauthnUserId, now).run();
+        INSERT INTO profiles (wtink_id, name, position, avatar, banner, username, is_dev, is_admin, token_hash, pin_hash, pin_salt, webauthn_user_id, privacy_policy_version, terms_version, rules_accepted_at, created_at, updated_at, last_seen)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?16, ?16)
+      `).bind(wtinkId, name, position, avatar, banner, username, wtinkId === DEV_WTINK_ID ? 1 : 0, wtinkId === DEV_WTINK_ID ? 1 : 0, tokenHash, pinData.hash, pinData.salt, webauthnUserId, privacyPolicyVersion, termsVersion, now, now).run();
     } catch (error) {
       if (String(error).toLowerCase().includes('unique')) return json({error: 'WTINK_ID_TAKEN'}, 409, origin);
       throw error;
     }
     const session = await createAuthSession(env, wtinkId, token, now, String(input?.deviceName || 'Устройство'));
-    return json({profile: publicProfile({wtink_id:wtinkId,name,position,avatar,banner,username}), token, sessionId:session.sessionId, security:{pinSet:true,onePassAvailable:false}}, 201, origin);
+    return json({profile: publicProfile({wtink_id:wtinkId,name,position,avatar,banner,username,is_official:0,is_verified:0}), token, sessionId:session.sessionId, security:{pinSet:true,onePassAvailable:false}}, 201, origin);
   }
 
   const chatSearchMatch = path.match(/^\/chat\/messages\/([^/]+)\/search$/);
