@@ -536,6 +536,61 @@ async function handle(request, env) {
     return json({profile: publicProfile({wtink_id:wtinkId,name,position,avatar,username}), token, sessionId:session.sessionId, security:{pinSet:true,onePassAvailable:false}}, 201, origin);
   }
 
+  const chatReactionMatch = path.match(/^\/chat\/messages\/([^/]+)\/reactions$/);
+  if (chatReactionMatch && request.method === 'GET') {
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const messageId=decodeURIComponent(chatReactionMatch[1]);
+    const message=await env.DB.prepare('SELECT id,from_id,to_id FROM chat_messages WHERE id=?1').bind(messageId).first();
+    if(!message)return json({error:'MESSAGE_NOT_FOUND'},404,origin);
+    if(message.from_id!==owner.wtink_id && message.to_id!==owner.wtink_id)return json({error:'FORBIDDEN'},403,origin);
+    const rows=await env.DB.prepare('SELECT emoji,profile_id FROM chat_message_reactions WHERE message_id=?1 ORDER BY created_at ASC').bind(messageId).all();
+    return json({reactions:(rows.results||[]).map(r=>({emoji:r.emoji,profileId:displayId(r.profile_id)}))},200,origin);
+  }
+  if (chatReactionMatch && request.method === 'PUT') {
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const messageId=decodeURIComponent(chatReactionMatch[1]); const input=await body(request);
+    const emoji=cleanText(input?.emoji,16);
+    if(!emoji)return json({error:'INVALID_REACTION'},400,origin);
+    const message=await env.DB.prepare('SELECT id,from_id,to_id FROM chat_messages WHERE id=?1').bind(messageId).first();
+    if(!message)return json({error:'MESSAGE_NOT_FOUND'},404,origin);
+    if(message.from_id!==owner.wtink_id && message.to_id!==owner.wtink_id)return json({error:'FORBIDDEN'},403,origin);
+    const now=Date.now();
+    await env.DB.prepare('INSERT INTO chat_message_reactions(message_id,profile_id,emoji,created_at) VALUES(?1,?2,?3,?4) ON CONFLICT(message_id,profile_id) DO UPDATE SET emoji=excluded.emoji,created_at=excluded.created_at').bind(messageId,owner.wtink_id,emoji,now).run();
+    return json({ok:true,reaction:{emoji,profileId:displayId(owner.wtink_id)}},200,origin);
+  }
+  if (chatReactionMatch && request.method === 'DELETE') {
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const messageId=decodeURIComponent(chatReactionMatch[1]);
+    await env.DB.prepare('DELETE FROM chat_message_reactions WHERE message_id=?1 AND profile_id=?2').bind(messageId,owner.wtink_id).run();
+    return json({ok:true},200,origin);
+  }
+  const groupReactionMatch = path.match(/^\/chat\/groups\/([^/]+)\/messages\/([^/]+)\/reactions$/);
+  if (groupReactionMatch && request.method === 'GET') {
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const groupId=decodeURIComponent(groupReactionMatch[1]),messageId=decodeURIComponent(groupReactionMatch[2]);
+    const member=await env.DB.prepare('SELECT 1 FROM chat_group_members WHERE group_id=?1 AND profile_id=?2').bind(groupId,owner.wtink_id).first();
+    if(!member)return json({error:'NOT_GROUP_MEMBER'},403,origin);
+    const rows=await env.DB.prepare('SELECT emoji,profile_id FROM chat_group_message_reactions WHERE message_id=?1 ORDER BY created_at ASC').bind(messageId).all();
+    return json({reactions:(rows.results||[]).map(r=>({emoji:r.emoji,profileId:displayId(r.profile_id)}))},200,origin);
+  }
+  if (groupReactionMatch && request.method === 'PUT') {
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const groupId=decodeURIComponent(groupReactionMatch[1]),messageId=decodeURIComponent(groupReactionMatch[2]); const input=await body(request);
+    const emoji=cleanText(input?.emoji,16); if(!emoji)return json({error:'INVALID_REACTION'},400,origin);
+    const member=await env.DB.prepare('SELECT 1 FROM chat_group_members WHERE group_id=?1 AND profile_id=?2').bind(groupId,owner.wtink_id).first();
+    if(!member)return json({error:'NOT_GROUP_MEMBER'},403,origin);
+    const message=await env.DB.prepare('SELECT id FROM chat_group_messages WHERE id=?1 AND group_id=?2').bind(messageId,groupId).first();
+    if(!message)return json({error:'MESSAGE_NOT_FOUND'},404,origin);
+    await env.DB.prepare('INSERT INTO chat_group_message_reactions(message_id,profile_id,emoji,created_at) VALUES(?1,?2,?3,?4) ON CONFLICT(message_id,profile_id) DO UPDATE SET emoji=excluded.emoji,created_at=excluded.created_at').bind(messageId,owner.wtink_id,emoji,Date.now()).run();
+    return json({ok:true,reaction:{emoji,profileId:displayId(owner.wtink_id)}},200,origin);
+  }
+  if (groupReactionMatch && request.method === 'DELETE') {
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const messageId=decodeURIComponent(groupReactionMatch[2]);
+    await env.DB.prepare('DELETE FROM chat_group_message_reactions WHERE message_id=?1 AND profile_id=?2').bind(messageId,owner.wtink_id).run();
+    return json({ok:true},200,origin);
+  }
+
   if (request.method === 'POST' && path === '/auth/onepass/register/options') {
     const owner = await authProfile(request, env);
     if (!owner) return json({error:'UNAUTHORIZED'},401,origin);
