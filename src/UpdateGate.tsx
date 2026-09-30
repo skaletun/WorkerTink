@@ -13,10 +13,10 @@ export default function UpdateGate({children}:UpdateGateProps){
   const updateSWRef=useRef<(reloadPage?:boolean)=>Promise<void>>(async()=>{});
 
   const requestReload=()=>{
-    if(!('serviceWorker' in navigator))return;
     setPhase('updating');
+    if(!('serviceWorker' in navigator)){try{localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID)}catch{};window.setTimeout(()=>window.location.reload(),250);return;}
     try{localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID)}catch{}
-    if(!('serviceWorker' in navigator)){window.setTimeout(()=>window.location.reload(),250);return;}
+    
     let reloaded=false;
     const reload=async()=>{
       if(reloaded)return;
@@ -73,7 +73,7 @@ export default function UpdateGate({children}:UpdateGateProps){
         void check();
       },
       onRegisterError(error){
-        console.warn('[WorkerTink] Service Worker registration failed',error);
+        console.warn('[WTinker] Service Worker registration failed',error);
       },
     });
     return()=>{
@@ -97,8 +97,8 @@ export default function UpdateGate({children}:UpdateGateProps){
             <span className="update-gate-icon-arrow">↻</span>
           </div>
           <div className="update-gate-copy">
-            <span className="update-gate-eyebrow">WORKERTINK</span>
-            <h2 id="update-gate-title">{phase==='updating'?'Обновляем WorkerTink':'Доступно важное обновление'}</h2>
+            <span className="update-gate-eyebrow">WTINKER</span>
+            <h2 id="update-gate-title">{phase==='updating'?'Обновляем WTinker':'Доступно важное обновление'}</h2>
             <p>{phase==='updating'?'Устанавливаем новую версию и очищаем устаревшие данные. Это займёт несколько секунд.':'Вышла новая версия приложения. Обновление обязательно, чтобы продолжить работу без ошибок.'}</p>
           </div>
           <div className="update-gate-progress" aria-hidden="true">
