@@ -1543,7 +1543,7 @@ async function handle(request, env) {
         c.name AS c_name,c.position AS c_position,c.avatar AS c_avatar,c.is_dev AS c_is_dev,c.is_admin AS c_is_admin
         FROM work_shift_swaps s JOIN profiles o ON o.wtink_id=s.owner_id LEFT JOIN profiles c ON c.wtink_id=s.claimed_by
         WHERE s.status='open' AND s.date>=?1 ORDER BY s.date ASC,s.created_at DESC LIMIT 30`).bind(new Date().toISOString().slice(0,10)).all(),
-      env.DB.prepare(`SELECT p.wtink_id,p.name,p.position,p.avatar,p.is_dev,p.is_admin,p.last_seen,
+      env.DB.prepare(`SELECT p.wtink_id,p.name,p.position,p.avatar,p.banner,p.username,p.is_dev,p.is_admin,p.last_seen,
         EXISTS(SELECT 1 FROM friend_requests r WHERE r.status='accepted' AND ((r.sender_id=?1 AND r.receiver_id=p.wtink_id) OR (r.sender_id=p.wtink_id AND r.receiver_id=?1))) AS connected,
         (SELECT COUNT(*) FROM friend_requests m WHERE m.status='accepted' AND ((m.sender_id=p.wtink_id AND m.receiver_id IN (SELECT CASE WHEN r.sender_id=?1 THEN r.receiver_id ELSE r.sender_id END FROM friend_requests r WHERE r.status='accepted' AND (r.sender_id=?1 OR r.receiver_id=?1))) OR (m.receiver_id=p.wtink_id AND m.sender_id IN (SELECT CASE WHEN r.sender_id=?1 THEN r.receiver_id ELSE r.sender_id END FROM friend_requests r WHERE r.status='accepted' AND (r.sender_id=?1 OR r.receiver_id=?1))))) AS mutual
         FROM profiles p WHERE p.wtink_id<>?1 ORDER BY p.last_seen DESC,p.updated_at DESC LIMIT 24`).bind(owner.wtink_id).all()
@@ -1560,7 +1560,7 @@ async function handle(request, env) {
     const owner = await authProfile(request, env); if (!owner) return json({error:'UNAUTHORIZED'},401,origin);
     const q=cleanText(new URL(request.url).searchParams.get('query'),100).replace(/^@+/, '');
     const pattern=`%${q}%`;
-    const rows=await env.DB.prepare(`SELECT p.wtink_id,p.name,p.position,p.avatar,p.is_dev,p.is_admin,p.last_seen,
+    const rows=await env.DB.prepare(`SELECT p.wtink_id,p.name,p.position,p.avatar,p.banner,p.username,p.is_dev,p.is_admin,p.last_seen,
       EXISTS(SELECT 1 FROM friend_requests r WHERE r.status='accepted' AND ((r.sender_id=?1 AND r.receiver_id=p.wtink_id) OR (r.sender_id=p.wtink_id AND r.receiver_id=?1))) AS connected
       FROM profiles p WHERE p.wtink_id<>?1 AND (?2='' OR p.wtink_id LIKE ?3 OR UPPER(COALESCE(p.username,'')) LIKE UPPER(?3) OR UPPER(p.name) LIKE UPPER(?3) OR UPPER(COALESCE(p.position,'')) LIKE UPPER(?3))
       ORDER BY connected DESC,p.last_seen DESC,p.updated_at DESC LIMIT 60`).bind(owner.wtink_id,q,pattern).all();
@@ -1770,7 +1770,7 @@ async function handle(request, env) {
       ORDER BY r.updated_at DESC
       LIMIT 200
     `).bind(owner.wtink_id).all();
-    return json({friends: (rows.results || []).map(row => ({profile: publicProfile({wtink_id: row.wtink_id, name: row.name, position: row.position, avatar: row.avatar, is_dev: row.is_dev, is_admin: row.is_admin}), addedAt: Number(row.updated_at || Date.now()), lastSeen: Number(row.last_seen || row.updated_at || 0), online: Number(row.last_seen || 0) >= Date.now() - ONLINE_WINDOW_MS}))}, 200, origin);
+    return json({friends: (rows.results || []).map(row => ({profile: publicProfile({wtink_id: row.wtink_id, name: row.name, position: row.position, avatar: row.avatar, banner: row.banner, username: row.username, is_dev: row.is_dev, is_admin: row.is_admin}), addedAt: Number(row.updated_at || Date.now()), lastSeen: Number(row.last_seen || row.updated_at || 0), online: Number(row.last_seen || 0) >= Date.now() - ONLINE_WINDOW_MS}))}, 200, origin);
   }
 
   return json({error: 'NOT_FOUND'}, 404, origin);
