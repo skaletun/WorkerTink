@@ -124,7 +124,7 @@ button{transition:background .16s ease,border-color .16s ease,color .16s ease,tr
 .v7-content .notification-list{display:grid;gap:8px!important}.v7-content .notification-card{background:var(--v7-surface)!important;border:1px solid var(--v7-line)!important;border-radius:13px!important;box-shadow:none!important}.v7-content .notification-card:hover{border-color:var(--v7-line-strong)!important}.v7-content .notification-card.unread{border-left:3px solid var(--v7-accent)!important}.v7-content .notification-icon{background:var(--v7-surface-3)!important}
 
 /* Profile / settings */
-.v7-content .profile-cover,.v7-content .profile-modal-cover{background:var(--v7-text)!important;background-image:none!important}
+.v7-content .profile-cover,.v7-content .profile-modal-cover{background-color:var(--v7-text)!important}
 .v7-content .profile-card,.v7-content .profile-hero-card{overflow:hidden}.v7-content .profile-actions{gap:7px!important}
 .v7-content .settings-card{padding:18px!important}.v7-content .settings-card h3{font-size:14px!important}.v7-content .field{border-color:transparent!important}
 

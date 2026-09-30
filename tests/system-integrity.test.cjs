@@ -27,9 +27,9 @@ if(!chat.includes('is-empty')) throw new Error('chat empty-state contract missin
 if(!work.includes('redesign-work')) throw new Error('rebuilt work surface missing');
 if(!rebuildCss.includes('.v7-work-page.calendar-layout>.v7-page-header')) throw new Error('calendar header grid fix missing');
 if(!rebuildCss.includes('.redesign-chats .chats-mode-nav button')) throw new Error('chat mode tab styling missing');
-if(!rebuildCss.includes('.v7-work-page.calendar-layout{display:grid!important')) throw new Error('calendar two-column grid contract missing');
-if(!network.includes('PostAttachment')||!network.includes('shift-note-editor')||!network.includes('post-attachments-v2')) throw new Error('rich post surface missing');
-if(!app.includes('Добавить баннер')||!app.includes('profile.username')||!app.includes('searchUser(profile.profileId)')) throw new Error('profile customization or username fallback missing');
+if(!rebuildCss.includes('.v7-work-page.calendar-layout{display:grid!important')||!rebuildCss.includes("grid-template-areas:'header' 'calendar' 'summary'")) throw new Error('calendar full-width grid contract missing');
+if(!network.includes('PostAttachment')||!network.includes('shift-note-editor')||!network.includes('post-attachments-v2')||!network.includes('groupAttachments')) throw new Error('rich post surface missing');
+if(!app.includes('Добавить баннер')||!app.includes('profile.username')||!app.includes('searchUser(profile.profileId)')||!app.includes('const cached=id===normalizeWTinkId(state.profile.profileId)')) throw new Error('profile customization or username hydration missing');
 for(const x of ['.redesign-page-intro','.home-snapshot','.network-layout-v2','.notification-timeline','.chat-page-rebuilt','.redesign-work']) if(!rebuildCss.includes(x)) throw new Error('rebuilt design token missing '+x);
 
 if(!app.includes('syncTabUrl=(next:Tab)=>')) throw new Error('navigation URL sync is missing');
