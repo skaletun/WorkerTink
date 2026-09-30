@@ -96,7 +96,7 @@ assert.equal(extraShift.base,normal.base);
 
 // История доходов выбирается хронологически, а не по порядку ключей объекта.
 const incomeState={...base,incomeHistory:{'2026-01':100,'2026-03':300,'2026-02':200,'2026-04':400}};
-assert.equal(Math.round(avgIncome(incomeState,3)),300);
+assert.equal(Math.round(avgIncome(incomeState,3,'2026-05')),300);
 assert.equal(Math.round(avgIncome(incomeState,3,'2026-04')),200);
 
 // Отпуск: федеральный праздник внутри периода не расходует день отпуска.
