@@ -35,7 +35,7 @@
     "electron": "^44.4.5",
     "electron-builder": "^26.15.3"
   },
-  "description": "WorkerTink — Work OS, social network and desktop app for work schedules, teams, chats and workplace tools.",
+  "description": "WTinker — социальная сеть для работы: люди, сообщества, общение и рабочие инструменты в одном пространстве.",
   "author": {
     "name": "WorkerTink",
     "email": "support@workertink.app"
