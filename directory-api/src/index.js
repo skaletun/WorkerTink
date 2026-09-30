@@ -1556,7 +1556,7 @@ async function handle(request, env) {
 
   if (path === '/network/groups' && request.method === 'GET') {
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
-    const rows=await env.DB.prepare(`SELECT g.id,g.name,g.slug,g.description,g.visibility,g.created_at,g.owner_id,
+    const rows=await env.DB.prepare(`SELECT g.id,g.name,g.slug,g.description,g.visibility,g.icon,g.accent,g.cover,g.rules,g.created_at,g.owner_id,
       (SELECT COUNT(*) FROM social_group_members gm WHERE gm.group_id=g.id) AS members,
       EXISTS(SELECT 1 FROM social_group_members me WHERE me.group_id=g.id AND me.profile_id=?1) AS joined,
       CASE WHEN g.owner_id=?1 THEN 'owner' ELSE (SELECT role FROM social_group_members mr WHERE mr.group_id=g.id AND mr.profile_id=?1) END AS member_role,
@@ -1588,7 +1588,7 @@ async function handle(request, env) {
   const networkGroupDetail=path.match(/^\/network\/groups\/([^/]+)$/);
   if(networkGroupDetail && request.method==='GET'){
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const key=decodeURIComponent(networkGroupDetail[1]);
-    const g=await env.DB.prepare(`SELECT g.id,g.name,g.slug,g.description,g.visibility,g.created_at,g.owner_id,p.name AS o_name,p.position AS o_position,p.avatar AS o_avatar,p.is_dev AS o_is_dev,p.is_admin AS o_is_admin FROM social_groups g JOIN profiles p ON p.wtink_id=g.owner_id WHERE g.id=?1 OR g.slug=?1 LIMIT 1`).bind(key).first();
+    const g=await env.DB.prepare(`SELECT g.id,g.name,g.slug,g.description,g.visibility,g.icon,g.accent,g.cover,g.rules,g.created_at,g.owner_id,p.name AS o_name,p.position AS o_position,p.avatar AS o_avatar,p.is_dev AS o_is_dev,p.is_admin AS o_is_admin FROM social_groups g JOIN profiles p ON p.wtink_id=g.owner_id WHERE g.id=?1 OR g.slug=?1 LIMIT 1`).bind(key).first();
     if(!g)return json({error:'GROUP_NOT_FOUND'},404,origin);
     const member=await env.DB.prepare('SELECT role FROM social_group_members WHERE group_id=?1 AND profile_id=?2').bind(g.id,owner.wtink_id).first();
     if(g.visibility==='private'&&!member)return json({error:'INVITE_REQUIRED'},403,origin);
