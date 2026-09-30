@@ -913,3 +913,60 @@ Production release is valid only when all of the following pass:
 ## 23. v7 Definition of Done
 
 v7 is complete when the application feels like one product from login through profile, social, people, communities, chats, work and settings — while existing data, calculations, identity, E2E, permissions, APIs and deep links continue to work unchanged.
+
+
+# WTinker v7 — Product Direction
+
+## Главная идея
+
+WTinker v7 — это **социальная сеть для работы**, а не Work OS, к которому сверху добавили социальную ленту.
+
+Порядок ценности для пользователя:
+
+1. **Люди** — коллеги, связи, профили и профессиональная идентичность.
+2. **Социальное пространство** — лента, сообщества, события, реакции и обсуждения.
+3. **Коммуникации** — личные E2E-чаты, группы и корпоративные каналы.
+4. **Рабочий контекст** — смены, команды, документы и рабочие события.
+5. **Рабочие действия** — зарплата, отпуск, больничные и другие расчёты.
+
+## Основная IA
+
+**Главная → Лента → Люди → Сообщества → Чаты → Работа → Уведомления → Профиль**
+
+Рабочие инструменты не удаляются и не переписываются без необходимости. Они становятся контекстными инструментами внутри социальной сети.
+
+## Полный пользовательский ребрендинг
+
+Во всех пользовательских поверхностях используется имя **WTinker**:
+
+- web title и metadata;
+- PWA name/short name;
+- desktop/mobile app name;
+- login/registration/setup;
+- navigation;
+- loading/empty/error states;
+- profile/public profile;
+- social feed;
+- notifications;
+- work surfaces;
+- settings/security;
+- help/copy и onboarding.
+
+Технические идентификаторы `workertink`, существующий Pages path, API hostnames, storage keys и E2E prefixes не меняются без отдельной миграции.
+
+## Дизайн-принцип
+
+Не использовать “AI-slop” паттерны: декоративные градиенты, стеклянные панели, чрезмерные pills, гигантские hero-блоки и бессмысленный ornamental UI.
+
+WTinker должен выглядеть как зрелый consumer/social product с профессиональным рабочим контекстом:
+
+- спокойный нейтральный фон;
+- сильная типографическая иерархия;
+- выразительная, но компактная лента;
+- профиль и social graph как полноценные сущности;
+- работа появляется там, где она относится к человеку, команде, событию или обсуждению;
+- мобильная версия проектируется как основной продуктовый сценарий, а не адаптация desktop.
+
+## Release condition
+
+v7 считается продуктово завершённой только после визуальной проверки всех пользовательских маршрутов: auth, onboarding, home, feed, people, communities, chats, work, notifications, profile, settings, admin и public profile.
