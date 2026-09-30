@@ -1,55 +1,46 @@
-# WorkerTink 5.0.0
+# WTinker 7.0.0
 
-**WorkerTink — рабочая социальная сеть и Work OS: люди, команды, коммуникации, смены, документы и личные рабочие расчёты в одном продукте.**
+**WTinker — социальная сеть для работы.** Люди, профессиональные связи, сообщества, публикации и чаты — в центре продукта. Смены, зарплата, отсутствие, документы и другие Work OS-инструменты встроены прямо в социальный контур.
 
-## Социальная сеть
+## Продуктовая модель v7
 
-- рабочая лента, публикации, вопросы и объявления;
-- профессиональные сообщества и события;
-- люди, поиск по имени, должности, WTinkID и username;
-- публичные профили `/user/<username>`;
-- уникальные username с автоматической генерацией и безопасной сменой;
-- центр уведомлений с прочтением, фильтрами и push-категориями.
+**Социальное ядро → рабочий контекст → рабочие действия.**
 
-## Коммуникации
+- **Главная** — персональный центр активности и рабочего контекста.
+- **Лента** — публикации, новости, обсуждения и рабочий опыт.
+- **Люди** — коллеги, WTinkID, username, связи и профессиональные профили.
+- **Сообщества** — команды, профессии, компании и рабочие группы.
+- **Чаты** — личные E2E-чаты, группы и корпоративные каналы.
+- **Работа** — смены, календарь, зарплата, отпуска, больничные, документы и команды.
+- **Уведомления** — единый социально-рабочий центр событий.
+- **Профиль** — публичная профессиональная страница, идентичность и безопасность.
 
-- личные E2E-чаты;
-- групповые E2E-чаты;
-- корпоративные каналы по приглашениям;
-- роли корпоративных каналов и гибкие права;
-- передача владельца;
-- собственные ленты корпоративных каналов;
-- очистка чата только на своём устройстве;
-- редактирование, ответы, удаление, read state;
-- голосовые сообщения с реальной waveform и прогрессом;
-- пакетная отправка фото/видео/файлов с общей подписью.
+## Что сохраняется
 
-## Work OS
+Все существующие данные и системные возможности остаются совместимыми:
 
-- графики 5/2, 4/1, 3/2, 3/1, 6/1, 2/2 и вахта;
-- зарплата, НДФЛ, аванс и остаток;
-- отпуск и больничные;
-- рабочие заметки;
-- события и обмен сменами;
-- команды/отделы;
-- рабочие документы и ссылки внутри команд.
+- WTinkID + username и поиск по обоим идентификаторам;
+- публичные профили и заявки в друзья;
+- личные и групповые E2E-чаты, ключи и identity continuity;
+- корпоративные каналы, роли, приглашения и права;
+- публикации, реакции, комментарии и уведомления;
+- графики, смены, payroll, налоги, авансы и баланс;
+- отпуска, больничные, заметки, документы, команды и события;
+- OnePass/WebAuthn/passkeys, сессии и безопасность;
+- PWA, push и Electron Desktop.
 
-## PWA и Desktop
+## Ребрендинг
 
-- PWA для iOS/Android с автоматическим предложением установки;
-- offline shell и push;
-- Electron Desktop подключается сразу к production GitHub Pages;
-- Windows NSIS installer с выбором каталога, ярлыками и деинсталлятором;
-- Windows portable;
-- macOS DMG/ZIP;
-- Linux AppImage/DEB.
+Пользовательское имя продукта: **WTinker**.
+
+Внутренние технические идентификаторы, существующие URL, GitHub Pages path, storage keys, API hostnames и E2E key prefixes намеренно не переименовываются: это сохраняет обратную совместимость и данные пользователей.
 
 ## Production
 
 Frontend: `https://skaletun.github.io/WorkerTink/`
 Directory API: `https://workertink-directory.workertink-directory.workers.dev`
 
-## Web
+## Development
 
 ```powershell
 npm install
@@ -58,40 +49,6 @@ npm run build
 npm run dev
 ```
 
-## Wrangler
+## Release
 
-```powershell
-cd directory-api
-npm install
-npx wrangler d1 migrations list workertink-directory --remote
-npx wrangler d1 migrations apply workertink-directory --remote
-npm run deploy
-```
-
-Миграция 0019 добавляет рабочие команды и общий каталог документов/ссылок.
-
-## Desktop
-
-Electron использует production Pages URL по умолчанию. Для тестового URL можно задать `WORKERTINK_WEB_URL`.
-
-```powershell
-npm install
-npm run desktop:dev
-npm run desktop:win
-```
-
-Windows installer: `release/WorkerTink-5.0.0-win-x64.exe`
-
-Portable: `release/WorkerTink-5.0.0-win-x64.exe` с соответствующим portable artifact name, если выбран target portable отдельно.
-
-## Проверки
-
-```powershell
-npm test
-npm run build
-```
-
-
-### Desktop notifications
-
-Desktop uses the production GitHub Pages frontend. When Chromium/Electron cannot create a Web Push subscription, WorkerTink falls back to the native Electron notification bridge while polling the notification center for new events.
+v7.0.0 нельзя считать выпущенной до прохождения полного release gate: тесты, TypeScript, production build, Directory API health, Pages deploy и smoke-проверки пользовательских сценариев.
