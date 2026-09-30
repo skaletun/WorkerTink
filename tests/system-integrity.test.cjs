@@ -10,6 +10,11 @@ const home=fs.readFileSync(path.join(root,'src/HomeView.tsx'),'utf8');
 const notifications=fs.readFileSync(path.join(root,'src/NotificationsView.tsx'),'utf8');
 const chats=fs.readFileSync(path.join(root,'src/ChatsHub.tsx'),'utf8');
 const chat=fs.readFileSync(path.join(root,'src/ChatView.tsx'),'utf8');
+if(!app.includes('BannerEditorModal')) throw new Error('profile banner editor missing');
+if(!app.includes('Скопировать ссылку')) throw new Error('profile link copy action missing');
+if(!network.includes('Обложка')) throw new Error('community customization UI missing');
+if(!channels.includes('Оформить канал')) throw new Error('channel customization UI missing');
+if(!network.includes('post-attachment-v2')) throw new Error('flexible post attachment rendering missing');
 const work=fs.readFileSync(path.join(root,'src/WorkHubView.tsx'),'utf8');
 const rebuildCss=fs.readFileSync(path.join(root,'src/rebuild.css'),'utf8');
 
