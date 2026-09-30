@@ -67,7 +67,7 @@ function createWindow() {
 
 ipcMain.on('workertink:notify', (_event, payload) => {
   if (!Notification.isSupported()) return;
-  const notification = new Notification({title: String(payload?.title || 'WorkerTink'), body: String(payload?.body || '')});
+  const notification = new Notification({title: String(payload?.title || 'WTinker'), body: String(payload?.body || '')});
   notification.on('click', () => {
     if (mainWindow && !mainWindow.isDestroyed()) { mainWindow.show(); mainWindow.focus(); if (payload?.url) { try { mainWindow.loadURL(new URL(payload.url, PRODUCTION_URL).toString()); } catch {} } }
   });
