@@ -115,9 +115,6 @@ export function getChatMute(peerId:string,token:string){return request<{mute:Cha
 export function removeFriend(profileId:string,token:string){return request<{ok:boolean}>(`/friends/${encodeURIComponent(profileId)}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
 export function blockProfile(profileId:string,token:string){return request<{ok:boolean}>(`/friends/${encodeURIComponent(profileId)}/block`,{method:'POST',headers:{Authorization:`Bearer ${token}`}})}
 export function unblockProfile(profileId:string,token:string){return request<{ok:boolean}>(`/friends/${encodeURIComponent(profileId)}/block`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
-export function startQrLogin(publicKey:JsonWebKey){return request<{session:string;secret:string;publicKey:JsonWebKey;expiresAt:number}>('/auth/qr/start',{method:'POST',body:JSON.stringify({publicKey})})}
-export function pollQrLogin(session:string,secret:string){return request<{status:'pending'|'approved'|'expired';profile?:UserProfile;token?:string;setup?:SetupData|null;security?:{pinSet:boolean;onePassAvailable:boolean};transfer?:{iv:string;data:string;peerPublicKey:JsonWebKey}}>(`/auth/qr/poll?session=${encodeURIComponent(session)}&secret=${encodeURIComponent(secret)}`)}
-export function approveQrLogin(session:string,secret:string,transfer:{iv:string;data:string;peerPublicKey:JsonWebKey},token:string){return request<{ok:boolean}>('/auth/qr/approve',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({session,secret,transfer})})}
 
 
 export type GroupChat={id:string;name:string;description:string;avatar:string;ownerId:string;visibility:'public'|'private';members:number;role:string;createdAt:number};
