@@ -1,29 +1,394 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>WTinker v6.0.0 — Redesign Concept</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f5f7fa">
+<title>WTinker v6 — Product Prototype</title>
 <style>
-:root{font-family:Inter,ui-sans-serif,system-ui,sans-serif;color:#172033;background:#f5f7fa;--s:#fff;--soft:#f8fafc;--line:#e4e8ef;--muted:#7b8494;--a:#3b82f6}
-*{box-sizing:border-box}body{margin:0}.app{display:grid;grid-template-columns:250px 1fr;min-height:100vh}.side{background:var(--s);border-right:1px solid var(--line);padding:18px 12px;position:sticky;top:0;height:100vh}.logo{font-weight:800;font-size:18px;padding:10px 12px 24px}.nav{display:grid;gap:4px}.nav a{padding:11px 12px;border-radius:11px;text-decoration:none;color:var(--muted);font-size:13px;font-weight:650}.nav a.active,.nav a:hover{background:#eef5ff;color:var(--a)}main{padding:28px;max-width:1500px;width:100%;margin:auto}.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}.top h1{font-size:28px;margin:0}.search{background:var(--s);border:1px solid var(--line);border-radius:12px;padding:11px 14px;color:var(--muted);min-width:260px}.screen{display:none}.screen.active{display:block}.hero{background:var(--s);border:1px solid var(--line);border-radius:20px;padding:28px;margin-bottom:16px;box-shadow:0 8px 28px #1420360d}.hero h2{font-size:34px;letter-spacing:-.04em;margin:0 0 8px}.hero p{color:var(--muted);max-width:720px;line-height:1.6}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.card{background:var(--s);border:1px solid var(--line);border-radius:18px;padding:18px}.card h3{margin:0 0 7px;font-size:15px}.muted{color:var(--muted);font-size:12px;line-height:1.55}.pill{display:inline-block;border-radius:999px;background:#eef5ff;color:var(--a);padding:5px 9px;font-size:10px;font-weight:700;margin:3px}.post{background:var(--s);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:12px}.posthead{display:flex;gap:10px;align-items:center}.avatar{width:38px;height:38px;border-radius:50%;background:#dce8fb}.composer{background:var(--s);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px;color:var(--muted)}.people{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.person{text-align:center}.person .avatar{margin:auto auto 10px;width:56px;height:56px}.chat{display:grid;grid-template-columns:280px 1fr;height:620px;background:var(--s);border:1px solid var(--line);border-radius:18px;overflow:hidden}.chatlist{border-right:1px solid var(--line);padding:12px}.chatitem{padding:11px;border-radius:11px;margin:3px 0}.chatitem.active{background:#eef5ff}.messages{padding:20px;background:#f8fafc;display:flex;flex-direction:column;gap:10px;justify-content:flex-end}.msg{max-width:62%;padding:10px 13px;border-radius:15px;background:var(--s);border:1px solid var(--line);font-size:13px}.msg.own{align-self:flex-end;background:var(--a);color:#fff;border-color:transparent}.workgrid{display:grid;grid-template-columns:2fr 1fr;gap:14px}.table{width:100%;border-collapse:collapse;font-size:12px}.table td,.table th{padding:11px;border-bottom:1px solid var(--line);text-align:left}.mobile{display:none}@media(max-width:800px){.app{display:block}.side{display:none}main{padding:12px 10px 80px}.top h1{font-size:21px}.search{min-width:0;width:42px;font-size:0}.grid,.people,.workgrid{grid-template-columns:1fr}.chat{grid-template-columns:1fr}.chatlist{display:none}.msg{max-width:82%}.mobile{display:flex;position:fixed;bottom:10px;left:8px;right:8px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:7px;z-index:5;justify-content:space-around}.mobile a{font-size:10px;color:var(--muted);text-decoration:none;padding:8px}}
-</style></head>
+:root{
+  color-scheme:light;
+  --bg:#f5f7fa;--surface:#fff;--surface-2:#f8fafc;--surface-3:#eef2f7;
+  --text:#172033;--muted:#7b8494;--line:#e3e8ef;--accent:#3b82f6;--accent-soft:#edf4ff;
+  --success:#12a66a;--danger:#e5484d;--warning:#c98512;--shadow:0 8px 28px rgba(20,30,48,.055);
+  --shadow-lg:0 24px 70px rgba(15,23,42,.16);--r:18px;--rs:12px;
+  --ease:cubic-bezier(.2,.8,.2,1);--fast:160ms;--normal:220ms;
+}
+[data-theme="dark"]{
+  color-scheme:dark;--bg:#0b1017;--surface:#111821;--surface-2:#151d27;--surface-3:#1c2632;
+  --text:#f1f5f9;--muted:#8c98aa;--line:#26313e;--accent:#4d8dff;--accent-soft:#162743;
+  --shadow:0 8px 28px rgba(0,0,0,.22);--shadow-lg:0 24px 70px rgba(0,0,0,.42);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 30%,transparent);outline-offset:2px}
+a{color:inherit}
+.app{min-height:100vh;display:grid;grid-template-columns:256px minmax(0,1fr)}
+.sidebar{position:sticky;top:0;height:100vh;padding:18px 14px;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:20}
+.brand{display:flex;align-items:center;gap:10px;padding:8px 10px 24px;font-weight:800;font-size:18px;letter-spacing:-.03em}
+.brand-mark{width:30px;height:30px;border-radius:10px;background:var(--text);color:var(--surface);display:grid;place-items:center;font-size:12px}
+.brand-version{font-size:10px;color:var(--accent);font-weight:800;margin-left:2px}
+.nav{display:grid;gap:3px}
+.nav-section{padding:15px 10px 7px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.09em;font-weight:800}
+.nav-item{display:flex;align-items:center;gap:11px;width:100%;min-height:42px;padding:9px 11px;border:0;border-radius:11px;background:transparent;color:var(--muted);text-decoration:none;font-weight:650;text-align:left;transition:background var(--fast),color var(--fast)}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.active{background:var(--accent-soft);color:var(--accent)}
+.nav-icon{width:19px;text-align:center;font-size:16px;flex:0 0 19px}
+.badge{margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:10px;font-weight:800}
+.sidebar-spacer{flex:1}
+.user-mini{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2)}
+.avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#dbe7f9,#aebfda);display:grid;place-items:center;color:#29415f;font-weight:800;flex:0 0 auto}
+.avatar.sm{width:30px;height:30px;font-size:11px}.avatar.lg{width:54px;height:54px;font-size:16px}
+.user-meta{min-width:0}.user-meta b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.user-meta span{display:block;color:var(--muted);font-size:11px}
+.main{min-width:0}
+.topbar{height:72px;position:sticky;top:0;z-index:15;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(18px);border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent);display:flex;align-items:center;gap:14px;padding:0 clamp(16px,3vw,38px)}
+.mobile-title{display:none;font-weight:750}
+.global-search{flex:1;max-width:520px;position:relative}
+.search-button{width:100%;height:42px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--muted);display:flex;align-items:center;gap:9px;padding:0 12px;text-align:left;box-shadow:0 2px 8px rgba(20,30,48,.025)}
+.search-button kbd{margin-left:auto;border:1px solid var(--line);border-radius:6px;padding:2px 6px;font-size:10px;color:var(--muted);background:var(--surface-2)}
+.top-actions{margin-left:auto;display:flex;gap:7px}
+.icon-btn{width:40px;height:40px;border:1px solid var(--line);border-radius:11px;background:var(--surface);color:var(--muted);display:grid;place-items:center;position:relative;transition:transform var(--fast),background var(--fast),color var(--fast)}
+.icon-btn:hover{background:var(--surface-2);color:var(--text);transform:translateY(-1px)}
+.dot{position:absolute;right:7px;top:7px;width:7px;height:7px;border:2px solid var(--surface);border-radius:50%;background:var(--danger)}
+.content{max-width:1480px;margin:0 auto;padding:28px clamp(16px,3vw,38px) 96px}
+.screen{display:none;animation:enter var(--normal) var(--ease)}
+.screen.active{display:block}
+@keyframes enter{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:22px}
+.eyebrow{color:var(--accent);font-size:10px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.page-head h1{font-size:28px;line-height:1.15;letter-spacing:-.035em;margin:0}
+.page-head p{margin:7px 0 0;color:var(--muted);max-width:680px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:11px;background:var(--surface);color:var(--text);font-weight:700;transition:transform var(--fast),background var(--fast),border var(--fast)}
+.btn:hover{transform:translateY(-1px);background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(.97)}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--danger)}
+.surface{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.hero{padding:28px;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:14px}
+.hero-copy{max-width:760px}.hero h2{font-size:34px;line-height:1.08;letter-spacing:-.045em;margin:0 0 9px}.hero p{margin:0;color:var(--muted);line-height:1.65}
+.hero-side{min-width:180px;text-align:right}.hero-side strong{display:block;font-size:24px;letter-spacing:-.03em}.hero-side span{color:var(--muted);font-size:11px}
+.grid{display:grid;gap:14px}.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.card{padding:18px}.card h3{margin:0 0 6px;font-size:15px}.muted{color:var(--muted);font-size:12px}.label{color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.kpi{min-height:128px}.kpi-value{font-size:25px;font-weight:800;letter-spacing:-.04em;margin-top:7px}.kpi-trend{font-size:11px;margin-top:8px;color:var(--success)}.kpi-trend.down{color:var(--danger)}
+.list{display:grid;gap:0}.list-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}.list-row:last-child{border-bottom:0}.grow{flex:1;min-width:0}.grow b{display:block}.grow span{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.chip{display:inline-flex;align-items:center;gap:5px;min-height:25px;padding:0 9px;border-radius:999px;background:var(--surface-3);color:var(--muted);font-size:10px;font-weight:800}.chip.blue{background:var(--accent-soft);color:var(--accent)}.chip.green{background:color-mix(in srgb,var(--success) 11%,transparent);color:var(--success)}.chip.red{background:color-mix(in srgb,var(--danger) 10%,transparent);color:var(--danger)}
+.section-title{display:flex;align-items:center;justify-content:space-between;margin:26px 0 11px}.section-title h2{font-size:17px;margin:0;letter-spacing:-.02em}.section-title button{border:0;background:none;color:var(--accent);font-weight:700;font-size:12px}
+.social-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;max-width:1120px;margin:0 auto}
+.composer{padding:14px}.composer-top{display:flex;gap:10px}.composer-input{min-height:44px;flex:1;border:1px solid var(--line);border-radius:12px;background:var(--surface-2);padding:12px;color:var(--muted);text-align:left}.composer-tools{display:flex;gap:6px;margin-top:10px;padding-left:48px}.tool{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:7px 10px;color:var(--muted);font-size:11px;font-weight:700}
+.post{padding:18px}.post-head{display:flex;align-items:center;gap:10px}.post-menu{margin-left:auto}.post-body{margin:13px 0;font-size:14px;line-height:1.65}.post-media{height:190px;border-radius:13px;background:linear-gradient(135deg,#dbe7f7,#eef2f7 52%,#cbd8e8);margin:12px 0;display:grid;place-items:center;color:#607087;font-size:12px;font-weight:700}.post-actions{display:flex;gap:5px;border-top:1px solid var(--line);padding-top:10px}.post-action{border:0;background:transparent;color:var(--muted);border-radius:9px;padding:7px 10px;font-size:11px;font-weight:700}.post-action:hover,.post-action.active{background:var(--accent-soft);color:var(--accent)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:12px}.tab{border:0;background:transparent;color:var(--muted);padding:10px 12px;border-bottom:2px solid transparent;font-weight:700;font-size:12px}.tab.active{color:var(--accent);border-color:var(--accent)}
+.people-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.person{padding:18px;text-align:left}.person-top{display:flex;gap:12px;align-items:center}.person h3{margin:0;font-size:14px}.person p{margin:3px 0 0;color:var(--muted);font-size:11px}.person-actions{display:flex;gap:7px;margin-top:16px}.person-actions .btn{flex:1}
+.search-box{display:flex;gap:8px;margin-bottom:12px}.input{height:42px;width:100%;border:1px solid var(--line);border-radius:11px;background:var(--surface);color:var(--text);padding:0 12px}.textarea{width:100%;min-height:110px;border:1px solid var(--line);border-radius:11px;background:var(--surface-2);color:var(--text);padding:12px;resize:vertical}
+.community-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.community{overflow:hidden}.cover{height:90px;background:linear-gradient(120deg,#dbe7f8,#eef2f7)}.community-body{padding:15px}.community h3{margin:0 0 5px}.community-meta{color:var(--muted);font-size:11px}
+.chat-shell{height:calc(100vh - 150px);min-height:560px;display:grid;grid-template-columns:260px minmax(0,1fr);overflow:hidden}
+.chat-sidebar{border-right:1px solid var(--line);padding:12px;background:var(--surface)}.chat-modes{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--surface-2);padding:4px;border-radius:10px;margin-bottom:12px}.mode{border:0;background:transparent;color:var(--muted);border-radius:7px;padding:8px 3px;font-size:10px;font-weight:800}.mode.active{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.chat-search{margin-bottom:9px}.chat-item{display:flex;align-items:center;gap:9px;padding:10px;border-radius:11px;cursor:pointer}.chat-item:hover,.chat-item.active{background:var(--accent-soft)}.chat-preview{min-width:0}.chat-preview b{font-size:12px;display:block}.chat-preview span{font-size:10px;color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-main{display:grid;grid-template-rows:auto 1fr auto;background:var(--surface-2);min-width:0}.chat-head{display:flex;align-items:center;gap:10px;padding:13px 16px;background:var(--surface);border-bottom:1px solid var(--line)}.chat-head-actions{margin-left:auto;display:flex;gap:5px}.messages{padding:20px;overflow:auto;display:flex;flex-direction:column;gap:9px}.day-sep{text-align:center;color:var(--muted);font-size:10px;margin:5px 0}.bubble{max-width:min(66%,520px);padding:10px 12px;border-radius:14px;background:var(--surface);border:1px solid var(--line);font-size:12px}.bubble.own{align-self:flex-end;background:var(--accent);color:#fff;border-color:transparent;border-bottom-right-radius:5px}.bubble:not(.own){border-bottom-left-radius:5px}.bubble small{display:block;margin-top:5px;opacity:.65;font-size:9px}.chat-compose{padding:11px;background:var(--surface);border-top:1px solid var(--line);display:flex;align-items:flex-end;gap:7px}.chat-compose textarea{flex:1;min-height:42px;max-height:120px;resize:none;border:1px solid var(--line);border-radius:12px;background:var(--surface-2);color:var(--text);padding:10px 12px}.send{width:42px;height:42px;border-radius:11px;border:0;background:var(--accent);color:#fff;font-weight:800}
+.work-layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(260px,.7fr);gap:14px}.schedule{overflow:hidden}.schedule-head{display:flex;align-items:center;justify-content:space-between;padding:15px 17px;border-bottom:1px solid var(--line)}.week{display:grid;grid-template-columns:repeat(7,minmax(90px,1fr));overflow:auto}.day{min-width:90px;border-right:1px solid var(--line);min-height:310px}.day:last-child{border-right:0}.day-head{padding:11px;text-align:center;border-bottom:1px solid var(--line);font-size:10px;color:var(--muted)}.day-head strong{display:block;color:var(--text);font-size:12px;margin-top:2px}.shift{margin:10px 7px;padding:9px;border-radius:9px;background:var(--accent-soft);border-left:3px solid var(--accent);font-size:10px}.shift.green{background:color-mix(in srgb,var(--success) 10%,transparent);border-left-color:var(--success)}.table-wrap{overflow:auto}.data-table{width:100%;border-collapse:collapse;min-width:620px}.data-table th,.data-table td{text-align:left;padding:12px 13px;border-bottom:1px solid var(--line);font-size:11px}.data-table th{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+.notifications{max-width:900px}.notification{display:flex;align-items:flex-start;gap:12px;padding:15px 16px;border-bottom:1px solid var(--line)}.notification:last-child{border-bottom:0}.notification.unread{background:color-mix(in srgb,var(--accent) 4%,transparent)}.notification-copy{flex:1}.notification-copy b{font-size:12px}.notification-copy p{margin:3px 0;color:var(--muted);font-size:11px}.time{color:var(--muted);font-size:10px;white-space:nowrap}
+.profile-grid{display:grid;grid-template-columns:280px minmax(0,1fr);gap:14px}.profile-card{text-align:center;padding:26px}.profile-card .avatar{margin:0 auto 13px}.profile-card h2{margin:0;font-size:20px}.profile-card p{margin:3px 0;color:var(--muted);font-size:12px}.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:20px}.stat{padding:10px;border:1px solid var(--line);border-radius:11px}.stat b{display:block}.stat span{font-size:9px;color:var(--muted)}
+.empty{padding:46px 24px;text-align:center;color:var(--muted)}.empty-icon{width:44px;height:44px;border-radius:14px;background:var(--surface-3);display:grid;place-items:center;margin:0 auto 12px;color:var(--accent);font-weight:900}.skeleton{background:linear-gradient(90deg,var(--surface-2),var(--surface-3),var(--surface-2));background-size:200% 100%;animation:shine 1.2s infinite;border-radius:9px}@keyframes shine{to{background-position:-200% 0}}
+.mobile-nav{display:none}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,18px);opacity:0;pointer-events:none;background:var(--text);color:var(--surface);border-radius:12px;padding:11px 15px;font-size:12px;font-weight:700;box-shadow:var(--shadow-lg);z-index:100;transition:opacity var(--normal),transform var(--normal)}.toast.show{opacity:1;transform:translate(-50%,0)}
+.overlay{position:fixed;inset:0;background:rgba(7,12,20,.45);backdrop-filter:blur(4px);z-index:80;display:none}.overlay.open{display:block}
+.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-48%) scale(.98);width:min(560px,calc(100vw - 28px));max-height:calc(100vh - 40px);overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow-lg);z-index:90;display:none}.modal.open{display:block;animation:modal-in var(--normal) var(--ease) forwards}@keyframes modal-in{to{transform:translate(-50%,-50%) scale(1)}}.modal-head{display:flex;align-items:center;justify-content:space-between;padding:17px 18px;border-bottom:1px solid var(--line)}.modal-head h2{font-size:16px;margin:0}.modal-body{padding:18px}.field{display:grid;gap:6px;margin-bottom:13px}.field label{font-size:11px;font-weight:750}.field .hint{font-size:10px;color:var(--muted)}.profile-menu{position:absolute;right:14px;top:58px;width:220px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-lg);padding:6px;display:none;z-index:40}.profile-menu.open{display:block}.menu-item{display:flex;width:100%;padding:9px 10px;border:0;background:transparent;border-radius:9px;color:var(--text);text-align:left;font-size:12px}.menu-item:hover{background:var(--surface-2)}.menu-item.danger{color:var(--danger)}
+.command{position:fixed;left:50%;top:12%;transform:translateX(-50%);width:min(650px,calc(100vw - 28px));background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow-lg);z-index:95;display:none;overflow:hidden}.command.open{display:block}.command input{width:100%;height:52px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--text);padding:0 16px;outline:0}.command-results{padding:7px}.command-item{display:flex;align-items:center;gap:10px;width:100%;padding:10px;border:0;background:transparent;border-radius:9px;text-align:left}.command-item:hover{background:var(--surface-2)}.command-item span{color:var(--muted);font-size:11px;margin-left:auto}
+@media(max-width:1050px){.app{grid-template-columns:76px 1fr}.sidebar{padding:15px 10px}.brand{justify-content:center;padding-bottom:18px}.brand-name,.nav-section,.user-meta{display:none}.nav-item{justify-content:center;padding:10px}.nav-item span:not(.nav-icon):not(.badge){display:none}.badge{position:absolute;margin:0;top:2px;right:5px}.user-mini{justify-content:center}.social-layout,.work-layout,.profile-grid{grid-template-columns:1fr}.social-layout .right-rail{display:none}.people-grid,.community-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+  .app{display:block}.sidebar{display:none}.topbar{height:62px;padding:0 12px}.mobile-title{display:block}.global-search{order:3;flex:0 0 auto;width:40px}.search-button{width:40px;padding:0;justify-content:center}.search-button span,.search-button kbd{display:none}.top-actions{gap:4px}.top-actions .icon-btn:nth-child(2){display:none}.content{padding:18px 12px 92px}.page-head{align-items:flex-start;margin-bottom:18px}.page-head h1{font-size:23px}.page-head p{font-size:12px}.page-head .actions .btn:not(.primary){display:none}.hero{padding:20px;display:block}.hero h2{font-size:27px}.hero-side{text-align:left;margin-top:18px}.grid-3,.grid-2,.people-grid,.community-grid{grid-template-columns:1fr}.social-layout{display:block}.chat-shell{height:calc(100dvh - 138px);min-height:0;grid-template-columns:1fr}.chat-sidebar{display:none}.bubble{max-width:82%}.chat-head{padding:11px}.messages{padding:14px}.work-layout{display:block}.schedule{margin-bottom:12px}.week{grid-template-columns:repeat(7,88px)}.profile-grid{display:block}.profile-card{margin-bottom:12px}.mobile-nav{position:fixed;display:grid;grid-template-columns:repeat(5,1fr);left:8px;right:8px;bottom:8px;z-index:30;padding:6px;background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow-lg);padding-bottom:max(6px,env(safe-area-inset-bottom))}.mobile-nav a{min-height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:var(--muted);font-size:9px;font-weight:750;border-radius:11px}.mobile-nav a.active{background:var(--accent-soft);color:var(--accent)}.mobile-nav .nav-icon{font-size:16px}.composer-tools{padding-left:0;overflow:auto}.tool{white-space:nowrap}.top-actions .icon-btn{width:38px;height:38px}.modal{width:calc(100vw - 20px)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:1ms!important;transition-duration:1ms!important}}
+</style>
+</head>
 <body>
-<div class="app"><aside class="side"><div class="logo">WTinker <span style="color:#3b82f6">v6</span></div><nav class="nav">
-<a href="#home" data-screen="home" class="active">Home</a><a href="#social" data-screen="social">Social</a><a href="#people" data-screen="people">People</a><a href="#communities" data-screen="communities">Communities</a><a href="#chats" data-screen="chats">Chats</a><a href="#work" data-screen="work">Work</a><a href="#notifications" data-screen="notifications">Notifications</a><a href="#profile" data-screen="profile">Profile</a>
-</nav></aside><main><div class="top"><h1 id="title">Home</h1><div class="search">⌕ Search WTinkID, username, people…</div></div>
-<section id="home" class="screen active"><div class="hero"><span class="pill">WORK + SOCIAL</span><h2>Your workday, in one place.</h2><p>Личный обзор работы, людей и активности без потери точности Work OS.</p></div><div class="grid"><div class="card"><h3>Сегодня</h3><b>09:00 — 18:00</b><p class="muted">Основная смена · Office</p></div><div class="card"><h3>Баланс</h3><b>€ 2 480</b><p class="muted">Текущий расчётный период</p></div><div class="card"><h3>Активность</h3><b>12 новых событий</b><p class="muted">Социальные и рабочие уведомления</p></div></div></section>
-<section id="social" class="screen"><div class="hero"><span class="pill">SOCIAL</span><h2>Что происходит в работе.</h2><p>Публикации, люди, команды и сообщества в одной профессиональной ленте.</p></div><div class="composer">Что нового, Adrian? · публикация · фото · файл · упоминание</div><div class="post"><div class="posthead"><div class="avatar"></div><div><b>Alex Morgan</b><div class="muted">@alex · 24 мин</div></div></div><p>Запустили новый проект. Спасибо команде за сильный первый спринт.</p><span class="pill">♥ 18</span><span class="pill">💬 4</span></div></section>
-<section id="people" class="screen"><div class="hero"><span class="pill">PEOPLE</span><h2>Найди людей.</h2><p>Поиск работает одинаково по WTinkID и username. Связи и заявки видны прямо в карточке.</p></div><div class="people"><div class="card person"><div class="avatar"></div><b>Alex Morgan</b><p class="muted">@alex · WTID-2048</p><span class="pill">Отправить заявку</span></div><div class="card person"><div class="avatar"></div><b>Maria Stone</b><p class="muted">@maria · WTID-2048</p><span class="pill">Отправить заявку</span></div><div class="card person"><div class="avatar"></div><b>Daniel Kim</b><p class="muted">@daniel · WTID-2048</p><span class="pill">Отправить заявку</span></div><div class="card person"><div class="avatar"></div><b>Elena Reed</b><p class="muted">@elena · WTID-2048</p><span class="pill">Отправить заявку</span></div></div></section>
-<section id="communities" class="screen"><div class="hero"><span class="pill">COMMUNITIES</span><h2>Рабочие сообщества.</h2><p>Профессиональные интересы, команды, события и обсуждения без отдельной экосистемы.</p></div><div class="grid"><div class="card"><h3>Product Builders</h3><p class="muted">1 248 участников · 18 событий</p></div><div class="card"><h3>Frontend Guild</h3><p class="muted">642 участника · 7 событий</p></div><div class="card"><h3>Remote Workers</h3><p class="muted">3 104 участника · 24 события</p></div></div></section>
-<section id="chats" class="screen"><div class="hero"><span class="pill">CHATS</span><h2>Одна система коммуникации.</h2><p>Personal · Groups · Channels — три равноправных режима, включая мобильный интерфейс.</p></div><div class="chat"><div class="chatlist"><b>Chats</b><div class="chatitem active">Alex Morgan<br><small class="muted">Увидимся завтра</small></div><div class="chatitem">Product Team<br><small class="muted">Новый файл</small></div><div class="chatitem"># announcements<br><small class="muted">Channel</small></div></div><div class="messages"><div class="msg">Готов новый макет v6.</div><div class="msg own">Отлично. Проверяю состояния и mobile.</div><div class="msg">Ок, отправлю комментарии.</div></div></div></section>
-<section id="work" class="screen"><div class="hero"><span class="pill">WORK OS</span><h2>Операционная часть остаётся сильной.</h2><p>Социальный слой меняет интерфейс, а не уничтожает существующие расчёты и рабочие данные.</p></div><div class="workgrid"><div class="card"><h3>Schedule</h3><table class="table"><tr><th>День</th><th>Смена</th><th>Статус</th></tr><tr><td>Сегодня</td><td>09:00–18:00</td><td>Работа</td></tr><tr><td>Завтра</td><td>10:00–19:00</td><td>Запланировано</td></tr><tr><td>Пт</td><td>09:00–18:00</td><td>Работа</td></tr></table></div><div class="card"><h3>Payroll</h3><b>€ 2 480</b><p class="muted">Gross · Tax · Advance · Balance</p></div></div></section>
-<section id="notifications" class="screen"><div class="hero"><span class="pill">NOTIFICATIONS</span><h2>Всё важное — в одном inbox.</h2><p>Социальные, чатовые и рабочие события сохраняют источник и ведут прямо к нему.</p></div><div class="grid"><div class="card"><h3>💬 Alex mentioned you</h3><p class="muted">В публикации · 3 мин назад</p></div><div class="card"><h3>👥 New friend request</h3><p class="muted">Maria Stone · 12 мин назад</p></div><div class="card"><h3>🗓 Shift updated</h3><p class="muted">Завтра · 10:00–19:00</p></div></div></section>
-<section id="profile" class="screen"><div class="hero"><span class="pill">PROFILE</span><h2>Adrian</h2><p>@adrian · WTinkID · Work identity · Communities · Security</p></div><div class="grid"><div class="card"><h3>Identity</h3><p class="muted">Username, WTinkID, profile, work identity</p></div><div class="card"><h3>Security</h3><p class="muted">OnePass · WebAuthn · Sessions · E2E</p></div><div class="card"><h3>Activity</h3><p class="muted">Publications · Communities · Friends</p></div></div></section>
-<div class="mobile"><a href="#home">Home</a><a href="#social">Social</a><a href="#chats">Chats</a><a href="#work">Work</a><a href="#profile">Profile</a></div>
-</main></div>
+<div class="app">
+<aside class="sidebar" aria-label="Основная навигация">
+  <div class="brand"><div class="brand-mark">W</div><span class="brand-name">WTinker</span><span class="brand-version">v6</span></div>
+  <nav class="nav" id="desktopNav">
+    <a class="nav-item active" href="#home" data-screen="home"><span class="nav-icon">⌂</span><span>Home</span></a>
+    <a class="nav-item" href="#social" data-screen="social"><span class="nav-icon">◉</span><span>Social</span></a>
+    <a class="nav-item" href="#people" data-screen="people"><span class="nav-icon">♙</span><span>People</span></a>
+    <a class="nav-item" href="#communities" data-screen="communities"><span class="nav-icon">◈</span><span>Communities</span></a>
+    <div class="nav-section">Workspace</div>
+    <a class="nav-item" href="#chats" data-screen="chats"><span class="nav-icon">◌</span><span>Chats</span><span class="badge">3</span></a>
+    <a class="nav-item" href="#work" data-screen="work"><span class="nav-icon">▦</span><span>Work</span></a>
+    <a class="nav-item" href="#notifications" data-screen="notifications"><span class="nav-icon">♢</span><span>Notifications</span><span class="badge">4</span></a>
+    <a class="nav-item" href="#profile" data-screen="profile"><span class="nav-icon">◎</span><span>Profile</span></a>
+  </nav>
+  <div class="sidebar-spacer"></div>
+  <div class="user-mini">
+    <div class="avatar sm">A</div><div class="user-meta"><b>Adrian</b><span>@adrian</span></div>
+    <button class="icon-btn" style="margin-left:auto;width:30px;height:30px" aria-label="Открыть меню профиля" id="profileMenuButton">⋯</button>
+  </div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div class="mobile-title" id="mobileTitle">Home</div>
+    <div class="global-search"><button class="search-button" id="searchOpen" aria-label="Поиск"><span>⌕</span><span>Поиск WTinkID, username, людей…</span><kbd>⌘ K</kbd></button></div>
+    <div class="top-actions">
+      <button class="icon-btn" id="themeToggle" aria-label="Переключить тему">☼</button>
+      <button class="icon-btn" id="createButton" aria-label="Создать">＋</button>
+      <button class="icon-btn" id="notificationButton" aria-label="Уведомления">♢<i class="dot"></i></button>
+      <button class="icon-btn" id="profileButton" aria-label="Профиль">A</button>
+    </div>
+    <div class="profile-menu" id="profileMenu">
+      <button class="menu-item" data-action="profile">◎ Открыть профиль</button>
+      <button class="menu-item" data-action="settings">⚙ Настройки</button>
+      <button class="menu-item" data-action="security">⌁ Безопасность</button>
+      <button class="menu-item danger" data-action="logout">Выйти</button>
+    </div>
+  </header>
+
+  <div class="content">
+    <section class="screen active" id="home">
+      <div class="page-head"><div><div class="eyebrow">Wednesday · 30 September</div><h1>Добрый день, Adrian</h1><p>Короткий обзор работы, людей и активности.</p></div><div class="actions"><button class="btn" data-toast="Открыт календарь">Сегодня</button><button class="btn primary" id="quickCreate">＋ Создать</button></div></div>
+      <div class="surface hero"><div class="hero-copy"><div class="eyebrow">WORK + SOCIAL</div><h2>Рабочий день, который не мешает жить.</h2><p>Социальный слой помогает быть на связи, а Work OS сохраняет точность смен, расчётов, документов и рабочих процессов.</p></div><div class="hero-side"><strong>09:00–18:00</strong><span>Сегодня · Office · активна</span></div></div>
+      <div class="grid grid-3">
+        <div class="surface card kpi"><div class="label">Баланс</div><div class="kpi-value">€ 2 480</div><div class="kpi-trend">+8.4% к прошлому периоду</div></div>
+        <div class="surface card kpi"><div class="label">События</div><div class="kpi-value">12 новых</div><div class="kpi-trend">4 рабочих · 8 социальных</div></div>
+        <div class="surface card kpi"><div class="label">Следующая смена</div><div class="kpi-value">Завтра</div><div class="kpi-trend">10:00–19:00 · Office</div></div>
+      </div>
+      <div class="section-title"><h2>Сегодня</h2><button data-screen-link="work">Открыть Work →</button></div>
+      <div class="grid grid-2">
+        <div class="surface card"><div class="label">Расписание</div><div class="list"><div class="list-row"><div class="avatar sm">W</div><div class="grow"><b>Основная смена</b><span>09:00–18:00 · Office</span></div><span class="chip green">Активна</span></div><div class="list-row"><div class="avatar sm">E</div><div class="grow"><b>Product sync</b><span>14:30 · Product Team</span></div><span class="chip blue">Событие</span></div></div></div>
+        <div class="surface card"><div class="label">Социальная активность</div><div class="list"><div class="list-row"><div class="avatar sm">A</div><div class="grow"><b>Alex упомянул вас</b><span>В публикации · 3 мин назад</span></div><span class="chip blue">Новое</span></div><div class="list-row"><div class="avatar sm">M</div><div class="grow"><b>Новая заявка в друзья</b><span>Maria Stone · 12 мин назад</span></div></div></div></div>
+      </div>
+    </section>
+
+    <section class="screen" id="social">
+      <div class="page-head"><div><div class="eyebrow">Social</div><h1>Что происходит в работе</h1><p>Публикации, команды, люди и сообщества — без ощущения корпоративного портала.</p></div><button class="btn primary" id="socialCreate">＋ Публикация</button></div>
+      <div class="social-layout">
+        <div>
+          <div class="surface composer">
+            <div class="composer-top"><div class="avatar">A</div><button class="composer-input" id="composerOpen">Что нового, Adrian?</button></div>
+            <div class="composer-tools"><button class="tool" data-toast="Добавление фото">▧ Фото</button><button class="tool" data-toast="Добавление файла">□ Файл</button><button class="tool" data-toast="Открыты упоминания">@ Упомянуть</button><button class="tool" data-toast="Создание опроса">◫ Опрос</button></div>
+          </div>
+          <div class="surface" style="padding:0;overflow:hidden">
+            <div class="tabs" style="padding:0 10px;margin:0"><button class="tab active" data-feed="for-you">Для вас</button><button class="tab" data-feed="following">Подписки</button><button class="tab" data-feed="communities">Сообщества</button></div>
+            <div id="feed">
+              <article class="post" data-feed-type="for-you">
+                <div class="post-head"><div class="avatar">A</div><div class="grow"><b>Alex Morgan</b><span class="muted">@alex · 24 мин</span></div><button class="icon-btn post-menu" style="width:32px;height:32px" aria-label="Меню публикации">⋯</button></div>
+                <div class="post-body">Запустили новый проект. Спасибо команде за сильный первый спринт — особенно за то, как быстро собрали обратную связь.</div>
+                <div class="post-media">Project update · preview</div>
+                <div class="post-actions"><button class="post-action active" data-like>♥ 18</button><button class="post-action" data-toast="Комментарии открыты">◌ 4</button><button class="post-action" data-toast="Публикация скопирована">↗ Поделиться</button><button class="post-action" data-toast="Публикация сохранена">⌑ Сохранить</button></div>
+              </article>
+              <article class="post" data-feed-type="following">
+                <div class="post-head"><div class="avatar">M</div><div class="grow"><b>Maria Stone</b><span class="muted">@maria · 1 ч</span></div></div>
+                <div class="post-body">Небольшой reminder: сегодня в 16:00 встречаемся в Product Team.</div>
+                <div class="post-actions"><button class="post-action" data-like>♥ 7</button><button class="post-action" data-toast="Комментарии открыты">◌ 2</button><button class="post-action" data-toast="Публикация скопирована">↗ Поделиться</button></div>
+              </article>
+              <article class="post" data-feed-type="communities">
+                <div class="post-head"><div class="avatar">F</div><div class="grow"><b>Frontend Guild</b><span class="muted">Сообщество · 2 ч</span></div></div>
+                <div class="post-body">Обсуждаем подходы к производительности приложений. Подключайтесь к треду.</div>
+                <div class="post-actions"><button class="post-action" data-like>♥ 31</button><button class="post-action" data-toast="Комментарии открыты">◌ 11</button></div>
+              </article>
+            </div>
+          </div>
+        </div>
+        <aside class="right-rail">
+          <div class="surface card"><div class="section-title" style="margin:0 0 8px"><h2>Ваши сообщества</h2></div><div class="list"><div class="list-row"><div class="avatar sm">P</div><div class="grow"><b>Product Builders</b><span>1 248 участников</span></div></div><div class="list-row"><div class="avatar sm">F</div><div class="grow"><b>Frontend Guild</b><span>642 участника</span></div></div></div></div>
+          <div class="surface card" style="margin-top:12px"><div class="label">В тренде</div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:9px"><span class="chip blue">#product</span><span class="chip">#remote</span><span class="chip">#frontend</span><span class="chip">#design</span></div></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="screen" id="people">
+      <div class="page-head"><div><div class="eyebrow">People</div><h1>Люди</h1><p>Поиск по WTinkID и username с одинаковым результатом и понятным состоянием связи.</p></div></div>
+      <div class="surface card"><div class="search-box"><input class="input" id="peopleSearch" placeholder="Поиск по WTinkID или @username…" aria-label="Поиск людей"><button class="btn primary" id="peopleSearchBtn">Найти</button></div><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="chip blue">Все</span><span class="chip">Друзья</span><span class="chip">В сети</span><span class="chip">Команды</span></div></div>
+      <div class="section-title"><h2>Результаты</h2><span class="muted" id="peopleCount">4 человека</span></div>
+      <div class="people-grid" id="peopleGrid">
+        <article class="surface person" data-name="alex morgan alex wtid-2048"><div class="person-top"><div class="avatar lg">A</div><div><h3>Alex Morgan</h3><p>@alex · WTID-2048</p></div></div><div class="person-actions"><button class="btn primary request">Отправить заявку</button><button class="btn" data-toast="Открыт профиль Alex Morgan">Профиль</button></div></article>
+        <article class="surface person" data-name="maria stone maria wtid-3371"><div class="person-top"><div class="avatar lg">M</div><div><h3>Maria Stone</h3><p>@maria · WTID-3371</p></div></div><div class="person-actions"><button class="btn primary request">Отправить заявку</button><button class="btn" data-toast="Открыт профиль Maria Stone">Профиль</button></div></article>
+        <article class="surface person" data-name="daniel kim daniel wtid-8810"><div class="person-top"><div class="avatar lg">D</div><div><h3>Daniel Kim</h3><p>@daniel · WTID-8810</p></div></div><div class="person-actions"><button class="btn primary request">Отправить заявку</button><button class="btn" data-toast="Открыт профиль Daniel Kim">Профиль</button></div></article>
+        <article class="surface person" data-name="elena reed elena wtid-1902"><div class="person-top"><div class="avatar lg">E</div><div><h3>Elena Reed</h3><p>@elena · WTID-1902</p></div></div><div class="person-actions"><button class="btn primary request">Отправить заявку</button><button class="btn" data-toast="Открыт профиль Elena Reed">Профиль</button></div></article>
+      </div>
+      <div class="surface empty" id="peopleEmpty" style="display:none"><div class="empty-icon">⌕</div><b>Ничего не найдено</b><div>Проверьте WTinkID или username.</div></div>
+    </section>
+
+    <section class="screen" id="communities">
+      <div class="page-head"><div><div class="eyebrow">Communities</div><h1>Сообщества</h1><p>Профессиональные интересы, команды и события в общей социальной модели.</p></div><button class="btn primary" data-toast="Открыта форма создания сообщества">＋ Создать</button></div>
+      <div class="community-grid">
+        <article class="surface community"><div class="cover"></div><div class="community-body"><span class="chip blue">WORK</span><h3>Product Builders</h3><div class="community-meta">1 248 участников · 18 событий</div><div style="margin-top:14px"><button class="btn" style="width:100%" data-toast="Открыто сообщество Product Builders">Открыть</button></div></div></article>
+        <article class="surface community"><div class="cover"></div><div class="community-body"><span class="chip blue">GUILD</span><h3>Frontend Guild</h3><div class="community-meta">642 участника · 7 событий</div><div style="margin-top:14px"><button class="btn" style="width:100%" data-toast="Открыто сообщество Frontend Guild">Открыть</button></div></div></article>
+        <article class="surface community"><div class="cover"></div><div class="community-body"><span class="chip blue">REMOTE</span><h3>Remote Workers</h3><div class="community-meta">3 104 участника · 24 события</div><div style="margin-top:14px"><button class="btn" style="width:100%" data-toast="Открыто сообщество Remote Workers">Открыть</button></div></div></article>
+      </div>
+      <div class="section-title"><h2>Ближайшие события</h2><button data-toast="Открыт календарь событий">Все события →</button></div>
+      <div class="surface card"><div class="list"><div class="list-row"><div class="avatar sm">P</div><div class="grow"><b>Product sync</b><span>Сегодня · 14:30 · Product Builders</span></div><span class="chip blue">Сегодня</span></div><div class="list-row"><div class="avatar sm">F</div><div class="grow"><b>Frontend performance clinic</b><span>2 октября · 18:00 · Frontend Guild</span></div><span class="chip">Запланировано</span></div></div></div>
+    </section>
+
+    <section class="screen" id="chats">
+      <div class="page-head"><div><div class="eyebrow">Chats</div><h1>Чаты</h1><p>Personal, Groups и Channels остаются равноправными режимами.</p></div><button class="btn primary" data-toast="Открыта форма нового чата">＋ Новый чат</button></div>
+      <div class="surface chat-shell">
+        <aside class="chat-sidebar">
+          <div class="chat-modes"><button class="mode active" data-chat-mode="personal">Personal</button><button class="mode" data-chat-mode="groups">Groups</button><button class="mode" data-chat-mode="channels">Channels</button></div>
+          <input class="input chat-search" placeholder="Поиск чатов…" aria-label="Поиск чатов">
+          <div id="chatList">
+            <div class="chat-item active" data-chat="Alex Morgan"><div class="avatar sm">A</div><div class="chat-preview"><b>Alex Morgan</b><span>Увидимся завтра</span></div></div>
+            <div class="chat-item" data-chat="Maria Stone"><div class="avatar sm">M</div><div class="chat-preview"><b>Maria Stone</b><span>Отправила файл</span></div></div>
+            <div class="chat-item" data-chat="Elena Reed"><div class="avatar sm">E</div><div class="chat-preview"><b>Elena Reed</b><span>Спасибо!</span></div></div>
+          </div>
+        </aside>
+        <section class="chat-main">
+          <header class="chat-head"><div class="avatar sm">A</div><div class="grow"><b id="chatTitle">Alex Morgan</b><span class="muted">онлайн · E2E защищён</span></div><div class="chat-head-actions"><button class="icon-btn" style="width:34px;height:34px" data-toast="Поиск в чате">⌕</button><button class="icon-btn" style="width:34px;height:34px" data-toast="Открыты детали чата">ⓘ</button></div></header>
+          <div class="messages" id="messages"><div class="day-sep">Сегодня</div><div class="bubble">Готов новый макет v6.<small>15:02</small></div><div class="bubble own">Отлично. Проверяю состояния и mobile.<small>15:04 · ✓✓</small></div><div class="bubble">Ок, отправлю комментарии по чату и Work.<small>15:06</small></div></div>
+          <form class="chat-compose" id="chatForm"><button type="button" class="icon-btn" style="width:40px;height:40px" data-toast="Открыты вложения">＋</button><textarea id="chatInput" rows="1" placeholder="Написать сообщение…" aria-label="Сообщение"></textarea><button class="send" aria-label="Отправить">➤</button></form>
+        </section>
+      </div>
+    </section>
+
+    <section class="screen" id="work">
+      <div class="page-head"><div><div class="eyebrow">Work OS</div><h1>Работа</h1><p>Точный операционный слой: расписание, смены, payroll, отпуска, документы и команды.</p></div><div class="actions"><button class="btn" data-toast="Открыт период расчёта">Период</button><button class="btn primary" data-toast="Открыт редактор смены">＋ Смена</button></div></div>
+      <div class="grid grid-3"><div class="surface card kpi"><div class="label">Gross</div><div class="kpi-value">€ 3 120</div><div class="kpi-trend">Текущий период</div></div><div class="surface card kpi"><div class="label">Tax</div><div class="kpi-value">€ 640</div><div class="kpi-trend down">Расчётно</div></div><div class="surface card kpi"><div class="label">Balance</div><div class="kpi-value">€ 2 480</div><div class="kpi-trend">После advance</div></div></div>
+      <div class="section-title"><h2>Расписание</h2><span class="muted">28 Sep — 4 Oct</span></div>
+      <div class="work-layout"><div class="surface schedule"><div class="schedule-head"><b>Неделя</b><div class="actions"><button class="icon-btn" style="width:32px;height:32px">‹</button><button class="icon-btn" style="width:32px;height:32px">›</button></div></div><div class="week"><div class="day"><div class="day-head">ПН<strong>28</strong></div><div class="shift">09:00–18:00<br><b>Office</b></div></div><div class="day"><div class="day-head">ВТ<strong>29</strong></div><div class="shift">09:00–18:00<br><b>Office</b></div></div><div class="day"><div class="day-head">СР<strong>30</strong></div><div class="shift green">09:00–18:00<br><b>Активна</b></div><div class="shift">14:30<br><b>Product sync</b></div></div><div class="day"><div class="day-head">ЧТ<strong>1</strong></div><div class="shift">10:00–19:00<br><b>Office</b></div></div><div class="day"><div class="day-head">ПТ<strong>2</strong></div><div class="shift">09:00–18:00<br><b>Office</b></div></div><div class="day"><div class="day-head">СБ<strong>3</strong></div></div><div class="day"><div class="day-head">ВС<strong>4</strong></div></div></div></div>
+        <div class="grid"><div class="surface card"><div class="label">Отсутствия</div><div style="margin-top:12px"><b>4 дня</b><div class="muted">Остаток отпуска</div></div><button class="btn" style="width:100%;margin-top:14px" data-toast="Открыт раздел отсутствий">Открыть</button></div><div class="surface card"><div class="label">Документы</div><div style="margin-top:12px"><b>3 новых</b><div class="muted">Требуют просмотра</div></div><button class="btn" style="width:100%;margin-top:14px" data-toast="Открыты документы">Открыть</button></div></div>
+      </div>
+      <div class="section-title"><h2>Последние расчёты</h2><button data-toast="Открыт payroll">Все расчёты →</button></div>
+      <div class="surface table-wrap"><table class="data-table"><thead><tr><th>Период</th><th>Gross</th><th>Tax</th><th>Advance</th><th>Balance</th><th>Статус</th></tr></thead><tbody><tr><td>Sep 2026</td><td>€ 3 120</td><td>€ 640</td><td>€ 0</td><td><b>€ 2 480</b></td><td><span class="chip green">Рассчитан</span></td></tr><tr><td>Aug 2026</td><td>€ 3 040</td><td>€ 612</td><td>€ 300</td><td><b>€ 2 128</b></td><td><span class="chip">Закрыт</span></td></tr></tbody></table></div>
+    </section>
+
+    <section class="screen" id="notifications">
+      <div class="page-head"><div><div class="eyebrow">Activity</div><h1>Уведомления</h1><p>Единый inbox сохраняет источник события и ведёт к исходному объекту.</p></div><button class="btn" id="markRead">Отметить всё прочитанным</button></div>
+      <div class="surface notifications">
+        <div class="notification unread"><div class="avatar sm">A</div><div class="notification-copy"><b>Alex Morgan упомянул вас</b><p>«Проверишь этот экран перед релизом?» · Social</p></div><span class="time">3 мин</span></div>
+        <div class="notification unread"><div class="avatar sm">M</div><div class="notification-copy"><b>Maria Stone отправила заявку</b><p>Новая связь · People</p></div><span class="time">12 мин</span></div>
+        <div class="notification"><div class="avatar sm">W</div><div class="notification-copy"><b>Смена обновлена</b><p>1 октября · 10:00–19:00 · Work</p></div><span class="time">1 ч</span></div>
+        <div class="notification"><div class="avatar sm">P</div><div class="notification-copy"><b>Новое событие Product sync</b><p>Сегодня · 14:30 · Communities</p></div><span class="time">2 ч</span></div>
+      </div>
+    </section>
+
+    <section class="screen" id="profile">
+      <div class="page-head"><div><div class="eyebrow">Profile</div><h1>Профиль</h1><p>Личная идентичность, рабочий контекст, безопасность и социальная активность.</p></div><button class="btn primary" data-toast="Открыт редактор профиля">Редактировать</button></div>
+      <div class="profile-grid"><div class="surface profile-card"><div class="avatar lg">A</div><h2>Adrian</h2><p>@adrian · WTID-1024</p><p>Fullstack Developer</p><div class="profile-stats"><div class="stat"><b>48</b><span>друзей</span></div><div class="stat"><b>12</b><span>постов</span></div><div class="stat"><b>5</b><span>сообществ</span></div></div></div>
+      <div class="grid"><div class="surface card"><div class="section-title" style="margin:0 0 8px"><h2>Identity</h2><button data-toast="Открыты настройки identity">Изменить</button></div><div class="list"><div class="list-row"><div class="grow"><b>Username</b><span>@adrian</span></div><span class="chip blue">Public</span></div><div class="list-row"><div class="grow"><b>WTinkID</b><span>WTID-1024</span></div><span class="chip">Verified</span></div></div></div>
+      <div class="surface card"><div class="section-title" style="margin:0 0 8px"><h2>Security</h2><button data-toast="Открыты настройки безопасности">Открыть</button></div><div class="list"><div class="list-row"><div class="grow"><b>OnePass / WebAuthn</b><span>Основной способ входа</span></div><span class="chip green">Активно</span></div><div class="list-row"><div class="grow"><b>Sessions</b><span>2 активных устройства</span></div><span class="chip">2</span></div><div class="list-row"><div class="grow"><b>E2E identity</b><span>Ключи и continuity</span></div><span class="chip green">OK</span></div></div></div></div></div>
+    </section>
+  </div>
+</main>
+</div>
+
+<nav class="mobile-nav" aria-label="Мобильная навигация">
+  <a href="#home" class="active" data-screen="home"><span class="nav-icon">⌂</span>Home</a>
+  <a href="#social" data-screen="social"><span class="nav-icon">◉</span>Social</a>
+  <a href="#chats" data-screen="chats"><span class="nav-icon">◌</span>Chats</a>
+  <a href="#work" data-screen="work"><span class="nav-icon">▦</span>Work</a>
+  <a href="#profile" data-screen="profile"><span class="nav-icon">◎</span>Profile</a>
+</nav>
+
+<div class="overlay" id="overlay"></div>
+<div class="modal" id="createModal" role="dialog" aria-modal="true" aria-labelledby="createTitle">
+  <div class="modal-head"><h2 id="createTitle">Создать</h2><button class="icon-btn" data-close="createModal" aria-label="Закрыть">×</button></div>
+  <div class="modal-body">
+    <div class="field"><label>Тип</label><select class="input" id="createType"><option>Публикация</option><option>Событие</option><option>Сообщество</option><option>Рабочая заметка</option><option>Смена</option></select></div>
+    <div class="field"><label>Заголовок</label><input class="input" placeholder="Например, новый Product sync"></div>
+    <div class="field"><label>Описание</label><textarea class="textarea" placeholder="Добавьте контекст…"></textarea></div>
+    <div class="actions" style="justify-content:flex-end"><button class="btn" data-close="createModal">Отмена</button><button class="btn primary" id="createSubmit">Создать</button></div>
+  </div>
+</div>
+
+<div class="command" id="command">
+  <input id="commandInput" placeholder="Поиск людей, страниц, WTinkID или username…" autocomplete="off">
+  <div class="command-results">
+    <button class="command-item" data-command-screen="people">♙ <b>People</b><span>WTinkID / username</span></button>
+    <button class="command-item" data-command-screen="social">◉ <b>Social</b><span>Публикации</span></button>
+    <button class="command-item" data-command-screen="chats">◌ <b>Chats</b><span>Сообщения</span></button>
+    <button class="command-item" data-command-screen="work">▦ <b>Work</b><span>Смены и payroll</span></button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
 <script>
-const title=document.getElementById('title');const links=[...document.querySelectorAll('[data-screen]')];const screens=[...document.querySelectorAll('.screen')];
-function go(id){screens.forEach(s=>s.classList.toggle('active',s.id===id));links.forEach(a=>a.classList.toggle('active',a.dataset.screen===id));title.textContent=id[0].toUpperCase()+id.slice(1)}
-links.forEach(a=>a.onclick=e=>{e.preventDefault();go(a.dataset.screen);history.replaceState(null,'','#'+a.dataset.screen)});
-if(location.hash)go(location.hash.slice(1));
-</script></body></html>
+(function(){
+  const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+  const screens=$$('.screen'), navLinks=$$('.nav-item,[data-screen]',document), title=$('#mobileTitle');
+  let toastTimer, current='home';
+
+  function showToast(message){const el=$('#toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2200)}
+  function openModal(id){$('#overlay').classList.add('open');$('#'+id).classList.add('open');document.body.style.overflow='hidden'}
+  function closeModals(){$('#overlay').classList.remove('open');$$('.modal').forEach(x=>x.classList.remove('open'));document.body.style.overflow=''}
+  function go(id,writeHash=true){
+    if(!$('#'+id)) id='home'; current=id;
+    screens.forEach(s=>s.classList.toggle('active',s.id===id));
+    $$('[data-screen]').forEach(a=>a.classList.toggle('active',a.dataset.screen===id));
+    if(title) title.textContent=id[0].toUpperCase()+id.slice(1);
+    if(writeHash) history.replaceState(null,'','#'+id);
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  $$('[data-screen]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();go(a.dataset.screen)}));
+  $$('[data-screen-link]').forEach(a=>a.addEventListener('click',()=>go(a.dataset.screenLink)));
+  if(location.hash) go(location.hash.slice(1),false);
+
+  $('#searchOpen').addEventListener('click',()=>{$('#command').classList.add('open');$('#overlay').classList.add('open');$('#commandInput').focus()});
+  function closeCommand(){$('#command').classList.remove('open');if(!$$('.modal.open').length)$('#overlay').classList.remove('open')}
+  $('#commandInput').addEventListener('input',e=>{
+    const q=e.target.value.trim().toLowerCase();
+    $$('.command-item').forEach(x=>x.style.display=(!q||x.textContent.toLowerCase().includes(q))?'flex':'none');
+  });
+  $$('.command-item').forEach(x=>x.addEventListener('click',()=>{go(x.dataset.commandScreen);closeCommand()}));
+
+  function toggleTheme(){
+    const root=document.documentElement, dark=root.dataset.theme==='dark';
+    root.dataset.theme=dark?'':'dark';localStorage.setItem('wtinker-theme',dark?'light':'dark');
+    $('#themeToggle').textContent=dark?'☼':'☾';showToast(dark?'Светлая тема':'Тёмная тема');
+  }
+  const saved=localStorage.getItem('wtinker-theme');if(saved==='dark'){document.documentElement.dataset.theme='dark';$('#themeToggle').textContent='☾'}
+  $('#themeToggle').addEventListener('click',toggleTheme);
+
+  $('#createButton').addEventListener('click',()=>openModal('createModal'));
+  $('#quickCreate').addEventListener('click',()=>openModal('createModal'));
+  $('#socialCreate').addEventListener('click',()=>openModal('createModal'));
+  $('#composerOpen').addEventListener('click',()=>openModal('createModal'));
+  $('#overlay').addEventListener('click',()=>{closeModals();closeCommand();$('#profileMenu').classList.remove('open')});
+  $$('[data-close]').forEach(x=>x.addEventListener('click',closeModals));
+  $('#createSubmit').addEventListener('click',()=>{closeModals();showToast($('#createType').value+' создано — это прототип')});
+
+  $('#profileButton').addEventListener('click',()=>go('profile'));
+  $('#notificationButton').addEventListener('click',()=>go('notifications'));
+  $('#profileMenuButton').addEventListener('click',e=>{e.stopPropagation();$('#profileMenu').classList.toggle('open')});
+  $('#profileButton').addEventListener('contextmenu',e=>{e.preventDefault();$('#profileMenu').classList.toggle('open')});
+  $$('.menu-item').forEach(x=>x.addEventListener('click',()=>{const a=x.dataset.action;$('#profileMenu').classList.remove('open');if(a==='profile')go('profile');else showToast(a==='logout'?'Выход доступен в production auth flow':'Открыт раздел '+a)}));
+
+  $$('[data-toast]').forEach(x=>x.addEventListener('click',()=>showToast(x.dataset.toast)));
+  $$('[data-like]').forEach(x=>x.addEventListener('click',()=>{x.classList.toggle('active');x.textContent=x.classList.contains('active')?'♥ 19':'♥ 18'}));
+  $$('.tab').forEach(tab=>tab.addEventListener('click',()=>{
+    $$('.tab').forEach(t=>t.classList.remove('active'));tab.classList.add('active');
+    const type=tab.dataset.feed;$$('#feed [data-feed-type]').forEach(p=>p.style.display=(type==='for-you'||p.dataset.feedType===type)?'block':'none');
+  }));
+
+  $$('.request').forEach(btn=>btn.addEventListener('click',()=>{btn.textContent='Заявка отправлена';btn.disabled=true;btn.classList.remove('primary');showToast('Заявка отправлена')}));
+  const peopleSearch=$('#peopleSearch'), peopleGrid=$('#peopleGrid'), peopleEmpty=$('#peopleEmpty'), peopleCount=$('#peopleCount');
+  function filterPeople(){
+    const q=peopleSearch.value.trim().toLowerCase();let n=0;
+    $$('.person',peopleGrid).forEach(p=>{const ok=!q||p.dataset.name.includes(q);p.style.display=ok?'block':'none';if(ok)n++});
+    peopleEmpty.style.display=n?'none':'block';peopleCount.textContent=n+' '+(n===1?'человек':'человека');
+  }
+  peopleSearch.addEventListener('input',filterPeople);$('#peopleSearchBtn').addEventListener('click',filterPeople);
+
+  $$('.mode').forEach(m=>m.addEventListener('click',()=>{
+    $$('.mode').forEach(x=>x.classList.remove('active'));m.classList.add('active');
+    const mode=m.dataset.chatMode;
+    showToast('Режим: '+({personal:'Personal',groups:'Groups',channels:'Channels'})[mode]);
+  }));
+  $$('.chat-item').forEach(i=>i.addEventListener('click',()=>{$$('.chat-item').forEach(x=>x.classList.remove('active'));i.classList.add('active');$('#chatTitle').textContent=i.dataset.chat}));
+  $('#chatForm').addEventListener('submit',e=>{
+    e.preventDefault();const input=$('#chatInput'), text=input.value.trim();if(!text)return;
+    const b=document.createElement('div');b.className='bubble own';b.innerHTML=text.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]))+'<small>сейчас · ✓</small>';
+    $('#messages').appendChild(b);input.value='';$('#messages').scrollTop=$('#messages').scrollHeight;showToast('Сообщение отправлено');
+  });
+  $('#chatInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#chatForm').requestSubmit()}});
+
+  $('#markRead').addEventListener('click',()=>{$$('.notification.unread').forEach(n=>n.classList.remove('unread'));showToast('Все уведомления прочитаны')});
+  document.addEventListener('keydown',e=>{
+    if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#searchOpen').click()}
+    if(e.key==='Escape'){closeModals();closeCommand();$('#profileMenu').classList.remove('open')}
+  });
+})();
+</script>
+</body>
+</html>
