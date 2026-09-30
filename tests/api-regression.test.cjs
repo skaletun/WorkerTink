@@ -28,6 +28,7 @@ assert.doesNotMatch(app,/Вход на ПК по QR|QrLoginPanel|startQrLogin/);
 assert.match(api,/auth_sessions/);
 assert.match(api,/social_messages \(id,sender_id,receiver_id,body,kind,mime,name,created_at\)/);
 assert.match(api,/device_name,created_at,updated_at\) VALUES \(\?1,\?2,\?3,\?4,\?5,\?6,\?7,\?8,\?9,\?10,\?10\)/);
+assert.match(api,/webauthn_credentials\(id,profile_id,user_id,public_key,counter,device_type,backed_up,transports,device_name,created_at,updated_at\).*VALUES \(\?1,\?2,\?3,\?4,\?5,\?6,\?7,\?8,\?9,\?10,\?11\).*bind\(credential\.id,owner\.wtink_id,owner\.webauthn_user_id \|\| owner\.wtink_id,base64Url\(credential\.publicKey\),credential\.counter,credentialDeviceType,credentialBackedUp\?1:0,JSON\.stringify\(credential\.transports\|\|\[\]\),deviceName,now,now\)/);
 assert.match(api,/!\['voice','image','video','file'\]\.includes\(kind\)/);
 assert.match(api,/body:r\.body,kind:r\.kind/);
 assert.doesNotMatch(app,/Входящий P2P-запрос/);
