@@ -69,6 +69,14 @@ function cleanText(value, max) {
   return String(value || '').trim().slice(0, max);
 }
 
+function validCalendarDate(value) {
+  const input = String(value || '').trim();
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(input)) return false;
+  const [year, month, day] = input.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+}
+
 function cleanUsername(value) {
   const username = String(value || '').trim().replace(/^@+/, '');
   return USERNAME_RE.test(username) ? username : '';
@@ -1401,7 +1409,7 @@ async function handle(request, env) {
 
   if (path === '/network/people' && request.method === 'GET') {
     const owner = await authProfile(request, env); if (!owner) return json({error:'UNAUTHORIZED'},401,origin);
-    const q=cleanText(new URL(request.url).searchParams.get('query'),100);
+    const q=cleanText(new URL(request.url).searchParams.get('query'),100).replace(/^@+/, '');
     const pattern=`%${q}%`;
     const rows=await env.DB.prepare(`SELECT p.wtink_id,p.name,p.position,p.avatar,p.is_dev,p.is_admin,p.last_seen,
       EXISTS(SELECT 1 FROM friend_requests r WHERE r.status='accepted' AND ((r.sender_id=?1 AND r.receiver_id=p.wtink_id) OR (r.sender_id=p.wtink_id AND r.receiver_id=?1))) AS connected
