@@ -1,9 +1,9 @@
-import {DEFAULT,createWTinkId,normalizeWTinkId,type State,type Period,type PaymentDates,type ShiftValue,type FriendRequest} from './core.ts';
+import {DEFAULT,createWTinkId,normalizeWTinkId,isValidYmd,type State,type Period,type PaymentDates,type ShiftValue,type FriendRequest} from './core.ts';
 
 export const STORAGE_KEY='workertink:v6';
 const LEGACY_KEYS=['workertink:v5','workertink:v4','workertink:v3','workertink:v2','workertink'] as const;
 const RECOVERY_KEY='workertink:recovery:last-invalid';
-const isDate=(s:unknown):s is string=>typeof s==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(s);
+const isDate=(s:unknown):s is string=>typeof s==='string'&&isValidYmd(s);
 const isRecord=(value:unknown):value is Record<string,unknown>=>Boolean(value)&&typeof value==='object'&&!Array.isArray(value);
 const cloneDefault=()=>structuredClone(DEFAULT);
 
