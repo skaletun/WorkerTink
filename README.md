@@ -1,4 +1,4 @@
-# WTinker 7.0.0
+# WTinker 7.2.0
 
 **WTinker — социальная сеть для работы.** Люди, профессиональные связи, сообщества, публикации и чаты — в центре продукта. Смены, зарплата, отсутствие, документы и другие Work OS-инструменты встроены прямо в социальный контур.
 
@@ -51,4 +51,4 @@ npm run dev
 
 ## Release
 
-v7.0.0 нельзя считать выпущенной до прохождения полного release gate: тесты, TypeScript, production build, Directory API health, Pages deploy и smoke-проверки пользовательских сценариев.
+v7.2.0 нельзя считать выпущенной до прохождения полного release gate: тесты, TypeScript, production build, Directory API health, Pages deploy и smoke-проверки пользовательских сценариев.
