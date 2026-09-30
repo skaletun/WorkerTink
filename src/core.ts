@@ -65,6 +65,7 @@ export function periodDays(p:Period){return Math.max(0,daysBetween(parseYmd(p.st
 export function periodsOverlap(a:Period,b:Period){return a.start<=b.end&&b.start<=a.end}
 export function vacationCalendarDays(_state:State,p:Period){if(!isValidYmd(p.start)||!isValidYmd(p.end)||p.end<p.start)return 0;let n=0;for(let d=parseYmd(p.start);ymd(d)<=p.end;d=addDays(d,1)){if(!isHoliday(d))n++}return n}
 export function vacationUsedDays(state:State){const days=new Set<string>();for(const p of state.vacations){if(!isValidYmd(p.start)||!isValidYmd(p.end)||p.end<p.start)continue;for(let d=parseYmd(p.start);ymd(d)<=p.end;d=addDays(d,1)){const key=ymd(d);if(!isHoliday(d)&&!state.sickLeaves.some(s=>periodContains(s,key)))days.add(key)}}return days.size}
+export function vacationProjectedUsedDays(state:State,period:Period){const days=new Set<string>();for(const p of [...state.vacations,period]){if(!isValidYmd(p.start)||!isValidYmd(p.end)||p.end<p.start)continue;for(let d=parseYmd(p.start);ymd(d)<=p.end;d=addDays(d,1)){const key=ymd(d);if(!isHoliday(d)&&!state.sickLeaves.some(s=>periodContains(s,key)))days.add(key)}}return days.size}
 
 function monthIndex(year:number,month:number){return year*12+month}
 function historyValue(state:State,index:number){const y=Math.floor(index/12),m=((index%12)+12)%12,key=monthKey(y,m),value=state.incomeHistory[key];return Number.isFinite(value)&&value>=0?value:state.salary}
