@@ -116,7 +116,7 @@ function App(){
   mobileItems={([['home','Главная'],['social','Сеть'],['chat','Чаты'],['work','Работа'],['profile','Профиль']] as [Tab,string][]).map(([id,label])=>({id,label,icon:<Icon name={id}/> }))}
   mobileMore={<button className={mobileMenuOpen||['people','communities','calendar','pay','absence','friends','notifications','settings','admin'].includes(tab)?'active':''} onClick={()=>setMobileMenuOpen(v=>!v)} aria-expanded={mobileMenuOpen} aria-label="Все разделы"><Icon name="settings"/><span>Ещё</span></button>}
 >
- <main className={`v7-page-content ${tab==='chat'?'v7-page-chat':''}>
+ <main className={`v7-page-content ${tab==='chat'?'v7-page-chat':''}`}>
  <div className="tab-stage" key={tab}>
  {tab==='home'&&<HomeView state={state} patch={patch} onNotice={setNotice} go={navigate}/>}
  {tab==='social'&&<NetworkView token={state.directoryToken} profile={state.profile} onNotice={setNotice} onChat={openChat} onProfile={openProfile} initialArea="feed" initialGroupSlug={cleanRoute.match(/^\/community\/([^/]+)/)?.[1]}/>} {tab==='people'&&<NetworkView token={state.directoryToken} profile={state.profile} onNotice={setNotice} onChat={openChat} onProfile={openProfile} initialArea="people"/>} {tab==='communities'&&<NetworkView token={state.directoryToken} profile={state.profile} onNotice={setNotice} onChat={openChat} onProfile={openProfile} initialArea="groups"/>}
