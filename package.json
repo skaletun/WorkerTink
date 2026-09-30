@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "test": "node --experimental-strip-types tests/core.test.mjs && node --experimental-strip-types tests/regression.test.mjs && node --experimental-strip-types tests/notes.test.mjs && node --experimental-strip-types tests/storage.test.mjs && node tests/smoke.test.cjs && node tests/motion.test.cjs && node tests/api-regression.test.cjs && node tests/social-regression.test.cjs",
+    "test": "node --experimental-strip-types tests/core.test.mjs && node --experimental-strip-types tests/regression.test.mjs && node --experimental-strip-types tests/notes.test.mjs && node --experimental-strip-types tests/storage.test.mjs && node tests/smoke.test.cjs && node tests/motion.test.cjs && node tests/api-regression.test.cjs && node tests/social-regression.test.cjs && node tests/system-integrity.test.cjs",
     "api": "node server/index.mjs",
     "directory:install": "npm --prefix directory-api install",
     "directory:dev": "npm --prefix directory-api run dev",
