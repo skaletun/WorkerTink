@@ -1257,24 +1257,26 @@ async function handle(request, env) {
     const u = new URL(request.url);
     const limit = Math.min(50, Math.max(1, Number(u.searchParams.get('limit') || 20)));
     const rows = await env.DB.prepare(`
-      SELECT p.id,p.body,p.kind,p.group_id,p.visibility,p.created_at,p.updated_at,
-        a.wtink_id AS a_id,a.name AS a_name,a.position AS a_position,a.avatar AS a_avatar,a.is_dev AS a_is_dev,a.is_admin AS a_is_admin,
+      SELECT p.id,p.body,p.kind,p.group_id,p.visibility,p.attachments,p.shift_note,p.created_at,p.updated_at,
+        a.wtink_id AS a_id,a.name AS a_name,a.position AS a_position,a.avatar AS a_avatar,a.banner AS a_banner,a.username AS a_username,a.is_dev AS a_is_dev,a.is_admin AS a_is_admin,
         (SELECT COUNT(*) FROM social_post_likes l WHERE l.post_id=p.id) AS likes,
         (SELECT COUNT(*) FROM social_post_comments c WHERE c.post_id=p.id) AS comments,
         EXISTS(SELECT 1 FROM social_post_likes ml WHERE ml.post_id=p.id AND ml.profile_id=?1) AS liked
       FROM social_posts p JOIN profiles a ON a.wtink_id=p.author_id
       WHERE p.visibility='network' OR p.author_id=?1 OR (p.visibility='friends' AND EXISTS(SELECT 1 FROM friend_requests fr WHERE fr.status='accepted' AND ((fr.sender_id=?1 AND fr.receiver_id=p.author_id) OR (fr.sender_id=p.author_id AND fr.receiver_id=?1)))) OR (p.group_id IS NOT NULL AND EXISTS(SELECT 1 FROM social_group_members gm WHERE gm.group_id=p.group_id AND gm.profile_id=?1))
       ORDER BY p.created_at DESC LIMIT ?2`).bind(owner.wtink_id,limit).all();
-    return json({posts:(rows.results||[]).map(r=>({id:r.id,body:r.body,kind:r.kind||'post',groupId:r.group_id||null,visibility:r.visibility||'network',createdAt:Number(r.created_at),updatedAt:Number(r.updated_at),author:socialProfile({wtink_id:r.a_id,name:r.a_name,position:r.a_position,avatar:r.a_avatar,is_dev:r.a_is_dev,is_admin:r.a_is_admin}),likes:Number(r.likes||0),comments:Number(r.comments||0),liked:Boolean(r.liked)}))},200,origin);
+    return json({posts:(rows.results||[]).map(r=>({id:r.id,body:r.body,kind:r.kind||'post',groupId:r.group_id||null,visibility:r.visibility||'network',attachments:parseJson(r.attachments,[]),shiftNote:parseJson(r.shift_note,null),createdAt:Number(r.created_at),updatedAt:Number(r.updated_at),author:socialProfile({wtink_id:r.a_id,name:r.a_name,position:r.a_position,avatar:r.a_avatar,banner:r.a_banner,username:r.a_username,is_dev:r.a_is_dev,is_admin:r.a_is_admin}),likes:Number(r.likes||0),comments:Number(r.comments||0),liked:Boolean(r.liked)}))},200,origin);
   }
 
   if (path === '/social/posts' && request.method === 'POST') {
     const owner = await authProfile(request, env); if (!owner) return json({error:'UNAUTHORIZED'},401,origin);
     const input=await body(request); const text=cleanText(input?.body,4000); const kind=['post','announcement','question','shift'].includes(input?.kind)?input.kind:'post'; const visibility=input?.visibility==='friends'?'friends':'network'; const groupId=input?.groupId?String(input.groupId):null;
-    if (!text) return json({error:'EMPTY_POST'},400,origin);
+    const attachments=cleanPostAttachments(input?.attachments);
+    const shiftNote=kind==='shift'?cleanShiftNote(input?.shiftNote):null;
+    if (!text && !attachments.length && !shiftNote) return json({error:'EMPTY_POST'},400,origin);
     if(groupId){const member=await env.DB.prepare('SELECT 1 FROM social_group_members WHERE group_id=?1 AND profile_id=?2').bind(groupId,owner.wtink_id).first();if(!member)return json({error:'GROUP_MEMBERSHIP_REQUIRED'},403,origin)}
     const id=crypto.randomUUID(),now=Date.now();
-    await env.DB.prepare('INSERT INTO social_posts (id,author_id,body,kind,group_id,visibility,created_at,updated_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?7)').bind(id,owner.wtink_id,text,kind,groupId,visibility,now).run();
+    await env.DB.prepare('INSERT INTO social_posts (id,author_id,body,kind,group_id,visibility,attachments,shift_note,created_at,updated_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?9)').bind(id,owner.wtink_id,text,kind,groupId,visibility,JSON.stringify(attachments),shiftNote?JSON.stringify(shiftNote):null,now).run();
     await notifyMentionedUsers(env,text,owner,id,`./?tab=social&post=${encodeURIComponent(id)}`);
     return json({ok:true,id,createdAt:now},201,origin);
   }
