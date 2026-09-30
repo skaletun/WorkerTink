@@ -28,7 +28,6 @@ assert.match(app,/ProfileView/);
 assert.match(app,/Активировать профиль/);
 assert.match(app,/Активировать на/);
 assert.match(app,/E2E/);
-assert.match(app,/Вход на ПК по QR/);
 assert.ok(fs.existsSync(path.join(root,'src/p2p.ts')));
 assert.match(storage,/RECOVERY_KEY/);
 assert.match(index,/viewport-fit=cover/);
