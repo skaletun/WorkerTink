@@ -71,7 +71,7 @@ function cleanText(value, max) {
 
 function validCalendarDate(value) {
   const input = String(value || '').trim();
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(input)) return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input)) return false;
   const [year, month, day] = input.split('-').map(Number);
   const date = new Date(year, month - 1, day);
   return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
@@ -484,7 +484,7 @@ async function handle(request, env) {
     if (!setup || typeof setup !== 'object') return json({error:'INVALID_SETUP'},400,origin);
     const allowed = ['salary','taxRate','stage','vacTotal','startDate','scheduleType','scheduleShift','scheduleVakhtaMonths','schedulePairType','holidayCoeff','nightExtraPercent'];
     const clean = Object.fromEntries(allowed.map(key => [key, setup[key]]));
-    if (!Number.isFinite(Number(clean.salary)) || Number(clean.salary) < 0 || !Number.isFinite(Number(clean.taxRate)) || Number(clean.taxRate) < 0 || Number(clean.taxRate) > 100 || !Number.isFinite(Number(clean.stage)) || Number(clean.stage) < 0 || !Number.isFinite(Number(clean.vacTotal)) || Number(clean.vacTotal) < 0 || !/^\d{4}-\d{2}-\d{2}$/.test(String(clean.startDate||'')) || !['5/2','4/1','3/2','3/1','6/1','2/2','7/0'].includes(String(clean.scheduleType)) || !['day','night','full'].includes(String(clean.scheduleShift)) || !Number.isFinite(Number(clean.scheduleVakhtaMonths)) || Number(clean.scheduleVakhtaMonths) < 1 || Number(clean.scheduleVakhtaMonths) > 6 || !['day-day','day-night','night-night'].includes(String(clean.schedulePairType)) || !Number.isFinite(Number(clean.holidayCoeff)) || !Number.isFinite(Number(clean.nightExtraPercent))) return json({error:'INVALID_SETUP'},400,origin);
+    if (!Number.isFinite(Number(clean.salary)) || Number(clean.salary) < 0 || !Number.isFinite(Number(clean.taxRate)) || Number(clean.taxRate) < 0 || Number(clean.taxRate) > 100 || !Number.isFinite(Number(clean.stage)) || Number(clean.stage) < 0 || !Number.isFinite(Number(clean.vacTotal)) || Number(clean.vacTotal) < 0 || !validCalendarDate(clean.startDate) || !['5/2','4/1','3/2','3/1','6/1','2/2','7/0'].includes(String(clean.scheduleType)) || !['day','night','full'].includes(String(clean.scheduleShift)) || !Number.isFinite(Number(clean.scheduleVakhtaMonths)) || Number(clean.scheduleVakhtaMonths) < 1 || Number(clean.scheduleVakhtaMonths) > 6 || !['day-day','day-night','night-night'].includes(String(clean.schedulePairType)) || !Number.isFinite(Number(clean.holidayCoeff)) || !Number.isFinite(Number(clean.nightExtraPercent))) return json({error:'INVALID_SETUP'},400,origin);
     clean.salary=Number(clean.salary); clean.taxRate=Number(clean.taxRate); clean.stage=Number(clean.stage); clean.vacTotal=Number(clean.vacTotal); clean.scheduleVakhtaMonths=Number(clean.scheduleVakhtaMonths); clean.holidayCoeff=Number(clean.holidayCoeff); clean.nightExtraPercent=Number(clean.nightExtraPercent);
     const encrypted = await encryptSetup(env, clean);
     const now = Date.now();
