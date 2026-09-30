@@ -370,6 +370,18 @@ async function createSocialNotification(env, profileId, actorId, kind, entityId,
 
 function socialProfile(row) { return publicProfile(row); }
 
+async function canViewSocialPost(env, profileId, postId) {
+  const post = await env.DB.prepare('SELECT id,author_id,visibility,group_id FROM social_posts WHERE id=?1').bind(postId).first();
+  if (!post) return {exists:false,allowed:false};
+  if (post.author_id === profileId || post.visibility === 'network') return {exists:true,allowed:true};
+  if (post.group_id) {
+    const member = await env.DB.prepare('SELECT 1 FROM social_group_members WHERE group_id=?1 AND profile_id=?2').bind(post.group_id,profileId).first();
+    return {exists:true,allowed:Boolean(member)};
+  }
+  const friend = await env.DB.prepare(`SELECT 1 FROM friend_requests WHERE status='accepted' AND ((sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1)) LIMIT 1`).bind(profileId,post.author_id).first();
+  return {exists:true,allowed:Boolean(friend)};
+}
+
 function requestView(row, from, to) {
   return {
     id: row.id,
@@ -1317,8 +1329,8 @@ async function handle(request, env) {
   const likeMatch=path.match(/^\/social\/posts\/([^/]+)\/like$/);
   if(likeMatch && request.method==='POST'){
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
-    const id=decodeURIComponent(likeMatch[1]); const post=await env.DB.prepare('SELECT id,author_id FROM social_posts WHERE id=?1').bind(id).first();
-    if(!post)return json({error:'POST_NOT_FOUND'},404,origin);
+    const id=decodeURIComponent(likeMatch[1]); const access=await canViewSocialPost(env,owner.wtink_id,id);
+    if(!access.exists)return json({error:'POST_NOT_FOUND'},404,origin); if(!access.allowed)return json({error:'FORBIDDEN'},403,origin); const post=await env.DB.prepare('SELECT id,author_id FROM social_posts WHERE id=?1').bind(id).first();
     const existing=await env.DB.prepare('SELECT 1 FROM social_post_likes WHERE post_id=?1 AND profile_id=?2').bind(id,owner.wtink_id).first();
     if(existing){await env.DB.prepare('DELETE FROM social_post_likes WHERE post_id=?1 AND profile_id=?2').bind(id,owner.wtink_id).run();}
     else {await env.DB.prepare('INSERT INTO social_post_likes (post_id,profile_id,created_at) VALUES (?1,?2,?3)').bind(id,owner.wtink_id,Date.now()).run(); if(post.author_id!==owner.wtink_id) {await createSocialNotification(env,post.author_id,owner.wtink_id,'like',id,'Новая реакция',`${owner.name} отметил(а) вашу публикацию`); await notifyProfile(env,post.author_id,'message',{title:'Новая реакция',body:`${owner.name} отметил(а) вашу публикацию`,url:`./?tab=social&post=${encodeURIComponent(id)}`,tag:`wtink-like-${id}-${owner.wtink_id}`});}}
@@ -1328,7 +1340,7 @@ async function handle(request, env) {
   const commentsMatch=path.match(/^\/social\/posts\/([^/]+)\/comments$/);
   if(commentsMatch && request.method==='GET'){
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
-    const id=decodeURIComponent(commentsMatch[1]);
+    const id=decodeURIComponent(commentsMatch[1]); const access=await canViewSocialPost(env,owner.wtink_id,id); if(!access.exists)return json({error:'POST_NOT_FOUND'},404,origin); if(!access.allowed)return json({error:'FORBIDDEN'},403,origin);
     const rows=await env.DB.prepare(`SELECT c.id,c.body,c.created_at,a.wtink_id AS a_id,a.name AS a_name,a.position AS a_position,a.avatar AS a_avatar,a.banner AS a_banner,a.username AS a_username,a.is_dev AS a_is_dev,a.is_admin AS a_is_admin,a.is_official AS a_is_official,a.is_verified AS a_is_verified FROM social_post_comments c JOIN profiles a ON a.wtink_id=c.author_id WHERE c.post_id=?1 ORDER BY c.created_at ASC LIMIT 100`).bind(id).all();
     return json({comments:(rows.results||[]).map(r=>({id:r.id,body:r.body,createdAt:Number(r.created_at),author:socialProfile({wtink_id:r.a_id,name:r.a_name,position:r.a_position,avatar:r.a_avatar,banner:r.a_banner,username:r.a_username,is_dev:r.a_is_dev,is_admin:r.a_is_admin,is_official:r.a_is_official,is_verified:r.a_is_verified})}))},200,origin);
   }
@@ -1454,7 +1466,7 @@ async function handle(request, env) {
   if(groupLinkMatch && request.method==='GET'){
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const id=decodeURIComponent(groupLinkMatch[1]);
     const g=await env.DB.prepare('SELECT id,name,description,avatar,owner_id,visibility,created_at FROM chat_groups WHERE id=?1').bind(id).first(); if(!g)return json({error:'GROUP_NOT_FOUND'},404,origin);
-    const member=await env.DB.prepare('SELECT role FROM chat_group_members WHERE group_id=?1 AND profile_id=?2').bind(id,owner.wtink_id).first();
+    const member=await env.DB.prepare('SELECT role FROM chat_group_members WHERE group_id=?1 AND profile_id=?2').bind(id,owner.wtink_id).first(); if(g.visibility!=='public'&&!member)return json({error:'INVITE_REQUIRED'},403,origin);
     return json({group:{id:g.id,name:g.name,description:g.description,avatar:g.avatar||'',ownerId:displayId(g.owner_id),visibility:g.visibility==='public'?'public':'private',createdAt:Number(g.created_at),joined:Boolean(member),role:member?.role||null}},200,origin);
   }
   const groupJoinMatch=path.match(/^\/chat\/groups\/([^/]+)\/join$/);
@@ -1521,7 +1533,7 @@ async function handle(request, env) {
   if(companyLinkMatch && request.method==='GET'){
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const slug=decodeURIComponent(companyLinkMatch[1]);
     const c=await env.DB.prepare('SELECT id,name,slug,description,company_name,owner_id,visibility,icon,accent,cover,topic,created_at FROM company_channels WHERE slug=?1').bind(slug).first(); if(!c)return json({error:'CHANNEL_NOT_FOUND'},404,origin);
-    const member=await env.DB.prepare('SELECT role_id FROM company_channel_members WHERE channel_id=?1 AND profile_id=?2').bind(c.id,owner.wtink_id).first();
+    const member=await env.DB.prepare('SELECT role_id FROM company_channel_members WHERE channel_id=?1 AND profile_id=?2').bind(c.id,owner.wtink_id).first(); if(c.visibility!=='public'&&!member)return json({error:'INVITE_REQUIRED'},403,origin);
     return json({channel:{id:c.id,name:c.name,slug:c.slug,description:c.description,companyName:c.company_name,ownerId:displayId(c.owner_id),visibility:c.visibility==='public'?'public':'private',icon:c.icon||'',accent:c.accent||'#2563eb',cover:c.cover||'',topic:c.topic||'',createdAt:Number(c.created_at),joined:Boolean(member),roleId:member?.role_id||null}},200,origin);
   }
   const companyJoinMatch=path.match(/^\/company\/channels\/([^/]+)\/join$/);
@@ -1658,7 +1670,7 @@ async function handle(request, env) {
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const id=decodeURIComponent(savePost[1]); const input=await body(request); const post=await env.DB.prepare('SELECT id FROM social_posts WHERE id=?1').bind(id).first(); if(!post)return json({error:'POST_NOT_FOUND'},404,origin); if(input?.saved===false)await env.DB.prepare('DELETE FROM social_saved_posts WHERE post_id=?1 AND profile_id=?2').bind(id,owner.wtink_id).run(); else await env.DB.prepare('INSERT OR IGNORE INTO social_saved_posts(post_id,profile_id,created_at) VALUES (?1,?2,?3)').bind(id,owner.wtink_id,Date.now()).run(); return json({saved:input?.saved!==false},200,origin);
   }
   if(path==='/network/posts/saved' && request.method==='GET'){
-    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const rows=await env.DB.prepare(`SELECT p.id,p.body,p.kind,p.group_id,p.visibility,p.attachments,p.shift_note,p.created_at,p.updated_at,a.wtink_id AS a_id,a.name AS a_name,a.position AS a_position,a.avatar AS a_avatar,a.banner AS a_banner,a.username AS a_username,a.is_dev AS a_is_dev,a.is_admin AS a_is_admin,a.is_official AS a_is_official,a.is_verified AS a_is_verified,(SELECT COUNT(*) FROM social_post_likes l WHERE l.post_id=p.id) AS likes,(SELECT COUNT(*) FROM social_post_comments c WHERE c.post_id=p.id) AS comments,1 AS liked FROM social_posts p JOIN social_saved_posts s ON s.post_id=p.id AND s.profile_id=?1 JOIN profiles a ON a.wtink_id=p.author_id ORDER BY s.created_at DESC LIMIT 100`).bind(owner.wtink_id).all(); return json({posts:(rows.results||[]).map(r=>({id:r.id,body:r.body,kind:r.kind||'post',groupId:r.group_id||null,visibility:r.visibility||'network',attachments:parseJson(r.attachments,[]),shiftNote:parseJson(r.shift_note,null),createdAt:Number(r.created_at),updatedAt:Number(r.updated_at),author:socialProfile({wtink_id:r.a_id,name:r.a_name,position:r.a_position,avatar:r.a_avatar,banner:r.a_banner,username:r.a_username,is_dev:r.a_is_dev,is_admin:r.a_is_admin,is_official:r.a_is_official,is_verified:r.a_is_verified}),likes:Number(r.likes||0),comments:Number(r.comments||0),liked:true}))},200,origin);
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const rows=await env.DB.prepare(`SELECT p.id,p.body,p.kind,p.group_id,p.visibility,p.attachments,p.shift_note,p.created_at,p.updated_at,a.wtink_id AS a_id,a.name AS a_name,a.position AS a_position,a.avatar AS a_avatar,a.banner AS a_banner,a.username AS a_username,a.is_dev AS a_is_dev,a.is_admin AS a_is_admin,a.is_official AS a_is_official,a.is_verified AS a_is_verified,(SELECT COUNT(*) FROM social_post_likes l WHERE l.post_id=p.id) AS likes,(SELECT COUNT(*) FROM social_post_comments c WHERE c.post_id=p.id) AS comments,1 AS liked FROM social_posts p JOIN social_saved_posts s ON s.post_id=p.id AND s.profile_id=?1 JOIN profiles a ON a.wtink_id=p.author_id WHERE p.author_id=?1 OR p.visibility='network' OR (p.visibility='friends' AND EXISTS(SELECT 1 FROM friend_requests fr WHERE fr.status='accepted' AND ((fr.sender_id=?1 AND fr.receiver_id=p.author_id) OR (fr.sender_id=p.author_id AND fr.receiver_id=?1)))) OR (p.group_id IS NOT NULL AND EXISTS(SELECT 1 FROM social_group_members gm WHERE gm.group_id=p.group_id AND gm.profile_id=?1)) ORDER BY s.created_at DESC LIMIT 100`).bind(owner.wtink_id).all(); return json({posts:(rows.results||[]).map(r=>({id:r.id,body:r.body,kind:r.kind||'post',groupId:r.group_id||null,visibility:r.visibility||'network',attachments:parseJson(r.attachments,[]),shiftNote:parseJson(r.shift_note,null),createdAt:Number(r.created_at),updatedAt:Number(r.updated_at),author:socialProfile({wtink_id:r.a_id,name:r.a_name,position:r.a_position,avatar:r.a_avatar,banner:r.a_banner,username:r.a_username,is_dev:r.a_is_dev,is_admin:r.a_is_admin,is_official:r.a_is_official,is_verified:r.a_is_verified}),likes:Number(r.likes||0),comments:Number(r.comments||0),liked:true}))},200,origin);
   }
 
   const adminProfile = async () => {
