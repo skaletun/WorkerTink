@@ -14,7 +14,6 @@ for(const x of ['social_posts','social_post_likes','social_post_comments','socia
 for(const x of ['chat_device_keys','auth_sessions']) if(!chatMigration.includes(x)) throw new Error(`missing table ${x}`);
 const pins=fs.readFileSync(path.join(root,'directory-api/migrations/0021_chat_pins.sql'),'utf8');
 for(const x of ['chat_message_pins','idx_chat_message_pins_profile']) if(!pins.includes(x)) throw new Error(`missing chat pin schema ${x}`);
-for(const x of ['/chat/messages/','/chat/messages/:messageId/pin','getChatPins','pinChatMessage','unpinChatMessage']) if(!api.includes(x)||!dir.includes(x)) { /* route strings are validated below by source-level checks */ }
 if(!api.includes('chatPinListMatch')||!api.includes('chatPinMatch')) throw new Error('missing chat pin API');
 if(!dir.includes('getChatPins')||!dir.includes('pinChatMessage')||!dir.includes('unpinChatMessage')) throw new Error('missing chat pin client API');
 for(const x of ['getSocialFeed','createSocialPost','toggleSocialLike','addSocialComment','getSocialNotifications','getChatMessages','sendChatMessage','putChatKey']) if(!dir.includes(x)) throw new Error(`missing client API ${x}`);
