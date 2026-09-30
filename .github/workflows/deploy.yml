@@ -39,6 +39,19 @@ jobs:
           done
           echo "Directory API health check failed"
           exit 1
+      - name: Verify Directory API route surface
+        run: |
+          set -euo pipefail
+          base="${VITE_WTINK_DIRECTORY_URL}"
+          for endpoint in             "/auth/status"             "/friends"             "/social/feed?limit=1"             "/network/home"             "/network/people?query="             "/network/groups"             "/network/posts/saved"             "/chat/keys/me"             "/company/channels"             "/work/teams"
+          do
+            code="$(curl -sS --max-time 10 -o /dev/null -w '%{http_code}' "${base}${endpoint}" || true)"
+            case "$code" in
+              404) echo "Directory route missing: $endpoint"; exit 1 ;;
+              000) echo "Directory route unreachable: $endpoint"; exit 1 ;;
+            esac
+            echo "$endpoint -> $code"
+          done
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
