@@ -1,4 +1,4 @@
-import {useEffect,useState,type ReactNode} from 'react';
+import {useEffect,useRef,useState,type ReactNode} from 'react';
 import {registerSW} from 'virtual:pwa-register';
 
 type Phase='ready'|'updating';
@@ -7,57 +7,57 @@ type UpdateGateProps={children:ReactNode};
 export default function UpdateGate({children}:UpdateGateProps){
   const [needRefresh,setNeedRefresh]=useState(false);
   const [phase,setPhase]=useState<Phase>('ready');
+  const updateSWRef=useRef<(reloadPage?:boolean)=>Promise<void>>(async()=>{});
 
-  useEffect(()=>{
-    if(!('serviceWorker' in navigator)) return;
-    let disposed=false;
-    let updateSW:(reloadPage?:boolean)=>Promise<void>=async()=>{};
-
-    const requestReload=()=>{
-      if(disposed) return;
-      setPhase('updating');
-      let reloaded=false;
-      const reload=async()=>{
-        if(reloaded) return;
-        reloaded=true;
-        try{sessionStorage.clear()}catch{}
-        try{
-          const registrations=await navigator.serviceWorker.getRegistrations();
-          await Promise.all(registrations.map(reg=>reg.update().catch(()=>{})));
-        }catch{}
-        window.location.reload();
-      };
-      const onControllerChange=()=>{
+  const requestReload=()=>{
+    if(!('serviceWorker' in navigator))return;
+    setPhase('updating');
+    let reloaded=false;
+    const reload=async()=>{
+      if(reloaded)return;
+      reloaded=true;
+      try{sessionStorage.clear()}catch{}
+      try{
+        const registrations=await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(reg=>reg.update().catch(()=>{})));
+      }catch{}
+      window.location.reload();
+    };
+    const onControllerChange=()=>{
+      navigator.serviceWorker.removeEventListener('controllerchange',onControllerChange);
+      void reload();
+    };
+    navigator.serviceWorker.addEventListener('controllerchange',onControllerChange);
+    void updateSWRef.current(false).then(()=>{
+      const controller=navigator.serviceWorker.controller;
+      if(controller)controller.postMessage({type:'workertink:cleanup-runtime-cache'});
+      window.setTimeout(()=>{
         navigator.serviceWorker.removeEventListener('controllerchange',onControllerChange);
         void reload();
-      };
-      navigator.serviceWorker.addEventListener('controllerchange',onControllerChange);
+      },8000);
+    }).catch(()=>{
+      navigator.serviceWorker.removeEventListener('controllerchange',onControllerChange);
+      setPhase('ready');
+    });
+  };
 
-      void updateSW(false).then(()=>{
-        const controller=navigator.serviceWorker.controller;
-        if(controller) controller.postMessage({type:'workertink:cleanup-runtime-cache'});
-        window.setTimeout(()=>{
-          navigator.serviceWorker.removeEventListener('controllerchange',onControllerChange);
-          void reload();
-        },8000);
-      }).catch(()=>{
-        navigator.serviceWorker.removeEventListener('controllerchange',onControllerChange);
-        setPhase('ready');
-        setNeedRefresh(true);
-      });
-    };
-
-    updateSW=registerSW({
+  useEffect(()=>{
+    if(!('serviceWorker' in navigator))return;
+    let disposed=false;
+    const registrationCleanup:{registration?:ServiceWorkerRegistration;interval?:number;check?:()=>void}={};
+    updateSWRef.current=registerSW({
       immediate:true,
       onNeedRefresh(){
-        if(disposed) return;
+        if(disposed)return;
         setNeedRefresh(true);
         setPhase('ready');
       },
       onRegistered(registration){
-        if(!registration) return;
+        if(!registration)return;
         const check=()=>registration.update().catch(()=>{});
-        window.setInterval(check,5*60*1000);
+        registrationCleanup.registration=registration;
+        registrationCleanup.check=check;
+        registrationCleanup.interval=window.setInterval(check,5*60*1000);
         window.addEventListener('focus',check);
         window.addEventListener('online',check);
         void check();
@@ -66,8 +66,14 @@ export default function UpdateGate({children}:UpdateGateProps){
         console.warn('[WorkerTink] Service Worker registration failed',error);
       },
     });
-
-    return()=>{disposed=true};
+    return()=>{
+      disposed=true;
+      if(registrationCleanup.interval)window.clearInterval(registrationCleanup.interval);
+      if(registrationCleanup.check){
+        window.removeEventListener('focus',registrationCleanup.check);
+        window.removeEventListener('online',registrationCleanup.check);
+      }
+    };
   },[]);
 
   return <>
