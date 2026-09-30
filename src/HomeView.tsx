@@ -48,3 +48,4 @@ export default function HomeView({state,patch,onNotice,go}:Props){
   </div>
   <div className="redesign-social-callout"><div><span className="redesign-overline">WTinker · социальная сеть для работы</span><h2>Рабочие новости должны быть рядом с людьми.</h2><p>Публикации, сообщества, сообщения и рабочие действия живут в одном контексте — так меньше переключений и потерянных договорённостей.</p></div><button className="redesign-btn redesign-btn-primary" onClick={()=>go('social')}>Открыть ленту →</button></div>
  </section>;
+}
