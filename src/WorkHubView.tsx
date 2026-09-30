@@ -1,6 +1,6 @@
 import {useMemo} from 'react';
 import type {State} from './core';
-import {MONTHS,calcYear,formatMoney,getScheduledShift,ymd} from './core';
+import {MONTHS,calcYear,formatMoney,getScheduledShift,vacationUsedDays,ymd} from './core';
 import WorkTeamsView from './WorkTeamsView';
 
 type Props={state:State;calc:any;view:Date;onNavigate:(tab:'calendar'|'pay'|'absence')=>void;onNetwork:()=>void;token?:string;onNotice?:(s:string)=>void};
@@ -8,7 +8,7 @@ function shiftName(v:string){return v==='night'?'Ночная':v==='full'?'Су�
 export default function WorkHubView({state,calc,view,onNavigate,onNetwork,token,onNotice}:Props){
  const upcoming=useMemo(()=>{const out:{date:Date;shift:string}[]=[];for(let i=0;i<14&&out.length<6;i++){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+i);const s=getScheduledShift(state,d);if(s!=='off')out.push({date:d,shift:s})}return out},[state]);
  const annual=useMemo(()=>calcYear(state,view.getFullYear()),[state,view]);
- const vacationLeft=Math.max(0,state.vacTotal-state.vacations.reduce((n,p)=>n+Math.max(0,(new Date(p.end).getTime()-new Date(p.start).getTime())/86400000+1),0));
+ const vacationLeft=Math.max(0,state.vacTotal-vacationUsedDays(state));
  return <section className="work-hub"><header className="work-hero"><div><span className="eyebrow">WORK OS</span><h2>Всё, что связано с работой</h2><p>График, деньги, отсутствие, заметки и рабочие договорённости — в одном месте.</p></div><button className="primary" onClick={onNetwork}>Открыть рабочую сеть</button></header>
  <div className="work-kpis"><button onClick={()=>onNavigate('calendar')}><span>Ближайшая смена</span><b>{upcoming[0]?shiftName(upcoming[0].shift):'Выходной'}</b><small>{upcoming[0]?upcoming[0].date.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'}):'Нет смен'}</small></button><button onClick={()=>onNavigate('pay')}><span>На руки · {MONTHS[calc.month]}</span><b>{formatMoney(calc.net)}</b><small>Начислено {formatMoney(calc.gross)}</small></button><button onClick={()=>onNavigate('absence')}><span>Остаток отпуска</span><b>{Math.round(vacationLeft)} дн.</b><small>Доступно по вашему профилю</small></button><button onClick={()=>onNavigate('calendar')}><span>Годовая сумма</span><b>{formatMoney(annual.net)}</b><small>{view.getFullYear()} · прогноз</small></button></div>
  <div className="work-grid"><div className="work-card"><div className="work-card-head"><div><span className="eyebrow">ГРАФИК</span><h3>Следующие смены</h3></div><button onClick={()=>onNavigate('calendar')}>Открыть календарь →</button></div>{upcoming.map(x=><div className="work-shift-row" key={ymd(x.date)}><div className={`shift-badge ${x.shift}`}>{x.shift==='night'?'Н':x.shift==='full'?'24':'Д'}</div><div><b>{x.date.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'})}</b><span>{shiftName(x.shift)}</span></div><strong>{x.date.getDate()}</strong></div>)}</div>
