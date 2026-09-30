@@ -38,3 +38,10 @@ assert.match(chat,/chat-file-input/);
 assert.match(chat,/Применить заметку/);
 assert.match(sw,/precacheAndRoute/);
 console.log('WorkerTink API regression tests: OK');
+
+assert.match(api,/ALTER TABLE profiles ADD COLUMN banner/);
+assert.match(api,/ALTER TABLE social_posts ADD COLUMN attachments/);
+assert.match(api,/ALTER TABLE social_posts ADD COLUMN shift_note/);
+assert.match(api,/UPDATE social_groups SET name=\?1,description=\?2,visibility=\?3,icon=\?4,accent=\?5,cover=\?6,rules=\?7/);
+assert.match(api,/UPDATE company_channels SET name=\?1,company_name=\?2,description=\?3,visibility=\?4,icon=\?5,accent=\?6,cover=\?7,topic=\?8/);
+assert.match(api,/function cleanShiftNote/);
