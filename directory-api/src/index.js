@@ -313,6 +313,21 @@ async function notifyProfile(env, profileId, kind, payload) {
   if (gone.length) for (const endpoint of gone) await env.DB.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?1').bind(endpoint).run();
 }
 
+async function notifyMentionedUsers(env, text, actor, entityId, url) {
+  const matches=[...String(text||'').matchAll(/@([A-Za-z0-9_]{3,32})/g)].map(m=>m[1].toLowerCase());
+  const usernames=[...new Set(matches)].slice(0,20);
+  if(!usernames.length)return;
+  const placeholders=usernames.map((_,i)=>`?${i+1}`).join(',');
+  const rows=await env.DB.prepare(`SELECT wtink_id,username FROM profiles WHERE LOWER(username) IN (${placeholders})`).bind(...usernames).all();
+  for(const row of rows.results||[]){
+    if(row.wtink_id===actor.wtink_id)continue;
+    const title='Вас упомянули';
+    const bodyText=`${actor.name} упомянул(а) вас в публикации`;
+    await createSocialNotification(env,row.wtink_id,actor.wtink_id,'mention',entityId,title,bodyText,url);
+    await notifyProfile(env,row.wtink_id,'message',{title,body:bodyText,url,tag:`wtink-mention-${entityId}-${row.wtink_id}`});
+  }
+}
+
 async function createSocialNotification(env, profileId, actorId, kind, entityId, title, bodyText, url='./?tab=social') {
   const now = Date.now();
   const id = crypto.randomUUID();
