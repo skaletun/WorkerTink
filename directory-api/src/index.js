@@ -85,9 +85,9 @@ function cleanUsername(value) {
 }
 
 async function uniqueUsername(env, preferred='') {
-  const clean = cleanUsername(preferred);
+  const clean = cleanUsername(preferred)?.toLowerCase() || '';
   if (clean) {
-    const exists = await env.DB.prepare('SELECT 1 FROM profiles WHERE username = ?1').bind(clean).first();
+    const exists = await env.DB.prepare('SELECT 1 FROM profiles WHERE LOWER(username)=LOWER(?1)').bind(clean).first();
     if (!exists) return clean;
   }
   for (let i=0;i<20;i++) {
@@ -597,7 +597,10 @@ async function handle(request, env) {
         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?16, ?16)
       `).bind(wtinkId, name, position, avatar, banner, username, wtinkId === DEV_WTINK_ID ? 1 : 0, wtinkId === DEV_WTINK_ID ? 1 : 0, tokenHash, pinData.hash, pinData.salt, webauthnUserId, privacyPolicyVersion, termsVersion, now, now).run();
     } catch (error) {
-      if (String(error).toLowerCase().includes('unique')) return json({error: 'WTINK_ID_TAKEN'}, 409, origin);
+      if (String(error).toLowerCase().includes('unique')) {
+        const wtinkConflict = await env.DB.prepare('SELECT 1 FROM profiles WHERE wtink_id = ?1').bind(wtinkId).first();
+        return json({error: wtinkConflict ? 'WTINK_ID_TAKEN' : 'USERNAME_TAKEN'}, 409, origin);
+      }
       throw error;
     }
     const session = await createAuthSession(env, wtinkId, token, now, String(input?.deviceName || 'Устройство'));
