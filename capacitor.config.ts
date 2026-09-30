@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'app.workertink',
-  appName: 'WorkerTink',
+  appName: 'WTinker',
   webDir: 'dist',
   bundledWebRuntime: false,
   server: {
