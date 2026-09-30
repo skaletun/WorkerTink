@@ -30,7 +30,7 @@ export default function V7Shell({items,active,onNavigate,profile,profileAction,p
     <a className="v7-skip" href="#v7-main">К содержимому</a>
     <aside className="v7-sidebar">
       <button className="v7-brand" onClick={()=>onNavigate('home')} aria-label="WTinker — Главная">
-        <span className="v7-brand-mark">W</span>
+        <span className="v7-brand-mark">WT</span>
         <span className="v7-brand-copy"><b>WTinker</b><small>people · work · together</small></span>
         <em>{version}</em>
       </button>
