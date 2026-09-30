@@ -108,15 +108,19 @@ function cleanBanner(value) {
 }
 function cleanPostAttachments(value) {
   if (!Array.isArray(value)) return [];
-  return value.slice(0,6).map((item,index)=>{
-    if (!item || typeof item !== 'object') return null;
+  let total=0;
+  const out=[];
+  for (let index=0;index<value.length&&out.length<4;index++) {
+    const item=value[index];
+    if (!item || typeof item !== 'object') continue;
     const data=typeof item.data==='string'&&item.data.startsWith('data:')?item.data:'';
     const name=cleanText(item.name,120);
     const mime=cleanText(item.mime,100);
-    const size=Math.max(0,Math.min(800000,Number(item.size)||0));
-    if(!data || !name || !size || data.length>900000) return null;
-    return {id:cleanText(item.id,64)||String(index+1),name,mime,size,data};
-  }).filter(Boolean);
+    const size=Math.max(0,Math.min(250000,Number(item.size)||0));
+    if(!data || !name || !size || data.length>340000 || total+size>800000) continue;
+    out.push({id:cleanText(item.id,64)||String(index+1),name,mime,size,data}); total+=size;
+  }
+  return out;
 }
 function cleanShiftNote(value) {
   if (!value || typeof value !== 'object') return null;
