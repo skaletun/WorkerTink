@@ -98,7 +98,8 @@ function App(){
  const basePrefix=window.location.hostname.endsWith('github.io')?'/WorkerTink':'';
  const cleanRoute=routePath.startsWith(basePrefix)?routePath.slice(basePrefix.length)||'/':routePath;
  const legalPath=cleanRoute.match(/^\/rules\/(privacy|terms)\/?$/i);
- if(legalPath)return <LegalSurface kind={legalPath[1] as 'privacy'|'terms'}/>;\n const publicPath=cleanRoute.match(/^\/user\/([^/]+)\/?$/i);
+ if(legalPath)return <LegalSurface kind={legalPath[1] as 'privacy'|'terms'}/>;
+ const publicPath=cleanRoute.match(/^\/user\/([^/]+)\/?$/i);
  if(publicPath)return <PublicProfileView username={decodeURIComponent(publicPath[1])} token={state.directoryToken} currentProfile={state.profile} onNotice={setNotice} onChat={openChat}/>;
  if(!state.profile.name)return <RegistrationWizard state={state} setState={setState}/>;
  if(!state.directoryToken)return <LoginScreen state={state} setState={setState}/>;
