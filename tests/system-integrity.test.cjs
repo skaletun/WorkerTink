@@ -8,9 +8,12 @@ const sw=fs.readFileSync(path.join(root,'src/sw.js'),'utf8');
 const workflow=fs.readFileSync(path.join(root,'.github/workflows/deploy.yml'),'utf8');
 
 if(!app.includes('syncTabUrl=(next:Tab)=>')) throw new Error('navigation URL sync is missing');
+if(!app.includes("const openChat=(profileId:string)=>{syncTabUrl('chat')")) throw new Error('chat navigation does not use the canonical URL sync');
 if(!app.includes("window.history.replaceState({},'',url.pathname+url.search+url.hash)")) throw new Error('navigation URL sync does not write browser URL');
 if(app.includes('<main className={')) throw new Error('nested main remains inside V7Shell');
 if(!app.includes('</div>\n</V7Shell>')) throw new Error('v7 page container is not closed as a div');
+if(!app.includes("message.includes('UNAUTHORIZED')||message.includes('HTTP_401')")) throw new Error('expired-session recovery is missing');
+if(!app.includes("directoryToken:'',onePassEnabled:false")) throw new Error('expired-session recovery does not clear credentials');
 
 if(!network.includes('let coreFailed=0')) throw new Error('network refresh failure isolation is missing');
 if(!network.includes('try{const savedRows=await getSavedNetworkPosts(token);setSaved(savedRows.posts)}catch{setSaved([])}')) throw new Error('saved posts must be optional during network refresh');
