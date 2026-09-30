@@ -578,7 +578,7 @@ async function handle(request, env) {
     const pinData = await hashPin(pin);
     const webauthnUserId = randomToken();
     const now = Date.now();
-    const username = await uniqueUsername(env, requestedUsername);
+    const username = (await uniqueUsername(env, requestedUsername)).toLowerCase();
     try {
       await env.DB.prepare(`
         INSERT INTO profiles (wtink_id, name, position, avatar, banner, username, is_dev, is_admin, token_hash, pin_hash, pin_salt, webauthn_user_id, privacy_policy_version, terms_version, rules_accepted_at, created_at, updated_at, last_seen)
@@ -922,7 +922,7 @@ async function handle(request, env) {
     const requestedUsername = cleanUsername(raw.username);
     if (wtinkId !== owner.wtink_id || !name || !position || (raw.username && !requestedUsername)) return json({error: 'INVALID_PROFILE'}, 400, origin);
     const current = await env.DB.prepare('SELECT username FROM profiles WHERE wtink_id=?1').bind(owner.wtink_id).first();
-    const username = requestedUsername || current?.username || null;
+    const username = requestedUsername ? requestedUsername.toLowerCase() : (current?.username ? String(current.username).toLowerCase() : null);
     const conflict = username ? await env.DB.prepare('SELECT wtink_id FROM profiles WHERE LOWER(username)=LOWER(?1) AND wtink_id<>?2').bind(username,owner.wtink_id).first() : null;
     if(conflict)return json({error:'USERNAME_TAKEN'},409,origin);
     const now = Date.now();
@@ -1051,7 +1051,7 @@ async function handle(request, env) {
     const target = normalizeId(input?.to);
     if (!validId(target)) return json({error: 'USER_NOT_FOUND'}, 404, origin);
     if (target === owner.wtink_id) return json({error: 'SELF_REQUEST'}, 400, origin);
-    const targetProfile = await env.DB.prepare('SELECT wtink_id, name, position, avatar, username, is_dev, is_admin FROM profiles WHERE wtink_id = ?1').bind(target).first();
+    const targetProfile = await env.DB.prepare('SELECT wtink_id, name, position, avatar, banner, username, is_dev, is_admin, is_official, is_verified FROM profiles WHERE wtink_id = ?1').bind(target).first();
     if (!targetProfile) return json({error: 'USER_NOT_FOUND'}, 404, origin);
 
     const existing = await env.DB.prepare(`
@@ -1281,14 +1281,14 @@ async function handle(request, env) {
     const limit = Math.min(50, Math.max(1, Number(u.searchParams.get('limit') || 20)));
     const rows = await env.DB.prepare(`
       SELECT p.id,p.body,p.kind,p.group_id,p.visibility,p.attachments,p.shift_note,p.created_at,p.updated_at,
-        a.wtink_id AS a_id,a.name AS a_name,a.position AS a_position,a.avatar AS a_avatar,a.banner AS a_banner,a.username AS a_username,a.is_dev AS a_is_dev,a.is_admin AS a_is_admin,
+        a.wtink_id AS a_id,a.name AS a_name,a.position AS a_position,a.avatar AS a_avatar,a.banner AS a_banner,a.username AS a_username,a.is_dev AS a_is_dev,a.is_admin AS a_is_admin,a.is_official AS a_is_official,a.is_verified AS a_is_verified,
         (SELECT COUNT(*) FROM social_post_likes l WHERE l.post_id=p.id) AS likes,
         (SELECT COUNT(*) FROM social_post_comments c WHERE c.post_id=p.id) AS comments,
         EXISTS(SELECT 1 FROM social_post_likes ml WHERE ml.post_id=p.id AND ml.profile_id=?1) AS liked
       FROM social_posts p JOIN profiles a ON a.wtink_id=p.author_id
       WHERE p.visibility='network' OR p.author_id=?1 OR (p.visibility='friends' AND EXISTS(SELECT 1 FROM friend_requests fr WHERE fr.status='accepted' AND ((fr.sender_id=?1 AND fr.receiver_id=p.author_id) OR (fr.sender_id=p.author_id AND fr.receiver_id=?1)))) OR (p.group_id IS NOT NULL AND EXISTS(SELECT 1 FROM social_group_members gm WHERE gm.group_id=p.group_id AND gm.profile_id=?1))
       ORDER BY p.created_at DESC LIMIT ?2`).bind(owner.wtink_id,limit).all();
-    return json({posts:(rows.results||[]).map(r=>({id:r.id,body:r.body,kind:r.kind||'post',groupId:r.group_id||null,visibility:r.visibility||'network',attachments:parseJson(r.attachments,[]),shiftNote:parseJson(r.shift_note,null),createdAt:Number(r.created_at),updatedAt:Number(r.updated_at),author:socialProfile({wtink_id:r.a_id,name:r.a_name,position:r.a_position,avatar:r.a_avatar,banner:r.a_banner,username:r.a_username,is_dev:r.a_is_dev,is_admin:r.a_is_admin}),likes:Number(r.likes||0),comments:Number(r.comments||0),liked:Boolean(r.liked)}))},200,origin);
+    return json({posts:(rows.results||[]).map(r=>({id:r.id,body:r.body,kind:r.kind||'post',groupId:r.group_id||null,visibility:r.visibility||'network',attachments:parseJson(r.attachments,[]),shiftNote:parseJson(r.shift_note,null),createdAt:Number(r.created_at),updatedAt:Number(r.updated_at),author:socialProfile({wtink_id:r.a_id,name:r.a_name,position:r.a_position,avatar:r.a_avatar,banner:r.a_banner,username:r.a_username,is_dev:r.a_is_dev,is_admin:r.a_is_admin,is_official:r.a_is_official,is_verified:r.a_is_verified}),likes:Number(r.likes||0),comments:Number(r.comments||0),liked:Boolean(r.liked)}))},200,origin);
   }
 
   if (path === '/social/posts' && request.method === 'POST') {
@@ -1554,14 +1554,14 @@ async function handle(request, env) {
         WHERE g.visibility='public' OR EXISTS(SELECT 1 FROM social_group_members gm2 WHERE gm2.group_id=g.id AND gm2.profile_id=?1)
         ORDER BY joined DESC,g.created_at DESC LIMIT 30`).bind(owner.wtink_id).all(),
       env.DB.prepare(`SELECT e.id,e.title,e.description,e.kind,e.starts_at,e.ends_at,e.location,e.group_id,e.created_at,
-        e.owner_id,o.name AS o_name,o.position AS o_position,o.avatar AS o_avatar,o.is_dev AS o_is_dev,o.is_admin AS o_is_admin,
+        e.owner_id,o.name AS o_name,o.position AS o_position,o.avatar AS o_avatar,o.banner AS o_banner,o.username AS o_username,o.is_dev AS o_is_dev,o.is_admin AS o_is_admin,o.is_official AS o_is_official,o.is_verified AS o_is_verified,
         (SELECT COUNT(*) FROM social_event_members em WHERE em.event_id=e.id AND em.status='going') AS going,
         EXISTS(SELECT 1 FROM social_event_members me WHERE me.event_id=e.id AND me.profile_id=?1 AND me.status='going') AS joined
         FROM social_events e JOIN profiles o ON o.wtink_id=e.owner_id
         WHERE e.starts_at>=?2 ORDER BY e.starts_at ASC LIMIT 30`).bind(owner.wtink_id,Date.now()).all(),
       env.DB.prepare(`SELECT s.id,s.date,s.shift,s.requested_shift,s.note,s.status,s.created_at,s.owner_id,s.claimed_by,
-        o.name AS o_name,o.position AS o_position,o.avatar AS o_avatar,o.is_dev AS o_is_dev,o.is_admin AS o_is_admin,
-        c.name AS c_name,c.position AS c_position,c.avatar AS c_avatar,c.is_dev AS c_is_dev,c.is_admin AS c_is_admin
+        o.name AS o_name,o.position AS o_position,o.avatar AS o_avatar,o.banner AS o_banner,o.username AS o_username,o.is_dev AS o_is_dev,o.is_admin AS o_is_admin,o.is_official AS o_is_official,o.is_verified AS o_is_verified,
+        c.name AS c_name,c.position AS c_position,c.avatar AS c_avatar,c.username AS c_username,c.is_dev AS c_is_dev,c.is_admin AS c_is_admin,c.is_official AS c_is_official,c.is_verified AS c_is_verified
         FROM work_shift_swaps s JOIN profiles o ON o.wtink_id=s.owner_id LEFT JOIN profiles c ON c.wtink_id=s.claimed_by
         WHERE s.status='open' AND s.date>=?1 ORDER BY s.date ASC,s.created_at DESC LIMIT 30`).bind(new Date().toISOString().slice(0,10)).all(),
       env.DB.prepare(`SELECT p.wtink_id,p.name,p.position,p.avatar,p.banner,p.username,p.is_dev,p.is_admin,p.is_official,p.is_verified,p.last_seen,
@@ -1571,8 +1571,8 @@ async function handle(request, env) {
     ]);
     return json({
       groups:(groups.results||[]).map(r=>({id:r.id,name:r.name,slug:r.slug,description:r.description,visibility:r.visibility,icon:r.icon||'',accent:r.accent||'#2563eb',cover:r.cover||'',rules:r.rules||'',owner:socialProfile({wtink_id:r.owner_id,name:r.o_name,position:r.o_position,avatar:r.o_avatar,banner:r.o_banner,username:r.o_username,is_dev:r.o_is_dev,is_admin:r.o_is_admin}),members:Number(r.members||0),joined:Boolean(r.joined),role:r.member_role||undefined,createdAt:Number(r.created_at||0)})),
-      events:(events.results||[]).map(r=>({id:r.id,title:r.title,description:r.description,kind:r.kind,startsAt:Number(r.starts_at),endsAt:r.ends_at?Number(r.ends_at):null,location:r.location,owner:socialProfile({wtink_id:r.owner_id,name:r.o_name,position:r.o_position,avatar:r.o_avatar,is_dev:r.o_is_dev,is_admin:r.o_is_admin}),groupId:r.group_id||null,going:Number(r.going||0),joined:Boolean(r.joined)})),
-      swaps:(swaps.results||[]).map(r=>({id:r.id,date:r.date,shift:r.shift,requestedShift:r.requested_shift,note:r.note,status:r.status,owner:socialProfile({wtink_id:r.owner_id,name:r.o_name,position:r.o_position,avatar:r.o_avatar,is_dev:r.o_is_dev,is_admin:r.o_is_admin}),claimedBy:r.claimed_by?socialProfile({wtink_id:r.claimed_by,name:r.c_name,position:r.c_position,avatar:r.c_avatar,is_dev:r.c_is_dev,is_admin:r.c_is_admin}):null,createdAt:Number(r.created_at||0)})),
+      events:(events.results||[]).map(r=>({id:r.id,title:r.title,description:r.description,kind:r.kind,startsAt:Number(r.starts_at),endsAt:r.ends_at?Number(r.ends_at):null,location:r.location,owner:socialProfile({wtink_id:r.owner_id,name:r.o_name,position:r.o_position,avatar:r.o_avatar,banner:r.o_banner,username:r.o_username,is_dev:r.o_is_dev,is_admin:r.o_is_admin,is_official:r.o_is_official,is_verified:r.o_is_verified}),groupId:r.group_id||null,going:Number(r.going||0),joined:Boolean(r.joined)})),
+      swaps:(swaps.results||[]).map(r=>({id:r.id,date:r.date,shift:r.shift,requestedShift:r.requested_shift,note:r.note,status:r.status,owner:socialProfile({wtink_id:r.owner_id,name:r.o_name,position:r.o_position,avatar:r.o_avatar,banner:r.o_banner,username:r.o_username,is_dev:r.o_is_dev,is_admin:r.o_is_admin,is_official:r.o_is_official,is_verified:r.o_is_verified}),claimedBy:r.claimed_by?socialProfile({wtink_id:r.claimed_by,name:r.c_name,position:r.c_position,avatar:r.c_avatar,username:r.c_username,is_dev:r.c_is_dev,is_admin:r.c_is_admin,is_official:r.c_is_official,is_verified:r.c_is_verified}):null,createdAt:Number(r.created_at||0)})),
       people:(people.results||[]).map(r=>({profile:socialProfile(r),online:Number(r.last_seen||0)>=Date.now()-ONLINE_WINDOW_MS,mutualFriends:Number(r.mutual||0),connected:Boolean(r.connected)}))
     },200,origin);
   }
@@ -1658,7 +1658,7 @@ async function handle(request, env) {
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const id=decodeURIComponent(savePost[1]); const input=await body(request); const post=await env.DB.prepare('SELECT id FROM social_posts WHERE id=?1').bind(id).first(); if(!post)return json({error:'POST_NOT_FOUND'},404,origin); if(input?.saved===false)await env.DB.prepare('DELETE FROM social_saved_posts WHERE post_id=?1 AND profile_id=?2').bind(id,owner.wtink_id).run(); else await env.DB.prepare('INSERT OR IGNORE INTO social_saved_posts(post_id,profile_id,created_at) VALUES (?1,?2,?3)').bind(id,owner.wtink_id,Date.now()).run(); return json({saved:input?.saved!==false},200,origin);
   }
   if(path==='/network/posts/saved' && request.method==='GET'){
-    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const rows=await env.DB.prepare(`SELECT p.id,p.body,p.kind,p.group_id,p.visibility,p.attachments,p.shift_note,p.created_at,p.updated_at,a.wtink_id AS a_id,a.name AS a_name,a.position AS a_position,a.avatar AS a_avatar,a.banner AS a_banner,a.username AS a_username,a.is_dev AS a_is_dev,a.is_admin AS a_is_admin,(SELECT COUNT(*) FROM social_post_likes l WHERE l.post_id=p.id) AS likes,(SELECT COUNT(*) FROM social_post_comments c WHERE c.post_id=p.id) AS comments,1 AS liked FROM social_posts p JOIN social_saved_posts s ON s.post_id=p.id AND s.profile_id=?1 JOIN profiles a ON a.wtink_id=p.author_id ORDER BY s.created_at DESC LIMIT 100`).bind(owner.wtink_id).all(); return json({posts:(rows.results||[]).map(r=>({id:r.id,body:r.body,kind:r.kind||'post',groupId:r.group_id||null,visibility:r.visibility||'network',attachments:parseJson(r.attachments,[]),shiftNote:parseJson(r.shift_note,null),createdAt:Number(r.created_at),updatedAt:Number(r.updated_at),author:socialProfile({wtink_id:r.a_id,name:r.a_name,position:r.a_position,avatar:r.a_avatar,banner:r.a_banner,username:r.a_username,is_dev:r.a_is_dev,is_admin:r.a_is_admin}),likes:Number(r.likes||0),comments:Number(r.comments||0),liked:true}))},200,origin);
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const rows=await env.DB.prepare(`SELECT p.id,p.body,p.kind,p.group_id,p.visibility,p.attachments,p.shift_note,p.created_at,p.updated_at,a.wtink_id AS a_id,a.name AS a_name,a.position AS a_position,a.avatar AS a_avatar,a.banner AS a_banner,a.username AS a_username,a.is_dev AS a_is_dev,a.is_admin AS a_is_admin,a.is_official AS a_is_official,a.is_verified AS a_is_verified,(SELECT COUNT(*) FROM social_post_likes l WHERE l.post_id=p.id) AS likes,(SELECT COUNT(*) FROM social_post_comments c WHERE c.post_id=p.id) AS comments,1 AS liked FROM social_posts p JOIN social_saved_posts s ON s.post_id=p.id AND s.profile_id=?1 JOIN profiles a ON a.wtink_id=p.author_id ORDER BY s.created_at DESC LIMIT 100`).bind(owner.wtink_id).all(); return json({posts:(rows.results||[]).map(r=>({id:r.id,body:r.body,kind:r.kind||'post',groupId:r.group_id||null,visibility:r.visibility||'network',attachments:parseJson(r.attachments,[]),shiftNote:parseJson(r.shift_note,null),createdAt:Number(r.created_at),updatedAt:Number(r.updated_at),author:socialProfile({wtink_id:r.a_id,name:r.a_name,position:r.a_position,avatar:r.a_avatar,banner:r.a_banner,username:r.a_username,is_dev:r.a_is_dev,is_admin:r.a_is_admin,is_official:r.a_is_official,is_verified:r.a_is_verified}),likes:Number(r.likes||0),comments:Number(r.comments||0),liked:true}))},200,origin);
   }
 
   const adminProfile = async () => {
@@ -1698,10 +1698,9 @@ async function handle(request, env) {
     const row=await env.DB.prepare("SELECT id,profile_id,status FROM verification_requests WHERE id=?1").bind(id).first();
     if(!row)return json({error:'REQUEST_NOT_FOUND'},404,origin);
     const input=await body(request); const note=cleanText(input?.note,1000); const now=Date.now(); const status=action==='approve'?'approved':'rejected';
-    await env.DB.batch([
-      env.DB.prepare("UPDATE verification_requests SET status=?1,note=?2,reviewed_at=?3,reviewed_by=?4 WHERE id=?5").bind(status,note,now,admin.wtink_id,id),
-      env.DB.prepare("UPDATE profiles SET is_official=?1,updated_at=?2 WHERE wtink_id=?3").bind(action==='approve'?1:0,now,row.profile_id)
-    ]);
+    const changed=await env.DB.prepare("UPDATE verification_requests SET status=?1,note=?2,reviewed_at=?3,reviewed_by=?4 WHERE id=?5 AND status='pending'").bind(status,note,now,admin.wtink_id,id).run();
+    if(!changed.meta?.changes)return json({error:'REQUEST_ALREADY_REVIEWED'},409,origin);
+    await env.DB.prepare("UPDATE profiles SET is_official=?1,updated_at=?2 WHERE wtink_id=?3").bind(action==='approve'?1:0,now,row.profile_id);
     const target=await env.DB.prepare("SELECT wtink_id,name,position,avatar,banner,username,is_dev,is_admin,is_official,is_verified FROM profiles WHERE wtink_id=?1").bind(row.profile_id).first();
     return json({ok:true,request:{id,profile:publicProfile(target),status,note,createdAt:0,reviewedAt:now}},200,origin);
   }
@@ -1828,7 +1827,7 @@ async function handle(request, env) {
   }
   const workTeamDocs=path.match(/^\/work\/teams\/([^/]+)\/documents$/);
   if(workTeamDocs && request.method==='GET'){
-    const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const teamId=decodeURIComponent(workTeamDocs[1]);const member=await env.DB.prepare('SELECT 1 FROM work_team_members WHERE team_id=?1 AND profile_id=?2').bind(teamId,owner.wtink_id).first();if(!member)return json({error:'FORBIDDEN'},403,origin);const rows=await env.DB.prepare(`SELECT d.id,d.team_id,d.title,d.description,d.url,d.created_at,d.updated_at,p.wtink_id,p.name,p.position,p.avatar,p.is_dev,p.is_admin,p.username FROM work_documents d JOIN profiles p ON p.wtink_id=d.owner_id WHERE d.team_id=?1 ORDER BY d.updated_at DESC LIMIT 200`).bind(teamId).all();return json({documents:(rows.results||[]).map(r=>({id:r.id,teamId:r.team_id,title:r.title,description:r.description||'',url:r.url,owner:publicProfile(r),createdAt:Number(r.created_at),updatedAt:Number(r.updated_at)}))},200,origin);
+    const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const teamId=decodeURIComponent(workTeamDocs[1]);const member=await env.DB.prepare('SELECT 1 FROM work_team_members WHERE team_id=?1 AND profile_id=?2').bind(teamId,owner.wtink_id).first();if(!member)return json({error:'FORBIDDEN'},403,origin);const rows=await env.DB.prepare(`SELECT d.id,d.team_id,d.title,d.description,d.url,d.created_at,d.updated_at,p.wtink_id,p.name,p.position,p.avatar,p.banner,p.is_dev,p.is_admin,p.username,p.is_official,p.is_verified FROM work_documents d JOIN profiles p ON p.wtink_id=d.owner_id WHERE d.team_id=?1 ORDER BY d.updated_at DESC LIMIT 200`).bind(teamId).all();return json({documents:(rows.results||[]).map(r=>({id:r.id,teamId:r.team_id,title:r.title,description:r.description||'',url:r.url,owner:publicProfile(r),createdAt:Number(r.created_at),updatedAt:Number(r.updated_at)}))},200,origin);
   }
   if(workTeamDocs && request.method==='POST'){
     const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const teamId=decodeURIComponent(workTeamDocs[1]);const member=await env.DB.prepare('SELECT 1 FROM work_team_members WHERE team_id=?1 AND profile_id=?2').bind(teamId,owner.wtink_id).first();if(!member)return json({error:'FORBIDDEN'},403,origin);const input=await body(request);const title=cleanText(input?.title,160);const description=cleanText(input?.description,500);const url=String(input?.url||'').trim();if(title.length<2||!/^https?:\/\//i.test(url))return json({error:'INVALID_DOCUMENT'},400,origin);const id=crypto.randomUUID(),now=Date.now();await env.DB.prepare('INSERT INTO work_documents(id,team_id,owner_id,title,description,url,created_at,updated_at) VALUES(?1,?2,?3,?4,?5,?6,?7,?7)').bind(id,teamId,owner.wtink_id,title,description,url,now).run();return json({document:{id,teamId,title,description,url,owner:publicProfile(owner),createdAt:now,updatedAt:now}},201,origin);
