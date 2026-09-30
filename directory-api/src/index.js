@@ -718,42 +718,6 @@ async function handle(request, env) {
     if(!row)return json({error:'CHAT_KEY_NOT_READY'},404,origin);
     return json({key:{profileId:displayId(target),publicKey:JSON.parse(row.public_key),updatedAt:Number(row.updated_at)}},200,origin);
   }
-  if(request.method==='POST'&&path==='/auth/qr/start'){
-    const input=await body(request); const publicKey=input?.publicKey;
-    if(!publicKey||publicKey.kty!=='EC'||publicKey.crv!=='P-256'||typeof publicKey.x!=='string'||typeof publicKey.y!=='string')return json({error:'INVALID_QR_KEY'},400,origin);
-    const session=crypto.randomUUID(),secret=randomToken(),now=Date.now(),expiresAt=now+2*60*1000;
-    await env.DB.prepare(`INSERT INTO qr_login_sessions(id,secret_hash,pc_public_key,status,expires_at,created_at) VALUES (?1,?2,?3,'pending',?4,?5)`).bind(session,await sha256(secret),JSON.stringify(publicKey),expiresAt,now).run();
-    return json({session,secret,publicKey,expiresAt},201,origin);
-  }
-  if(request.method==='GET'&&path==='/auth/qr/poll'){
-    const session=String(url.searchParams.get('session')||''),secret=String(url.searchParams.get('secret')||'');
-    if(!session||!secret)return json({error:'INVALID_QR_SESSION'},400,origin);
-    const row=await env.DB.prepare('SELECT * FROM qr_login_sessions WHERE id=?1').bind(session).first();
-    if(!row)return json({status:'expired'},200,origin);
-    if(Number(row.expires_at)<Date.now()){await env.DB.prepare("UPDATE qr_login_sessions SET status='expired' WHERE id=?1").bind(session).run();return json({status:'expired'},200,origin)}
-    if(await sha256(secret)!==row.secret_hash)return json({error:'INVALID_QR_SESSION'},403,origin);
-    if(row.status!=='approved')return json({status:row.status},200,origin);
-    const profile=await env.DB.prepare('SELECT wtink_id,name,position,avatar,is_dev,is_admin,pin_hash FROM profiles WHERE wtink_id=?1').bind(row.profile_id).first();
-    if(!profile)return json({status:'expired'},200,origin);
-    const setupRow=await env.DB.prepare('SELECT setup_ciphertext,setup_iv FROM account_setup WHERE wtink_id=?1').bind(row.profile_id).first();
-    const setup=setupRow?await decryptSetup(env,setupRow.setup_ciphertext,setupRow.setup_iv):null;
-    const passkey=await env.DB.prepare('SELECT COUNT(*) AS count FROM webauthn_credentials WHERE profile_id=?1').bind(row.profile_id).first();
-    return json({status:'approved',profile:publicProfile(profile),token:row.login_token,setup,security:{pinSet:Boolean(profile.pin_hash),onePassAvailable:Number(passkey?.count||0)>0},transfer:{iv:row.transfer_iv,data:row.transfer_data,peerPublicKey:JSON.parse(row.transfer_peer_public_key)}},200,origin);
-  }
-  if(request.method==='POST'&&path==='/auth/qr/approve'){
-    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
-    const input=await body(request),session=String(input?.session||''),secret=String(input?.secret||''),transfer=input?.transfer;
-    if(!session||!secret||!transfer?.iv||!transfer?.data||!transfer?.peerPublicKey)return json({error:'INVALID_QR_APPROVAL'},400,origin);
-    const row=await env.DB.prepare('SELECT id,secret_hash,status,expires_at FROM qr_login_sessions WHERE id=?1').bind(session).first();
-    if(!row||row.status!=='pending'||Number(row.expires_at)<Date.now()||await sha256(secret)!==row.secret_hash)return json({error:'INVALID_QR_SESSION'},403,origin);
-    const token=randomToken(),now=Date.now(),tokenHash=await sha256(token);
-    await env.DB.batch([
-      env.DB.prepare('INSERT INTO auth_sessions(token_hash,profile_id,created_at,expires_at,session_id,device_name,last_seen) VALUES (?1,?2,?3,?4,?5,?6,?3)').bind(tokenHash,owner.wtink_id,now,now+AUTH_SESSION_TTL,crypto.randomUUID(),'QR-подключение',now),
-      env.DB.prepare(`UPDATE qr_login_sessions SET status='approved',profile_id=?1,transfer_iv=?2,transfer_data=?3,transfer_peer_public_key=?4,login_token=?5 WHERE id=?6`).bind(owner.wtink_id,String(transfer.iv),String(transfer.data),JSON.stringify(transfer.peerPublicKey),token,session)
-    ]);
-    return json({ok:true},200,origin);
-  }
-
   if (request.method === 'DELETE' && path === '/auth/session') {
     const token = bearer(request);
     if (!token) return json({error:'UNAUTHORIZED'},401,origin);
