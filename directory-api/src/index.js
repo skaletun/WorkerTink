@@ -597,7 +597,7 @@ async function handle(request, env) {
     const now=Date.now();
     try {
       await env.DB.batch([
-        env.DB.prepare(`INSERT OR REPLACE INTO webauthn_credentials(id,profile_id,user_id,public_key,counter,device_type,backed_up,transports,device_name,created_at,updated_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?10)`).bind(credential.id,owner.wtink_id,owner.webauthn_user_id || owner.wtink_id,base64Url(credential.publicKey),credential.counter,credentialDeviceType,credentialBackedUp?1:0,JSON.stringify(credential.transports||[]),deviceName,now,now),
+        env.DB.prepare(`INSERT OR REPLACE INTO webauthn_credentials(id,profile_id,user_id,public_key,counter,device_type,backed_up,transports,device_name,created_at,updated_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)`).bind(credential.id,owner.wtink_id,owner.webauthn_user_id || owner.wtink_id,base64Url(credential.publicKey),credential.counter,credentialDeviceType,credentialBackedUp?1:0,JSON.stringify(credential.transports||[]),deviceName,now,now),
         env.DB.prepare('DELETE FROM auth_challenges WHERE id = ?1').bind(challenge.id)
       ]);
     } catch(error) {
