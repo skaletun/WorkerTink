@@ -24,7 +24,7 @@ export default function NotificationToasts({token,onOpen}:Props){
     let cancelled=false;
     const dismiss=(id:string)=>{
       setExiting(x=>({...x,[id]:true}));
-      window.setTimeout(()=>setItems(x=>x.filter(n=>n.id!==id),240);
+      window.setTimeout(()=>setItems(x=>x.filter(n=>n.id!==id)),240);
     };
     const load=async()=>{
       try{
@@ -58,7 +58,7 @@ export default function NotificationToasts({token,onOpen}:Props){
   const open=async(notification:SocialNotification)=>{
     setExiting(x=>({...x,[notification.id]:true}));
     try{if(!notification.readAt)await readSocialNotification(notification.id,token)}catch{}
-    window.setTimeout(()=>setItems(x=>x.filter(n=>n.id!==notification.id),240);
+    window.setTimeout(()=>setItems(x=>x.filter(n=>n.id!==notification.id)),240);
     onOpen(notification);
   };
 
