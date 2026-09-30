@@ -2,7 +2,7 @@
 
 > Стратегическое направление: **WTinker — социальная сеть для работы**.
 > 
-> Начиная с **v6.0.0**, продукт перестраивается вокруг социальной модели: люди → профили → друзья/связи → лента → сообщества → группы → корпоративные каналы → личные и рабочие чаты → события → рабочие инструменты.
+> Начиная с **v7.0.0**, продукт перестраивается вокруг социальной модели: люди → профили → друзья/связи → лента → сообщества → группы → корпоративные каналы → личные и рабочие чаты → события → рабочие инструменты.
 >
 > **Ключевое правило:** это не переписывание Work OS с нуля. Все существующие рабочие системы и данные сохраняются и становятся частью новой социальной архитектуры.
 
@@ -1160,3 +1160,45 @@ v5.0.0 фиксирует совместную работу социальной
 - [x] GitHub Pages deployment проходит.
 
 **Следующий этап:** v6.0.0 — social-first реструктура интерфейса и информационной архитектуры при сохранении этой функциональной базы.
+
+
+---
+
+# v7.0.0 — Product Completion
+
+**Статус: production redesign in progress**
+
+v7 завершает переход от «нового shell поверх старых страниц» к единой продуктовой поверхности.
+
+### UI
+- [x] V7 application shell.
+- [x] Unified desktop navigation.
+- [x] Unified mobile navigation.
+- [x] Unified visual tokens and controls.
+- [x] Light/dark parity.
+- [x] Accessible focus states.
+- [x] Reduced-motion support.
+- [x] Responsive authentication surface.
+- [ ] Final visual QA всех внутренних экранов.
+
+### Product surfaces
+- [ ] Home.
+- [ ] Social.
+- [ ] People.
+- [ ] Communities.
+- [ ] Chats.
+- [ ] Work.
+- [ ] Notifications.
+- [ ] Profile / Settings / Security.
+
+### Systems
+- [ ] Calculation integrity gate.
+- [ ] Auth/OnePass regression gate.
+- [ ] E2E identity continuity gate.
+- [ ] WTinkID + username search gate.
+- [ ] Friend-request state-machine gate.
+- [ ] Directory API health gate.
+- [ ] Production smoke gate.
+- [ ] Release tag v7.0.0.
+
+**Главное правило:** v7 не удаляет существующие данные, расчёты, E2E identity, API, deep links или рабочие функции ради нового интерфейса.
