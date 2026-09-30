@@ -1,109 +1,136 @@
-# WTinker — Internal Systems Roadmap
+# WTinker — roadmap_system.md
 
-> Roadmap по развитию внутренних систем WTinker после v6.0.0. Фокус — корректность данных, расчёты, безопасность, API, E2E, уведомления, поиск, синхронизация, observability и эксплуатационная надёжность.
+> Внутренняя техническая дорожная карта WTinker после перехода на v6.0.0.
+>
+> **Цель:** привести внутренние системы к состоянию, в котором социальный слой, Work OS, E2E-коммуникации и Directory API работают как единая надёжная платформа — без потери существующих данных, аккаунтов, идентичности, URL и рабочих расчётов.
 
-## Принципы
-- Не ломать существующие данные, URL, API и E2E identity.
-- Сервер — источник истины для авторизации, прав и критичных расчётов.
-- Любая миграция БД должна быть безопасной, проверяемой и совместимой с предыдущей схемой.
-- Критичные операции должны быть идемпотентными и аудируемыми.
-- Сначала корректность и надёжность, затем масштабирование и новые возможности.
+## 0. Правила разработки
 
-## P0 — Core Integrity
+1. **Correctness first.** Сначала корректность данных и бизнес-логики, затем новые возможности.
+2. **No big-bang rewrite.** Модули выделяются постепенно вокруг уже работающего поведения.
+3. **Backward compatibility.** Старые данные, deep links, API-контракты и E2E identity не ломаются без отдельного migration plan.
+4. **Server authority.** Авторизация, права, критичные расчёты и финальное состояние серверных сущностей не определяются клиентом.
+5. **Idempotency.** Критичные mutation-операции можно безопасно повторить.
+6. **Auditability.** Финансы, права, identity, security и административные действия должны оставлять проверяемый след.
+7. **Observable by default.** Ошибка должна быть диагностируема без воспроизведения у пользователя.
+8. **CI is a gate.** Production считается обновлённым только после успешного build, deploy и smoke verification.
 
-### State / Storage
-- [ ] Аудит `storage.ts` и текущей схемы State.
-- [ ] Формализовать версии локальной схемы и migration pipeline.
-- [ ] Добавить проверки целостности после миграций.
-- [ ] Безопасно восстанавливать повреждённое локальное состояние.
-- [ ] Обработать IndexedDB/localStorage quota и storage errors.
-- [ ] Добавить regression tests для всех существующих schema versions.
+---
 
-### Date / Time
-- [ ] Единая политика timezone.
-- [ ] Разделить local date и абсолютные timestamps.
-- [ ] Проверить DST.
-- [ ] Проверить ночные смены, переходы месяца/года и невалидные даты.
+# P0 — Core Integrity
 
-### Server / Client consistency
-- [ ] Определить authoritative source для каждого домена.
-- [ ] Единый error model.
-- [ ] Request IDs.
-- [ ] Idempotency keys для mutation-запросов.
-- [ ] Optimistic update rollback.
-- [ ] Conflict/stale-data detection.
+## 1. Calculation Engine
 
-## P0 — Calculation Engine
-
-Цель — вынести критичные расчёты из UI в детерминированные domain functions.
+**Цель:** сделать расчёты детерминированными, тестируемыми и независимыми от UI.
 
 ### Payroll
-- [ ] Единый calculation engine.
-- [ ] Snapshot входных параметров.
+
+- [ ] Инвентаризация всех текущих формул и мест, где выполняются расчёты.
+- [ ] Выделить pure calculation functions.
+- [ ] Зафиксировать входные параметры и единицы измерения.
+- [ ] Зафиксировать правила округления.
 - [ ] Ставки, часы, ночные, выходные, праздники, переработки.
-- [ ] Авансы, налоги, удержания и округления.
-- [ ] История расчётов.
+- [ ] Авансы, налоги, удержания, баланс.
+- [ ] Snapshot входных данных для каждого итогового расчёта.
 - [ ] Версия алгоритма расчёта.
-- [ ] Запрет пересчёта исторических результатов новым алгоритмом без явной миграции.
-- [ ] Regression fixtures для реальных пограничных случаев.
-- [ ] Проверки на NaN, Infinity и невозможные отрицательные значения.
+- [ ] История результатов без silent recalculation.
+- [ ] Явная процедура пересчёта исторических данных.
+- [ ] Защита от NaN, Infinity, overflow и невозможных отрицательных значений.
+- [ ] Regression fixtures для пограничных случаев.
 
 ### Shifts
+
 - [ ] Единая модель смены.
-- [ ] Timezone-aware start/end.
-- [ ] Overnight shift support.
+- [ ] Timezone-aware timestamps.
+- [ ] Overnight shifts.
+- [ ] DST transitions.
 - [ ] Overlap/duplicate detection.
-- [ ] Swap state machine.
-- [ ] Approval/rejection.
+- [ ] Проверка невозможных интервалов.
+- [ ] State machine для swap/approval/rejection.
 - [ ] Immutable history критичных изменений.
 
 ### Absence
-- [ ] Единый engine отпусков и больничных.
-- [ ] Проверка пересечений.
-- [ ] Рабочие/нерабочие дни.
+
+- [ ] Единый engine отпусков/больничных.
+- [ ] Рабочие и нерабочие дни.
+- [ ] Пересечения.
 - [ ] Лимиты и переносы.
 - [ ] Approval state machine.
+- [ ] Аудит изменения периода/статуса.
 
-## P0 — Identity / Auth / Security
+### Definition of Done
 
-### Identity
+- одинаковый input всегда даёт одинаковый результат;
+- UI не содержит собственной альтернативной формулы;
+- критичные edge cases покрыты тестами;
+- изменение алгоритма имеет версию;
+- старые результаты не меняются молча.
+
+---
+
+# P0 — Identity, Auth & Security
+
+## 2. Identity
+
 - [ ] WTinkID — immutable identifier.
-- [ ] Username uniqueness и normalization policy.
+- [ ] Username normalization policy.
+- [ ] Case-insensitive lookup.
+- [ ] Username uniqueness на сервере.
 - [ ] Reserved usernames.
-- [ ] Audit trail изменений identity.
+- [ ] Защита от identity collision.
+- [ ] Audit trail изменений username/profile identity.
+- [ ] Разделить display name и machine identity.
 
-### Sessions
+## 3. Sessions
+
 - [ ] Session rotation.
 - [ ] Expiration.
+- [ ] Revoke current session.
 - [ ] Revoke all sessions.
 - [ ] Device/session registry.
-- [ ] Rate limiting и lockout.
+- [ ] Suspicious-session detection.
+- [ ] Rate limiting.
 - [ ] Security events.
+- [ ] Регрессии для multi-device.
 
-### OnePass / WebAuthn
-- [ ] Аудит challenge lifecycle и expiry.
+## 4. OnePass / WebAuthn
+
+- [ ] Audit challenge lifecycle.
+- [ ] Challenge expiry.
 - [ ] Replay protection.
 - [ ] Credential uniqueness.
-- [ ] Device management.
 - [ ] Credential revoke.
+- [ ] Device management.
 - [ ] Recovery flow.
 - [ ] Multi-device regression tests.
-- [ ] Проверка поведения после deploy/update/migration.
+- [ ] Проверка после deploy/migration.
 
-**Критично:** deploy или migration никогда не должны автоматически создавать новую E2E identity.
+> **Критическое правило:** deploy, migration, logout, device registration или обновление клиента не должны автоматически создавать новую E2E identity.
 
-## P0 — Permissions
+---
 
-- [ ] Единый permission evaluator.
-- [ ] Формальная RBAC/resource ownership модель.
-- [ ] Company/community/channel scope.
-- [ ] Membership checks.
+# P0 — Authorization
+
+## 5. Unified Permission Engine
+
+Постепенно убрать разрозненные permission checks и привести их к единой модели:
+
+`actor → action → resource → scope → decision`
+
+- [ ] Resource ownership.
+- [ ] Company scope.
+- [ ] Community scope.
+- [ ] Channel scope.
+- [ ] Team scope.
+- [ ] Membership state.
+- [ ] Role state.
 - [ ] Admin scope.
+- [ ] Blocked/deleted/expired member checks.
 - [ ] Negative authorization tests.
 - [ ] Cross-company access tests.
-- [ ] Blocked/deleted/expired-member access tests.
 
-### Permission matrix
+### Базовая матрица
+
 | Resource | Owner | Admin | Manager | Moderator | Member |
 |---|---:|---:|---:|---:|---:|
 | Profile | full | limited | — | — | own |
@@ -112,141 +139,69 @@
 | Work data | own | audit | scoped | — | own |
 | Payroll | own | audit | scoped | — | own |
 
-## P0 — People / Directory / Search
+Матрица уточняется по каждому endpoint/resource, а не заменяет endpoint-level authorization.
 
-### People search
-- [ ] Поиск по WTinkID.
-- [ ] Поиск по username.
-- [ ] Имя, компания, должность, подразделение.
-- [ ] Exact-match priority.
-- [ ] Case-insensitive username lookup.
-- [ ] Pagination.
-- [ ] Privacy/block filtering.
-- [ ] Rate limiting.
+---
 
-### Global search
-- [ ] People.
-- [ ] Posts/comments.
-- [ ] Communities/companies/channels.
-- [ ] Events/documents.
-- [ ] Local decrypted message search.
-- [ ] Incremental indexing.
-- [ ] Delete/update propagation.
-- [ ] Rebuild и stale-index detection.
+# P0 — People / Directory / Social Graph
 
-## P0 — Social Graph
+## 6. People Search
+
+Поиск должен одинаково корректно работать по:
+
+- [ ] WTinkID.
+- [ ] username.
+- [ ] имени.
+- [ ] компании.
+- [ ] должности.
+- [ ] подразделению.
+- [ ] доступным публичным атрибутам.
+
+Технически:
+
+- [ ] exact match priority;
+- [ ] normalized username;
+- [ ] pagination/cursors;
+- [ ] privacy filtering;
+- [ ] blocked-user filtering;
+- [ ] rate limiting;
+- [ ] deterministic ranking;
+- [ ] regression tests для WTinkID + username.
+
+## 7. Social Graph
 
 - [ ] Friend-request state machine.
 - [ ] Duplicate request prevention.
 - [ ] Accept/reject/cancel.
 - [ ] Block precedence.
 - [ ] Friendship uniqueness.
-- [ ] Follow/subscribe model.
+- [ ] Follow/subscribe semantics.
 - [ ] Mutual connections.
 - [ ] Relationship cache.
 - [ ] Relationship event log.
 - [ ] Transactional notification creation.
 
-### Public profile flow
+### Public profile
+
 - [ ] Privacy checks.
-- [ ] Authenticated `Отправить заявку`.
+- [ ] Authenticated «Отправить заявку».
 - [ ] Duplicate request handling.
 - [ ] Blocked-user handling.
 - [ ] Deep-link compatibility.
 
-## P1 — Notifications / Event Bus
+---
 
-Перейти от разрозненных вызовов уведомлений к единой domain-event модели.
+# P0 — Data & D1
 
-### Events
-- [ ] friend.request.created
-- [ ] friend.request.accepted
-- [ ] post.created
-- [ ] reaction.created
-- [ ] comment.created
-- [ ] mention.created
-- [ ] message.created
-- [ ] shift.changed
-- [ ] payroll.updated
-- [ ] absence.created
-- [ ] security.event
+## 8. Schema Integrity
 
-Для каждого события определить ID, actor, target, timestamp, schema version и idempotency.
-
-### Notification pipeline
-- [ ] Event → policy → inbox → push/desktop.
-- [ ] Deduplication.
-- [ ] Batching.
-- [ ] Priority.
-- [ ] Mute settings.
-- [ ] Read state.
-- [ ] Deep links.
-- [ ] Retry и failure tracking.
-
-## P1 — Messaging / E2E Reliability
-
-### E2E identity
-- [ ] Formalize identity lifecycle.
-- [ ] Durable IndexedDB vault.
-- [ ] localStorage migration compatibility.
-- [ ] Identity continuity tests.
-- [ ] Backup/restore.
-- [ ] Multi-device model.
-
-### Group keys
-- [ ] Key versioning.
-- [ ] Rotation при изменении состава.
-- [ ] Member removal.
-- [ ] Recovery.
-- [ ] Stale-key detection.
-- [ ] Concurrent membership change tests.
-
-### Message reliability
-- [ ] Pending state.
-- [ ] Delivery state.
-- [ ] Retry with backoff.
-- [ ] Deduplication.
-- [ ] Ordering.
-- [ ] Offline queue.
-- [ ] Attachment retry.
-- [ ] Failed-message recovery.
-
-## P1 — Offline / Synchronization
-
-- [ ] Sync cursor.
-- [ ] Server/client revision.
-- [ ] Conflict detection.
-- [ ] Mutation queue.
-- [ ] Retry backoff.
-- [ ] Idempotency.
-- [ ] Partial sync.
-- [ ] Full resync.
-
-Для каждого домена определить стратегию конфликта: server-wins, client-wins, merge или manual resolution. Не использовать одну стратегию для всех данных.
-
-Offline scope:
-- [ ] Calendar.
-- [ ] Work notes.
-- [ ] Drafts.
-- [ ] Pending chat messages.
-- [ ] Cached profiles.
-- [ ] Read states.
-- [ ] Social drafts.
-
-## P1 — API / D1
-
-### API contracts
-- [ ] Versioned contracts.
-- [ ] Typed request/response schemas.
-- [ ] Consistent error codes.
-- [ ] Pagination/cursor contract.
-- [ ] Auth middleware.
-- [ ] Authorization middleware.
-- [ ] Rate limits.
-
-### D1
-- [ ] Audit schema.
+- [ ] Полный inventory таблиц и связей.
 - [ ] Foreign-key strategy.
+- [ ] UNIQUE constraints.
+- [ ] NOT NULL where required.
+- [ ] CHECK constraints.
+- [ ] Soft-delete policy.
+- [ ] Retention policy.
 - [ ] Index audit.
 - [ ] Query profiling.
 - [ ] Migration ordering.
@@ -254,135 +209,429 @@ Offline scope:
 - [ ] Backup procedure.
 - [ ] Restore procedure.
 
-### Data integrity
-- [ ] Uniqueness constraints.
-- [ ] NOT NULL where required.
-- [ ] CHECK constraints.
-- [ ] Referential integrity.
-- [ ] Soft-delete policy.
-- [ ] Retention policy.
+## 9. Migration Safety
 
-## P1 — Attachments / Media
+Каждая миграция должна иметь:
 
-- [ ] Upload sessions.
-- [ ] Size/MIME/content validation.
+- [ ] forward path;
+- [ ] compatibility window;
+- [ ] validation query;
+- [ ] rollback/recovery procedure, если rollback технически возможен;
+- [ ] backup requirement для destructive changes;
+- [ ] production verification.
+
+**Нельзя** выполнять destructive migration только потому, что старое поле «больше не используется» клиентом.
+
+---
+
+# P0 — Local State / Storage
+
+## 10. Client State Integrity
+
+- [ ] Inventory localStorage/IndexedDB state.
+- [ ] Versioned local schema.
+- [ ] Migration pipeline.
+- [ ] Recovery from corrupted state.
+- [ ] Quota handling.
+- [ ] Storage error handling.
+- [ ] Clear separation между cache и source-of-truth data.
+- [ ] Regression tests всех schema versions.
+- [ ] Safe logout/device reset.
+
+Особое внимание:
+
+- E2E identity;
+- session metadata;
+- drafts;
+- pending mutations;
+- cached profiles;
+- notification state;
+- chat state.
+
+---
+
+# P0 — E2E Messaging Reliability
+
+## 11. E2E Identity
+
+- [ ] Formal identity lifecycle.
+- [ ] Durable IndexedDB vault.
+- [ ] Compatibility с существующим storage.
+- [ ] Identity continuity tests.
+- [ ] Backup/restore strategy.
+- [ ] Multi-device model.
+- [ ] Explicit device revocation.
+
+## 12. Group Keys
+
+- [ ] Key versioning.
+- [ ] Rotation при изменении состава.
+- [ ] Member removal.
+- [ ] Recovery.
+- [ ] Stale-key detection.
+- [ ] Concurrent membership-change tests.
+- [ ] Unknown-key recovery state.
+
+## 13. Message Delivery
+
+Состояния:
+
+`draft → pending → sent → delivered → read`
+
+и отдельное:
+
+`failed → retrying → sent/failed`
+
+- [ ] Client message ID.
+- [ ] Server message ID.
+- [ ] Deduplication.
+- [ ] Retry with backoff.
+- [ ] Ordering.
+- [ ] Offline queue.
+- [ ] Attachment retry.
+- [ ] Failed-message recovery.
+- [ ] Read-state synchronization.
+
+---
+
+# P1 — API Reliability
+
+## 14. API Contracts
+
+- [ ] Typed request/response schemas.
+- [ ] Versioned contracts where needed.
+- [ ] Consistent error envelope.
+- [ ] Stable machine-readable error codes.
+- [ ] Cursor pagination.
+- [ ] Auth middleware.
+- [ ] Authorization middleware.
+- [ ] Rate limits.
+- [ ] Request ID.
+- [ ] Idempotency key for critical mutations.
+
+Рекомендуемая форма:
+
+`request_id + error_code + message + details?`
+
+Не использовать текст ошибки как единственный контракт клиента.
+
+---
+
+# P1 — Event & Notification System
+
+## 15. Domain Events
+
+Перейти от прямых разрозненных вызовов уведомлений к domain-event модели.
+
+Минимальный envelope:
+
+- `event_id`
+- `event_type`
+- `schema_version`
+- `actor_id`
+- `target_id`
+- `timestamp`
+- `request_id`
+- `idempotency_key`
+
+Базовые события:
+
+- [ ] `friend.request.created`
+- [ ] `friend.request.accepted`
+- [ ] `post.created`
+- [ ] `reaction.created`
+- [ ] `comment.created`
+- [ ] `mention.created`
+- [ ] `message.created`
+- [ ] `shift.changed`
+- [ ] `payroll.updated`
+- [ ] `absence.created`
+- [ ] `security.event`
+
+## 16. Notification Pipeline
+
+`domain event → policy → inbox → push/desktop`
+
+- [ ] Deduplication.
+- [ ] Batching.
+- [ ] Priority.
+- [ ] Mute settings.
+- [ ] Read/unread.
+- [ ] Deep links.
+- [ ] Retry.
+- [ ] Failure tracking.
+- [ ] Notification grouping.
+- [ ] Preference inheritance.
+
+---
+
+# P1 — Offline & Synchronization
+
+## 17. Sync Engine
+
+- [ ] Sync cursor.
+- [ ] Server revision.
+- [ ] Client revision.
+- [ ] Mutation queue.
+- [ ] Idempotency.
+- [ ] Retry backoff.
+- [ ] Partial sync.
+- [ ] Full resync.
+- [ ] Conflict detection.
+- [ ] Corruption/recovery state.
+
+Для каждого домена отдельно определить:
+
+- server-wins;
+- client-wins;
+- merge;
+- manual resolution.
+
+**Одна глобальная conflict strategy недопустима.**
+
+### Offline scope
+
+- [ ] Drafts.
+- [ ] Pending chat messages.
+- [ ] Work notes.
+- [ ] Calendar cache.
+- [ ] Cached profiles.
+- [ ] Read states.
+- [ ] Social drafts.
+
+---
+
+# P1 — Attachments / Media
+
+## 18. Upload Pipeline
+
+- [ ] Upload session.
+- [ ] Size validation.
+- [ ] MIME validation.
+- [ ] Content validation.
 - [ ] Filename sanitization.
+- [ ] Access control.
 - [ ] Resumable uploads.
 - [ ] Retry.
 - [ ] Orphan cleanup.
-- [ ] Access-controlled downloads.
 - [ ] Thumbnail pipeline.
 - [ ] Storage quotas.
+- [ ] Download authorization.
 
-## P1 — Observability
+---
 
-### Logs
+# P1 — Search
+
+## 19. Global Search
+
+Индексируемые домены:
+
+- [ ] People.
+- [ ] Posts.
+- [ ] Comments.
+- [ ] Communities.
+- [ ] Companies.
+- [ ] Channels.
+- [ ] Events.
+- [ ] Documents.
+- [ ] Public metadata.
+
+E2E message search остаётся локальным по расшифрованным данным, если сервер не получает plaintext.
+
+Технически:
+
+- [ ] Incremental indexing.
+- [ ] Delete propagation.
+- [ ] Update propagation.
+- [ ] Rebuild.
+- [ ] Stale-index detection.
+- [ ] Cursor pagination.
+- [ ] Privacy-aware filtering.
+
+---
+
+# P1 — Observability
+
+## 20. Structured Logging
+
+Каждый серверный request по возможности связывать через:
+
+`request_id → domain event → mutation → error`
+
 - [ ] Structured logs.
 - [ ] Request ID.
-- [ ] Domain event ID.
+- [ ] Event ID.
+- [ ] User/account identifier в безопасной форме.
 - [ ] Error category.
-- [ ] No secrets in logs.
+- [ ] No passwords/tokens/private keys/plaintext E2E messages in logs.
 
-### Metrics
+## 21. Metrics
+
+Минимальный набор:
+
 - [ ] API latency.
 - [ ] Error rate.
 - [ ] Auth failures.
+- [ ] Rate-limit hits.
 - [ ] Notification delivery.
 - [ ] Message delivery.
 - [ ] Sync failures.
 - [ ] Calculation failures.
 - [ ] Migration status.
 - [ ] Storage failures.
+- [ ] Deployment status.
 
-### Health
+## 22. Health
+
 - [ ] Health endpoint.
 - [ ] DB health.
-- [ ] Dependency health.
-- [ ] Event/queue health.
+- [ ] Directory API health.
+- [ ] Storage health.
 - [ ] Deployment health.
+- [ ] Dependency health.
 
-## P1 — Testing
+---
 
-### Unit
+# P1 — Testing Strategy
+
+## 23. Unit Tests
+
+Обязательно покрыть:
+
 - [ ] Payroll/tax.
-- [ ] Shifts/absence.
-- [ ] Dates.
+- [ ] Shift calculations.
+- [ ] Absence.
+- [ ] Date/time/DST.
 - [ ] Permissions.
+- [ ] Identity normalization.
+- [ ] Search.
+- [ ] Friend-request state machine.
 - [ ] Notifications.
-- [ ] Search normalization.
-- [ ] Identity migration.
 - [ ] E2E key lifecycle.
+- [ ] Sync/conflict resolution.
 
-### Integration
+## 24. Integration Tests
+
 - [ ] Auth.
-- [ ] OnePass.
+- [ ] OnePass/WebAuthn.
 - [ ] Directory API.
 - [ ] D1 migrations.
 - [ ] Social graph.
 - [ ] Notifications.
-- [ ] Chat.
+- [ ] Personal chat.
+- [ ] Group chat.
+- [ ] Corporate channels.
 - [ ] Attachments.
+- [ ] Work/payroll.
 
-### Invariants
-- [ ] Payroll never returns NaN/Infinity.
-- [ ] Impossible balances rejected.
-- [ ] Duplicate friendships impossible.
-- [ ] Duplicate usernames impossible.
-- [ ] Unauthorized resource access impossible.
-- [ ] Expired challenges rejected.
-- [ ] Existing E2E identity remains recoverable.
-- [ ] Migrations are idempotent.
+## 25. Invariants
 
-## P1 — CI/CD & Release Safety
+Автоматически проверять:
 
-- [ ] lint.
-- [ ] typecheck.
-- [ ] unit tests.
-- [ ] integration tests.
-- [ ] build.
-- [ ] migration validation.
-- [ ] deployment.
-- [ ] production smoke tests.
-- [ ] immutable release tags.
-- [ ] backup before risky migrations.
-- [ ] rollback procedure.
-- [ ] Artifact/error-log retention.
+- [ ] Payroll никогда не возвращает NaN/Infinity.
+- [ ] Невозможный баланс отклоняется.
+- [ ] Duplicate friendship невозможен.
+- [ ] Duplicate username невозможен.
+- [ ] Unauthorized resource access невозможен.
+- [ ] Expired auth challenge отклоняется.
+- [ ] E2E identity сохраняется после обновления.
+- [ ] Critical mutations безопасно повторяются.
+- [ ] Migration validation проходит.
+- [ ] Deep links не ломаются.
 
-Каждый production deploy считается успешным только после фактического успешного build + deploy + smoke verification.
+---
 
-## P2 — Admin / Audit
+# P1 — CI/CD & Release Safety
 
-- [ ] Immutable audit log.
-- [ ] Actor/target/action/timestamp.
-- [ ] Reason.
-- [ ] Before/after metadata.
-- [ ] Admin session controls.
-- [ ] Bulk operation safeguards.
+## 26. Required Pipeline
 
-Для удаления, изменения ролей, revoke sessions/credentials, финансовых корректировок и массовых операций обязательны permission check, confirmation, audit event и idempotency.
+Каждый production change должен проходить:
 
-## P2 — Performance
+1. [ ] dependency install;
+2. [ ] tests;
+3. [ ] typecheck;
+4. [ ] build;
+5. [ ] migration validation, если затронута schema;
+6. [ ] deploy;
+7. [ ] production smoke test;
+8. [ ] deployment status verification.
 
-- [ ] API query profiling.
-- [ ] D1 index audit.
-- [ ] N+1 audit.
-- [ ] Feed cursor pagination.
-- [ ] Chat history pagination.
-- [ ] Notification pagination.
-- [ ] Lazy media.
-- [ ] Client caching.
-- [ ] Code splitting.
-- [ ] Bundle budget.
-- [ ] Memory leak audit.
+### Release rules
+
+- [ ] Версия изменяется явно.
+- [ ] Production releases имеют immutable tag.
+- [ ] Рискованные миграции требуют backup.
+- [ ] Есть rollback/recovery plan.
+- [ ] Сохраняются build/deploy logs.
+- [ ] Failed deploy не считается успешным релизом.
+
+---
+
+# P1 — Performance
+
+## 27. Client
+
 - [ ] Background polling audit.
 - [ ] Visibility-aware refresh.
+- [ ] Abort stale requests.
+- [ ] Code splitting.
+- [ ] Lazy media.
+- [ ] Client cache.
+- [ ] Memory leak audit.
+- [ ] Render cost audit.
+- [ ] Bundle budget.
 
-Правила: inactive tab не должен постоянно опрашивать API; большие коллекции нельзя загружать целиком; тяжёлые расчёты не должны выполняться во время render.
+## 28. Server / D1
 
-## P2 — Privacy / Data Lifecycle
+- [ ] Query profiling.
+- [ ] N+1 audit.
+- [ ] Index audit.
+- [ ] Feed cursor pagination.
+- [ ] Chat pagination.
+- [ ] Notification pagination.
+- [ ] Bounded result sets.
+
+Правило: большие коллекции никогда не должны безусловно загружаться целиком.
+
+---
+
+# P2 — Admin / Audit
+
+## 29. Immutable Audit Log
+
+Для критичных действий фиксировать:
+
+- actor;
+- target;
+- action;
+- timestamp;
+- reason;
+- request ID;
+- before/after metadata;
+- result.
+
+Обязательно для:
+
+- [ ] удаления;
+- [ ] изменения ролей;
+- [ ] revoke sessions;
+- [ ] revoke credentials;
+- [ ] финансовых корректировок;
+- [ ] массовых операций;
+- [ ] security actions.
+
+Критичная mutation должна иметь:
+
+`permission check + confirmation + audit event + idempotency`
+
+---
+
+# P2 — Privacy & Data Lifecycle
+
+## 30. Data Lifecycle
 
 - [ ] Data classification.
-- [ ] Sensitive-fields inventory.
+- [ ] Sensitive-field inventory.
 - [ ] Retention policy.
 - [ ] Deletion policy.
 - [ ] Account deletion.
@@ -392,81 +641,168 @@ Offline scope:
 - [ ] Export policy.
 - [ ] Privacy enforcement tests.
 
-## P2 — Internal Architecture
+Особое правило: удаление пользователя не должно оставлять бесконтрольные orphan records или раскрывать приватные данные через старые deep links/cache/search indexes.
 
-Постепенно двигаться к границе:
+---
+
+# P2 — Internal Architecture
+
+## 31. Target Boundary
+
+Постепенно двигаться к:
 
 `UI → application services → domain logic → data/API`
 
-Domain modules:
-- [ ] identity
-- [ ] auth
-- [ ] permissions
-- [ ] social graph
-- [ ] feed
-- [ ] communities
-- [ ] messaging
-- [ ] notifications
-- [ ] work
-- [ ] payroll
-- [ ] absence
-- [ ] search
-- [ ] files
-- [ ] sync
+Основные домены:
 
-Не делать big-bang rewrite. Каждый модуль выделять вокруг уже работающего поведения.
+- [ ] identity;
+- [ ] auth;
+- [ ] permissions;
+- [ ] social graph;
+- [ ] feed;
+- [ ] communities;
+- [ ] messaging;
+- [ ] notifications;
+- [ ] work;
+- [ ] payroll;
+- [ ] absence;
+- [ ] search;
+- [ ] files;
+- [ ] sync.
 
-## Приоритет внедрения
+### Правило рефакторинга
 
-### Sprint 1 — Correctness
-1. [ ] Аудит payroll/calculation logic.
-2. [ ] Зафиксировать формулы, округления и пограничные случаи.
-3. [ ] Вынести критичные расчёты в pure functions.
-4. [ ] Permission matrix audit.
-5. [ ] WTinkID/username uniqueness + search normalization.
-6. [ ] Friend-request state machine audit.
-7. [ ] Notification consistency audit.
-8. [ ] E2E identity continuity tests.
-9. [ ] D1 migration integrity check.
-10. [ ] Critical negative authorization tests.
+Не создавать новую абстракцию только ради архитектурной красоты. Выделять модуль тогда, когда он:
 
-### Sprint 2 — Reliability
+- имеет собственные инварианты;
+- имеет повторяемую бизнес-логику;
+- имеет собственные тесты;
+- имеет чёткую границу ответственности.
+
+---
+
+# 32. Приоритетный execution plan
+
+## Phase 1 — Correctness
+
+**Цель:** убрать риски потери/искажения данных.
+
+1. [ ] Audit calculation engine.
+2. [ ] Зафиксировать payroll formulas/rounding.
+3. [ ] Выделить pure calculation functions.
+4. [ ] Audit shift/absence edge cases.
+5. [ ] Audit permissions.
+6. [ ] Укрепить WTinkID/username uniqueness + normalization.
+7. [ ] Audit friend-request state machine.
+8. [ ] Проверить notification consistency.
+9. [ ] E2E identity continuity tests.
+10. [ ] D1 integrity/migration validation.
+
+**Exit criteria:** критичные domain invariants покрыты regression tests; production data не требует ручной коррекции для штатных сценариев.
+
+## Phase 2 — Reliability
+
 1. [ ] Unified API errors.
-2. [ ] Request/idempotency IDs.
-3. [ ] Offline mutation queue.
-4. [ ] Sync cursor.
-5. [ ] Message retry/deduplication.
-6. [ ] Notification event pipeline.
-7. [ ] Attachment retry/cleanup.
-8. [ ] Structured logging.
+2. [ ] Request IDs.
+3. [ ] Idempotency keys.
+4. [ ] Message retry/deduplication.
+5. [ ] Notification event pipeline.
+6. [ ] Offline mutation queue.
+7. [ ] Sync cursor.
+8. [ ] Attachment retry/cleanup.
+9. [ ] Structured logging.
+10. [ ] Health checks.
 
-### Sprint 3 — Scale
+**Exit criteria:** основные transient failures восстанавливаются автоматически, а постоянные ошибки диагностируются по request/event ID.
+
+## Phase 3 — Security
+
+1. [ ] Unified permission evaluator.
+2. [ ] Negative authorization suite.
+3. [ ] Session/device audit.
+4. [ ] OnePass/WebAuthn hardening.
+5. [ ] Credential/session revoke.
+6. [ ] Admin audit log.
+7. [ ] Privacy/data lifecycle enforcement.
+
+**Exit criteria:** каждый критичный resource/action имеет формализованное authorization rule и negative test.
+
+## Phase 4 — Scale
+
 1. [ ] Global search.
-2. [ ] Feed indexing/pagination.
+2. [ ] Feed cursor pagination.
 3. [ ] Chat history pagination.
 4. [ ] Notification pagination.
-5. [ ] DB index audit.
-6. [ ] Background cleanup jobs.
-7. [ ] Metrics dashboard.
+5. [ ] D1 index/query audit.
+6. [ ] Background cleanup.
+7. [ ] Metrics.
+8. [ ] Client bundle/memory audit.
 
-## Definition of Done
+**Exit criteria:** рост объёма данных не приводит к линейному росту размера одного request/render.
 
-Внутренняя система считается готовой, если:
+## Phase 5 — Architecture
+
+1. [ ] Domain boundaries.
+2. [ ] Application services.
+3. [ ] Shared API contracts.
+4. [ ] Event contracts.
+5. [ ] Shared validation primitives.
+6. [ ] Remove duplicated business logic.
+7. [ ] Reduce App.tsx orchestration responsibility.
+
+**Exit criteria:** новые функции можно добавлять в конкретный domain module без изменения несвязанных систем.
+
+---
+
+# 33. Definition of Done
+
+Внутренняя система считается завершённой, если:
+
 - [ ] есть формальная модель данных;
 - [ ] определён source of truth;
 - [ ] определены authorization rules;
+- [ ] определены invariants;
 - [ ] есть error/retry strategy;
 - [ ] есть idempotency strategy для критичных mutations;
 - [ ] есть migration/backward compatibility strategy;
-- [ ] есть unit + integration/regression tests;
-- [ ] есть logging/telemetry;
+- [ ] есть unit tests;
+- [ ] есть integration/regression tests;
+- [ ] есть observability;
 - [ ] есть документация;
 - [ ] CI проходит;
-- [ ] production smoke test проходит;
-- [ ] существующие данные, E2E identity и deep links продолжают работать.
+- [ ] production deploy проходит;
+- [ ] smoke test проходит;
+- [ ] существующие данные сохраняются;
+- [ ] E2E identity сохраняется;
+- [ ] существующие deep links продолжают работать.
 
-## Главный принцип
+---
 
-> **Корректность → надёжность → безопасность → масштабирование → новые возможности.**
+# 34. Красные флаги
 
-WTinker должен развиваться без потери существующих аккаунтов, рабочих данных, расчётов, чатов, E2E identity и API.
+Следующие изменения нельзя вливать в production без отдельной проверки:
+
+- изменение payroll formulas;
+- изменение identity model;
+- изменение E2E key storage;
+- изменение session/auth lifecycle;
+- destructive D1 migration;
+- изменение permission semantics;
+- массовое удаление;
+- изменение notification event schema;
+- изменение message ID/order semantics;
+- изменение sync conflict strategy.
+
+Для каждого такого изменения обязательны:
+
+**backup → tests → migration/compatibility check → CI → deploy → smoke verification.**
+
+---
+
+# 35. Главный порядок работы
+
+> **Корректность → безопасность → надёжность → наблюдаемость → производительность → масштабирование → новые возможности.**
+
+WTinker должен развиваться как единая социально-рабочая платформа, но внутренние системы должны оставаться консервативными там, где цена ошибки — потеря аккаунта, рабочего расчёта, сообщения, E2E identity или доступа к данным.
+
+> **Не переписываем то, что уже работает. Усиливаем границы, инварианты и надёжность — и только затем расширяем систему.**
