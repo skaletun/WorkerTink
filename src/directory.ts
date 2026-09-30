@@ -76,12 +76,14 @@ export function syncPushReminders(reminders:unknown[],token:string){return reque
 export function logoutSession(token:string){return request<{ok:boolean}>('/auth/session',{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
 export function deleteProfile(token:string){return request<{ok:boolean}>('/profiles',{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
 
-export type SocialPost={id:string;body:string;kind?:'post'|'announcement'|'question'|'shift';groupId?:string|null;visibility?:'network'|'friends';createdAt:number;updatedAt:number;author:UserProfile;likes:number;comments:number;liked:boolean};
+export type PostAttachment={id:string;name:string;mime:string;size:number;data:string};
+export type ShiftNote={date:string;shift:string;summary:string};
+export type SocialPost={id:string;body:string;kind?:'post'|'announcement'|'question'|'shift';groupId?:string|null;visibility?:'network'|'friends';attachments?:PostAttachment[];shiftNote?:ShiftNote|null;createdAt:number;updatedAt:number;author:UserProfile;likes:number;comments:number;liked:boolean};
 export type SocialComment={id:string;body:string;createdAt:number;author:UserProfile};
 export type SocialNotification={id:string;kind:string;entityId:string|null;title:string;body:string;url:string;readAt:number|null;createdAt:number;actor:UserProfile|null};
 export type SocialMessage={id:string;from:string;to:string;body:string;createdAt:number;readAt:number|null};
 export function getSocialFeed(token:string,limit=20){return request<{posts:SocialPost[]}>(`/social/feed?limit=${limit}`,{headers:{Authorization:`Bearer ${token}`}})}
-export function createSocialPost(body:string,token:string,options?:{kind?:'post'|'announcement'|'question'|'shift';groupId?:string|null;visibility?:'network'|'friends'}){return request<{ok:boolean;id:string;createdAt:number}>('/social/posts',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({body,...options})})}
+export function createSocialPost(body:string,token:string,options?:{kind?:'post'|'announcement'|'question'|'shift';groupId?:string|null;visibility?:'network'|'friends';attachments?:PostAttachment[];shiftNote?:ShiftNote|null}){return request<{ok:boolean;id:string;createdAt:number}>('/social/posts',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({body,...options})})}
 export function deleteSocialPost(id:string,token:string){return request<{ok:boolean}>(`/social/posts/${encodeURIComponent(id)}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
 export function toggleSocialLike(id:string,token:string){return request<{liked:boolean;likes:number}>(`/social/posts/${encodeURIComponent(id)}/like`,{method:'POST',headers:{Authorization:`Bearer ${token}`}})}
 export function getSocialComments(id:string,token:string){return request<{comments:SocialComment[]}>(`/social/posts/${encodeURIComponent(id)}/comments`,{headers:{Authorization:`Bearer ${token}`}})}
@@ -146,13 +148,13 @@ export function sendChatGroupMessage(id:string,body:string,kind:ChatServerMessag
 export function deleteChatGroupMessage(id:string,mode:'me'|'both',token:string){return request<{ok:boolean}>(`/chat/groups/messages/${encodeURIComponent(id)}/${mode}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
 export function clearChatGroup(id:string,token:string){return request<{ok:boolean;count:number}>(`/chat/groups/${encodeURIComponent(id)}/clear`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
 
-export type CompanyChannel={id:string;name:string;slug:string;description:string;companyName:string;ownerId:string;visibility:'public'|'private';members:number;roleId:string|null;createdAt:number};
+export type CompanyChannel={id:string;name:string;slug:string;description:string;companyName:string;ownerId:string;visibility:'public'|'private';members:number;roleId:string|null;createdAt:number;icon?:string;accent?:string;cover?:string;topic?:string};
 export type ChannelRole={id:string;name:string;permissions:Record<string,boolean>};
 export type ChannelPost={id:string;body:string;createdAt:number;updatedAt:number;author:UserProfile};
 export type CompanyInvite={id:string;channelId:string;channelName:string;companyName:string;createdAt:number;sender:UserProfile};
 export function getCompanyChannels(token:string){return request<{channels:CompanyChannel[]}>('/company/channels',{headers:{Authorization:`Bearer ${token}`}})}
 export function getCompanyInvites(token:string){return request<{invites:CompanyInvite[]}>('/company/invites',{headers:{Authorization:`Bearer ${token}`}})}
-export function createCompanyChannel(input:{name:string;companyName:string;description?:string;slug?:string;visibility?:'public'|'private'},token:string){return request<{channel:CompanyChannel}>('/company/channels',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(input)})}
+export function createCompanyChannel(input:{name:string;companyName:string;description?:string;slug?:string;visibility?:'public'|'private';icon?:string;accent?:string;cover?:string;topic?:string},token:string){return request<{channel:CompanyChannel}>('/company/channels',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(input)})}
 export function getCompanyChannelLink(slug:string,token:string){return request<{channel:CompanyChannel & {joined:boolean}}>(`/company/channels/link/${encodeURIComponent(slug)}`,{headers:{Authorization:`Bearer ${token}`}})}
 export function joinCompanyChannel(id:string,token:string){return request<{ok:boolean}>(`/company/channels/${encodeURIComponent(id)}/join`,{method:'POST',headers:{Authorization:`Bearer ${token}`}})}
 export function inviteCompanyChannel(channelId:string,profileId:string,token:string){return request<{ok:boolean;id:string}>(`/company/channels/${encodeURIComponent(channelId)}/invite`,{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({profileId})})}
@@ -164,7 +166,7 @@ export function createCompanyChannelRole(channelId:string,name:string,permission
 export function updateCompanyChannelRole(channelId:string,roleId:string,name:string,permissions:Record<string,boolean>,token:string){return request<{ok:boolean}>(`/company/channels/${encodeURIComponent(channelId)}/roles/${encodeURIComponent(roleId)}`,{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({name,permissions})})}
 export function transferCompanyChannelOwner(channelId:string,profileId:string,token:string){return request<{ok:boolean}>(`/company/channels/${encodeURIComponent(channelId)}/transfer-owner`,{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({profileId})})}
 
-export type NetworkGroup={id:string;name:string;slug:string;description:string;visibility:'public'|'private';owner:UserProfile;members:number;joined:boolean;role?:string;createdAt:number};
+export type NetworkGroup={id:string;name:string;slug:string;description:string;visibility:'public'|'private';icon?:string;accent?:string;cover?:string;rules?:string;owner:UserProfile;members:number;joined:boolean;role?:string;createdAt:number};
 export type NetworkEvent={id:string;title:string;description:string;kind:string;startsAt:number;endsAt:number|null;location:string;owner:UserProfile;groupId:string|null;going:number;joined:boolean};
 export type ShiftSwap={id:string;date:string;shift:string;requestedShift:string;note:string;status:'open'|'claimed'|'cancelled';owner:UserProfile;claimedBy:UserProfile|null;createdAt:number};
 export type NetworkPerson={profile:UserProfile;online:boolean;mutualFriends:number;connected:boolean};
@@ -172,8 +174,8 @@ export type NetworkHome={groups:NetworkGroup[];events:NetworkEvent[];swaps:Shift
 export function getNetworkHome(token:string){return request<NetworkHome>('/network/home',{headers:{Authorization:`Bearer ${token}`}})}
 export function searchNetworkPeople(query:string,token:string){return request<{people:NetworkPerson[]}>(`/network/people?query=${encodeURIComponent(query)}`,{headers:{Authorization:`Bearer ${token}`}})}
 export function getNetworkGroups(token:string){return request<{groups:NetworkGroup[]}>('/network/groups',{headers:{Authorization:`Bearer ${token}`}})}
-export function createNetworkGroup(input:{name:string;description:string;visibility:'public'|'private'},token:string){return request<{group:NetworkGroup}>('/network/groups',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(input)})}
-export function updateNetworkGroup(id:string,input:{name:string;description:string;visibility:'public'|'private'},token:string){return request<{group:NetworkGroup}>(`/network/groups/${encodeURIComponent(id)}`,{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(input)})}
+export function createNetworkGroup(input:{name:string;description:string;visibility:'public'|'private';icon?:string;accent?:string;cover?:string;rules?:string},token:string){return request<{group:NetworkGroup}>('/network/groups',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(input)})}
+export function updateNetworkGroup(id:string,input:{name:string;description:string;visibility:'public'|'private';icon?:string;accent?:string;cover?:string;rules?:string},token:string){return request<{group:NetworkGroup}>(`/network/groups/${encodeURIComponent(id)}`,{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(input)})}
 export type NetworkGroupDetail={group:NetworkGroup;members:{profile:UserProfile;role:string}[]};
 export function getNetworkGroup(idOrSlug:string,token:string){return request<NetworkGroupDetail>(`/network/groups/${encodeURIComponent(idOrSlug)}`,{headers:{Authorization:`Bearer ${token}`}})}
 export function joinNetworkGroup(id:string,token:string){return request<{ok:boolean}>(`/network/groups/${encodeURIComponent(id)}/join`,{method:'POST',headers:{Authorization:`Bearer ${token}`}})}
