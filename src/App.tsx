@@ -107,7 +107,7 @@ function App(){
   items={navItems.map(([id,label,sub])=>({id,label,sub,icon:<Icon name={id}/> }))}
   active={tab}
   onNavigate={id=>navigate(id as Tab)}
-  profile={<><Avatar profile={state.profile} size="sm"/><span><b><NameWithBadge profile={state.profile}/></b><small>{state.profile.position||'Профиль'}</small></span></>}
+  profile={<><Avatar profile={state.profile} size="sm"/><span><b><NameWithBadge profile={state.profile}/></b><small>{state.profile.username?'@'+state.profile.username:'@username'}</small></span></>}
   profileAction={()=>navigate('profile')}
   privacy={<div className="v7-privacy" role="status" aria-label="E2E шифрование включено">
   <div className="v7-privacy-icon" aria-hidden="true">✓</div>
