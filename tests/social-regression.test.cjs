@@ -3,6 +3,7 @@ const path=require('path');
 const root=path.resolve(__dirname,'..');
 const api=fs.readFileSync(path.join(root,'directory-api/src/index.js'),'utf8');
 const dir=fs.readFileSync(path.join(root,'src/directory.ts'),'utf8');
+const app=fs.readFileSync(path.join(root,'src/App.tsx'),'utf8');
 const social=fs.readFileSync(path.join(root,'src/SocialView.tsx'),'utf8');
 const chat=fs.readFileSync(path.join(root,'src/ChatView.tsx'),'utf8');
 const home=fs.readFileSync(path.join(root,'src/HomeView.tsx'),'utf8');
