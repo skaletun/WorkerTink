@@ -97,7 +97,6 @@ export type ChatServerMessage={id:string;from:string;to:string;body:string;kind:
 export function putChatKey(publicKey:JsonWebKey,token:string){return request<{ok:boolean;key:ChatKey}>('/chat/keys',{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({publicKey})})}
 export function getChatKey(profileId:string,token:string){return request<{key:ChatKey}>(`/chat/keys/${encodeURIComponent(profileId)}`,{headers:{Authorization:`Bearer ${token}`}})}
 export function getOwnChatKey(token:string){return request<{key:ChatKey}>('/chat/keys/me',{headers:{Authorization:`Bearer ${token}`}})}
-export function searchChatMessages(profileId:string,q:string,token:string,limit=30){return request<{messages:ChatServerMessage[]}>(`/chat/messages/${encodeURIComponent(profileId)}/search?q=${encodeURIComponent(q)}&limit=${limit}`,{headers:{Authorization:`Bearer ${token}`}})}
 export function getChatMessages(profileId:string,token:string){return request<{messages:ChatServerMessage[]}>(`/chat/messages/${encodeURIComponent(profileId)}`,{headers:{Authorization:`Bearer ${token}`}})}
 export type ChatPin={messageId:string;pinnedBy:string;pinnedAt:number;message:ChatServerMessage};
 export function getChatPins(profileId:string,token:string){return request<{pins:ChatPin[]}>(`/chat/messages/${encodeURIComponent(profileId)}/pins`,{headers:{Authorization:`Bearer ${token}`}})}
