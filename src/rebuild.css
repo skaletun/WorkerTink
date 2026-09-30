@@ -66,3 +66,7 @@
 :root[data-theme=dark] .redesign-work .work-card,:root[data-theme=dark] .redesign-work .work-kpis>button{background:#11151c;border-color:#2a303a}:root[data-theme=dark] .redesign-work .shift-badge{background:#1b212b}
 :root[data-theme=dark] .chat-page-rebuilt .chat-contacts-v2,:root[data-theme=dark] .chat-page-rebuilt .chat-head-v2,:root[data-theme=dark] .chat-page-rebuilt .chat-compose-v2{background:#11151c;border-color:#2a303a}
 :root[data-theme=dark] .chat-page-rebuilt .message-bubble-v2{background:#151a22;border-color:#303744;color:#edf0f4}
+
+.panel-input{width:100%;min-height:40px;padding:0 10px;border:1px solid #dfe3e9;border-radius:9px;background:#fafbfc;color:#2b323c;font-size:10px}.backup-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px}.inline-form-single{grid-template-columns:auto}.home-tools-grid{margin-top:12px}.home-tools-grid .security-summary{grid-template-columns:repeat(4,1fr)}
+@media(max-width:760px){.home-tools-grid .security-summary{grid-template-columns:1fr 1fr}.backup-row{grid-template-columns:1fr}}
+:root[data-theme=dark] .panel-input{background:#151a22;color:#f4f6f8;border-color:#303744}
