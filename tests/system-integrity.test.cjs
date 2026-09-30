@@ -7,6 +7,8 @@ const channels=fs.readFileSync(path.join(root,'src/ChannelsView.tsx'),'utf8');
 const update=fs.readFileSync(path.join(root,'src/UpdateGate.tsx'),'utf8');
 const sw=fs.readFileSync(path.join(root,'src/sw.js'),'utf8');
 const workflow=fs.readFileSync(path.join(root,'.github/workflows/deploy.yml'),'utf8');
+const packageJson=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
+
 const home=fs.readFileSync(path.join(root,'src/HomeView.tsx'),'utf8');
 const notifications=fs.readFileSync(path.join(root,'src/NotificationsView.tsx'),'utf8');
 const chats=fs.readFileSync(path.join(root,'src/ChatsHub.tsx'),'utf8');
@@ -48,5 +50,8 @@ if(!update.includes("if(!('serviceWorker' in navigator)){try{localStorage.setIte
 if(!update.includes('WTINKER')) throw new Error('UpdateGate brand was not migrated');
 
 if(!sw.includes("title:'WTinker'")) throw new Error('service worker default notification brand is stale');
+if(packageJson.scripts?.api!=='npm run directory:dev') throw new Error('root api script must use the production-equivalent Directory API');
+if(fs.existsSync(path.join(root,'directory-api/.wrangler'))) throw new Error('tracked local Wrangler state must not be present in repository');
+if(fs.existsSync(path.join(root,'tsconfig.tsbuildinfo'))) throw new Error('generated TypeScript build info must not be tracked');
 if(!workflow.includes('VITE_BUILD_ID: ${{ github.sha }}')) throw new Error('production build ID is not injected');
 console.log('WTinker system integrity regression tests: OK');
