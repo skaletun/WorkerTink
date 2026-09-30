@@ -16,6 +16,7 @@ import NotificationToasts from './NotificationToasts';
 import HomeView from './HomeView';
 import ChatView from './ChatView';
 import ChatsHub from './ChatsHub';
+import V6Shell from './V6Shell';
 import {getChatIdentity,getChatIdentityMatching} from './chatCrypto';
 
 const scheduleTypeOptions=['5/2','4/1','3/2','3/1','6/1','2/2','7/0'] as const;
@@ -101,7 +102,20 @@ function App(){
  if(!state.setupComplete)return <SetupWizard state={state} setState={setState}/>;
  const heading=tab==='home'?'Главная':tab==='social'?'Социальная сеть':tab==='people'?'Люди':tab==='communities'?'Сообщества':tab==='work'?'Работа':tab==='calendar'?'Ваш график':tab==='pay'?'Зарплата':tab==='absence'?'Отпуск и больничные':tab==='friends'?'Контакты':tab==='chat'?'Сообщения':tab==='notifications'?'Уведомления':tab==='profile'?'Ваш профиль':tab==='admin'?'Админ-панель':'Настройки';
  const kicker=tab==='home'?'Ваш рабочий центр':tab==='social'?'WorkerTink Network':tab==='people'?'People · WTinkID + username':tab==='communities'?'Communities · группы и события':tab==='work'?'Work OS':tab==='calendar'?'Рабочий календарь':tab==='pay'?'Финансы':tab==='absence'?'Периоды отсутствия':tab==='friends'?'Контакты и коллеги':tab==='chat'?'Личные сообщения и файлы':tab==='notifications'?'Notification Center':tab==='profile'?'Личная карточка':tab==='admin'?'Управление каталогом':'Параметры профиля';
- return <><div className="app-shell"><aside className="sidebar"><div className="brand"><img src="./icon.svg" alt=""/><div><b>WorkerTink</b><span>Рабочий ритм под контролем</span></div></div><div className="mini-profile" onClick={()=>navigate('profile')} role="button" tabIndex={0}><Avatar profile={state.profile} size="sm"/><span><b><NameWithBadge profile={state.profile}/></b><small>{state.profile.position||'Профиль'}</small></span></div><div className="side-label">Рабочее пространство</div><nav className="side-nav">{navItems.map(([id,label,sub])=><button key={id} className={tab===id?'active':''} aria-current={tab===id?'page':undefined} onClick={()=>navigate(id)}><i><Icon name={id}/></i><span><b>{label}</b><small>{sub}</small></span></button>)}</nav><div className="sidebar-bottom"><div className="privacy"><span className="status-dot"/><div><b>E2E для сообщений</b><small>Личные сообщения шифруются на устройстве</small></div></div><div className="version">WorkerTink · 6.0.0</div></div></aside>
+ return <><V6Shell
+  items={navItems.map(([id,label,sub])=>({id,label,sub,icon:<Icon name={id}/> }))}
+  active={tab}
+  onNavigate={id=>navigate(id)}
+  profile={<><Avatar profile={state.profile} size="sm"/><span><b><NameWithBadge profile={state.profile}/></b><small>{state.profile.position||'Профиль'}</small></span></>}
+  profileAction={()=>navigate('profile')}
+  privacy={<div className="v6-privacy"><span className="status-dot"/><div><b>E2E для сообщений</b><small>Личные сообщения шифруются на устройстве</small></div></div>}
+  searchAction={()=>navigate('people')}
+  title={heading}
+  kicker={kicker}
+  version="6.0.0"
+  mobileItems={([['home','Главная'],['social','Сеть'],['chat','Чаты'],['work','Работа'],['profile','Профиль']] as [Tab,string][]).map(([id,label])=>({id,label,icon:<Icon name={id}/> }))}
+  mobileMore={<button className={mobileMenuOpen||['people','communities','calendar','pay','absence','friends','notifications','settings','admin'].includes(tab)?'active':''} onClick={()=>setMobileMenuOpen(v=>!v)} aria-expanded={mobileMenuOpen} aria-label="Все разделы"><Icon name="settings"/><span>Ещё</span></button>}
+>
  <main className={`content ${tab==='chat'?'content-chat':''}`}><header className="topbar"><div className="topbar-title"><p className="kicker">{kicker}</p><h1>{heading}</h1></div><div className="topbar-search"><button type="button" onClick={()=>navigate('people')} aria-label="Поиск людей по WTinkID или username"><span>⌕</span><span>Поиск WTinkID, username, людей…</span><kbd>⌘ K</kbd></button></div><div className="top-actions"><button className="top-profile" onClick={()=>navigate('profile')} title="Открыть профиль"><Avatar profile={state.profile} size="sm"/></button><Button quiet onClick={()=>{setView(new Date());navigate('calendar')}}>Сегодня</Button></div></header>
  <div className="tab-stage" key={tab}>
  {tab==='home'&&<HomeView state={state} patch={patch} onNotice={setNotice} go={navigate}/>}
@@ -118,6 +132,7 @@ function App(){
  </div>
  <NotificationToasts token={state.directoryToken} onOpen={openNotification}/>
  {editorDate&&<ShiftEditor state={state} date={editorDate} setState={setState} close={()=>setEditorDate(null)} onNotice={setNotice}/>} {notice&&<button className="toast" onClick={()=>setNotice('')}>{notice}<span>×</span></button>}</main>
+</V6Shell>
  <nav className="mobile-nav" aria-label="Мобильная навигация">{([['home','Главная'],['social','Сеть'],['chat','Чаты'],['work','Работа'],['profile','Профиль']] as [Tab,string][]).map(([id,label])=><button key={id} className={tab===id?'active':''} aria-current={tab===id?'page':undefined} onClick={()=>navigate(id)}><Icon name={id}/><span>{label}</span></button>)}<button className={mobileMenuOpen||['people','communities','calendar','pay','absence','friends','notifications','settings','admin'].includes(tab)?'active':''} onClick={()=>setMobileMenuOpen(v=>!v)} aria-expanded={mobileMenuOpen} aria-label="Все разделы"><Icon name="settings"/><span>Ещё</span></button></nav>{mobileMenuOpen&&<div className="mobile-menu-backdrop" role="presentation" onMouseDown={e=>{if(e.currentTarget===e.target)setMobileMenuOpen(false)}}><section className="mobile-menu-sheet" role="dialog" aria-modal="true" aria-labelledby="mobile-menu-title"><div className="mobile-menu-handle"/><div className="mobile-menu-head"><div><span className="eyebrow">WorkerTink</span><h2 id="mobile-menu-title">Все разделы</h2></div><button type="button" className="mobile-menu-close" onClick={()=>setMobileMenuOpen(false)} aria-label="Закрыть">×</button></div><div className="mobile-menu-grid">{navItems.map(([id,label,sub])=><button key={id} className={tab===id?'active':''} onClick={()=>navigate(id)}><i><Icon name={id}/></i><span><b>{label}</b><small>{sub}</small></span></button>)}</div></section></div>}</div>{viewedProfile&&<ProfileModal profile={viewedProfile} onClose={()=>setViewedProfile(null)} onChat={()=>{setViewedProfile(null);openChat(viewedProfile.profileId)}}/>}{usernameGate&&<div className="modal-backdrop"><div className="modal-card username-modal"><span className="eyebrow">Ваш публичный адрес</span><h2>Создайте username</h2><p>Он нужен для профиля и ссылки вида <b>/WorkerTink/user/username</b>. Его можно изменить позже.</p><input autoFocus value={usernameDraft} onChange={e=>setUsernameDraft(e.target.value.replace(/[^A-Za-z0-9_]/g,''))} placeholder="WTinker" maxLength={32}/><small>3–32 символа · латиница, цифры и _</small><button className="btn primary" disabled={usernameBusy} onClick={()=>void saveUsername()}>{usernameBusy?'Сохраняем…':'Сохранить username'}</button></div></div>}{installBanner&&<div className="pwa-install-banner"><div><b>Установить WorkerTink</b><span>{installEvent?'Установите приложение на устройство для быстрого доступа и push-уведомлений.':'В Safari: Поделиться → На экран «Домой». В Chrome выберите «Установить приложение».'}</span></div><div><button className="btn primary" onClick={async()=>{if(installEvent){await installEvent.prompt();setInstallEvent(null)}setInstallBanner(false)}}>{installEvent?'Установить':'Понятно'}</button><button className="btn quiet" onClick={()=>setInstallBanner(false)}>×</button></div></div>}</>;
 }
 
