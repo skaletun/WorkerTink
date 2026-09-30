@@ -16,6 +16,8 @@ const pins=fs.readFileSync(path.join(root,'directory-api/migrations/0021_chat_pi
 for(const x of ['chat_message_pins','idx_chat_message_pins_profile']) if(!pins.includes(x)) throw new Error(`missing chat pin schema ${x}`);
 if(!api.includes('chatPinListMatch')||!api.includes('chatPinMatch')) throw new Error('missing chat pin API');
 if(!dir.includes('getChatPins')||!dir.includes('pinChatMessage')||!dir.includes('unpinChatMessage')) throw new Error('missing chat pin client API');
+if(!api.includes('notifyMentionedUsers')||!api.includes("'mention'")) throw new Error('missing mention notification support');
+if(!social.includes('mentionQuery')||!social.includes('mention-suggestions')||!social.includes('renderText')) throw new Error('missing mention UI');
 for(const x of ['getSocialFeed','createSocialPost','toggleSocialLike','addSocialComment','getSocialNotifications','getChatMessages','sendChatMessage','putChatKey']) if(!dir.includes(x)) throw new Error(`missing client API ${x}`);
 for(const x of ['Лента','Уведомления','Люди']) if(!social.includes(x)) throw new Error(`missing social section ${x}`);
 if(social.includes("section==='messages'")) throw new Error('community chat section must be removed');
