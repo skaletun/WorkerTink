@@ -1,7 +1,7 @@
 import {useEffect,useMemo,useState} from 'react';
 import type {UserProfile} from './core';
 import {encodeQR} from 'qr';
-import {getUserByUsername,searchUser,sendFriendRequest,getVerificationStatus,submitVerificationRequest,getOwnVerificationStatus} from './directory';
+import {getUserByUsername,searchUser,sendFriendRequest} from './directory';
 
 const basePath=()=>window.location.hostname.endsWith('github.io')?'/WorkerTink':'';
 export const publicProfileUrl=(username:string)=>`${window.location.origin}${basePath()}/user/${encodeURIComponent(username)}`;
