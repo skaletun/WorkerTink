@@ -1,6 +1,6 @@
 # WTinker — roadmap_system.md
 
-> Внутренняя техническая дорожная карта WTinker после перехода на v6.0.0.
+> Внутренняя техническая дорожная карта WTinker после перехода на v7.0.0.
 >
 > **Цель:** привести внутренние системы к состоянию, в котором социальный слой, Work OS, E2E-коммуникации и Directory API работают как единая надёжная платформа — без потери существующих данных, аккаунтов, идентичности, URL и рабочих расчётов.
 
@@ -806,3 +806,110 @@ E2E message search остаётся локальным по расшифрова
 WTinker должен развиваться как единая социально-рабочая платформа, но внутренние системы должны оставаться консервативными там, где цена ошибки — потеря аккаунта, рабочего расчёта, сообщения, E2E identity или доступа к данным.
 
 > **Не переписываем то, что уже работает. Усиливаем границы, инварианты и надёжность — и только затем расширяем систему.**
+
+
+---
+
+# v7.0.0 — Product Completion Program
+
+v7 — это не новый набор CSS поверх v6. Это завершение перехода на единую продуктовую систему при сохранении существующей доменной логики.
+
+## 19. Product Surface Contract
+
+Каждый production-экран обязан использовать один визуальный язык:
+
+- [ ] единая типографическая шкала;
+- [ ] единая сетка отступов;
+- [ ] единые controls и focus states;
+- [ ] единые card/table/list primitives;
+- [ ] единая цветовая семантика success/warning/danger/info;
+- [ ] единые loading/empty/error/offline states;
+- [ ] 44px touch targets на мобильных сценариях;
+- [ ] keyboard navigation;
+- [ ] reduced-motion;
+- [ ] light/dark parity;
+- [ ] отсутствие декоративных градиентов, glassmorphism и случайных визуальных паттернов.
+
+## 20. v7 Screen Completion
+
+### Home
+- [ ] Один главный контекст: сегодня, следующая смена, деньги, отсутствие.
+- [ ] Вторичные действия не конкурируют с главным контентом.
+- [ ] Рабочие метрики остаются точными и компактными.
+- [ ] Social activity является частью рабочего контекста.
+
+### Social
+- [ ] Composer, feed и filters используют общий surface system.
+- [ ] Post card имеет стабильную иерархию автора → контент → actions.
+- [ ] Comments, mentions, attachments и states не ломают layout.
+- [ ] Empty/loading/error/retry оформлены одинаково.
+
+### People
+- [ ] Search by WTinkID and username is first-class.
+- [ ] Exact match is visually obvious.
+- [ ] Relationship state and actions are explicit.
+- [ ] Public profile keeps authenticated «Отправить заявку».
+
+### Communities
+- [ ] Directory and detail share one card grammar.
+- [ ] Membership state is visible before action.
+- [ ] Feed, members and events have clear hierarchy.
+- [ ] Admin controls are permission-aware.
+
+### Chats
+- [ ] Personal, group and corporate modes feel like one product.
+- [ ] E2E state is visible but quiet.
+- [ ] Composer, attachments, replies and reactions share one interaction model.
+- [ ] Mobile chat is full-screen and keyboard-safe.
+
+### Work
+- [ ] Calendar, payroll and absence use the same information hierarchy.
+- [ ] Dense data remains dense where precision matters.
+- [ ] Financial numbers use stable formatting.
+- [ ] No visual treatment obscures calculations.
+
+### Notifications
+- [ ] One activity center.
+- [ ] Read/unread state is unmistakable.
+- [ ] Deep-link action is predictable.
+- [ ] Internal, social, chat and work events share one event presentation.
+
+### Profile / Settings / Security
+- [ ] Identity, work profile and security are clearly separated.
+- [ ] Sessions, OnePass/WebAuthn and E2E identity continuity remain accessible.
+- [ ] Destructive actions require explicit confirmation.
+- [ ] Account state and privacy controls are understandable.
+
+## 21. v7 Reliability Gate
+
+Production release is valid only when all of the following pass:
+
+- [ ] unit/regression tests;
+- [ ] TypeScript build;
+- [ ] Vite production build;
+- [ ] Directory API deploy;
+- [ ] Directory API /health smoke test;
+- [ ] GitHub Pages deploy;
+- [ ] deployed application smoke test;
+- [ ] auth/login smoke test;
+- [ ] WTinkID + username search regression;
+- [ ] friend request regression;
+- [ ] E2E identity continuity regression;
+- [ ] payroll/calculation regression;
+- [ ] deep-link regression;
+- [ ] mobile layout regression;
+- [ ] version metadata reports 7.0.0.
+
+## 22. v7 Release Rules
+
+1. Never call v7 released while CI is red.
+2. Never change calculation semantics as part of a visual-only refactor.
+3. Never replace E2E identity storage during UI migration.
+4. Never remove a legacy URL without an explicit compatibility path.
+5. Every destructive data change requires backup and migration validation.
+6. Release tag v7.0.0 is created only from the verified production commit.
+7. Backup branch backup/pre-v7-2026-09-30 remains immutable.
+
+## 23. v7 Definition of Done
+
+v7 is complete when the application feels like one product from login through profile, social, people, communities, chats, work and settings — while existing data, calculations, identity, E2E, permissions, APIs and deep links continue to work unchanged.
