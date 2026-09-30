@@ -3,6 +3,7 @@ const path=require('node:path');
 const root=path.resolve(__dirname,'..');
 const app=fs.readFileSync(path.join(root,'src/App.tsx'),'utf8');
 const network=fs.readFileSync(path.join(root,'src/NetworkView.tsx'),'utf8');
+const channels=fs.readFileSync(path.join(root,'src/ChannelsView.tsx'),'utf8');
 const update=fs.readFileSync(path.join(root,'src/UpdateGate.tsx'),'utf8');
 const sw=fs.readFileSync(path.join(root,'src/sw.js'),'utf8');
 const workflow=fs.readFileSync(path.join(root,'.github/workflows/deploy.yml'),'utf8');
