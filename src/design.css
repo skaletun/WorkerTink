@@ -765,3 +765,359 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 @media (min-width:768px){
   .mobile-menu-backdrop{display:none!important}
 }
+
+
+/* ==========================================================================
+   Mobile polish + complete dark theme
+   ========================================================================== */
+
+/* Keep the design token systems in sync. Some legacy components still use
+   --bg/--surface while newer components use --wt-* tokens. */
+:root[data-theme="dark"]{
+  --bg:#0b0f14;
+  --surface:#121820;
+  --surface-2:#171f29;
+  --surface-3:#202a36;
+  --text:#edf2f7;
+  --muted:#95a1b2;
+  --muted-2:#6f7b8a;
+  --line:#293442;
+  --accent:#78a8ff;
+  --accent-2:#9bc0ff;
+  --soft:#182844;
+  --red:#ff7d7d;
+  --green:#61c998;
+  --shadow:0 18px 55px rgba(0,0,0,.32);
+
+  --wt-bg:#0b0f14;
+  --wt-surface:#121820;
+  --wt-surface-soft:#171f29;
+  --wt-surface-2:#1b2430;
+  --wt-surface-strong:#222d3a;
+  --wt-text:#edf2f7;
+  --wt-text-2:#c1cad6;
+  --wt-muted:#95a1b2;
+  --wt-line:#293442;
+  --wt-line-strong:#344152;
+  --wt-accent:#78a8ff;
+  --wt-accent-soft:#182844;
+  --wt-success:#61c998;
+  --wt-danger:#ff7d7d;
+}
+
+/* Global dark surfaces that are commonly missed by component-specific rules. */
+:root[data-theme="dark"] body{
+  background:
+    radial-gradient(circle at 100% 0%,rgba(74,125,220,.055),transparent 30%),
+    var(--wt-bg)!important;
+}
+:root[data-theme="dark"] .content,
+:root[data-theme="dark"] .app-shell{background:transparent!important}
+:root[data-theme="dark"] .sidebar,
+:root[data-theme="dark"] .topbar,
+:root[data-theme="dark"] .mobile-nav,
+:root[data-theme="dark"] .network-nav,
+:root[data-theme="dark"] .chats-hub-nav{
+  background:color-mix(in srgb,var(--wt-surface) 96%,transparent)!important;
+}
+:root[data-theme="dark"] .btn,
+:root[data-theme="dark"] .btn.quiet,
+:root[data-theme="dark"] .settings-card,
+:root[data-theme="dark"] .period-editor,
+:root[data-theme="dark"] .month-card,
+:root[data-theme="dark"] .balance-card,
+:root[data-theme="dark"] .stat-card,
+:root[data-theme="dark"] .quick-actions,
+:root[data-theme="dark"] .legend-card,
+:root[data-theme="dark"] .pay-hero,
+:root[data-theme="dark"] .breakdown-card,
+:root[data-theme="dark"] .pay-date-card,
+:root[data-theme="dark"] .profile-card,
+:root[data-theme="dark"] .profile-hero-card,
+:root[data-theme="dark"] .network-widget,
+:root[data-theme="dark"] .network-compose,
+:root[data-theme="dark"] .network-post,
+:root[data-theme="dark"] .group-card,
+:root[data-theme="dark"] .person-card,
+:root[data-theme="dark"] .community-detail-head,
+:root[data-theme="dark"] .community-members-card,
+:root[data-theme="dark"] .channels-hero,
+:root[data-theme="dark"] .channel-invites,
+:root[data-theme="dark"] .channel-detail,
+:root[data-theme="dark"] .chat-shell-v2,
+:root[data-theme="dark"] .shift-modal,
+:root[data-theme="dark"] .modal-card,
+:root[data-theme="dark"] .profile-modal-card,
+:root[data-theme="dark"] .avatar-editor-modal{
+  background:var(--wt-surface)!important;
+  color:var(--wt-text)!important;
+  border-color:var(--wt-line)!important;
+}
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] textarea,
+:root[data-theme="dark"] .field-control,
+:root[data-theme="dark"] .markdown-editor{
+  color:var(--wt-text)!important;
+}
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder{color:var(--wt-muted)!important}
+:root[data-theme="dark"] option{background:var(--wt-surface);color:var(--wt-text)}
+:root[data-theme="dark"] .calendar-day.day{background:#172b49!important;border-color:#2d4e7d!important;color:#cfe0ff!important}
+:root[data-theme="dark"] .calendar-day.night{background:#292342!important;border-color:#4a3f70!important;color:#ddd3ff!important}
+:root[data-theme="dark"] .calendar-day.full{background:#17352a!important;border-color:#2b654a!important;color:#c9f0db!important}
+:root[data-theme="dark"] .calendar-day.holiday.day,
+:root[data-theme="dark"] .calendar-day.holiday.night{background:#392125!important;color:#ffc7c7!important}
+:root[data-theme="dark"] .calendar-day.off{background:var(--wt-surface-soft)!important;color:var(--wt-text)!important}
+:root[data-theme="dark"] .network-hero{
+  background:
+    radial-gradient(circle at 82% 18%,rgba(120,168,255,.12),transparent 34%),
+    linear-gradient(135deg,var(--wt-surface),var(--wt-surface-soft))!important;
+}
+:root[data-theme="dark"] .message-bubble-v2{
+  background:var(--wt-surface-soft)!important;
+  border-color:var(--wt-line)!important;
+  color:var(--wt-text)!important;
+}
+:root[data-theme="dark"] .message-row-v2.own .message-bubble-v2{
+  background:var(--wt-accent)!important;
+  color:#07101d!important;
+}
+:root[data-theme="dark"] .chat-messages-v2{background:#0e141c!important}
+:root[data-theme="dark"] .chat-input-v2,
+:root[data-theme="dark"] .reply-bar,
+:root[data-theme="dark"] .payout-total div,
+:root[data-theme="dark"] .period-item,
+:root[data-theme="dark"] .setup-summary div,
+:root[data-theme="dark"] .privacy,
+:root[data-theme="dark"] .markdown-toolbar,
+:root[data-theme="dark"] .markdown-preview{
+  background:var(--wt-surface-soft)!important;
+  border-color:var(--wt-line)!important;
+}
+:root[data-theme="dark"] .markdown-toolbar button:hover,
+:root[data-theme="dark"] .chat-tools-v2 button:hover,
+:root[data-theme="dark"] .chat-head-actions button:hover,
+:root[data-theme="dark"] .chat-contact-v2:hover,
+:root[data-theme="dark"] .side-nav button:hover,
+:root[data-theme="dark"] .quick-actions button:hover{
+  background:var(--wt-surface-strong)!important;
+}
+:root[data-theme="dark"] .modal-backdrop{
+  background:rgba(0,0,0,.68)!important;
+}
+:root[data-theme="dark"] .modal-actions{
+  background:var(--wt-surface)!important;
+}
+:root[data-theme="dark"] .toast{
+  background:#f1f5f9!important;
+  color:#0b0f14!important;
+}
+
+/* Phone: consistent scale, safe areas, touch targets and horizontal overflow. */
+@media (max-width:767px){
+  html{font-size:16px;overflow-x:hidden}
+  body{overflow-x:hidden}
+  .content{
+    width:100%;
+    max-width:100%;
+    padding:0 12px calc(94px + env(safe-area-inset-bottom))!important;
+  }
+  .topbar{
+    min-height:64px!important;
+    margin-bottom:12px!important;
+    gap:8px!important;
+  }
+  .topbar h1{font-size:22px!important;line-height:1.1!important}
+  .kicker,.eyebrow{font-size:8px!important}
+  .btn{min-height:44px!important;padding-inline:13px!important}
+  .top-actions{gap:6px!important}
+  .top-actions .btn{min-height:40px!important}
+  input,select,textarea{min-height:44px!important;font-size:16px!important}
+  .field{gap:7px!important;padding:10px 0!important}
+  .field-label{font-size:10px!important}
+  .settings-card,.period-editor,.month-card,.breakdown-card,.pay-date-card{padding:15px!important}
+  .section-title h3{font-size:16px!important}
+  .settings-intro h2{font-size:27px!important}
+  .settings-grid,.profile-grid,.absence-grid,.calendar-layout,.pay-layout{gap:10px!important}
+  .network-hero{padding:18px!important;border-radius:17px!important}
+  .network-hero h1{font-size:27px!important}
+  .network-nav,.friends-tabs,.friend-tabs,.social-tabs{
+    max-width:calc(100vw - 24px);
+    overflow-x:auto!important;
+    -webkit-overflow-scrolling:touch;
+  }
+  .network-nav button,.friends-tabs button,.friend-tabs button,.social-tabs button{
+    min-height:42px!important;
+    font-size:10px!important;
+  }
+  .data-buttons{gap:7px!important}
+  .data-buttons .btn,.data-buttons .file-btn{width:100%!important}
+  .mobile-nav{
+    left:8px!important;
+    right:8px!important;
+    bottom:max(8px,env(safe-area-inset-bottom))!important;
+    min-height:68px!important;
+    height:68px!important;
+    border:1px solid var(--wt-line)!important;
+    border-radius:18px!important;
+    padding:5px!important;
+    box-shadow:0 14px 40px rgba(0,0,0,.16)!important;
+    background:color-mix(in srgb,var(--wt-surface) 94%,transparent)!important;
+  }
+  .mobile-nav button{min-height:56px!important;border-radius:13px!important}
+  .mobile-nav button span{font-size:9px!important}
+
+  /* Notes editor: the action bar is always visible above the iOS/Android safe area. */
+  .modal-backdrop{
+    padding:0!important;
+    align-items:flex-end!important;
+    overflow:hidden!important;
+  }
+  .shift-modal{
+    width:100%!important;
+    height:min(94dvh,900px)!important;
+    max-height:94dvh!important;
+    min-height:0!important;
+    display:flex!important;
+    flex-direction:column!important;
+    overflow:hidden!important;
+    padding:0!important;
+    border-radius:20px 20px 0 0!important;
+    border-bottom:0!important;
+  }
+  .shift-modal .modal-head{
+    flex:0 0 auto!important;
+    padding:14px 14px 11px!important;
+    min-height:70px!important;
+    background:var(--wt-surface)!important;
+    position:relative!important;
+    z-index:3!important;
+  }
+  .shift-modal .modal-head h2{font-size:21px!important;margin:3px 0!important}
+  .shift-modal .modal-head p{font-size:9px!important}
+  .shift-modal .modal-close{
+    width:42px!important;height:42px!important;min-width:42px!important;
+  }
+  .shift-editor-meta{
+    flex:0 0 auto!important;
+    padding:8px 14px!important;
+    border-bottom:1px solid var(--wt-line)!important;
+    background:var(--wt-surface)!important;
+  }
+  .shift-editor-meta .field{grid-template-columns:1fr!important;padding:0!important;border:0!important}
+  .shift-editor-meta .field-label{padding:0!important;margin-bottom:5px!important}
+  .editor-source{padding:7px 0 1px!important;font-size:9px!important}
+  .markdown-workspace{
+    min-height:0!important;
+    flex:1 1 auto!important;
+    display:flex!important;
+    flex-direction:column!important;
+    overflow:hidden!important;
+    padding:10px 10px 0!important;
+  }
+  .markdown-toolbar{
+    flex:0 0 auto!important;
+    position:sticky!important;
+    top:0!important;
+    z-index:2!important;
+    overflow-x:auto!important;
+    flex-wrap:nowrap!important;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    border:1px solid var(--wt-line)!important;
+    border-radius:12px 12px 0 0!important;
+    padding:5px!important;
+  }
+  .markdown-toolbar::-webkit-scrollbar{display:none}
+  .markdown-toolbar button{
+    flex:0 0 auto!important;
+    min-width:38px!important;
+    min-height:38px!important;
+    padding:0 9px!important;
+    font-size:11px!important;
+    border-radius:9px!important;
+  }
+  .markdown-wysiwyg-wrap{
+    min-height:0!important;
+    flex:1 1 auto!important;
+    display:flex!important;
+    flex-direction:column!important;
+    overflow:hidden!important;
+  }
+  .editor-label{
+    flex:0 0 auto!important;
+    padding:9px 2px 7px!important;
+    font-size:10px!important;
+  }
+  .markdown-editor{
+    flex:1 1 auto!important;
+    min-height:120px!important;
+    max-height:none!important;
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch;
+    padding:13px!important;
+    border:1px solid var(--wt-line)!important;
+    border-top:0!important;
+    border-radius:0 0 12px 12px!important;
+    font-family:Inter,ui-sans-serif,system-ui,sans-serif!important;
+    font-size:16px!important;
+    line-height:1.6!important;
+    -webkit-user-select:text!important;
+    user-select:text!important;
+  }
+  .markdown-shortcuts{display:none!important}
+  .modal-actions{
+    position:relative!important;
+    flex:0 0 auto!important;
+    display:grid!important;
+    grid-template-columns:1fr 1.25fr!important;
+    gap:8px!important;
+    padding:9px 12px calc(9px + env(safe-area-inset-bottom))!important;
+    margin:0!important;
+    border-top:1px solid var(--wt-line)!important;
+    background:var(--wt-surface)!important;
+    box-shadow:0 -8px 24px rgba(0,0,0,.08)!important;
+    z-index:5!important;
+  }
+  .modal-actions .btn{
+    min-height:48px!important;
+    width:100%!important;
+    font-size:11px!important;
+  }
+  .modal-actions .quiet:first-child{display:none!important}
+  .modal-actions .quiet{grid-column:1!important}
+  .modal-actions .primary{grid-column:2!important;grid-row:1!important}
+  .table-context.mobile{
+    position:fixed!important;
+    left:10px!important;
+    right:10px!important;
+    bottom:calc(78px + env(safe-area-inset-bottom))!important;
+    top:auto!important;
+    width:auto!important;
+    max-width:none!important;
+    z-index:20!important;
+  }
+}
+
+@media (max-width:390px){
+  .content{padding-inline:9px!important}
+  .topbar h1{font-size:20px!important}
+  .settings-card,.period-editor,.month-card,.breakdown-card,.pay-date-card{padding:13px!important}
+  .mobile-nav{left:6px!important;right:6px!important}
+  .mobile-nav button span{font-size:8px!important}
+  .shift-modal .modal-head{padding-inline:11px!important}
+  .shift-editor-meta{padding-inline:11px!important}
+  .markdown-workspace{padding-inline:7px!important}
+  .modal-actions{padding-inline:9px!important}
+  .modal-actions .btn{min-height:46px!important;font-size:10px!important}
+}
+
+/* Landscape phones: preserve editor height without letting the keyboard push actions off-screen. */
+@media (max-width:767px) and (orientation:landscape){
+  .shift-modal{height:96dvh!important;max-height:96dvh!important}
+  .shift-modal .modal-head{min-height:56px!important;padding-block:8px!important}
+  .shift-editor-meta{padding-block:5px!important}
+  .shift-editor-meta .field-control{display:none!important}
+  .editor-source{padding:3px 0!important}
+}
