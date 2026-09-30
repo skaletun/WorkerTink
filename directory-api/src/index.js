@@ -100,6 +100,28 @@ function cleanAvatar(value) {
   const avatar = typeof value === 'string' && value.startsWith('data:image/') ? value : '';
   return avatar.length <= AVATAR_MAX ? avatar : '';
 }
+function cleanBanner(value) {
+  const banner = typeof value === 'string' && value.startsWith('data:image/') ? value : '';
+  return banner.length <= 1600000 ? banner : '';
+}
+function cleanPostAttachments(value) {
+  if (!Array.isArray(value)) return [];
+  return value.slice(0,6).map((item,index)=>{
+    if (!item || typeof item !== 'object') return null;
+    const data=typeof item.data==='string'&&item.data.startsWith('data:')?item.data:'';
+    const name=cleanText(item.name,120);
+    const mime=cleanText(item.mime,100);
+    const size=Math.max(0,Math.min(800000,Number(item.size)||0));
+    if(!data || !name || !size || data.length>900000) return null;
+    return {id:cleanText(item.id,64)||String(index+1),name,mime,size,data};
+  }).filter(Boolean);
+}
+function cleanShiftNote(value) {
+  if (!value || typeof value !== 'object') return null;
+  const date=cleanText(value.date,10), shift=cleanText(value.shift,40), summary=cleanText(value.summary,1200);
+  if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date) || !summary) return null;
+  return {date,shift,summary};
+}
 
 function roleFlags(row) {
   const id = normalizeId(row?.wtink_id);
@@ -118,6 +140,7 @@ function publicProfile(row) {
     name: row.name,
     position: row.position,
     avatar: row.avatar,
+    banner: row.banner || '',
     username: row.username || null,
     isDev: roles.isDev,
     isAdmin: roles.isAdmin
@@ -256,7 +279,7 @@ async function authProfile(request, env) {
   const session = await env.DB.prepare('SELECT profile_id,session_id,device_name FROM auth_sessions WHERE token_hash = ?1 AND expires_at > ?2').bind(tokenHash,Date.now()).first();
   if (session) {
     await env.DB.prepare('UPDATE auth_sessions SET last_seen = ?1 WHERE token_hash = ?2').bind(Date.now(), tokenHash).run();
-    return env.DB.prepare('SELECT wtink_id, name, position, avatar, username, is_dev, is_admin, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE wtink_id = ?1').bind(session.profile_id).first();
+    return env.DB.prepare('SELECT wtink_id, name, position, avatar, banner, username, is_dev, is_admin, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE wtink_id = ?1').bind(session.profile_id).first();
   }
   // Backward compatibility for the original single-token sessions.
   return env.DB.prepare('SELECT wtink_id, name, position, avatar, username, is_dev, is_admin, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE token_hash = ?1').bind(tokenHash).first();
@@ -427,7 +450,7 @@ async function handle(request, env) {
     const wtinkId = normalizeId(input?.profileId);
     const pin = String(input?.pin || '');
     if (!validId(wtinkId) || !validPin(pin)) return json({error:'INVALID_CREDENTIALS'},400,origin);
-    const row = await env.DB.prepare(`SELECT wtink_id, name, position, avatar, username, is_dev, is_admin, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, last_seen FROM profiles WHERE wtink_id = ?1`).bind(wtinkId).first();
+    const row = await env.DB.prepare(`SELECT wtink_id, name, position, avatar, banner, username, is_dev, is_admin, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, last_seen FROM profiles WHERE wtink_id = ?1`).bind(wtinkId).first();
     if (!row) return json({error:'INVALID_CREDENTIALS'},401,origin);
     const lockedUntil = Number(row.pin_locked_until || 0);
     if (lockedUntil > Date.now()) return json({error:'PIN_LOCKED',retryAfter:Math.ceil((lockedUntil-Date.now())/1000)},429,origin);
@@ -525,6 +548,7 @@ async function handle(request, env) {
     const name = cleanText(raw.name, NAME_MAX);
     const position = cleanText(raw.position, POSITION_MAX);
     const avatar = cleanAvatar(raw.avatar);
+    const banner = cleanBanner(raw.banner);
     const requestedUsername = cleanUsername(raw.username);
     const pin = String(input?.pin || '');
     if (!validId(wtinkId) || !name || !position || !validPin(pin) || (raw.username && !requestedUsername)) return json({error: !validPin(pin) ? 'INVALID_PIN' : 'INVALID_USERNAME'}, 400, origin);
@@ -540,15 +564,15 @@ async function handle(request, env) {
     const username = await uniqueUsername(env, requestedUsername);
     try {
       await env.DB.prepare(`
-        INSERT INTO profiles (wtink_id, name, position, avatar, username, is_dev, is_admin, token_hash, pin_hash, pin_salt, webauthn_user_id, created_at, updated_at, last_seen)
+        INSERT INTO profiles (wtink_id, name, position, avatar, banner, username, is_dev, is_admin, token_hash, pin_hash, pin_salt, webauthn_user_id, created_at, updated_at, last_seen)
         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?12, ?12)
-      `).bind(wtinkId, name, position, avatar, username, wtinkId === DEV_WTINK_ID ? 1 : 0, wtinkId === DEV_WTINK_ID ? 1 : 0, tokenHash, pinData.hash, pinData.salt, webauthnUserId, now).run();
+      `).bind(wtinkId, name, position, avatar, banner, username, wtinkId === DEV_WTINK_ID ? 1 : 0, wtinkId === DEV_WTINK_ID ? 1 : 0, tokenHash, pinData.hash, pinData.salt, webauthnUserId, now).run();
     } catch (error) {
       if (String(error).toLowerCase().includes('unique')) return json({error: 'WTINK_ID_TAKEN'}, 409, origin);
       throw error;
     }
     const session = await createAuthSession(env, wtinkId, token, now, String(input?.deviceName || 'Устройство'));
-    return json({profile: publicProfile({wtink_id:wtinkId,name,position,avatar,username}), token, sessionId:session.sessionId, security:{pinSet:true,onePassAvailable:false}}, 201, origin);
+    return json({profile: publicProfile({wtink_id:wtinkId,name,position,avatar,banner,username}), token, sessionId:session.sessionId, security:{pinSet:true,onePassAvailable:false}}, 201, origin);
   }
 
   const chatSearchMatch = path.match(/^\/chat\/messages\/([^/]+)\/search$/);
@@ -859,7 +883,7 @@ async function handle(request, env) {
   if (request.method === 'GET' && profileMatch) {
     const wtinkId = normalizeId(decodeURIComponent(profileMatch[1]));
     if (!validId(wtinkId)) return json({error: 'USER_NOT_FOUND'}, 404, origin);
-    const row = await env.DB.prepare('SELECT wtink_id, name, position, avatar, username, is_dev, is_admin FROM profiles WHERE wtink_id = ?1').bind(wtinkId).first();
+    const row = await env.DB.prepare('SELECT wtink_id, name, position, avatar, banner, username, is_dev, is_admin FROM profiles WHERE wtink_id = ?1').bind(wtinkId).first();
     if (!row) return json({error: 'USER_NOT_FOUND'}, 404, origin);
     return json({profile: publicProfile(row)}, 200, origin);
   }
@@ -873,6 +897,7 @@ async function handle(request, env) {
     const name = cleanText(raw.name, NAME_MAX) || owner.name;
     const position = cleanText(raw.position, POSITION_MAX) || owner.position;
     const avatar = raw.avatar === undefined ? (owner.avatar || '') : cleanAvatar(raw.avatar);
+    const banner = raw.banner === undefined ? (owner.banner || '') : cleanBanner(raw.banner);
     const requestedUsername = cleanUsername(raw.username);
     if (wtinkId !== owner.wtink_id || !name || !position || (raw.username && !requestedUsername)) return json({error: 'INVALID_PROFILE'}, 400, origin);
     const current = await env.DB.prepare('SELECT username FROM profiles WHERE wtink_id=?1').bind(owner.wtink_id).first();
@@ -880,9 +905,9 @@ async function handle(request, env) {
     const conflict = username ? await env.DB.prepare('SELECT wtink_id FROM profiles WHERE LOWER(username)=LOWER(?1) AND wtink_id<>?2').bind(username,owner.wtink_id).first() : null;
     if(conflict)return json({error:'USERNAME_TAKEN'},409,origin);
     const now = Date.now();
-    await env.DB.prepare(`UPDATE profiles SET name = ?1, position = ?2, avatar = ?3, username = ?4, updated_at = ?5, last_seen = ?5 WHERE wtink_id = ?6`)
-      .bind(name, position, avatar, username, now, owner.wtink_id).run();
-    return json({profile: publicProfile({...owner,wtink_id:wtinkId,name,position,avatar,username})}, 200, origin);
+    await env.DB.prepare(`UPDATE profiles SET name = ?1, position = ?2, avatar = ?3, banner = ?4, username = ?5, updated_at = ?6, last_seen = ?6 WHERE wtink_id = ?7`)
+      .bind(name, position, avatar, banner, username, now, owner.wtink_id).run();
+    return json({profile: publicProfile({...owner,wtink_id:wtinkId,name,position,avatar,banner,username})}, 200, origin);
   }
 
   if (request.method === 'GET' && path === '/user') {
