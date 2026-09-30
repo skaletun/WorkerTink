@@ -10,10 +10,13 @@ const migration=fs.readFileSync(path.join(root,'directory-api/migrations/0010_so
 const chatMigration=fs.readFileSync(path.join(root,'directory-api/migrations/0012_chat_e2ee_qr.sql'),'utf8');
 for(const x of ['/social/feed','/social/posts','/social/notifications','/social/messages','/chat/messages','/chat/keys']) if(!api.includes(x)) throw new Error(`missing API route ${x}`);
 for(const x of ['social_posts','social_post_likes','social_post_comments','social_notifications','social_messages']) if(!migration.includes(x)) throw new Error(`missing table ${x}`);
-for(const x of ['chat_device_keys','qr_login_sessions','auth_sessions']) if(!chatMigration.includes(x)) throw new Error(`missing table ${x}`);
-for(const x of ['getSocialFeed','createSocialPost','toggleSocialLike','addSocialComment','getSocialNotifications','getChatMessages','sendChatMessage','putChatKey','startQrLogin']) if(!dir.includes(x)) throw new Error(`missing client API ${x}`);
+for(const x of ['chat_device_keys','auth_sessions']) if(!chatMigration.includes(x)) throw new Error(`missing table ${x}`);
+for(const x of ['getSocialFeed','createSocialPost','toggleSocialLike','addSocialComment','getSocialNotifications','getChatMessages','sendChatMessage','putChatKey']) if(!dir.includes(x)) throw new Error(`missing client API ${x}`);
 for(const x of ['Лента','Уведомления','Люди']) if(!social.includes(x)) throw new Error(`missing social section ${x}`);
 if(social.includes("section==='messages'")) throw new Error('community chat section must be removed');
 for(const x of ['E2E','Фото','Видео','Голос','Остановить и отправить']) if(!chat.includes(x)) throw new Error(`missing protected chat feature ${x}`);
 for(const x of ['Salary Forecast','Vacation Planner','Sick Simulator','What If?','Encrypted Backup']) if(!home.includes(x)) throw new Error(`missing enhancement ${x}`);
 console.log('WorkerTink social/protected-chat regression tests: OK');
+
+if(/\/auth\/qr\//.test(api)) throw new Error('QR auth routes must be removed');
+if(/startQrLogin|pollQrLogin|approveQrLogin|QrLoginPanel/.test(app)) throw new Error('QR auth client code must be removed');
