@@ -18,6 +18,7 @@ jobs:
   build:
     env:
       VITE_WTINK_DIRECTORY_URL: ${{ vars.WTINK_DIRECTORY_URL || 'https://workertink-directory.workertink-directory.workers.dev' }}
+      VITE_BUILD_ID: ${{ github.sha }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
