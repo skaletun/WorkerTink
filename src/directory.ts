@@ -28,7 +28,7 @@ export function getOwnVerificationStatus(token:string){return request<{status:'n
 export function submitVerificationRequest(note:string,token:string){return request<{request:VerificationRequest}>(`/verification/request`,{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({note})})}
 export function checkUsername(username:string){return request<{valid:boolean;available:boolean}>(`/username/check?username=${encodeURIComponent(username.replace(/^@/,''))}`)}
 export function updateUsername(username:string,token:string){return request<SearchResult>('/profiles',{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({profile:{username}})})}
-export function registerProfile(profile:UserProfile,pin:string){return request<RegisterResult>('/profiles',{method:'POST',body:JSON.stringify({profile,pin})})}
+export function registerProfile(profile:UserProfile,pin:string){return request<RegisterResult>('/profiles',{method:'POST',body:JSON.stringify({profile,pin,privacyPolicyVersion:'1.0',termsVersion:'1.0'})})}
 export function loginAccount(profileId:string,pin:string,deviceName?:string){return request<LoginResult>('/auth/login',{method:'POST',body:JSON.stringify({profileId,pin,deviceName:deviceName||((navigator as any).userAgentData?.platform||navigator.platform||'Устройство')})})}
 export function saveAccountSetup(setup:SetupData,token:string){return request<{ok:boolean;configured:boolean;setup:SetupData}>('/account/setup',{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({setup})})}
 export function getAccountSetup(token:string){return request<{configured:boolean;setup:SetupData|null}>('/account/setup',{headers:{Authorization:`Bearer ${token}`}})}
