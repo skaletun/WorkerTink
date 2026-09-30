@@ -28,7 +28,7 @@ function createWindow() {
     minHeight: 680,
     title: 'WorkerTink',
     icon: iconPath,
-    backgroundColor: '#f4f7fb',
+    backgroundColor: '#f6f7f9',
     show: false,
     autoHideMenuBar: true,
     webPreferences: {
