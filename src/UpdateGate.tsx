@@ -54,14 +54,13 @@ export default function UpdateGate({children}:UpdateGateProps){
         setNeedRefresh(true);
         setPhase('ready');
       },
-      onRegisteredSW(_url,registration){
+      onRegistered(registration){
         if(!registration) return;
         const check=()=>registration.update().catch(()=>{});
-        const timer=window.setInterval(check,5*60*1000);
+        window.setInterval(check,5*60*1000);
         window.addEventListener('focus',check);
         window.addEventListener('online',check);
         void check();
-        return ()=>{};
       },
       onRegisterError(error){
         console.warn('[WorkerTink] Service Worker registration failed',error);
