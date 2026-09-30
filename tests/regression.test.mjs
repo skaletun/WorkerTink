@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {DEFAULT,calcMonth,getScheduledShift,avgIncome,vacationCalendarDays} from '../src/core.ts';
+import {DEFAULT,calcMonth,calcYear,getScheduledShift,avgIncome,vacationCalendarDays,vacationUsedDays,isValidYmd,sickPayForDays} from '../src/core.ts';
 
 const base={...DEFAULT,startDate:'2026-09-01',scheduleType:'5/2',taxRate:0,salary:100000};
 const normal=calcMonth(base,2026,8);
@@ -103,3 +103,33 @@ assert.equal(Math.round(avgIncome(incomeState,3,'2026-04')),200);
 const vacationPeriod={start:'2026-05-01',end:'2026-05-03'};
 assert.equal(vacationCalendarDays(base,vacationPeriod),2);
 console.log('WorkerTink payroll edge-case tests: OK');
+
+
+// Некорректные календарные даты не принимаются.
+assert.equal(isValidYmd('2026-02-28'),true);
+assert.equal(isValidYmd('2026-02-29'),false);
+assert.equal(isValidYmd('2026-13-01'),false);
+
+// Пересечение отпуска и больничного не должно давать двойного начисления.
+const overlap={...base,vacations:[{start:'2026-09-07',end:'2026-09-11'}],sickLeaves:[{start:'2026-09-09',end:'2026-09-10'}]};
+const overlapCalc=calcMonth(overlap,2026,8);
+assert.equal(overlapCalc.sickDays,2);
+assert.equal(overlapCalc.vacDays,3);
+
+// Остаток отпуска считает объединение периодов, а не сумму пересекающихся диапазонов.
+const overlappingVacations={...base,vacations:[{start:'2026-09-07',end:'2026-09-11'},{start:'2026-09-09',end:'2026-09-15'}]};
+assert.equal(vacationUsedDays(overlappingVacations),9);
+
+// Больничный симулятор использует тот же расчётный путь и ограничения, что и месячный payroll.
+const sickState={...base,salary:100000,taxRate:0,stage:10};
+assert.equal(sickPayForDays(sickState,2026,8,5),Math.round((100000*24/730)*5));
+const sickLowIncome={...sickState,salary:1000};
+assert.equal(sickPayForDays(sickLowIncome,2026,8,30),27093);
+
+// Прогрессивный НДФЛ применяется нарастающим итогом для основной налоговой базы.
+const highIncome={...base,salary:250000,taxRate:13,startDate:'2026-01-01',scheduleType:'7/0',scheduleShift:'day',scheduleVakhtaMonths:6};
+const highYear=calcYear(highIncome,2026);
+assert.equal(highYear.gross,3000000);
+assert.equal(highYear.tax,402000);
+assert.equal(highYear.net,2598000);
+console.log('WorkerTink payroll hardening tests: OK');
