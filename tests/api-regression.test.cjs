@@ -46,3 +46,22 @@ assert.match(customizationMigration,/ALTER TABLE social_posts ADD COLUMN shift_n
 assert.match(api,/UPDATE social_groups SET name=\?1,description=\?2,visibility=\?3,icon=\?4,accent=\?5,cover=\?6,rules=\?7/);
 assert.match(api,/UPDATE company_channels SET name=\?1,company_name=\?2,description=\?3,visibility=\?4,icon=\?5,accent=\?6,cover=\?7,topic=\?8/);
 assert.match(api,/function cleanShiftNote/);
+
+const verificationMigration=fs.readFileSync(path.join(root,'directory-api/migrations/0023_profile_verification.sql'),'utf8');
+assert.match(verificationMigration,/is_official/);
+assert.match(verificationMigration,/is_verified/);
+assert.match(verificationMigration,/privacy_policy_version/);
+assert.match(verificationMigration,/terms_version/);
+assert.match(verificationMigration,/verification_requests/);
+assert.match(api,/verification\/request/);
+assert.match(api,/admin\/verification/);
+assert.match(api,/admin\/profiles\/\(\[\^\/\]\+\)\/official/);
+assert.match(api,/is_verified = 1/);
+assert.match(api,/is_verified=0/);
+assert.match(api,/RULES_ACCEPTANCE_REQUIRED/);
+assert.match(app,/Политику конфиденциальности/);
+assert.match(app,/Условия использования/);
+assert.match(app,/Заявка на верификацию/);
+assert.match(app,/ProfileQrModal/);
+assert.match(app,/Admin Control Center/);
+console.log('WorkerTink verification/profile release tests: OK');
