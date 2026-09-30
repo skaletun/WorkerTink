@@ -150,7 +150,9 @@ function publicProfile(row) {
     banner: row.banner || '',
     username: row.username || null,
     isDev: roles.isDev,
-    isAdmin: roles.isAdmin
+    isAdmin: roles.isAdmin,
+    isOfficial: Boolean(row.is_official),
+    isVerified: Boolean(row.is_verified)
   };
 }
 
@@ -890,7 +892,7 @@ async function handle(request, env) {
   if (request.method === 'GET' && profileMatch) {
     const wtinkId = normalizeId(decodeURIComponent(profileMatch[1]));
     if (!validId(wtinkId)) return json({error: 'USER_NOT_FOUND'}, 404, origin);
-    const row = await env.DB.prepare('SELECT wtink_id, name, position, avatar, banner, username, is_dev, is_admin FROM profiles WHERE wtink_id = ?1').bind(wtinkId).first();
+    const row = await env.DB.prepare('SELECT wtink_id, name, position, avatar, banner, username, is_dev, is_admin, is_official, is_verified FROM profiles WHERE wtink_id = ?1').bind(wtinkId).first();
     if (!row) return json({error: 'USER_NOT_FOUND'}, 404, origin);
     return json({profile: publicProfile(row)}, 200, origin);
   }
@@ -920,7 +922,7 @@ async function handle(request, env) {
   if (request.method === 'GET' && path === '/user') {
     const username = cleanUsername(url.searchParams.get('username'));
     if(!username)return json({error:'INVALID_USERNAME'},400,origin);
-    const row=await env.DB.prepare('SELECT wtink_id,name,position,avatar,banner,username,is_dev,is_admin FROM profiles WHERE LOWER(username)=LOWER(?1)').bind(username).first();
+    const row=await env.DB.prepare('SELECT wtink_id,name,position,avatar,banner,username,is_dev,is_admin,is_official,is_verified FROM profiles WHERE LOWER(username)=LOWER(?1)').bind(username).first();
     if(!row)return json({error:'USER_NOT_FOUND'},404,origin);
     return json({profile:publicProfile(row)},200,origin);
   }
@@ -1452,7 +1454,7 @@ async function handle(request, env) {
   const groupMatch=path.match(/^\/chat\/groups\/([^/]+)$/);
   if(groupMatch && request.method==='GET'){
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const id=decodeURIComponent(groupMatch[1]); const member=await env.DB.prepare('SELECT role FROM chat_group_members WHERE group_id=?1 AND profile_id=?2').bind(id,owner.wtink_id).first(); if(!member)return json({error:'NOT_GROUP_MEMBER'},403,origin);
-    const [g, members, keys]=await Promise.all([env.DB.prepare('SELECT id,name,description,avatar,owner_id,visibility,created_at FROM chat_groups WHERE id=?1').bind(id).first(),env.DB.prepare('SELECT m.profile_id,m.role,m.joined_at,p.name,p.position,p.avatar,p.username,p.is_dev,p.is_admin FROM chat_group_members m JOIN profiles p ON p.wtink_id=m.profile_id WHERE m.group_id=?1 ORDER BY m.joined_at ASC').bind(id).all(),env.DB.prepare('SELECT iv,data,updated_at FROM chat_group_keys WHERE group_id=?1 AND profile_id=?2').bind(id,owner.wtink_id).first()]); if(!g)return json({error:'GROUP_NOT_FOUND'},404,origin); return json({group:{id:g.id,name:g.name,description:g.description,avatar:g.avatar||'',ownerId:displayId(g.owner_id),visibility:g.visibility==='public'?'public':'private',createdAt:Number(g.created_at),role:member.role},members:(members.results||[]).map(r=>({profile:publicProfile({wtink_id:r.profile_id,name:r.name,position:r.position,avatar:r.avatar,username:r.username,is_dev:r.is_dev,is_admin:r.is_admin}),role:r.role,joinedAt:Number(r.joined_at)})),key:keys?{iv:keys.iv,data:keys.data}:null},200,origin);
+    const [g, members, keys]=await Promise.all([env.DB.prepare('SELECT id,name,description,avatar,owner_id,visibility,created_at FROM chat_groups WHERE id=?1').bind(id).first(),env.DB.prepare('SELECT m.profile_id,m.role,m.joined_at,p.name,p.position,p.avatar,p.username,p.is_dev,p.is_admin,p.is_official,p.is_verified FROM chat_group_members m JOIN profiles p ON p.wtink_id=m.profile_id WHERE m.group_id=?1 ORDER BY m.joined_at ASC').bind(id).all(),env.DB.prepare('SELECT iv,data,updated_at FROM chat_group_keys WHERE group_id=?1 AND profile_id=?2').bind(id,owner.wtink_id).first()]); if(!g)return json({error:'GROUP_NOT_FOUND'},404,origin); return json({group:{id:g.id,name:g.name,description:g.description,avatar:g.avatar||'',ownerId:displayId(g.owner_id),visibility:g.visibility==='public'?'public':'private',createdAt:Number(g.created_at),role:member.role},members:(members.results||[]).map(r=>({profile:publicProfile({wtink_id:r.profile_id,name:r.name,position:r.position,avatar:r.avatar,username:r.username,is_dev:r.is_dev,is_admin:r.is_admin,is_official:r.is_official,is_verified:r.is_verified}),role:r.role,joinedAt:Number(r.joined_at)})),key:keys?{iv:keys.iv,data:keys.data}:null},200,origin);
   }
   const groupMemberMatch=path.match(/^\/chat\/groups\/([^/]+)\/members$/);
   if(groupMemberMatch && request.method==='POST'){
@@ -1665,7 +1667,7 @@ async function handle(request, env) {
   if (adminDetailMatch && request.method === 'GET') {
     if (!(await adminProfile())) return json({error:'FORBIDDEN'},403,origin);
     const target=normalizeId(decodeURIComponent(adminDetailMatch[1]));
-    const profile=await env.DB.prepare('SELECT wtink_id,name,position,avatar,is_dev,is_admin,created_at,updated_at,last_seen FROM profiles WHERE wtink_id=?1').bind(target).first();
+    const profile=await env.DB.prepare('SELECT wtink_id,name,position,avatar,is_dev,is_admin,is_official,is_verified,created_at,updated_at,last_seen FROM profiles WHERE wtink_id=?1').bind(target).first();
     if(!profile)return json({error:'USER_NOT_FOUND'},404,origin);
     const [friends,requests,devices,blocked,media,deviceRows]=await Promise.all([
       env.DB.prepare("SELECT COUNT(*) AS count FROM friend_requests WHERE status='accepted' AND (sender_id=?1 OR receiver_id=?1)").bind(target).first(),
@@ -1681,10 +1683,10 @@ async function handle(request, env) {
   if (path === '/admin/profiles' && request.method === 'GET') {
     if (!(await adminProfile())) return json({error:'FORBIDDEN'}, 403, origin);
     const url = new URL(request.url);
-    const query = normalizeId(url.searchParams.get('query') || '');
+    const query = String(url.searchParams.get('query') || '').trim().slice(0,120);
     const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit') || 50)));
     const pattern = `%${query}%`;
-    const rows = await env.DB.prepare(`SELECT wtink_id,name,position,avatar,is_dev,is_admin,created_at,updated_at,last_seen FROM profiles WHERE ?1 = '' OR wtink_id LIKE ?2 OR UPPER(name) LIKE UPPER(?2) ORDER BY updated_at DESC LIMIT ?3`).bind(query, pattern, limit).all();
+    const rows = await env.DB.prepare(`SELECT wtink_id,name,position,avatar,is_dev,is_admin,created_at,updated_at,last_seen FROM profiles WHERE ?1 = '' OR wtink_id LIKE ?2 OR UPPER(name) LIKE UPPER(?2) OR LOWER(COALESCE(username,'')) LIKE LOWER(?2) ORDER BY updated_at DESC LIMIT ?3`).bind(query, pattern, limit).all();
     return json({profiles:(rows.results||[]).map(row=>({...publicProfile(row),createdAt:Number(row.created_at||0),updatedAt:Number(row.updated_at||0),lastSeen:Number(row.last_seen||0),online:Number(row.last_seen||0)>=Date.now()-ONLINE_WINDOW_MS}))},200,origin);
   }
 
@@ -1726,7 +1728,7 @@ async function handle(request, env) {
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
     const rows=await env.DB.prepare(`SELECT t.id,t.name,t.description,t.owner_id,t.created_at,COUNT(m.profile_id) AS members,COALESCE((SELECT role FROM work_team_members wm WHERE wm.team_id=t.id AND wm.profile_id=?1),'') AS role FROM work_teams t JOIN work_team_members me ON me.team_id=t.id AND me.profile_id=?1 LEFT JOIN work_team_members m ON m.team_id=t.id GROUP BY t.id ORDER BY t.updated_at DESC`).bind(owner.wtink_id).all();
     const ownerIds=[...(rows.results||[])].map(r=>r.owner_id); const owners=new Map();
-    if(ownerIds.length){const qs=ownerIds.map((_,i)=>`?${i+1}`).join(',');const os=await env.DB.prepare(`SELECT wtink_id,name,position,avatar,is_dev,is_admin,username FROM profiles WHERE wtink_id IN (${qs})`).bind(...ownerIds).all();for(const r of os.results||[])owners.set(r.wtink_id,publicProfile(r));}
+    if(ownerIds.length){const qs=ownerIds.map((_,i)=>`?${i+1}`).join(',');const os=await env.DB.prepare(`SELECT wtink_id,name,position,avatar,is_dev,is_admin,username,is_official,is_verified FROM profiles WHERE wtink_id IN (${qs})`).bind(...ownerIds).all();for(const r of os.results||[])owners.set(r.wtink_id,publicProfile(r));}
     return json({teams:(rows.results||[]).map(r=>({id:r.id,name:r.name,description:r.description||'',owner:owners.get(r.owner_id)||null,members:Number(r.members||0),role:r.role||'member',createdAt:Number(r.created_at||0)}))},200,origin);
   }
   if (path === '/work/teams' && request.method === 'POST') {
