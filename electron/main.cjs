@@ -2,7 +2,7 @@ const {app, BrowserWindow, shell, session, Menu, nativeImage, ipcMain, Notificat
 const path = require('path');
 
 const APP_ID = 'com.workertink.desktop';
-const PRODUCTION_URL = process.env.WORKERTINK_WEB_URL || 'https://skaletun.github.io/WorkerTink/';
+const PRODUCTION_URL = process.env.WORKERTINK_WEB_URL || 'https://skaletun.github.io/WTinker/';
 
 app.setAppUserModelId(APP_ID);
 app.commandLine.appendSwitch('enable-features', 'GlobalMediaControls');
@@ -26,7 +26,7 @@ function createWindow() {
     height: 920,
     minWidth: 980,
     minHeight: 680,
-    title: 'WorkerTink',
+    title: 'WTinker',
     icon: iconPath,
     backgroundColor: '#f6f7f9',
     show: false,
