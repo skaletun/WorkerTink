@@ -48,11 +48,15 @@ assert.match(api,/UPDATE company_channels SET name=\?1,company_name=\?2,descript
 assert.match(api,/function cleanShiftNote/);
 
 const verificationMigration=fs.readFileSync(path.join(root,'directory-api/migrations/0023_profile_verification.sql'),'utf8');
+const identityMigration=fs.readFileSync(path.join(root,'directory-api/migrations/0024_identity_hardening.sql'),'utf8');
 assert.match(verificationMigration,/is_official/);
 assert.match(verificationMigration,/is_verified/);
 assert.match(verificationMigration,/privacy_policy_version/);
 assert.match(verificationMigration,/terms_version/);
 assert.match(verificationMigration,/verification_requests/);
+assert.match(identityMigration,/DROP INDEX IF EXISTS idx_profiles_username_unique/);
+assert.match(identityMigration,/LOWER\(username\)/);
+assert.match(identityMigration,/COLLATE NOCASE/);
 assert.match(api,/verification\/request/);
 assert.match(api,/admin\/verification/);
 assert.match(api,/officialMatch=path\.match/);
