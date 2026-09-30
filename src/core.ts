@@ -5,7 +5,7 @@ export type PairType='day-day'|'day-night'|'night-night';
 export interface Period {start:string; end:string}
 export interface PaymentDates {advanceDate:string; remainderDate:string}
 export interface IncomeHistory {[key:string]:number}
-export interface UserProfile {profileId:string;name:string;position:string;avatar:string;banner?:string;username?:string|null;isDev?:boolean;isAdmin?:boolean}
+export interface UserProfile {profileId:string;name:string;position:string;avatar:string;banner?:string;username?:string|null;isDev?:boolean;isAdmin?:boolean;isOfficial?:boolean;isVerified?:boolean}
 export interface Friend {profile:UserProfile;addedAt:number;lastSeen:number;connected?:boolean;online?:boolean}
 export interface FriendRequest {id:string;from:UserProfile;to:UserProfile;createdAt:number;status:'pending'|'accepted'|'declined'}
 export interface ChatMessage {id:string;from:string;at:number;type:'text'|'profile'|'note';text?:string;profile?:UserProfile;note?:{date:string;note:string;shift?:string}}
