@@ -1288,6 +1288,7 @@ async function handle(request, env) {
     const text=cleanText((await body(request))?.body,1000); if(!text)return json({error:'EMPTY_COMMENT'},400,origin);
     const cid=crypto.randomUUID(),now=Date.now(); await env.DB.prepare('INSERT INTO social_post_comments (id,post_id,author_id,body,created_at) VALUES (?1,?2,?3,?4,?5)').bind(cid,id,owner.wtink_id,text,now).run();
     if(post.author_id!==owner.wtink_id){await createSocialNotification(env,post.author_id,owner.wtink_id,'comment',id,'Новый комментарий',`${owner.name} прокомментировал(а) вашу публикацию`); await notifyProfile(env,post.author_id,'message',{title:'Новый комментарий',body:`${owner.name} прокомментировал(а) вашу публикацию`,url:`./?tab=social&post=${encodeURIComponent(id)}`,tag:`wtink-comment-${cid}`});}
+    await notifyMentionedUsers(env,text,owner,id,`./?tab=social&post=${encodeURIComponent(id)}`);
     return json({ok:true,id:cid,createdAt:now},201,origin);
   }
 
