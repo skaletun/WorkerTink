@@ -22,4 +22,8 @@ assert.deepEqual(normalized.chats,{});
 assert.equal(normalized.notifications.enabled,true);
 assert.equal(normalized.notifications.messages,true);
 assert.equal(normalized.onePassEnabled,false);
+const invalidDates=normalizeState({...DEFAULT,startDate:'2026-02-31',vacations:[{start:'2026-02-31',end:'2026-03-02'}],sickLeaves:[{start:'2026-03-01',end:'2026-02-31'}]});
+assert.equal(invalidDates.startDate,DEFAULT.startDate);
+assert.deepEqual(invalidDates.vacations,[]);
+assert.deepEqual(invalidDates.sickLeaves,[]);
 console.log('WorkerTink storage migration tests: OK');
