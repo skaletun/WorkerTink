@@ -1413,3 +1413,18 @@ body{background:var(--v6-canvas)!important;color:var(--v6-text)!important}
 .v6-auth-card .setup-brand{margin-bottom:22px}.v6-auth-card .registration-hero h1{font-size:32px!important;letter-spacing:-.045em}.v6-auth-card .registration-submit{min-height:46px!important}.v6-auth-card input{background:var(--wt-surface-soft)!important}
 @media(max-width:850px){.v6-auth-screen{grid-template-columns:1fr;padding:18px}.v6-auth-aside{display:none}.v6-auth-card{border-left:1px solid var(--wt-line)!important;border-radius:22px!important;max-width:560px!important;justify-self:center}}
 @media(max-width:520px){.v6-auth-screen{padding:8px}.v6-auth-card{border-radius:18px!important}.v6-auth-card .registration-hero h1{font-size:27px!important}}
+
+
+/* Sidebar account identity: avatar + name + username only. */
+.v7-profile{gap:9px!important;overflow:hidden!important}
+.v7-profile>.avatar{flex:0 0 auto!important}
+.v7-profile>span:last-child{display:grid!important;gap:2px!important;min-width:0!important}
+.v7-profile>span:last-child b{display:block!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:10px!important}
+.v7-profile>span:last-child small{display:block!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;margin:0!important;font-size:8px!important;color:var(--v7-subtle)!important;font-weight:650!important}
+
+/* Mobile shift editor must sit above the fixed bottom navigation. */
+@media(max-width:820px){
+  .v7-shell .modal-backdrop{z-index:220!important}
+  .v7-shell .v7-mobile-nav{z-index:100!important}
+  .v7-shell .shift-modal{margin-bottom:0!important}
+}
