@@ -79,6 +79,23 @@ function payrollAverageMonthlyIncome(state:State,months:number,throughMonth:stri
  for(let i=count;i>=1;i--)sum+=historyValue(state,through-i);
  return sum/count;
 }
+function vacationDailyAverage(state:State,throughMonth:string){
+ const [y,m]=throughMonth.split('-').map(Number);
+ const endExclusive=new Date(y,m-1,1),windowStart=new Date(y,m-13,1),employmentStart=parseYmd(state.startDate);
+ let incomeTotal=0,dayFactorTotal=0;
+ for(let cursor=new Date(windowStart);cursor<endExclusive;cursor.setMonth(cursor.getMonth()+1)){
+   const monthStart=new Date(cursor.getFullYear(),cursor.getMonth(),1),monthEnd=new Date(cursor.getFullYear(),cursor.getMonth()+1,0);
+   if(monthEnd<employmentStart)continue;
+   const employedStart=monthStart<employmentStart?employmentStart:monthStart;
+   const calendarDays=monthEnd.getDate(),employedDays=Math.max(0,calendarDays-(employedStart.getDate()-1));
+   if(!employedDays)continue;
+   const key=monthKey(cursor.getFullYear(),cursor.getMonth()),raw=state.incomeHistory[key];
+   const monthlyIncome=Number.isFinite(raw)&&raw>=0?raw:state.salary*(employedDays/calendarDays);
+   const factor=employedDays===calendarDays?1:employedDays/calendarDays;
+   incomeTotal+=monthlyIncome;dayFactorTotal+=29.3*factor;
+ }
+ return dayFactorTotal>0?incomeTotal/dayFactorTotal:state.salary/29.3;
+}
 
 function shiftHours(state:State,shift:ShiftValue){return shift==='full'?(state.scheduleType==='7/0'?24:8):shift==='off'?0:8}
 function periodSet(periods:Period[],start:Date,end:Date){const out=new Set<string>();for(const p of periods){if(!isValidYmd(p.start)||!isValidYmd(p.end)||p.end<p.start)continue;const a=parseYmd(p.start)>start?parseYmd(p.start):start,b=parseYmd(p.end)<end?parseYmd(p.end):end;if(a>b)continue;for(let d=new Date(a);d<=b;d=addDays(d,1))out.add(ymd(d))}return out}
@@ -120,7 +137,7 @@ function calcMonthGross(state:State,year:number,month:number):GrossCalc{
  const extraPay=Math.round(hourValue*extraWorkHours);
  const holidayExtra=Math.round(hourValue*holidayWorkHours*Math.max(0,state.holidayCoeff-1));
  const nightExtra=Math.round(hourValue*nightWork*8*Math.max(0,state.nightExtraPercent)/100);
- const vacPay=Math.round(payrollAverageMonthlyIncome(state,12,monthKey(year,month))/29.3*vacDays);
+ const vacPay=Math.round(vacationDailyAverage(state,monthKey(year,month))*vacDays);
  const sickPay=sickPayForDays(state,year,month,sickDays);
  return {year,month,work,nightWork,holidayWork,vacDays,sickDays,base,extraPay,holidayExtra,nightExtra,vacPay,sickPay,gross:base+extraPay+holidayExtra+nightExtra+vacPay+sickPay,sickRate,scheduled:scheduledSafe,scheduledHours:scheduledHoursSafe,workHours,plannedWorkHours,extraWorkHours};
 }
