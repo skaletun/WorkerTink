@@ -55,7 +55,7 @@ assert.match(verificationMigration,/terms_version/);
 assert.match(verificationMigration,/verification_requests/);
 assert.match(api,/verification\/request/);
 assert.match(api,/admin\/verification/);
-assert.match(api,/admin\/profiles\/\(\[\^\/\]\+\)\/official/);
+assert.match(api,/admin\/profiles\/[^/]+\/official/);
 assert.match(api,/is_verified = 1/);
 assert.match(api,/is_verified=0/);
 assert.match(api,/RULES_ACCEPTANCE_REQUIRED/);
