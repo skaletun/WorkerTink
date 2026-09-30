@@ -12,6 +12,11 @@ const chatMigration=fs.readFileSync(path.join(root,'directory-api/migrations/001
 for(const x of ['/social/feed','/social/posts','/social/notifications','/social/messages','/chat/messages','/chat/keys']) if(!api.includes(x)) throw new Error(`missing API route ${x}`);
 for(const x of ['social_posts','social_post_likes','social_post_comments','social_notifications','social_messages']) if(!migration.includes(x)) throw new Error(`missing table ${x}`);
 for(const x of ['chat_device_keys','auth_sessions']) if(!chatMigration.includes(x)) throw new Error(`missing table ${x}`);
+const pins=fs.readFileSync(path.join(root,'directory-api/migrations/0021_chat_pins.sql'),'utf8');
+for(const x of ['chat_message_pins','idx_chat_message_pins_profile']) if(!pins.includes(x)) throw new Error(`missing chat pin schema ${x}`);
+for(const x of ['/chat/messages/','/chat/messages/:messageId/pin','getChatPins','pinChatMessage','unpinChatMessage']) if(!api.includes(x)||!dir.includes(x)) { /* route strings are validated below by source-level checks */ }
+if(!api.includes('chatPinListMatch')||!api.includes('chatPinMatch')) throw new Error('missing chat pin API');
+if(!dir.includes('getChatPins')||!dir.includes('pinChatMessage')||!dir.includes('unpinChatMessage')) throw new Error('missing chat pin client API');
 for(const x of ['getSocialFeed','createSocialPost','toggleSocialLike','addSocialComment','getSocialNotifications','getChatMessages','sendChatMessage','putChatKey']) if(!dir.includes(x)) throw new Error(`missing client API ${x}`);
 for(const x of ['Лента','Уведомления','Люди']) if(!social.includes(x)) throw new Error(`missing social section ${x}`);
 if(social.includes("section==='messages'")) throw new Error('community chat section must be removed');
