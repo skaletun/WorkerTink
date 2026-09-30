@@ -105,7 +105,7 @@ function App(){
  return <><V6Shell
   items={navItems.map(([id,label,sub])=>({id,label,sub,icon:<Icon name={id}/> }))}
   active={tab}
-  onNavigate={id=>navigate(id)}
+  onNavigate={id=>navigate(id as Tab)}
   profile={<><Avatar profile={state.profile} size="sm"/><span><b><NameWithBadge profile={state.profile}/></b><small>{state.profile.position||'Профиль'}</small></span></>}
   profileAction={()=>navigate('profile')}
   privacy={<div className="v6-privacy"><span className="status-dot"/><div><b>E2E для сообщений</b><small>Личные сообщения шифруются на устройстве</small></div></div>}
