@@ -69,6 +69,8 @@ function cleanText(value, max) {
   return String(value || '').trim().slice(0, max);
 }
 
+function parseJson(value,fallback=null){try{return value?JSON.parse(String(value)):fallback}catch{return fallback}}
+
 function validCalendarDate(value) {
   const input = String(value || '').trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input)) return false;
