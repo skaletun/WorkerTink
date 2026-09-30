@@ -622,3 +622,146 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   .network-hero h1{font-size:28px!important}
   .chat-shell-v2{grid-template-columns:250px minmax(0,1fr)!important;height:calc(100dvh - 136px)!important;min-height:500px!important}
 }
+
+
+/* Mobile navigation 3.1 — full section access without hiding product features. */
+@media (max-width: 767px){
+  .mobile-nav{
+    display:grid!important;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:4px;
+    left:8px!important;
+    right:8px!important;
+    bottom:max(8px,env(safe-area-inset-bottom))!important;
+    height:68px!important;
+    min-height:68px!important;
+    padding:5px!important;
+    border:1px solid var(--line);
+    border-radius:18px;
+    box-shadow:0 16px 44px rgba(20,29,40,.18);
+    background:color-mix(in srgb,var(--surface) 94%,transparent);
+    backdrop-filter:blur(22px) saturate(1.15);
+  }
+  .mobile-nav button{
+    min-height:56px!important;
+    border-radius:13px!important;
+    gap:3px!important;
+    font-weight:800;
+    position:relative;
+  }
+  .mobile-nav button.active:before{
+    content:"";
+    position:absolute;
+    top:4px;
+    left:50%;
+    width:22px;
+    height:3px;
+    border-radius:99px;
+    transform:translateX(-50%);
+    background:currentColor;
+  }
+  .mobile-nav button span{font-size:10px!important;line-height:1.1}
+  .mobile-menu-backdrop{
+    position:fixed;
+    inset:0;
+    z-index:4000;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    padding:12px;
+    background:rgba(10,15,24,.46);
+    backdrop-filter:blur(8px);
+  }
+  .mobile-menu-sheet{
+    width:min(680px,100%);
+    max-height:min(82dvh,720px);
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+    background:var(--surface);
+    color:var(--text);
+    border:1px solid var(--line);
+    border-radius:24px;
+    box-shadow:0 30px 90px rgba(0,0,0,.3);
+    padding:10px 14px calc(14px + env(safe-area-inset-bottom));
+  }
+  .mobile-menu-handle{
+    width:38px;
+    height:4px;
+    border-radius:99px;
+    background:var(--line-strong);
+    margin:2px auto 12px;
+  }
+  .mobile-menu-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:4px 2px 12px;
+  }
+  .mobile-menu-head h2{margin:2px 0 0;font-size:20px;letter-spacing:-.02em}
+  .mobile-menu-close{
+    width:42px;height:42px;min-height:42px;border:1px solid var(--line);
+    border-radius:12px;background:var(--surface-2);color:var(--text);font-size:24px;cursor:pointer;
+  }
+  .mobile-menu-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+  }
+  .mobile-menu-grid button{
+    min-height:72px;
+    display:flex;
+    align-items:center;
+    gap:11px;
+    text-align:left;
+    padding:12px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:var(--surface-2);
+    color:var(--text);
+    cursor:pointer;
+  }
+  .mobile-menu-grid button.active{
+    border-color:color-mix(in srgb,var(--accent) 35%,var(--line));
+    background:var(--soft);
+    color:var(--accent);
+  }
+  .mobile-menu-grid i{
+    width:40px;height:40px;flex:0 0 40px;display:grid;place-items:center;
+    border-radius:12px;background:var(--surface);border:1px solid var(--line);
+  }
+  .mobile-menu-grid svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .mobile-menu-grid span{min-width:0;display:grid;gap:3px}
+  .mobile-menu-grid b{font-size:12px}
+  .mobile-menu-grid small{font-size:10px;line-height:1.25;color:var(--muted)}
+  .network-nav,.friends-tabs,.friend-tabs,.social-tabs{
+    position:sticky;
+    top:6px;
+    z-index:20;
+    margin-inline:-2px;
+    padding:5px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:color-mix(in srgb,var(--surface) 94%,transparent);
+    backdrop-filter:blur(16px);
+    box-shadow:0 8px 24px rgba(20,29,40,.07);
+    scrollbar-width:none;
+  }
+  .network-nav::-webkit-scrollbar,.friends-tabs::-webkit-scrollbar,.friend-tabs::-webkit-scrollbar,.social-tabs::-webkit-scrollbar{display:none}
+  .network-nav button,.friends-tabs button,.friend-tabs button,.social-tabs button{
+    min-height:42px!important;
+    flex:0 0 auto!important;
+    padding-inline:14px!important;
+    border-radius:11px!important;
+  }
+  .network-nav button.active,.friends-tabs button.active,.friend-tabs button.active,.social-tabs button.active{
+    box-shadow:0 3px 12px rgba(20,29,40,.08);
+  }
+}
+@media (max-width: 420px){
+  .mobile-menu-grid{grid-template-columns:1fr}
+  .mobile-menu-grid button{min-height:64px}
+}
+@media (min-width:768px){
+  .mobile-menu-backdrop{display:none!important}
+}
