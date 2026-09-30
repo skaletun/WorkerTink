@@ -2,7 +2,7 @@ const {app, BrowserWindow, shell, session, Menu, nativeImage, ipcMain, Notificat
 const path = require('path');
 
 const APP_ID = 'com.workertink.desktop';
-const PRODUCTION_URL = process.env.WORKERTINK_WEB_URL || 'https://skaletun.github.io/WTinker/';
+const PRODUCTION_URL = process.env.WORKERTINK_WEB_URL || 'https://skaletun.github.io/WorkerTink/';
 
 app.setAppUserModelId(APP_ID);
 app.commandLine.appendSwitch('enable-features', 'GlobalMediaControls');
