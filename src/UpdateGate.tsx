@@ -4,6 +4,9 @@ import {registerSW} from 'virtual:pwa-register';
 type Phase='ready'|'updating';
 type UpdateGateProps={children:ReactNode};
 
+const BUILD_ID=import.meta.env.VITE_BUILD_ID||'dev';
+const BUILD_STORAGE_KEY='workertink:last-seen-build';
+
 export default function UpdateGate({children}:UpdateGateProps){
   const [needRefresh,setNeedRefresh]=useState(false);
   const [phase,setPhase]=useState<Phase>('ready');
@@ -12,6 +15,8 @@ export default function UpdateGate({children}:UpdateGateProps){
   const requestReload=()=>{
     if(!('serviceWorker' in navigator))return;
     setPhase('updating');
+    try{localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID)}catch{}
+    if(!('serviceWorker' in navigator)){window.setTimeout(()=>window.location.reload(),250);return;}
     let reloaded=false;
     const reload=async()=>{
       if(reloaded)return;
@@ -42,6 +47,11 @@ export default function UpdateGate({children}:UpdateGateProps){
   };
 
   useEffect(()=>{
+    try{
+      const previous=localStorage.getItem(BUILD_STORAGE_KEY);
+      if(previous===null)localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID);
+      else if(previous!==BUILD_ID){setNeedRefresh(true);setPhase('ready');}
+    }catch{}
     if(!('serviceWorker' in navigator))return;
     let disposed=false;
     const registrationCleanup:{registration?:ServiceWorkerRegistration;interval?:number;check?:()=>void}={};
