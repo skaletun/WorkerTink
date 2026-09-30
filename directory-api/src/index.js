@@ -103,8 +103,9 @@ function cleanAvatar(value) {
   return avatar.length <= AVATAR_MAX ? avatar : '';
 }
 function cleanBanner(value) {
-  const banner = typeof value === 'string' && value.startsWith('data:image/') ? value : '';
-  return banner.length <= 1600000 ? banner : '';
+  const banner = String(value || '').trim();
+  if(/^https:\/\//i.test(banner)) return banner.length<=1200?banner:'';
+  return banner.startsWith('data:image/') && banner.length<=1600000 ? banner : '';
 }
 function cleanPostAttachments(value) {
   if (!Array.isArray(value)) return [];
