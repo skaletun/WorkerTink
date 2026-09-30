@@ -6,6 +6,19 @@ const network=fs.readFileSync(path.join(root,'src/NetworkView.tsx'),'utf8');
 const update=fs.readFileSync(path.join(root,'src/UpdateGate.tsx'),'utf8');
 const sw=fs.readFileSync(path.join(root,'src/sw.js'),'utf8');
 const workflow=fs.readFileSync(path.join(root,'.github/workflows/deploy.yml'),'utf8');
+const home=fs.readFileSync(path.join(root,'src/HomeView.tsx'),'utf8');
+const notifications=fs.readFileSync(path.join(root,'src/NotificationsView.tsx'),'utf8');
+const chats=fs.readFileSync(path.join(root,'src/ChatsHub.tsx'),'utf8');
+const chat=fs.readFileSync(path.join(root,'src/ChatView.tsx'),'utf8');
+const work=fs.readFileSync(path.join(root,'src/WorkHubView.tsx'),'utf8');
+const rebuildCss=fs.readFileSync(path.join(root,'src/rebuild.css'),'utf8');
+
+for(const x of ['redesign-home','Ваш график','Сценарий выплаты','Резервная копия']) if(!home.includes(x)) throw new Error('rebuilt home surface missing '+x);
+for(const x of ['redesign-notifications','notification-timeline','timeline-item']) if(!notifications.includes(x)) throw new Error('rebuilt notification surface missing '+x);
+for(const x of ['redesign-chats','chats-mode-nav','Формат разговора']) if(!chats.includes(x)) throw new Error('rebuilt chats surface missing '+x);
+if(!chat.includes('chat-page-rebuilt')) throw new Error('rebuilt personal chat surface missing');
+if(!work.includes('redesign-work')) throw new Error('rebuilt work surface missing');
+for(const x of ['.redesign-page-intro','.home-snapshot','.network-layout-v2','.notification-timeline','.chat-page-rebuilt','.redesign-work']) if(!rebuildCss.includes(x)) throw new Error('rebuilt design token missing '+x);
 
 if(!app.includes('syncTabUrl=(next:Tab)=>')) throw new Error('navigation URL sync is missing');
 if(!app.includes("const openChat=(profileId:string)=>{syncTabUrl('chat')")) throw new Error('chat navigation does not use the canonical URL sync');
