@@ -126,7 +126,7 @@ function cleanPostAttachments(value) {
 function cleanShiftNote(value) {
   if (!value || typeof value !== 'object') return null;
   const date=cleanText(value.date,10), shift=cleanText(value.shift,40), summary=cleanText(value.summary,1200);
-  if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date) || !summary) return null;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date) || !summary) return null;
   return {date,shift,summary};
 }
 
