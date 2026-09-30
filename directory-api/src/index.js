@@ -565,7 +565,7 @@ async function handle(request, env) {
     try {
       await env.DB.prepare(`
         INSERT INTO profiles (wtink_id, name, position, avatar, banner, username, is_dev, is_admin, token_hash, pin_hash, pin_salt, webauthn_user_id, created_at, updated_at, last_seen)
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?12, ?12)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?13, ?13)
       `).bind(wtinkId, name, position, avatar, banner, username, wtinkId === DEV_WTINK_ID ? 1 : 0, wtinkId === DEV_WTINK_ID ? 1 : 0, tokenHash, pinData.hash, pinData.salt, webauthnUserId, now).run();
     } catch (error) {
       if (String(error).toLowerCase().includes('unique')) return json({error: 'WTINK_ID_TAKEN'}, 409, origin);
