@@ -1250,6 +1250,7 @@ async function handle(request, env) {
     if(groupId){const member=await env.DB.prepare('SELECT 1 FROM social_group_members WHERE group_id=?1 AND profile_id=?2').bind(groupId,owner.wtink_id).first();if(!member)return json({error:'GROUP_MEMBERSHIP_REQUIRED'},403,origin)}
     const id=crypto.randomUUID(),now=Date.now();
     await env.DB.prepare('INSERT INTO social_posts (id,author_id,body,kind,group_id,visibility,created_at,updated_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?7)').bind(id,owner.wtink_id,text,kind,groupId,visibility,now).run();
+    await notifyMentionedUsers(env,text,owner,id,`./?tab=social&post=${encodeURIComponent(id)}`);
     return json({ok:true,id,createdAt:now},201,origin);
   }
 
