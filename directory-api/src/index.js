@@ -575,6 +575,30 @@ async function handle(request, env) {
     await env.DB.prepare('DELETE FROM chat_message_reactions WHERE message_id=?1 AND profile_id=?2').bind(messageId,owner.wtink_id).run();
     return json({ok:true},200,origin);
   }
+  const chatPinListMatch = path.match(/^\/chat\/messages\/([^/]+)\/pins$/);
+  if (chatPinListMatch && request.method === 'GET') {
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const peerId=normalizeId(decodeURIComponent(chatPinListMatch[1]));
+    if(!validId(peerId))return json({error:'INVALID_ID'},400,origin);
+    const peer=await env.DB.prepare('SELECT wtink_id FROM profiles WHERE wtink_id=?1').bind(peerId).first();
+    if(!peer)return json({error:'PROFILE_NOT_FOUND'},404,origin);
+    const rows=await env.DB.prepare('SELECT p.message_id,p.profile_id,p.created_at,m.sender_id,m.receiver_id,m.body,m.kind,mime,name,m.created_at AS message_created_at,m.reply_to_id,m.reply_preview,m.note_date,m.note_shift FROM chat_message_pins p JOIN social_messages m ON m.id=p.message_id WHERE ((m.sender_id=?1 AND m.receiver_id=?2) OR (m.sender_id=?2 AND m.receiver_id=?1)) ORDER BY p.created_at DESC LIMIT 100').bind(owner.wtink_id,peerId).all();
+    return json({pins:(rows.results||[]).map(r=>({messageId:r.message_id,pinnedBy:displayId(r.profile_id),pinnedAt:Number(r.created_at),message:{id:r.message_id,from:displayId(r.sender_id),to:displayId(r.receiver_id),body:r.body,kind:r.kind||'text',mime:r.mime||null,name:r.name||null,createdAt:Number(r.message_created_at),replyToId:r.reply_to_id||null,replyPreview:r.reply_preview||null,noteDate:r.note_date||null,noteShift:r.note_shift||null}}))},200,origin);
+  }
+  const chatPinMatch = path.match(/^\/chat\/messages\/([^/]+)\/pin$/);
+  if (chatPinMatch && (request.method === 'PUT' || request.method === 'DELETE')) {
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const messageId=decodeURIComponent(chatPinMatch[1]);
+    const message=await env.DB.prepare('SELECT id,sender_id,receiver_id FROM social_messages WHERE id=?1').bind(messageId).first();
+    if(!message)return json({error:'MESSAGE_NOT_FOUND'},404,origin);
+    if(message.sender_id!==owner.wtink_id && message.receiver_id!==owner.wtink_id)return json({error:'FORBIDDEN'},403,origin);
+    if(request.method==='DELETE'){
+      await env.DB.prepare('DELETE FROM chat_message_pins WHERE message_id=?1').bind(messageId).run();
+      return json({ok:true},200,origin);
+    }
+    await env.DB.prepare('INSERT OR REPLACE INTO chat_message_pins(message_id,profile_id,created_at) VALUES(?1,?2,?3)').bind(messageId,owner.wtink_id,Date.now()).run();
+    return json({ok:true,messageId,pinnedBy:displayId(owner.wtink_id)},200,origin);
+  }
   const groupReactionMatch = path.match(/^\/chat\/groups\/([^/]+)\/messages\/([^/]+)\/reactions$/);
   if (groupReactionMatch && request.method === 'GET') {
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
