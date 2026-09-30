@@ -1579,7 +1579,7 @@ async function handle(request, env) {
       CASE WHEN g.owner_id=?1 THEN 'owner' ELSE (SELECT role FROM social_group_members mr WHERE mr.group_id=g.id AND mr.profile_id=?1) END AS member_role,
       p.name AS o_name,p.position AS o_position,p.avatar AS o_avatar,p.banner AS o_banner,p.username AS o_username,p.is_dev AS o_is_dev,p.is_admin AS o_is_admin
       FROM social_groups g JOIN profiles p ON p.wtink_id=g.owner_id WHERE g.visibility='public' OR EXISTS(SELECT 1 FROM social_group_members x WHERE x.group_id=g.id AND x.profile_id=?1) ORDER BY g.created_at DESC LIMIT 100`).bind(owner.wtink_id).all();
-    return json({groups:(rows.results||[]).map(r=>({id:r.id,name:r.name,slug:r.slug,description:r.description,visibility:r.visibility,owner:socialProfile({wtink_id:r.owner_id,name:r.o_name,position:r.o_position,avatar:r.o_avatar,banner:r.o_banner,username:r.o_username,is_dev:r.o_is_dev,is_admin:r.o_is_admin}),members:Number(r.members||0),joined:Boolean(r.joined),role:r.member_role||undefined,createdAt:Number(r.created_at||0)}))},200,origin);
+    return json({groups:(rows.results||[]).map(r=>({id:r.id,name:r.name,slug:r.slug,description:r.description,visibility:r.visibility,icon:r.icon||'',accent:r.accent||'#2563eb',cover:r.cover||'',rules:r.rules||'',owner:socialProfile({wtink_id:r.owner_id,name:r.o_name,position:r.o_position,avatar:r.o_avatar,banner:r.o_banner,username:r.o_username,is_dev:r.o_is_dev,is_admin:r.o_is_admin}),members:Number(r.members||0),joined:Boolean(r.joined),role:r.member_role||undefined,createdAt:Number(r.created_at||0)}))},200,origin);
   }
   if (path === '/network/groups' && request.method === 'POST') {
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const input=await body(request);
@@ -1587,7 +1587,7 @@ async function handle(request, env) {
     const slug=(name.toLowerCase().replace(/[^a-zа-я0-9]+/gi,'-').replace(/^-+|-+$/g,'').slice(0,50)||crypto.randomUUID().slice(0,8));
     const unique=`${slug}-${crypto.randomUUID().slice(0,6)}`; const id=crypto.randomUUID(),now=Date.now();
     await env.DB.batch([env.DB.prepare('INSERT INTO social_groups(id,name,slug,description,owner_id,visibility,icon,accent,cover,rules,created_at,updated_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?11)').bind(id,name,unique,description,owner.wtink_id,visibility,icon,accent,cover,rules,now),env.DB.prepare('INSERT INTO social_group_members(group_id,profile_id,role,created_at) VALUES (?1,?2,?3,?4)').bind(id,owner.wtink_id,'owner',now)]);
-    return json({group:{id,name,slug:unique,description,visibility,owner:publicProfile(owner),members:1,joined:true,role:'owner',createdAt:now}},201,origin);
+    return json({group:{id,name,slug:unique,description,visibility,icon,accent,cover,rules,owner:publicProfile(owner),members:1,joined:true,role:'owner',createdAt:now}},201,origin);
   }
   const networkGroupUpdate=path.match(/^\/network\/groups\/([^/]+)$/);
   if(networkGroupUpdate && request.method==='PUT'){
