@@ -134,7 +134,7 @@ function calcMonthGross(state:State,year:number,month:number):GrossCalc{
    }
  }
  const scheduledSafe=Math.max(1,scheduled),scheduledHoursSafe=Math.max(1,scheduledHours),hourValue=state.salary/scheduledHoursSafe;
- const base=Math.round(state.salary*plannedWorkHours/scheduledSafe);
+ const base=Math.round(state.salary*plannedWorkHours/scheduledHoursSafe);
  const extraPay=Math.round(hourValue*extraWorkHours);
  const holidayExtra=Math.round(hourValue*holidayWorkHours*Math.max(0,state.holidayCoeff-1));
  const nightExtra=Math.round(hourValue*nightWork*8*Math.max(0,state.nightExtraPercent)/100);
