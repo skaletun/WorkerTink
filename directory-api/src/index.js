@@ -536,6 +536,17 @@ async function handle(request, env) {
     return json({profile: publicProfile({wtink_id:wtinkId,name,position,avatar,username}), token, sessionId:session.sessionId, security:{pinSet:true,onePassAvailable:false}}, 201, origin);
   }
 
+  const chatSearchMatch = path.match(/^\/chat\/messages\/([^/]+)\/search$/);
+  if (chatSearchMatch && request.method === 'GET') {
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const peerId=decodeURIComponent(chatSearchMatch[1]); const url=new URL(request.url);
+    const q=(url.searchParams.get('q')||'').trim().slice(0,120); const limit=Math.min(Math.max(Number(url.searchParams.get('limit')||30),1),100);
+    if(!q)return json({messages:[]},200,origin);
+    const peer=await env.DB.prepare('SELECT 1 FROM profiles WHERE wtink_id=?1').bind(peerId).first();
+    if(!peer)return json({error:'PROFILE_NOT_FOUND'},404,origin);
+    const rows=await env.DB.prepare("SELECT id,from_id,to_id,body,kind,mime,name,created_at,read_at,edited_at,deleted_at,reply_to_id,reply_preview,note_date,note_shift FROM chat_messages WHERE ((from_id=?1 AND to_id=?2) OR (from_id=?2 AND to_id=?1)) AND deleted_at IS NULL AND lower(COALESCE(reply_preview,'')) LIKE lower(?3) ORDER BY created_at DESC LIMIT ?4").bind(owner.wtink_id,peerId,'%'+q+'%',limit).all();
+    return json({messages:(rows.results||[]).map(m=>({id:m.id,from:displayId(m.from_id),to:displayId(m.to_id),body:m.body,kind:m.kind,mime:m.mime,name:m.name,createdAt:m.created_at,readAt:m.read_at,editedAt:m.edited_at,deletedAt:m.deleted_at,replyToId:m.reply_to_id,replyPreview:m.reply_preview,noteDate:m.note_date,noteShift:m.note_shift}))},200,origin);
+  }
   const chatReactionMatch = path.match(/^\/chat\/messages\/([^/]+)\/reactions$/);
   if (chatReactionMatch && request.method === 'GET') {
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
