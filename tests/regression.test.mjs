@@ -134,3 +134,11 @@ assert.equal(highYear.gross,3000000);
 assert.equal(highYear.tax,402000);
 assert.equal(highYear.net,2598000);
 console.log('WorkerTink payroll hardening tests: OK');
+
+
+// Ручная смена после завершения 7/0 не должна использовать делитель 1 час и раздувать выплату.
+const endedVakhta={...base,startDate:'2026-01-01',scheduleType:'7/0',scheduleShift:'day',scheduleVakhtaMonths:1,salary:100000,taxRate:0,shiftOverrides:{'2026-02-02':'day'}};
+const endedVakhtaCalc=calcMonth(endedVakhta,2026,1);
+assert.equal(endedVakhtaCalc.scheduled,1);
+assert.equal(endedVakhtaCalc.scheduledHours,1);
+assert.equal(endedVakhtaCalc.extraPay,Math.round(100000/(28*8)*8));
