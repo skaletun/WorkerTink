@@ -15,7 +15,7 @@ if(!app.includes('</div>\n</V7Shell>')) throw new Error('v7 page container is no
 if(!app.includes("message.includes('UNAUTHORIZED')||message.includes('HTTP_401')")) throw new Error('expired-session recovery is missing');
 if(!app.includes("directoryToken:'',onePassEnabled:false")) throw new Error('expired-session recovery does not clear credentials');
 
-if(!network.includes('let coreFailed=0')) throw new Error('network refresh failure isolation is missing');
+if(!network.includes('Promise.allSettled([getNetworkHome(token)')) throw new Error('network refresh failure isolation is missing');
 if(!network.includes('try{const savedRows=await getSavedNetworkPosts(token);setSaved(savedRows.posts)}catch{setSaved([])}')) throw new Error('saved posts must be optional during network refresh');
 if(network.includes('Promise.all([getNetworkHome(token),import(\'./directory\').then(m=>m.getSocialFeed(token,60)),getSavedNetworkPosts(token)])')) throw new Error('network refresh still fails atomically on saved posts');
 
