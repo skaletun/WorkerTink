@@ -16,6 +16,7 @@ export type SearchResult={profile:UserProfile};
 export type DirectoryFriend={profile:UserProfile;addedAt:number;lastSeen:number;online:boolean};
 export type ChatMute={peerId:string;mutedUntil:number|null};
 export type AdminProfile=UserProfile & {createdAt:number;updatedAt:number;lastSeen:number;online:boolean};
+export type VerificationRequest={id:string;profile:UserProfile;status:'pending'|'approved'|'rejected';note:string;createdAt:number;reviewedAt:number|null};
 export type RegisterResult={profile:UserProfile;token:string;security?:{pinSet:boolean;onePassAvailable:boolean}};
 export type SetupData={salary:number;taxRate:number;stage:number;vacTotal:number;startDate:string;scheduleType:State['scheduleType'];scheduleShift:State['scheduleShift'];scheduleVakhtaMonths:number;schedulePairType:State['schedulePairType'];holidayCoeff:number;nightExtraPercent:number};
 export type LoginResult={profile:UserProfile;token:string;setup:SetupData|null;security:{pinSet:boolean;onePassAvailable:boolean}};
@@ -23,6 +24,8 @@ export type RequestResult={request:FriendRequest};
 
 export function searchUser(profileId:string){return request<SearchResult>(`/profiles/${encodeURIComponent(profileId.trim())}`)}
 export function getUserByUsername(username:string){return request<SearchResult>(`/user?username=${encodeURIComponent(username.replace(/^@/,''))}`)}
+export function getOwnVerificationStatus(token:string){return request<{status:'none'|'pending'|'approved'|'rejected';requestId:string|null}>(`/verification/status`,{headers:{Authorization:`Bearer ${token}`}})}
+export function submitVerificationRequest(note:string,token:string){return request<{request:VerificationRequest}>(`/verification/request`,{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({note})})}
 export function checkUsername(username:string){return request<{valid:boolean;available:boolean}>(`/username/check?username=${encodeURIComponent(username.replace(/^@/,''))}`)}
 export function updateUsername(username:string,token:string){return request<SearchResult>('/profiles',{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({profile:{username}})})}
 export function registerProfile(profile:UserProfile,pin:string){return request<RegisterResult>('/profiles',{method:'POST',body:JSON.stringify({profile,pin})})}
@@ -45,7 +48,11 @@ export function removeOnePassDevice(id:string,token:string){return request<{ok:b
 export function removeOnePass(token:string){return request<{ok:boolean}>('/auth/onepass',{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
 export function heartbeatPresence(token:string){return request<{ok:boolean;lastSeen:number}>('/presence/heartbeat',{method:'POST',headers:{Authorization:`Bearer ${token}`}})}
 export function getDirectoryFriends(token:string){return request<{friends:DirectoryFriend[]}>('/friends',{headers:{Authorization:`Bearer ${token}`}})}
-export function getAdminOverview(token:string){return request<{stats:{profiles:number;friendships:number;pendingRequests:number}}>('/admin/overview',{headers:{Authorization:`Bearer ${token}`}})}
+export function getAdminOverview(token:string){return request<{stats:{profiles:number;friendships:number;pendingRequests:number;pendingVerification:number;official:number;verified:number;posts:number;communities:number;channels:number;messages:number;media:number}}>('/admin/overview',{headers:{Authorization:`Bearer ${token}`}})}
+export function getAdminVerification(token:string){return request<{requests:VerificationRequest[]}>(`/admin/verification`,{headers:{Authorization:`Bearer ${token}`}})}
+export function reviewVerification(id:string,action:'approve'|'reject',token:string,note=''){return request<{ok:boolean;request:VerificationRequest}>(`/admin/verification/${encodeURIComponent(id)}/${action}`,{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({note})})}
+export function setOfficialStatus(profileId:string,official:boolean,token:string){return request<{ok:boolean;profile:UserProfile}>(`/admin/profiles/${encodeURIComponent(profileId)}/official`,{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({official})})}
+export function getAdminSpaces(token:string){return request<{communities:unknown[];channels:unknown[]}>(`/admin/spaces`,{headers:{Authorization:`Bearer ${token}`}})}
 export function getAdminProfiles(token:string,query=''){return request<{profiles:AdminProfile[]}>(`/admin/profiles?query=${encodeURIComponent(query)}`,{headers:{Authorization:`Bearer ${token}`}})}
 export function getAdminProfileDetail(profileId:string,token:string){return request<{profile:AdminProfile;stats:{friends:number;requests:number;onePass:number;blocks:number;media:number};devices:{id:string;deviceName:string;deviceType:string;backedUp:boolean;createdAt:number;updatedAt:number}[]}>(`/admin/profiles/${encodeURIComponent(profileId)}`,{headers:{Authorization:`Bearer ${token}`}})}
 export function revokeAdminSession(profileId:string,token:string){return request<{ok:boolean}>(`/admin/profiles/${encodeURIComponent(profileId)}/revoke`,{method:'POST',headers:{Authorization:`Bearer ${token}`}})}
