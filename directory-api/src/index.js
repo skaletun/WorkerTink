@@ -288,10 +288,10 @@ async function authProfile(request, env) {
   const session = await env.DB.prepare('SELECT profile_id,session_id,device_name FROM auth_sessions WHERE token_hash = ?1 AND expires_at > ?2').bind(tokenHash,Date.now()).first();
   if (session) {
     await env.DB.prepare('UPDATE auth_sessions SET last_seen = ?1 WHERE token_hash = ?2').bind(Date.now(), tokenHash).run();
-    return env.DB.prepare('SELECT wtink_id, name, position, avatar, banner, username, is_dev, is_admin, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE wtink_id = ?1').bind(session.profile_id).first();
+    return env.DB.prepare('SELECT wtink_id, name, position, avatar, banner, username, is_dev, is_admin, is_official, is_verified, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE wtink_id = ?1').bind(session.profile_id).first();
   }
   // Backward compatibility for the original single-token sessions.
-  return env.DB.prepare('SELECT wtink_id, name, position, avatar, username, is_dev, is_admin, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE token_hash = ?1').bind(tokenHash).first();
+  return env.DB.prepare('SELECT wtink_id, name, position, avatar, username, is_dev, is_admin, is_official, is_verified, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE token_hash = ?1').bind(tokenHash).first();
 }
 
 
@@ -299,6 +299,7 @@ const DEFAULT_PUSH_PREFERENCES = {friendRequests:true,friendAccepted:true,messag
 function cleanPushPreferences(value) {
   const input = value && typeof value === 'object' ? value : {};
   return {
+    enabled: input.enabled !== false,
     friendRequests: input.friendRequests !== false,
     friendAccepted: input.friendAccepted !== false,
     messages: input.messages !== false,
@@ -383,8 +384,8 @@ async function loadRequest(env, id) {
   return env.DB.prepare(`
     SELECT
       r.id, r.sender_id, r.receiver_id, r.status, r.created_at, r.updated_at,
-      s.wtink_id AS s_id, s.name AS s_name, s.position AS s_position, s.avatar AS s_avatar, s.is_dev AS s_is_dev, s.is_admin AS s_is_admin,
-      t.wtink_id AS t_id, t.name AS t_name, t.position AS t_position, t.avatar AS t_avatar, t.is_dev AS t_is_dev, t.is_admin AS t_is_admin
+      s.wtink_id AS s_id, s.name AS s_name, s.position AS s_position, s.avatar AS s_avatar, s.banner AS s_banner, s.username AS s_username, s.is_dev AS s_is_dev, s.is_admin AS s_is_admin, s.is_official AS s_is_official, s.is_verified AS s_is_verified,
+      t.wtink_id AS t_id, t.name AS t_name, t.position AS t_position, t.avatar AS t_avatar, t.banner AS t_banner, t.username AS t_username, t.is_dev AS t_is_dev, t.is_admin AS t_is_admin, t.is_official AS t_is_official, t.is_verified AS t_is_verified
     FROM friend_requests r
     JOIN profiles s ON s.wtink_id = r.sender_id
     JOIN profiles t ON t.wtink_id = r.receiver_id
@@ -398,8 +399,12 @@ function profileFromJoined(row, prefix) {
     name: row[`${prefix}_name`],
     position: row[`${prefix}_position`],
     avatar: row[`${prefix}_avatar`],
+    banner: row[`${prefix}_banner`],
+    username: row[`${prefix}_username`],
     is_dev: row[`${prefix}_is_dev`],
-    is_admin: row[`${prefix}_is_admin`]
+    is_admin: row[`${prefix}_is_admin`],
+    is_official: row[`${prefix}_is_official`],
+    is_verified: row[`${prefix}_is_verified`]
   };
 }
 
@@ -423,8 +428,8 @@ async function loadPeerSession(env, id) {
   return env.DB.prepare(`
     SELECT
       p.id, p.initiator_id, p.receiver_id, p.offer_sdp, p.answer_sdp, p.status, p.created_at, p.updated_at, p.expires_at,
-      s.wtink_id AS s_id, s.name AS s_name, s.position AS s_position, s.avatar AS s_avatar, s.is_dev AS s_is_dev, s.is_admin AS s_is_admin,
-      t.wtink_id AS t_id, t.name AS t_name, t.position AS t_position, t.avatar AS t_avatar, t.is_dev AS t_is_dev, t.is_admin AS t_is_admin
+      s.wtink_id AS s_id, s.name AS s_name, s.position AS s_position, s.avatar AS s_avatar, s.banner AS s_banner, s.username AS s_username, s.is_dev AS s_is_dev, s.is_admin AS s_is_admin, s.is_official AS s_is_official, s.is_verified AS s_is_verified,
+      t.wtink_id AS t_id, t.name AS t_name, t.position AS t_position, t.avatar AS t_avatar, t.banner AS t_banner, t.username AS t_username, t.is_dev AS t_is_dev, t.is_admin AS t_is_admin, t.is_official AS t_is_official, t.is_verified AS t_is_verified
     FROM peer_sessions p
     JOIN profiles s ON s.wtink_id = p.initiator_id
     JOIN profiles t ON t.wtink_id = p.receiver_id
@@ -595,16 +600,16 @@ async function handle(request, env) {
     if(!q)return json({messages:[]},200,origin);
     const peer=await env.DB.prepare('SELECT 1 FROM profiles WHERE wtink_id=?1').bind(peerId).first();
     if(!peer)return json({error:'PROFILE_NOT_FOUND'},404,origin);
-    const rows=await env.DB.prepare("SELECT id,from_id,to_id,body,kind,mime,name,created_at,read_at,edited_at,deleted_at,reply_to_id,reply_preview,note_date,note_shift FROM social_messages WHERE ((from_id=?1 AND to_id=?2) OR (from_id=?2 AND to_id=?1)) AND deleted_at IS NULL AND lower(COALESCE(reply_preview,'')) LIKE lower(?3) ORDER BY created_at DESC LIMIT ?4").bind(owner.wtink_id,peerId,'%'+q+'%',limit).all();
-    return json({messages:(rows.results||[]).map(m=>({id:m.id,from:displayId(m.from_id),to:displayId(m.to_id),body:m.body,kind:m.kind,mime:m.mime,name:m.name,createdAt:m.created_at,readAt:m.read_at,editedAt:m.edited_at,deletedAt:m.deleted_at,replyToId:m.reply_to_id,replyPreview:m.reply_preview,noteDate:m.note_date,noteShift:m.note_shift}))},200,origin);
+    const rows=await env.DB.prepare("SELECT id,sender_id,receiver_id,body,kind,mime,name,created_at,read_at,edited_at,deleted_at,reply_receiver_id,reply_preview,note_date,note_shift FROM social_messages WHERE ((sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1)) AND deleted_at IS NULL AND lower(COALESCE(reply_preview,'')) LIKE lower(?3) ORDER BY created_at DESC LIMIT ?4").bind(owner.wtink_id,peerId,'%'+q+'%',limit).all();
+    return json({messages:(rows.results||[]).map(m=>({id:m.id,from:displayId(m.sender_id),to:displayId(m.receiver_id),body:m.body,kind:m.kind,mime:m.mime,name:m.name,createdAt:m.created_at,readAt:m.read_at,editedAt:m.edited_at,deletedAt:m.deleted_at,replyToId:m.reply_receiver_id,replyPreview:m.reply_preview,noteDate:m.note_date,noteShift:m.note_shift}))},200,origin);
   }
   const chatReactionMatch = path.match(/^\/chat\/messages\/([^/]+)\/reactions$/);
   if (chatReactionMatch && request.method === 'GET') {
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
     const messageId=decodeURIComponent(chatReactionMatch[1]);
-    const message=await env.DB.prepare('SELECT id,from_id,to_id FROM social_messages WHERE id=?1').bind(messageId).first();
+    const message=await env.DB.prepare('SELECT id,sender_id,receiver_id FROM social_messages WHERE id=?1').bind(messageId).first();
     if(!message)return json({error:'MESSAGE_NOT_FOUND'},404,origin);
-    if(message.from_id!==owner.wtink_id && message.to_id!==owner.wtink_id)return json({error:'FORBIDDEN'},403,origin);
+    if(message.sender_id!==owner.wtink_id && message.receiver_id!==owner.wtink_id)return json({error:'FORBIDDEN'},403,origin);
     const rows=await env.DB.prepare('SELECT emoji,profile_id FROM chat_message_reactions WHERE message_id=?1 ORDER BY created_at ASC').bind(messageId).all();
     return json({reactions:(rows.results||[]).map(r=>({emoji:r.emoji,profileId:displayId(r.profile_id)}))},200,origin);
   }
@@ -613,9 +618,9 @@ async function handle(request, env) {
     const messageId=decodeURIComponent(chatReactionMatch[1]); const input=await body(request);
     const emoji=cleanText(input?.emoji,16);
     if(!emoji)return json({error:'INVALID_REACTION'},400,origin);
-    const message=await env.DB.prepare('SELECT id,from_id,to_id FROM social_messages WHERE id=?1').bind(messageId).first();
+    const message=await env.DB.prepare('SELECT id,sender_id,receiver_id FROM social_messages WHERE id=?1').bind(messageId).first();
     if(!message)return json({error:'MESSAGE_NOT_FOUND'},404,origin);
-    if(message.from_id!==owner.wtink_id && message.to_id!==owner.wtink_id)return json({error:'FORBIDDEN'},403,origin);
+    if(message.sender_id!==owner.wtink_id && message.receiver_id!==owner.wtink_id)return json({error:'FORBIDDEN'},403,origin);
     const now=Date.now();
     await env.DB.prepare('INSERT INTO chat_message_reactions(message_id,profile_id,emoji,created_at) VALUES(?1,?2,?3,?4) ON CONFLICT(message_id,profile_id) DO UPDATE SET emoji=excluded.emoji,created_at=excluded.created_at').bind(messageId,owner.wtink_id,emoji,now).run();
     return json({ok:true,reaction:{emoji,profileId:displayId(owner.wtink_id)}},200,origin);
@@ -633,8 +638,8 @@ async function handle(request, env) {
     if(!validId(peerId))return json({error:'INVALID_ID'},400,origin);
     const peer=await env.DB.prepare('SELECT wtink_id FROM profiles WHERE wtink_id=?1').bind(peerId).first();
     if(!peer)return json({error:'PROFILE_NOT_FOUND'},404,origin);
-    const rows=await env.DB.prepare('SELECT p.message_id,p.profile_id,p.created_at,m.sender_id,m.receiver_id,m.body,m.kind,mime,name,m.created_at AS message_created_at,m.reply_to_id,m.reply_preview,m.note_date,m.note_shift FROM chat_message_pins p JOIN social_messages m ON m.id=p.message_id WHERE ((m.sender_id=?1 AND m.receiver_id=?2) OR (m.sender_id=?2 AND m.receiver_id=?1)) ORDER BY p.created_at DESC LIMIT 100').bind(owner.wtink_id,peerId).all();
-    return json({pins:(rows.results||[]).map(r=>({messageId:r.message_id,pinnedBy:displayId(r.profile_id),pinnedAt:Number(r.created_at),message:{id:r.message_id,from:displayId(r.sender_id),to:displayId(r.receiver_id),body:r.body,kind:r.kind||'text',mime:r.mime||null,name:r.name||null,createdAt:Number(r.message_created_at),replyToId:r.reply_to_id||null,replyPreview:r.reply_preview||null,noteDate:r.note_date||null,noteShift:r.note_shift||null}}))},200,origin);
+    const rows=await env.DB.prepare('SELECT p.message_id,p.profile_id,p.created_at,m.sender_id,m.receiver_id,m.body,m.kind,mime,name,m.created_at AS message_created_at,m.reply_receiver_id,m.reply_preview,m.note_date,m.note_shift FROM chat_message_pins p JOIN social_messages m ON m.id=p.message_id WHERE ((m.sender_id=?1 AND m.receiver_id=?2) OR (m.sender_id=?2 AND m.receiver_id=?1)) ORDER BY p.created_at DESC LIMIT 100').bind(owner.wtink_id,peerId).all();
+    return json({pins:(rows.results||[]).map(r=>({messageId:r.message_id,pinnedBy:displayId(r.profile_id),pinnedAt:Number(r.created_at),message:{id:r.message_id,from:displayId(r.sender_id),to:displayId(r.receiver_id),body:r.body,kind:r.kind||'text',mime:r.mime||null,name:r.name||null,createdAt:Number(r.message_created_at),replyToId:r.reply_receiver_id||null,replyPreview:r.reply_preview||null,noteDate:r.note_date||null,noteShift:r.note_shift||null}}))},200,origin);
   }
   const chatPinMatch = path.match(/^\/chat\/messages\/([^/]+)\/pin$/);
   if (chatPinMatch && (request.method === 'PUT' || request.method === 'DELETE')) {
@@ -1029,8 +1034,10 @@ async function handle(request, env) {
     const target = normalizeId(input?.to);
     const kind = ['message','friendRequest','friendAccepted'].includes(String(input?.kind)) ? input.kind : '';
     if (!validId(target) || !kind || target === owner.wtink_id) return json({error:'INVALID_PUSH_EVENT'},400,origin);
-    const friend = await env.DB.prepare(`SELECT 1 FROM friend_requests WHERE status='accepted' AND ((sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1)) LIMIT 1`).bind(owner.wtink_id,target).first();
-    if (!friend) return json({error:'NOT_FRIENDS'},403,origin);
+    const relation = kind === 'friendRequest'
+      ? await env.DB.prepare(`SELECT 1 FROM friend_requests WHERE status='pending' AND sender_id=?1 AND receiver_id=?2 LIMIT 1`).bind(owner.wtink_id,target).first()
+      : await env.DB.prepare(`SELECT 1 FROM friend_requests WHERE status='accepted' AND ((sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1)) LIMIT 1`).bind(owner.wtink_id,target).first();
+    if (!relation) return json({error:kind==='friendRequest'?'REQUEST_NOT_FOUND':'NOT_FRIENDS'},403,origin);
     const titles={message:'Новое сообщение',friendRequest:'Новая заявка в друзья',friendAccepted:'Заявка принята'};
     const bodies={message:`Новое сообщение от ${displayId(owner.wtink_id)}`,friendRequest:`${owner.name} отправил(а) вам заявку в друзья`,friendAccepted:`${owner.name} принял(а) вашу заявку в друзья`};
     await notifyProfile(env,target,kind,{title:titles[kind],body:bodies[kind],url:'./?tab=friends',tag:`workertink-${kind}-${owner.wtink_id}`,urgency:kind==='message'?'high':'normal'});
@@ -1085,8 +1092,8 @@ async function handle(request, env) {
     const rows = await env.DB.prepare(`
       SELECT
         r.id, r.sender_id, r.receiver_id, r.status, r.created_at, r.updated_at,
-        s.wtink_id AS s_id, s.name AS s_name, s.position AS s_position, s.avatar AS s_avatar, s.is_dev AS s_is_dev, s.is_admin AS s_is_admin,
-        t.wtink_id AS t_id, t.name AS t_name, t.position AS t_position, t.avatar AS t_avatar, t.is_dev AS t_is_dev, t.is_admin AS t_is_admin
+        s.wtink_id AS s_id, s.name AS s_name, s.position AS s_position, s.avatar AS s_avatar, s.banner AS s_banner, s.username AS s_username, s.is_dev AS s_is_dev, s.is_admin AS s_is_admin, s.is_official AS s_is_official, s.is_verified AS s_is_verified,
+        t.wtink_id AS t_id, t.name AS t_name, t.position AS t_position, t.avatar AS t_avatar, t.banner AS t_banner, t.username AS t_username, t.is_dev AS t_is_dev, t.is_admin AS t_is_admin, t.is_official AS t_is_official, t.is_verified AS t_is_verified
       FROM friend_requests r
       JOIN profiles s ON s.wtink_id = r.sender_id
       JOIN profiles t ON t.wtink_id = r.receiver_id
@@ -1202,8 +1209,8 @@ async function handle(request, env) {
     const rows = await env.DB.prepare(`
       SELECT
         p.id, p.initiator_id, p.receiver_id, p.offer_sdp, p.answer_sdp, p.status, p.created_at, p.updated_at, p.expires_at,
-        s.wtink_id AS s_id, s.name AS s_name, s.position AS s_position, s.avatar AS s_avatar, s.is_dev AS s_is_dev, s.is_admin AS s_is_admin,
-        t.wtink_id AS t_id, t.name AS t_name, t.position AS t_position, t.avatar AS t_avatar, t.is_dev AS t_is_dev, t.is_admin AS t_is_admin
+        s.wtink_id AS s_id, s.name AS s_name, s.position AS s_position, s.avatar AS s_avatar, s.banner AS s_banner, s.username AS s_username, s.is_dev AS s_is_dev, s.is_admin AS s_is_admin, s.is_official AS s_is_official, s.is_verified AS s_is_verified,
+        t.wtink_id AS t_id, t.name AS t_name, t.position AS t_position, t.avatar AS t_avatar, t.banner AS t_banner, t.username AS t_username, t.is_dev AS t_is_dev, t.is_admin AS t_is_admin, t.is_official AS t_is_official, t.is_verified AS t_is_verified
       FROM peer_sessions p
       JOIN profiles s ON s.wtink_id = p.initiator_id
       JOIN profiles t ON t.wtink_id = p.receiver_id
@@ -1399,8 +1406,8 @@ async function handle(request, env) {
     const friend=await env.DB.prepare(`SELECT 1 FROM friend_requests WHERE status='accepted' AND ((sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1)) LIMIT 1`).bind(owner.wtink_id,target).first(); if(!friend)return json({error:'NOT_FRIENDS'},403,origin);
     const now=Date.now();
     await env.DB.prepare('UPDATE social_messages SET read_at=?1 WHERE receiver_id=?2 AND sender_id=?3 AND read_at IS NULL AND deleted_at IS NULL').bind(now,owner.wtink_id,target).run();
-    const rows=await env.DB.prepare(`SELECT m.id,m.sender_id,m.receiver_id,m.body,m.kind,mime,name,m.created_at,m.read_at,m.edited_at,m.deleted_at,m.reply_to_id,m.reply_preview,m.note_date,m.note_shift,CASE WHEN d.message_id IS NULL THEN 0 ELSE 1 END AS deleted_for_me FROM social_messages m LEFT JOIN social_message_deletions d ON d.message_id=m.id AND d.profile_id=?1 WHERE (m.sender_id=?1 AND m.receiver_id=?2) OR (m.sender_id=?2 AND m.receiver_id=?1) ORDER BY m.created_at ASC LIMIT 500`).bind(owner.wtink_id,target).all();
-    return json({messages:(rows.results||[]).map(r=>({id:r.id,from:displayId(r.sender_id),to:displayId(r.receiver_id),body:r.body,kind:r.kind||'text',mime:r.mime||null,name:r.name||null,createdAt:Number(r.created_at),readAt:r.read_at?Number(r.read_at):null,editedAt:r.edited_at?Number(r.edited_at):null,deletedAt:r.deleted_at?Number(r.deleted_at):null,replyToId:r.reply_to_id||null,replyPreview:r.reply_preview||null,noteDate:r.note_date||null,noteShift:r.note_shift||null,deletedForMe:Boolean(r.deleted_for_me)}))},200,origin);
+    const rows=await env.DB.prepare(`SELECT m.id,m.sender_id,m.receiver_id,m.body,m.kind,mime,name,m.created_at,m.read_at,m.edited_at,m.deleted_at,m.reply_receiver_id,m.reply_preview,m.note_date,m.note_shift,CASE WHEN d.message_id IS NULL THEN 0 ELSE 1 END AS deleted_for_me FROM social_messages m LEFT JOIN social_message_deletions d ON d.message_id=m.id AND d.profile_id=?1 WHERE (m.sender_id=?1 AND m.receiver_id=?2) OR (m.sender_id=?2 AND m.receiver_id=?1) ORDER BY m.created_at ASC LIMIT 500`).bind(owner.wtink_id,target).all();
+    return json({messages:(rows.results||[]).map(r=>({id:r.id,from:displayId(r.sender_id),to:displayId(r.receiver_id),body:r.body,kind:r.kind||'text',mime:r.mime||null,name:r.name||null,createdAt:Number(r.created_at),readAt:r.read_at?Number(r.read_at):null,editedAt:r.edited_at?Number(r.edited_at):null,deletedAt:r.deleted_at?Number(r.deleted_at):null,replyToId:r.reply_receiver_id||null,replyPreview:r.reply_preview||null,noteDate:r.note_date||null,noteShift:r.note_shift||null,deletedForMe:Boolean(r.deleted_for_me)}))},200,origin);
   }
   const messageAction=path.match(/^\/chat\/messages\/([^/]+)(?:\/(me|both))?$/);
   if(messageAction && request.method==='PUT' && !messageAction[2]){
@@ -1424,7 +1431,7 @@ async function handle(request, env) {
     const friend=await env.DB.prepare(`SELECT 1 FROM friend_requests WHERE status='accepted' AND ((sender_id=?1 AND receiver_id=?2) OR (sender_id=?2 AND receiver_id=?1)) LIMIT 1`).bind(owner.wtink_id,target).first(); if(!friend)return json({error:'NOT_FRIENDS'},403,origin);
     if(replyToId){const replyRow=await env.DB.prepare('SELECT 1 FROM social_messages WHERE id=?1 AND ((sender_id=?2 AND receiver_id=?3) OR (sender_id=?3 AND receiver_id=?2))').bind(replyToId,owner.wtink_id,target).first();if(!replyRow)return json({error:'INVALID_REPLY'},400,origin)}
     const id=crypto.randomUUID(),now=Date.now(); await env.DB.prepare('INSERT INTO social_messages (id,sender_id,receiver_id,body,kind,mime,name,created_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8)').bind(id,owner.wtink_id,target,text,kind,mime,name,now).run();
-    await env.DB.prepare('UPDATE social_messages SET reply_to_id=?1,reply_preview=?2,note_date=?3,note_shift=?4 WHERE id=?5').bind(replyToId,replyPreview,noteDate,noteShift,id).run();
+    await env.DB.prepare('UPDATE social_messages SET reply_receiver_id=?1,reply_preview=?2,note_date=?3,note_shift=?4 WHERE id=?5').bind(replyToId,replyPreview,noteDate,noteShift,id).run();
     await createSocialNotification(env,target,owner.wtink_id,'message',id,'Новое сообщение',`${owner.name}: ${kind==='text'?text.slice(0,120):kind==='note'?'Заметка смены':'Вложение'}`,`./?tab=chat&chatWith=${encodeURIComponent(owner.wtink_id)}`);
     await notifyProfile(env,target,'message',{actorId:owner.wtink_id,title:`Сообщение от ${owner.name}`,body:kind==='text'?text.slice(0,120):kind==='note'?'Заметка смены':'Новое зашифрованное вложение',url:'./?tab=chat',tag:`wtink-message-${id}`,urgency:'high'});
     return json({ok:true,message:{id,from:displayId(owner.wtink_id),to:displayId(target),body:text,kind,mime,name,createdAt:now,readAt:null,editedAt:null,deletedAt:null,replyToId,replyPreview,noteDate,noteShift}},201,origin);
@@ -1480,10 +1487,10 @@ async function handle(request, env) {
   }
   const groupMessagesMatch=path.match(/^\/chat\/groups\/([^/]+)\/messages$/);
   if(groupMessagesMatch && request.method==='GET'){
-    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const id=decodeURIComponent(groupMessagesMatch[1]); const member=await env.DB.prepare('SELECT 1 FROM chat_group_members WHERE group_id=?1 AND profile_id=?2').bind(id,owner.wtink_id).first(); if(!member)return json({error:'NOT_GROUP_MEMBER'},403,origin); await env.DB.prepare('UPDATE chat_group_messages SET read_at=?1 WHERE group_id=?2 AND sender_id<>?3 AND read_at IS NULL').bind(Date.now(),id,owner.wtink_id).run(); const rows=await env.DB.prepare(`SELECT m.id,m.sender_id,m.body,m.kind,m.mime,m.name,m.created_at,m.read_at,m.edited_at,m.deleted_at,m.reply_to_id,m.reply_preview,CASE WHEN d.message_id IS NULL THEN 0 ELSE 1 END AS deleted_for_me FROM chat_group_messages m LEFT JOIN chat_group_message_deletions d ON d.message_id=m.id AND d.profile_id=?2 WHERE m.group_id=?1 ORDER BY m.created_at ASC LIMIT 1000`).bind(id,owner.wtink_id).all(); return json({messages:(rows.results||[]).map(r=>({id:r.id,from:displayId(r.sender_id),to:id,body:r.body,kind:r.kind,mime:r.mime||null,name:r.name||null,createdAt:Number(r.created_at),readAt:r.read_at?Number(r.read_at):null,editedAt:r.edited_at?Number(r.edited_at):null,deletedAt:r.deleted_at?Number(r.deleted_at):null,replyToId:r.reply_to_id||null,replyPreview:r.reply_preview||null,deletedForMe:Boolean(r.deleted_for_me)}))},200,origin);
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const id=decodeURIComponent(groupMessagesMatch[1]); const member=await env.DB.prepare('SELECT 1 FROM chat_group_members WHERE group_id=?1 AND profile_id=?2').bind(id,owner.wtink_id).first(); if(!member)return json({error:'NOT_GROUP_MEMBER'},403,origin); await env.DB.prepare('UPDATE chat_group_messages SET read_at=?1 WHERE group_id=?2 AND sender_id<>?3 AND read_at IS NULL').bind(Date.now(),id,owner.wtink_id).run(); const rows=await env.DB.prepare(`SELECT m.id,m.sender_id,m.body,m.kind,m.mime,m.name,m.created_at,m.read_at,m.edited_at,m.deleted_at,m.reply_receiver_id,m.reply_preview,CASE WHEN d.message_id IS NULL THEN 0 ELSE 1 END AS deleted_for_me FROM chat_group_messages m LEFT JOIN chat_group_message_deletions d ON d.message_id=m.id AND d.profile_id=?2 WHERE m.group_id=?1 ORDER BY m.created_at ASC LIMIT 1000`).bind(id,owner.wtink_id).all(); return json({messages:(rows.results||[]).map(r=>({id:r.id,from:displayId(r.sender_id),to:id,body:r.body,kind:r.kind,mime:r.mime||null,name:r.name||null,createdAt:Number(r.created_at),readAt:r.read_at?Number(r.read_at):null,editedAt:r.edited_at?Number(r.edited_at):null,deletedAt:r.deleted_at?Number(r.deleted_at):null,replyToId:r.reply_receiver_id||null,replyPreview:r.reply_preview||null,deletedForMe:Boolean(r.deleted_for_me)}))},200,origin);
   }
   if(groupMessagesMatch && request.method==='POST'){
-    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const id=decodeURIComponent(groupMessagesMatch[1]); const member=await env.DB.prepare('SELECT 1 FROM chat_group_members WHERE group_id=?1 AND profile_id=?2').bind(id,owner.wtink_id).first(); if(!member)return json({error:'NOT_GROUP_MEMBER'},403,origin); const input=await body(request); const kind=['text','voice','image','video','file','note'].includes(String(input?.kind))?String(input.kind):'text'; const bodyText=cleanText(input?.body,28000000); if(!bodyText)return json({error:'INVALID_MESSAGE'},400,origin); const msgId=crypto.randomUUID(),now=Date.now(); await env.DB.prepare('INSERT INTO chat_group_messages(id,group_id,sender_id,body,kind,mime,name,created_at,reply_to_id,reply_preview) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)').bind(msgId,id,owner.wtink_id,bodyText,kind,cleanText(input?.mime,120)||null,cleanText(input?.name,160)||null,now,input?.replyToId||null,cleanText(input?.replyPreview,500)).run(); const recipients=await env.DB.prepare('SELECT profile_id FROM chat_group_members WHERE group_id=?1 AND profile_id<>?2').bind(id,owner.wtink_id).all(); for(const r of recipients.results||[]) {await createSocialNotification(env,r.profile_id,owner.wtink_id,'groupMessage',msgId,`Новое сообщение в группе`,`Новое сообщение от ${owner.name}`,`./chat/group/${encodeURIComponent(id)}`); await notifyProfile(env,r.profile_id,'groupMessage',{actorId:owner.wtink_id,title:`${owner.name} в группе`,body:kind==='text'?bodyText.slice(0,120):'Новое вложение',url:`./?tab=chat&group=${encodeURIComponent(id)}`,tag:`wtink-group-${id}`,urgency:'high'});} return json({ok:true,message:{id,from:displayId(owner.wtink_id),to:id,body:bodyText,kind,mime:input?.mime||null,name:input?.name||null,createdAt:now,readAt:null}},201,origin);
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const id=decodeURIComponent(groupMessagesMatch[1]); const member=await env.DB.prepare('SELECT 1 FROM chat_group_members WHERE group_id=?1 AND profile_id=?2').bind(id,owner.wtink_id).first(); if(!member)return json({error:'NOT_GROUP_MEMBER'},403,origin); const input=await body(request); const kind=['text','voice','image','video','file','note'].includes(String(input?.kind))?String(input.kind):'text'; const bodyText=cleanText(input?.body,28000000); if(!bodyText)return json({error:'INVALID_MESSAGE'},400,origin); const msgId=crypto.randomUUID(),now=Date.now(); await env.DB.prepare('INSERT INTO chat_group_messages(id,group_id,sender_id,body,kind,mime,name,created_at,reply_receiver_id,reply_preview) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)').bind(msgId,id,owner.wtink_id,bodyText,kind,cleanText(input?.mime,120)||null,cleanText(input?.name,160)||null,now,input?.replyToId||null,cleanText(input?.replyPreview,500)).run(); const recipients=await env.DB.prepare('SELECT profile_id FROM chat_group_members WHERE group_id=?1 AND profile_id<>?2').bind(id,owner.wtink_id).all(); for(const r of recipients.results||[]) {await createSocialNotification(env,r.profile_id,owner.wtink_id,'groupMessage',msgId,`Новое сообщение в группе`,`Новое сообщение от ${owner.name}`,`./chat/group/${encodeURIComponent(id)}`); await notifyProfile(env,r.profile_id,'groupMessage',{actorId:owner.wtink_id,title:`${owner.name} в группе`,body:kind==='text'?bodyText.slice(0,120):'Новое вложение',url:`./?tab=chat&group=${encodeURIComponent(id)}`,tag:`wtink-group-${id}`,urgency:'high'});} return json({ok:true,message:{id,from:displayId(owner.wtink_id),to:id,body:bodyText,kind,mime:input?.mime||null,name:input?.name||null,createdAt:now,readAt:null}},201,origin);
   }
   const groupClear=path.match(/^\/chat\/groups\/([^/]+)\/clear$/);
   if(groupClear && request.method==='DELETE'){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const gid=decodeURIComponent(groupClear[1]);const member=await env.DB.prepare('SELECT 1 FROM chat_group_members WHERE group_id=?1 AND profile_id=?2').bind(gid,owner.wtink_id).first();if(!member)return json({error:'NOT_GROUP_MEMBER'},403,origin);const rows=await env.DB.prepare('SELECT id FROM chat_group_messages WHERE group_id=?1').bind(gid).all();const statements=(rows.results||[]).map(r=>env.DB.prepare('INSERT OR REPLACE INTO chat_group_message_deletions(message_id,profile_id,deleted_at) VALUES(?1,?2,?3)').bind(r.id,owner.wtink_id,Date.now()));if(statements.length)await env.DB.batch(statements);return json({ok:true,count:statements.length},200,origin);}
@@ -1528,7 +1535,7 @@ async function handle(request, env) {
   }
   const channelPosts=path.match(/^\/company\/channels\/([^/]+)\/posts$/);if(channelPosts&&request.method==='GET'){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const id=decodeURIComponent(channelPosts[1]);const member=await env.DB.prepare('SELECT 1 FROM company_channel_members WHERE channel_id=?1 AND profile_id=?2').bind(id,owner.wtink_id).first();if(!member)return json({error:'FORBIDDEN'},403,origin);const rows=await env.DB.prepare(`SELECT p.id,p.body,p.created_at,p.updated_at,a.wtink_id,a.name,a.position,a.avatar,a.username,a.is_dev,a.is_admin FROM company_channel_posts p JOIN profiles a ON a.wtink_id=p.author_id WHERE p.channel_id=?1 ORDER BY p.created_at DESC LIMIT 100`).bind(id).all();return json({posts:(rows.results||[]).map(r=>({id:r.id,body:r.body,createdAt:Number(r.created_at),updatedAt:Number(r.updated_at),author:publicProfile({wtink_id:r.wtink_id,name:r.name,position:r.position,avatar:r.avatar,username:r.username,is_dev:r.is_dev,is_admin:r.is_admin})}))},200,origin)}
   if(channelPosts&&request.method==='POST'){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const id=decodeURIComponent(channelPosts[1]);const member=await env.DB.prepare(`SELECT r.permissions FROM company_channel_members m JOIN company_channel_roles r ON r.id=m.role_id WHERE m.channel_id=?1 AND m.profile_id=?2`).bind(id,owner.wtink_id).first();if(!member||!JSON.parse(member.permissions||'{}').post)return json({error:'FORBIDDEN'},403,origin);const bodyText=cleanText((await body(request))?.body,12000);if(!bodyText)return json({error:'EMPTY_POST'},400,origin);const pid=crypto.randomUUID(),now=Date.now();await env.DB.prepare('INSERT INTO company_channel_posts(id,channel_id,author_id,body,created_at,updated_at) VALUES(?1,?2,?3,?4,?5,?5)').bind(pid,id,owner.wtink_id,bodyText,now).run();return json({ok:true,id:pid,createdAt:now},201,origin)}
-  const channelRoles=path.match(/^\/company\/channels\/([^/]+)\/roles$/);if(channelRoles&&request.method==='GET'){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const rows=await env.DB.prepare('SELECT id,name,permissions,created_at FROM company_channel_roles WHERE channel_id=?1 ORDER BY created_at ASC').bind(decodeURIComponent(channelRoles[1])).all();return json({roles:(rows.results||[]).map(r=>({id:r.id,name:r.name,permissions:JSON.parse(r.permissions||'{}')}))},200,origin)}
+  const channelRoles=path.match(/^\/company\/channels\/([^/]+)\/roles$/);if(channelRoles&&request.method==='GET'){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const channelId=decodeURIComponent(channelRoles[1]);const membership=await env.DB.prepare('SELECT 1 FROM company_channel_members WHERE channel_id=?1 AND profile_id=?2').bind(channelId,owner.wtink_id).first();if(!membership)return json({error:'FORBIDDEN'},403,origin);const rows=await env.DB.prepare('SELECT id,name,permissions,created_at FROM company_channel_roles WHERE channel_id=?1 ORDER BY created_at ASC').bind(channelId).all();return json({roles:(rows.results||[]).map(r=>({id:r.id,name:r.name,permissions:JSON.parse(r.permissions||'{}')}))},200,origin)}
   if(channelRoles&&request.method==='POST'){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const id=decodeURIComponent(channelRoles[1]);const member=await env.DB.prepare(`SELECT r.permissions FROM company_channel_members m JOIN company_channel_roles r ON r.id=m.role_id JOIN company_channels c ON c.id=m.channel_id WHERE c.id=?1 AND m.profile_id=?2`).bind(id,owner.wtink_id).first();if(!member||!JSON.parse(member.permissions||'{}').manageRoles)return json({error:'FORBIDDEN'},403,origin);const input=await body(request);const name=cleanText(input?.name,60);const permissions=input?.permissions&&typeof input.permissions==='object'?input.permissions:{};if(!name)return json({error:'INVALID_ROLE'},400,origin);const rid=crypto.randomUUID();await env.DB.prepare('INSERT INTO company_channel_roles(id,channel_id,name,permissions,created_at) VALUES(?1,?2,?3,?4,?5)').bind(rid,id,name,JSON.stringify(permissions),Date.now()).run();return json({ok:true,role:{id:rid,name,permissions}},201,origin)}
   const channelRoleAction=path.match(/^\/company\/channels\/([^/]+)\/roles\/([^/]+)$/);
   if(channelRoleAction&&request.method==='PUT'){const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);const id=decodeURIComponent(channelRoleAction[1]),roleId=decodeURIComponent(channelRoleAction[2]);const member=await env.DB.prepare(`SELECT r.permissions FROM company_channel_members m JOIN company_channel_roles r ON r.id=m.role_id WHERE m.channel_id=?1 AND m.profile_id=?2`).bind(id,owner.wtink_id).first();if(!member||!JSON.parse(member.permissions||'{}').manageRoles)return json({error:'FORBIDDEN'},403,origin);const input=await body(request);const name=cleanText(input?.name,60);const permissions=input?.permissions&&typeof input.permissions==='object'?input.permissions:{};await env.DB.prepare('UPDATE company_channel_roles SET name=?1,permissions=?2 WHERE id=?3 AND channel_id=?4').bind(name||'Сотрудник',JSON.stringify(permissions),roleId,id).run();return json({ok:true},200,origin)}
@@ -1557,7 +1564,7 @@ async function handle(request, env) {
         c.name AS c_name,c.position AS c_position,c.avatar AS c_avatar,c.is_dev AS c_is_dev,c.is_admin AS c_is_admin
         FROM work_shift_swaps s JOIN profiles o ON o.wtink_id=s.owner_id LEFT JOIN profiles c ON c.wtink_id=s.claimed_by
         WHERE s.status='open' AND s.date>=?1 ORDER BY s.date ASC,s.created_at DESC LIMIT 30`).bind(new Date().toISOString().slice(0,10)).all(),
-      env.DB.prepare(`SELECT p.wtink_id,p.name,p.position,p.avatar,p.banner,p.username,p.is_dev,p.is_admin,p.last_seen,
+      env.DB.prepare(`SELECT p.wtink_id,p.name,p.position,p.avatar,p.banner,p.username,p.is_dev,p.is_admin,p.is_official,p.is_verified,p.last_seen,
         EXISTS(SELECT 1 FROM friend_requests r WHERE r.status='accepted' AND ((r.sender_id=?1 AND r.receiver_id=p.wtink_id) OR (r.sender_id=p.wtink_id AND r.receiver_id=?1))) AS connected,
         (SELECT COUNT(*) FROM friend_requests m WHERE m.status='accepted' AND ((m.sender_id=p.wtink_id AND m.receiver_id IN (SELECT CASE WHEN r.sender_id=?1 THEN r.receiver_id ELSE r.sender_id END FROM friend_requests r WHERE r.status='accepted' AND (r.sender_id=?1 OR r.receiver_id=?1))) OR (m.receiver_id=p.wtink_id AND m.sender_id IN (SELECT CASE WHEN r.sender_id=?1 THEN r.receiver_id ELSE r.sender_id END FROM friend_requests r WHERE r.status='accepted' AND (r.sender_id=?1 OR r.receiver_id=?1))))) AS mutual
         FROM profiles p WHERE p.wtink_id<>?1 ORDER BY p.last_seen DESC,p.updated_at DESC LIMIT 24`).bind(owner.wtink_id).all()
@@ -1574,7 +1581,7 @@ async function handle(request, env) {
     const owner = await authProfile(request, env); if (!owner) return json({error:'UNAUTHORIZED'},401,origin);
     const q=cleanText(new URL(request.url).searchParams.get('query'),100).replace(/^@+/, '');
     const pattern=`%${q}%`;
-    const rows=await env.DB.prepare(`SELECT p.wtink_id,p.name,p.position,p.avatar,p.banner,p.username,p.is_dev,p.is_admin,p.last_seen,
+    const rows=await env.DB.prepare(`SELECT p.wtink_id,p.name,p.position,p.avatar,p.banner,p.username,p.is_dev,p.is_admin,p.is_official,p.is_verified,p.last_seen,
       EXISTS(SELECT 1 FROM friend_requests r WHERE r.status='accepted' AND ((r.sender_id=?1 AND r.receiver_id=p.wtink_id) OR (r.sender_id=p.wtink_id AND r.receiver_id=?1))) AS connected
       FROM profiles p WHERE p.wtink_id<>?1 AND (?2='' OR p.wtink_id LIKE ?3 OR UPPER(COALESCE(p.username,'')) LIKE UPPER(?3) OR UPPER(p.name) LIKE UPPER(?3) OR UPPER(COALESCE(p.position,'')) LIKE UPPER(?3))
       ORDER BY connected DESC,p.last_seen DESC,p.updated_at DESC LIMIT 60`).bind(owner.wtink_id,q,pattern).all();
@@ -1637,7 +1644,7 @@ async function handle(request, env) {
   }
   const eventRsvp=path.match(/^\/network\/events\/([^/]+)\/rsvp$/);
   if(eventRsvp && request.method==='POST'){
-    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const id=decodeURIComponent(eventRsvp[1]); const input=await body(request); const status=['going','interested','declined'].includes(input?.status)?input.status:'going'; const event=await env.DB.prepare('SELECT id FROM social_events WHERE id=?1').bind(id).first(); if(!event)return json({error:'EVENT_NOT_FOUND'},404,origin); await env.DB.prepare('INSERT OR REPLACE INTO social_event_members(event_id,profile_id,status,created_at) VALUES (?1,?2,?3,?4)').bind(id,owner.wtink_id,status,Date.now()).run(); return json({ok:true},200,origin);
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const id=decodeURIComponent(eventRsvp[1]); const input=await body(request); const status=['going','interested','declined'].includes(input?.status)?input.status:'going'; const event=await env.DB.prepare('SELECT id,group_id FROM social_events WHERE id=?1').bind(id).first(); if(!event)return json({error:'EVENT_NOT_FOUND'},404,origin); if(event.group_id){const member=await env.DB.prepare('SELECT 1 FROM social_group_members WHERE group_id=?1 AND profile_id=?2').bind(event.group_id,owner.wtink_id).first();if(!member)return json({error:'INVITE_REQUIRED'},403,origin);} await env.DB.prepare('INSERT OR REPLACE INTO social_event_members(event_id,profile_id,status,created_at) VALUES (?1,?2,?3,?4)').bind(id,owner.wtink_id,status,Date.now()).run(); return json({ok:true},200,origin);
   }
   if (path === '/network/swaps' && request.method === 'POST') {
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const input=await body(request); const date=cleanText(input?.date,10),shift=cleanText(input?.shift,20),requestedShift=cleanText(input?.requestedShift,20),note=cleanText(input?.note,500); if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!shift||!requestedShift)return json({error:'INVALID_SHIFT_SWAP'},400,origin); const id=crypto.randomUUID(),now=Date.now(); await env.DB.prepare('INSERT INTO work_shift_swaps(id,owner_id,date,shift,requested_shift,note,status,created_at,updated_at) VALUES (?1,?2,?3,?4,?5,?6,\'open\',?7,?7)').bind(id,owner.wtink_id,date,shift,requestedShift,note,now).run(); return json({swap:{id,date,shift,requestedShift,note,status:'open',owner:publicProfile(owner),claimedBy:null,createdAt:now}},201,origin);
@@ -1760,7 +1767,7 @@ async function handle(request, env) {
     const query = String(url.searchParams.get('query') || '').trim().slice(0,120);
     const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit') || 50)));
     const pattern = `%${query}%`;
-    const rows = await env.DB.prepare(`SELECT wtink_id,name,position,avatar,is_dev,is_admin,created_at,updated_at,last_seen FROM profiles WHERE ?1 = '' OR wtink_id LIKE ?2 OR UPPER(name) LIKE UPPER(?2) OR LOWER(COALESCE(username,'')) LIKE LOWER(?2) ORDER BY updated_at DESC LIMIT ?3`).bind(query, pattern, limit).all();
+    const rows = await env.DB.prepare(`SELECT wtink_id,name,position,avatar,banner,username,is_dev,is_admin,is_official,is_verified,created_at,updated_at,last_seen FROM profiles WHERE ?1 = '' OR wtink_id LIKE ?2 OR UPPER(name) LIKE UPPER(?2) OR LOWER(COALESCE(username,'')) LIKE LOWER(?2) ORDER BY updated_at DESC LIMIT ?3`).bind(query, pattern, limit).all();
     return json({profiles:(rows.results||[]).map(row=>({...publicProfile(row),createdAt:Number(row.created_at||0),updatedAt:Number(row.updated_at||0),lastSeen:Number(row.last_seen||0),online:Number(row.last_seen||0)>=Date.now()-ONLINE_WINDOW_MS}))},200,origin);
   }
 
@@ -1844,6 +1851,8 @@ async function handle(request, env) {
         CASE WHEN r.sender_id = ?1 THEN t.username ELSE s.username END AS username,
         CASE WHEN r.sender_id = ?1 THEN t.is_dev ELSE s.is_dev END AS is_dev,
         CASE WHEN r.sender_id = ?1 THEN t.is_admin ELSE s.is_admin END AS is_admin,
+        CASE WHEN r.sender_id = ?1 THEN t.is_official ELSE s.is_official END AS is_official,
+        CASE WHEN r.sender_id = ?1 THEN t.is_verified ELSE s.is_verified END AS is_verified,
         CASE WHEN r.sender_id = ?1 THEN t.last_seen ELSE s.last_seen END AS last_seen,
         r.updated_at
       FROM friend_requests r
@@ -1853,7 +1862,7 @@ async function handle(request, env) {
       ORDER BY r.updated_at DESC
       LIMIT 200
     `).bind(owner.wtink_id).all();
-    return json({friends: (rows.results || []).map(row => ({profile: publicProfile({wtink_id: row.wtink_id, name: row.name, position: row.position, avatar: row.avatar, banner: row.banner, username: row.username, is_dev: row.is_dev, is_admin: row.is_admin}), addedAt: Number(row.updated_at || Date.now()), lastSeen: Number(row.last_seen || row.updated_at || 0), online: Number(row.last_seen || 0) >= Date.now() - ONLINE_WINDOW_MS}))}, 200, origin);
+    return json({friends: (rows.results || []).map(row => ({profile: publicProfile({wtink_id: row.wtink_id, name: row.name, position: row.position, avatar: row.avatar, banner: row.banner, username: row.username, is_dev: row.is_dev, is_admin: row.is_admin, is_official: row.is_official, is_verified: row.is_verified}), addedAt: Number(row.updated_at || Date.now()), lastSeen: Number(row.last_seen || row.updated_at || 0), online: Number(row.last_seen || 0) >= Date.now() - ONLINE_WINDOW_MS}))}, 200, origin);
   }
 
   return json({error: 'NOT_FOUND'}, 404, origin);
