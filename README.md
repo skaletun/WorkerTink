@@ -1,4 +1,4 @@
-# WorkerTink 3.0.0
+# WorkerTink 5.0.0
 
 **WorkerTink — рабочая социальная сеть и Work OS: люди, команды, коммуникации, смены, документы и личные рабочие расчёты в одном продукте.**
 
@@ -80,9 +80,9 @@ npm run desktop:dev
 npm run desktop:win
 ```
 
-Windows installer: `release/WorkerTink-3.0.0-win-x64.exe`
+Windows installer: `release/WorkerTink-5.0.0-win-x64.exe`
 
-Portable: `release/WorkerTink-3.0.0-win-x64.exe` с соответствующим portable artifact name, если выбран target portable отдельно.
+Portable: `release/WorkerTink-5.0.0-win-x64.exe` с соответствующим portable artifact name, если выбран target portable отдельно.
 
 ## Проверки
 
