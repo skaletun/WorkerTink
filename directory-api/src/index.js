@@ -747,7 +747,8 @@ async function handle(request, env) {
     try {
       await env.DB.batch([
         env.DB.prepare(`INSERT OR REPLACE INTO webauthn_credentials(id,profile_id,user_id,public_key,counter,device_type,backed_up,transports,device_name,created_at,updated_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)`).bind(credential.id,owner.wtink_id,owner.webauthn_user_id || owner.wtink_id,base64Url(credential.publicKey),credential.counter,credentialDeviceType,credentialBackedUp?1:0,JSON.stringify(credential.transports||[]),deviceName,now,now),
-        env.DB.prepare('DELETE FROM auth_challenges WHERE id = ?1').bind(challenge.id)
+        env.DB.prepare('DELETE FROM auth_challenges WHERE id = ?1').bind(challenge.id),
+        env.DB.prepare('UPDATE profiles SET is_verified = 1, updated_at = ?1 WHERE wtink_id = ?2').bind(now,owner.wtink_id)
       ]);
     } catch(error) {
       return json({error:'ONEPASS_STORAGE_FAILED',detail:String(error).slice(0,220)},500,origin);
@@ -827,12 +828,15 @@ async function handle(request, env) {
     const row=await env.DB.prepare('SELECT id FROM webauthn_credentials WHERE id=?1 AND profile_id=?2').bind(credentialId,owner.wtink_id).first();
     if(!row)return json({error:'ONEPASS_DEVICE_NOT_FOUND'},404,origin);
     await env.DB.prepare('DELETE FROM webauthn_credentials WHERE id=?1').bind(credentialId).run();
+    const remaining=await env.DB.prepare('SELECT COUNT(*) AS count FROM webauthn_credentials WHERE profile_id=?1').bind(owner.wtink_id).first();
+    if(Number(remaining?.count||0)===0) await env.DB.prepare('UPDATE profiles SET is_verified=0, updated_at=?1 WHERE wtink_id=?2').bind(Date.now(),owner.wtink_id).run();
     return json({ok:true},200,origin);
   }
   if (request.method === 'DELETE' && path === '/auth/onepass') {
     const owner=await authProfile(request,env);
     if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
     await env.DB.prepare('DELETE FROM webauthn_credentials WHERE profile_id = ?1').bind(owner.wtink_id).run();
+    await env.DB.prepare('UPDATE profiles SET is_verified=0, updated_at=?1 WHERE wtink_id=?2').bind(Date.now(),owner.wtink_id).run();
     return json({ok:true},200,origin);
   }
 
