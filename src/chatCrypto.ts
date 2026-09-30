@@ -158,26 +158,6 @@ export async function decryptChat(profileId:string,peerPublicKey:JsonWebKey,enve
 
 export async function exportPublicKey(profileId:string){return (await getChatIdentity(profileId)).publicKey}
 
-export async function createQrTransferKey(){
- const pair=await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveKey']);
- return {privateKey:pair.privateKey,publicKey:await crypto.subtle.exportKey('jwk',pair.publicKey)};
-}
-
-export async function encryptKeyTransfer(privateKey:CryptoKey,peerPublicJwk:JsonWebKey,identity:StoredIdentity){
- const peer=await crypto.subtle.importKey('jwk',peerPublicJwk,{name:'ECDH',namedCurve:'P-256'},false,[]);
- const key=await crypto.subtle.deriveKey({name:'ECDH',public:peer},privateKey,{name:'AES-GCM',length:256},false,['encrypt']);
- const iv=crypto.getRandomValues(new Uint8Array(12));
- const data=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(JSON.stringify(identity)));
- return {iv:b64(iv),data:b64(data)};
-}
-
-export async function decryptKeyTransfer(privateKey:CryptoKey,peerPublicJwk:JsonWebKey,packet:{iv:string;data:string}):Promise<StoredIdentity>{
- const peer=await crypto.subtle.importKey('jwk',peerPublicJwk,{name:'ECDH',namedCurve:'P-256'},false,[]);
- const key=await crypto.subtle.deriveKey({name:'ECDH',public:peer},privateKey,{name:'AES-GCM',length:256},false,['decrypt']);
- const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(packet.iv)},key,unb64(packet.data));
- return JSON.parse(dec.decode(plain)) as StoredIdentity;
-}
-
 export const blobToArrayBuffer=(blob:Blob)=>blob.arrayBuffer();
 export async function importIdentityPrivateKey(identity:StoredIdentity){return crypto.subtle.importKey('jwk',identity.privateKey,{name:'ECDH',namedCurve:'P-256'},false,['deriveKey'])}
 
