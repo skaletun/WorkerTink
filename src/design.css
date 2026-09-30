@@ -1305,3 +1305,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   .mobile-nav{left:5px!important;right:5px!important}
   .mobile-nav button{min-width:0!important}
 }
+
+.message-reaction-trigger{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:15px;opacity:.65}.message-reaction-trigger:hover{opacity:1}
+.message-reactions{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.message-reactions button,.reaction-picker button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 8px;cursor:pointer;font-size:12px}.message-reactions button{box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.reaction-picker{position:absolute;right:8px;bottom:42px;z-index:30;display:flex;gap:4px;padding:7px;border:1px solid var(--line);background:var(--surface);border-radius:14px;box-shadow:0 12px 30px rgba(0,0,0,.16)}.reaction-picker button{font-size:18px;border:0;background:transparent;padding:5px}.reaction-picker button:hover{background:var(--surface-2)}
+@media(max-width:767px){.reaction-picker{right:4px;bottom:38px}.message-reaction-trigger{font-size:16px}}
