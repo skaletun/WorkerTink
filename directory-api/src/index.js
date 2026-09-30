@@ -1528,7 +1528,7 @@ async function handle(request, env) {
         (SELECT COUNT(*) FROM social_group_members gm WHERE gm.group_id=g.id) AS members,
         EXISTS(SELECT 1 FROM social_group_members me WHERE me.group_id=g.id AND me.profile_id=?1) AS joined,
         CASE WHEN g.owner_id=?1 THEN 'owner' ELSE (SELECT role FROM social_group_members mr WHERE mr.group_id=g.id AND mr.profile_id=?1) END AS member_role,
-        p.name AS o_name,p.position AS o_position,p.avatar AS o_avatar,p.is_dev AS o_is_dev,p.is_admin AS o_is_admin
+        p.name AS o_name,p.position AS o_position,p.avatar AS o_avatar,p.banner AS o_banner,p.username AS o_username,p.is_dev AS o_is_dev,p.is_admin AS o_is_admin
         FROM social_groups g JOIN profiles p ON p.wtink_id=g.owner_id
         WHERE g.visibility='public' OR EXISTS(SELECT 1 FROM social_group_members gm2 WHERE gm2.group_id=g.id AND gm2.profile_id=?1)
         ORDER BY joined DESC,g.created_at DESC LIMIT 30`).bind(owner.wtink_id).all(),
@@ -1549,7 +1549,7 @@ async function handle(request, env) {
         FROM profiles p WHERE p.wtink_id<>?1 ORDER BY p.last_seen DESC,p.updated_at DESC LIMIT 24`).bind(owner.wtink_id).all()
     ]);
     return json({
-      groups:(groups.results||[]).map(r=>({id:r.id,name:r.name,slug:r.slug,description:r.description,visibility:r.visibility,icon:r.icon||'',accent:r.accent||'#2563eb',cover:r.cover||'',rules:r.rules||'',owner:socialProfile({wtink_id:r.owner_id,name:r.o_name,position:r.o_position,avatar:r.o_avatar,is_dev:r.o_is_dev,is_admin:r.o_is_admin}),members:Number(r.members||0),joined:Boolean(r.joined),role:r.member_role||undefined,createdAt:Number(r.created_at||0)})),
+      groups:(groups.results||[]).map(r=>({id:r.id,name:r.name,slug:r.slug,description:r.description,visibility:r.visibility,icon:r.icon||'',accent:r.accent||'#2563eb',cover:r.cover||'',rules:r.rules||'',owner:socialProfile({wtink_id:r.owner_id,name:r.o_name,position:r.o_position,avatar:r.o_avatar,banner:r.o_banner,username:r.o_username,is_dev:r.o_is_dev,is_admin:r.o_is_admin}),members:Number(r.members||0),joined:Boolean(r.joined),role:r.member_role||undefined,createdAt:Number(r.created_at||0)})),
       events:(events.results||[]).map(r=>({id:r.id,title:r.title,description:r.description,kind:r.kind,startsAt:Number(r.starts_at),endsAt:r.ends_at?Number(r.ends_at):null,location:r.location,owner:socialProfile({wtink_id:r.owner_id,name:r.o_name,position:r.o_position,avatar:r.o_avatar,is_dev:r.o_is_dev,is_admin:r.o_is_admin}),groupId:r.group_id||null,going:Number(r.going||0),joined:Boolean(r.joined)})),
       swaps:(swaps.results||[]).map(r=>({id:r.id,date:r.date,shift:r.shift,requestedShift:r.requested_shift,note:r.note,status:r.status,owner:socialProfile({wtink_id:r.owner_id,name:r.o_name,position:r.o_position,avatar:r.o_avatar,is_dev:r.o_is_dev,is_admin:r.o_is_admin}),claimedBy:r.claimed_by?socialProfile({wtink_id:r.claimed_by,name:r.c_name,position:r.c_position,avatar:r.c_avatar,is_dev:r.c_is_dev,is_admin:r.c_is_admin}):null,createdAt:Number(r.created_at||0)})),
       people:(people.results||[]).map(r=>({profile:socialProfile(r),online:Number(r.last_seen||0)>=Date.now()-ONLINE_WINDOW_MS,mutualFriends:Number(r.mutual||0),connected:Boolean(r.connected)}))
