@@ -1511,7 +1511,7 @@ async function handle(request, env) {
   if (path === '/network/home' && request.method === 'GET') {
     const owner = await authProfile(request, env); if (!owner) return json({error:'UNAUTHORIZED'},401,origin);
     const [groups, events, swaps, people] = await Promise.all([
-      env.DB.prepare(`SELECT g.id,g.name,g.slug,g.description,g.visibility,g.created_at,g.owner_id,
+      env.DB.prepare(`SELECT g.id,g.name,g.slug,g.description,g.visibility,g.icon,g.accent,g.cover,g.rules,g.created_at,g.owner_id,
         (SELECT COUNT(*) FROM social_group_members gm WHERE gm.group_id=g.id) AS members,
         EXISTS(SELECT 1 FROM social_group_members me WHERE me.group_id=g.id AND me.profile_id=?1) AS joined,
         CASE WHEN g.owner_id=?1 THEN 'owner' ELSE (SELECT role FROM social_group_members mr WHERE mr.group_id=g.id AND mr.profile_id=?1) END AS member_role,
@@ -1536,7 +1536,7 @@ async function handle(request, env) {
         FROM profiles p WHERE p.wtink_id<>?1 ORDER BY p.last_seen DESC,p.updated_at DESC LIMIT 24`).bind(owner.wtink_id).all()
     ]);
     return json({
-      groups:(groups.results||[]).map(r=>({id:r.id,name:r.name,slug:r.slug,description:r.description,visibility:r.visibility,owner:socialProfile({wtink_id:r.owner_id,name:r.o_name,position:r.o_position,avatar:r.o_avatar,is_dev:r.o_is_dev,is_admin:r.o_is_admin}),members:Number(r.members||0),joined:Boolean(r.joined),role:r.member_role||undefined,createdAt:Number(r.created_at||0)})),
+      groups:(groups.results||[]).map(r=>({id:r.id,name:r.name,slug:r.slug,description:r.description,visibility:r.visibility,icon:r.icon||'',accent:r.accent||'#2563eb',cover:r.cover||'',rules:r.rules||'',owner:socialProfile({wtink_id:r.owner_id,name:r.o_name,position:r.o_position,avatar:r.o_avatar,is_dev:r.o_is_dev,is_admin:r.o_is_admin}),members:Number(r.members||0),joined:Boolean(r.joined),role:r.member_role||undefined,createdAt:Number(r.created_at||0)})),
       events:(events.results||[]).map(r=>({id:r.id,title:r.title,description:r.description,kind:r.kind,startsAt:Number(r.starts_at),endsAt:r.ends_at?Number(r.ends_at):null,location:r.location,owner:socialProfile({wtink_id:r.owner_id,name:r.o_name,position:r.o_position,avatar:r.o_avatar,is_dev:r.o_is_dev,is_admin:r.o_is_admin}),groupId:r.group_id||null,going:Number(r.going||0),joined:Boolean(r.joined)})),
       swaps:(swaps.results||[]).map(r=>({id:r.id,date:r.date,shift:r.shift,requestedShift:r.requested_shift,note:r.note,status:r.status,owner:socialProfile({wtink_id:r.owner_id,name:r.o_name,position:r.o_position,avatar:r.o_avatar,is_dev:r.o_is_dev,is_admin:r.o_is_admin}),claimedBy:r.claimed_by?socialProfile({wtink_id:r.claimed_by,name:r.c_name,position:r.c_position,avatar:r.c_avatar,is_dev:r.c_is_dev,is_admin:r.c_is_admin}):null,createdAt:Number(r.created_at||0)})),
       people:(people.results||[]).map(r=>({profile:socialProfile(r),online:Number(r.last_seen||0)>=Date.now()-ONLINE_WINDOW_MS,mutualFriends:Number(r.mutual||0),connected:Boolean(r.connected)}))
@@ -1566,10 +1566,10 @@ async function handle(request, env) {
   }
   if (path === '/network/groups' && request.method === 'POST') {
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const input=await body(request);
-    const name=cleanText(input?.name,80),description=cleanText(input?.description,500),visibility=input?.visibility==='private'?'private':'public'; if(name.length<2)return json({error:'INVALID_GROUP_NAME'},400,origin);
+    const name=cleanText(input?.name,80),description=cleanText(input?.description,500),visibility=input?.visibility==='private'?'private':'public',icon=cleanText(input?.icon,4),accent=/^#[0-9a-fA-F]{6}$/.test(String(input?.accent||''))?String(input.accent):'#2563eb',cover=cleanBanner(input?.cover),rules=cleanText(input?.rules,1200); if(name.length<2)return json({error:'INVALID_GROUP_NAME'},400,origin);
     const slug=(name.toLowerCase().replace(/[^a-zа-я0-9]+/gi,'-').replace(/^-+|-+$/g,'').slice(0,50)||crypto.randomUUID().slice(0,8));
     const unique=`${slug}-${crypto.randomUUID().slice(0,6)}`; const id=crypto.randomUUID(),now=Date.now();
-    await env.DB.batch([env.DB.prepare('INSERT INTO social_groups(id,name,slug,description,owner_id,visibility,created_at,updated_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?7)').bind(id,name,unique,description,owner.wtink_id,visibility,now),env.DB.prepare('INSERT INTO social_group_members(group_id,profile_id,role,created_at) VALUES (?1,?2,?3,?4)').bind(id,owner.wtink_id,'owner',now)]);
+    await env.DB.batch([env.DB.prepare('INSERT INTO social_groups(id,name,slug,description,owner_id,visibility,icon,accent,cover,rules,created_at,updated_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?11)').bind(id,name,unique,description,owner.wtink_id,visibility,icon,accent,cover,rules,now),env.DB.prepare('INSERT INTO social_group_members(group_id,profile_id,role,created_at) VALUES (?1,?2,?3,?4)').bind(id,owner.wtink_id,'owner',now)]);
     return json({group:{id,name,slug:unique,description,visibility,owner:publicProfile(owner),members:1,joined:true,role:'owner',createdAt:now}},201,origin);
   }
   const networkGroupUpdate=path.match(/^\/network\/groups\/([^/]+)$/);
@@ -1577,10 +1577,10 @@ async function handle(request, env) {
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
     const id=decodeURIComponent(networkGroupUpdate[1]); const group=await env.DB.prepare('SELECT id,owner_id FROM social_groups WHERE id=?1').bind(id).first();
     if(!group)return json({error:'GROUP_NOT_FOUND'},404,origin); if(group.owner_id!==owner.wtink_id && !roleFlags(owner).isAdmin)return json({error:'FORBIDDEN'},403,origin);
-    const input=await body(request); const name=cleanText(input?.name,80),description=cleanText(input?.description,500),visibility=input?.visibility==='private'?'private':'public';
+    const input=await body(request); const name=cleanText(input?.name,80),description=cleanText(input?.description,500),visibility=input?.visibility==='private'?'private':'public',icon=cleanText(input?.icon,4),accent=/^#[0-9a-fA-F]{6}$/.test(String(input?.accent||''))?String(input.accent):'#2563eb',cover=cleanBanner(input?.cover),rules=cleanText(input?.rules,1200);
     if(name.length<2)return json({error:'INVALID_GROUP_NAME'},400,origin);
-    await env.DB.prepare('UPDATE social_groups SET name=?1,description=?2,visibility=?3,updated_at=?4 WHERE id=?5').bind(name,description,visibility,Date.now(),id).run();
-    const row=await env.DB.prepare(`SELECT g.id,g.name,g.slug,g.description,g.visibility,g.created_at,g.owner_id,p.name AS o_name,p.position AS o_position,p.avatar AS o_avatar,p.username AS o_username,p.is_dev AS o_is_dev,p.is_admin AS o_is_admin,
+    await env.DB.prepare('undefined').bind(name,description,visibility,icon,accent,cover,rules,Date.now(),id).run();
+    const row=await env.DB.prepare(`SELECT g.id,g.name,g.slug,g.description,g.visibility,g.icon,g.accent,g.cover,g.rules,g.created_at,g.owner_id,p.name AS o_name,p.position AS o_position,p.avatar AS o_avatar,p.username AS o_username,p.is_dev AS o_is_dev,p.is_admin AS o_is_admin,
       (SELECT COUNT(*) FROM social_group_members gm WHERE gm.group_id=g.id) AS members FROM social_groups g JOIN profiles p ON p.wtink_id=g.owner_id WHERE g.id=?1`).bind(id).first();
     return json({group:{id:row.id,name:row.name,slug:row.slug,description:row.description,visibility:row.visibility,owner:socialProfile({wtink_id:row.owner_id,name:row.o_name,position:row.o_position,avatar:row.o_avatar,username:row.o_username,is_dev:row.o_is_dev,is_admin:row.o_is_admin}),members:Number(row.members||0),joined:true,role:'owner',createdAt:Number(row.created_at||0)}},200,origin);
   }
