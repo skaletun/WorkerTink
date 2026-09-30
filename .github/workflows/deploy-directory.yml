@@ -34,4 +34,18 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Smoke test deployed Directory API
+        run: |
+          set -euo pipefail
+          url="https://workertink-directory.workertink-directory.workers.dev/health"
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            body="$(curl -fsS --retry 2 --retry-delay 2 "$url" || true)"
+            if printf '%s' "$body" | grep -q '"ok"[[:space:]]*:[[:space:]]*true'; then
+              echo "$body"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "Directory API health check failed"
+          exit 1
 
