@@ -1,7 +1,7 @@
 # WTinker v6.0.0 — Complete Redesign Concept
 
 ## Status
-This directory is the canonical v6 redesign concept. It is intentionally isolated from the current application implementation: v6 is designed here first, then implemented incrementally without deleting or rewriting existing Work OS behavior.
+This directory is the canonical v6 redesign concept. The standalone prototype is now a production-level visual/interaction prototype for validating the v6 shell and screen behavior before wiring the surfaces into the real application. It is intentionally isolated from the current application implementation: v6 is designed here first, then implemented incrementally without deleting or rewriting existing Work OS behavior.
 
 ## Product direction
 WTinker becomes a **social network for work**. Social interaction becomes the primary interface while Work OS remains the operational foundation.
@@ -58,3 +58,19 @@ The redesign MUST preserve:
 09 Mobile system
 
 See the companion files in this folder for exact screen contracts, tokens, components, responsive rules and implementation mapping.
+
+## Prototype capabilities
+The standalone `prototype.html` is intentionally dependency-free and demonstrates the intended product behavior, not just static screenshots:
+- responsive desktop/tablet/mobile shell with persistent mobile navigation
+- light/dark theme with persisted preference
+- command/search palette with keyboard shortcut
+- Home, Social, People, Communities, Chats, Work, Notifications and Profile surfaces
+- Social feed tabs, reactions and composer flow
+- People search by WTinkID or username plus authenticated-style “Отправить заявку” interaction
+- Personal / Groups / Channels chat switcher, chat selection and local message composition
+- Work schedule, payroll summary, dense data table and operational cards
+- notifications read-state interaction
+- create modal, profile menu, toasts, focus states and Escape handling
+- reduced-motion support and 44px+ mobile interaction targets
+
+The prototype remains isolated from production application code and uses mock data by design.
