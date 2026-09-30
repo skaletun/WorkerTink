@@ -19,9 +19,9 @@ type Props={
 
 export default function V7Shell({items,active,onNavigate,profile,profileAction,privacy,children,searchAction,title,kicker,version,mobileItems,mobileMore}:Props){
   const groups=[
-    {label:'Основное',ids:['home','social','people','communities','chat']},
+    {label:'Социальное',ids:['home','social','people','communities','chat']},
     {label:'Работа',ids:['work','calendar','pay','absence']},
-    {label:'Аккаунт',ids:['friends','notifications','profile','settings','admin']}
+    {label:'Аккаунт',ids:['notifications','friends','profile','settings','admin']}
   ];
   const renderItem=(item:NavItem)=><button key={item.id} className={active===item.id?'active':''} aria-current={active===item.id?'page':undefined} onClick={()=>onNavigate(item.id)}>
     <i aria-hidden="true">{item.icon}</i><span><b>{item.label}</b><small>{item.sub}</small></span>
@@ -29,9 +29,9 @@ export default function V7Shell({items,active,onNavigate,profile,profileAction,p
   return <div className="v7-shell">
     <a className="v7-skip" href="#v7-main">К содержимому</a>
     <aside className="v7-sidebar">
-      <button className="v7-brand" onClick={()=>onNavigate('home')} aria-label="WorkerTink — Главная">
+      <button className="v7-brand" onClick={()=>onNavigate('home')} aria-label="WTinker — Главная">
         <span className="v7-brand-mark">W</span>
-        <span className="v7-brand-copy"><b>WorkerTink</b><small>work · people · life</small></span>
+        <span className="v7-brand-copy"><b>WTinker</b><small>people · work · together</small></span>
         <em>{version}</em>
       </button>
       <button className="v7-profile" onClick={profileAction} aria-label="Открыть профиль">{profile}</button>
@@ -41,14 +41,14 @@ export default function V7Shell({items,active,onNavigate,profile,profileAction,p
           {group.ids.map(id=>{const item=items.find(x=>x.id===id);return item?renderItem(item):null})}
         </div>)}
       </nav>
-      <div className="v7-sidebar-bottom">{privacy}<span className="v7-version">WorkerTink {version}</span></div>
+      <div className="v7-sidebar-bottom">{privacy}<span className="v7-version">WTinker {version}</span></div>
     </aside>
     <main id="v7-main" className="v7-main">
       <header className="v7-topbar">
         <div className="v7-context"><span>{kicker}</span><strong>{title}</strong></div>
         <button className="v7-global-search" onClick={searchAction} aria-label="Глобальный поиск">
           <span className="v7-search-icon" aria-hidden="true">⌕</span>
-          <span>Поиск людей, публикаций, сообществ…</span>
+          <span>Поиск людей, публикаций, сообществ и работы…</span>
           <kbd>⌘ K</kbd>
         </button>
         <div className="v7-top-actions">
