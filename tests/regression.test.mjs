@@ -128,7 +128,7 @@ const sickLowIncome={...sickState,salary:1000};
 assert.equal(sickPayForDays(sickLowIncome,2026,8,30),27093);
 
 // Прогрессивный НДФЛ применяется нарастающим итогом для основной налоговой базы.
-const highIncome={...base,salary:250000,taxRate:13,startDate:'2026-01-01',scheduleType:'5/2'};
+const highIncome={...base,salary:250000,taxRate:13,startDate:'2026-01-01',scheduleType:'5/2',holidayCoeff:1,nightExtraPercent:0};
 const highYear=calcYear(highIncome,2026);
 assert.equal(highYear.gross,3000000);
 assert.equal(highYear.tax,402000);
