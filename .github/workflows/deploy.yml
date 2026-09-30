@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: read
-  issues: write
   pages: write
   id-token: write
 
@@ -28,30 +27,7 @@ jobs:
           node-version: 22
       - run: npm install --no-audit --no-fund
       - run: npm test
-      - name: Run npm run build
-        id: build
-        continue-on-error: true
-        shell: bash
-        run: |
-          set -o pipefail
-          npm run build 2>&1 | tee build-error.log
-          exit ${PIPESTATUS[0]}
-      - name: Publish temporary build diagnostics
-        if: steps.build.outcome == 'failure'
-        uses: actions/github-script@v8
-        env:
-          BUILD_LOG: build-error.log
-        with:
-          script: |
-            const fs = require('fs');
-            const body = fs.readFileSync(process.env.BUILD_LOG, 'utf8').slice(-20000);
-            const issue = await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: '[CI DEBUG] WTinker build diagnostics',
-              body: 'Temporary diagnostic issue for commit ' + context.sha + '\n\n```text\n' + body + '\n```'
-            });
-            core.setFailed('Temporary diagnostics issue: #' + issue.data.number);
+      - run: npm run build
       - name: Verify release version
         run: node -e "const p=require('./package.json'); if(p.version!=='7.2.0') throw new Error('Expected WTinker 7.2.0, got '+p.version)"
       - name: Verify Directory API health
