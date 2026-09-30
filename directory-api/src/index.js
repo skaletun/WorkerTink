@@ -1660,14 +1660,81 @@ async function handle(request, env) {
     return owner;
   };
 
+
+  if (path === '/verification/status' && request.method === 'GET') {
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const row=await env.DB.prepare("SELECT id,status FROM verification_requests WHERE profile_id=?1 ORDER BY created_at DESC LIMIT 1").bind(owner.wtink_id).first();
+    return json({status:row?.status||'none',requestId:row?.id||null},200,origin);
+  }
+
+  if (path === '/verification/request' && request.method === 'POST') {
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    if(Boolean(owner.is_official))return json({error:'ALREADY_OFFICIAL'},409,origin);
+    const existing=await env.DB.prepare("SELECT id,status FROM verification_requests WHERE profile_id=?1 ORDER BY created_at DESC LIMIT 1").bind(owner.wtink_id).first();
+    if(existing?.status==='pending')return json({error:'REQUEST_EXISTS'},409,origin);
+    const input=await body(request); const note=cleanText(input?.note,1000); const id=crypto.randomUUID(); const now=Date.now();
+    await env.DB.prepare("INSERT INTO verification_requests(id,profile_id,status,note,created_at) VALUES(?1,?2,'pending',?3,?4)").bind(id,owner.wtink_id,note,now).run();
+    await env.DB.prepare("INSERT INTO social_notifications(id,profile_id,actor_id,kind,entity_id,title,body,url,created_at) VALUES(?1,?2,?3,'verification_request',?4,?5,?6,?7,?8)").bind(crypto.randomUUID(),DEV_WTINK_ID,owner.wtink_id,id,'Новая заявка на верификацию',`${owner.name} отправил заявку на официальный аккаунт.`,`./?tab=admin&verification=${id}`,now).run();
+    return json({request:{id,profile:publicProfile(owner),status:'pending',note,createdAt:now,reviewedAt:null}},201,origin);
+  }
+
+  if (path === '/admin/verification' && request.method === 'GET') {
+    if(!(await adminProfile()))return json({error:'FORBIDDEN'},403,origin);
+    const rows=await env.DB.prepare("SELECT v.id,v.profile_id,v.status,v.note,v.created_at,v.reviewed_at,p.wtink_id,p.name,p.position,p.avatar,p.banner,p.username,p.is_dev,p.is_admin,p.is_official,p.is_verified FROM verification_requests v JOIN profiles p ON p.wtink_id=v.profile_id ORDER BY CASE v.status WHEN 'pending' THEN 0 ELSE 1 END,v.created_at DESC LIMIT 200").all();
+    return json({requests:(rows.results||[]).map(r=>({id:r.id,profile:publicProfile(r),status:r.status,note:r.note||'',createdAt:Number(r.created_at||0),reviewedAt:r.reviewed_at?Number(r.reviewed_at):null}))},200,origin);
+  }
+
+  const verificationReview=path.match(/^\/admin\/verification\/([^/]+)\/(approve|reject)$/);
+  if(verificationReview && request.method==='POST'){
+    const admin=await adminProfile(); if(!admin)return json({error:'FORBIDDEN'},403,origin);
+    const id=decodeURIComponent(verificationReview[1]); const action=verificationReview[2];
+    const row=await env.DB.prepare("SELECT id,profile_id,status FROM verification_requests WHERE id=?1").bind(id).first();
+    if(!row)return json({error:'REQUEST_NOT_FOUND'},404,origin);
+    const input=await body(request); const note=cleanText(input?.note,1000); const now=Date.now(); const status=action==='approve'?'approved':'rejected';
+    await env.DB.batch([
+      env.DB.prepare("UPDATE verification_requests SET status=?1,note=?2,reviewed_at=?3,reviewed_by=?4 WHERE id=?5").bind(status,note,now,admin.wtink_id,id),
+      env.DB.prepare("UPDATE profiles SET is_official=?1,updated_at=?2 WHERE wtink_id=?3").bind(action==='approve'?1:0,now,row.profile_id)
+    ]);
+    const target=await env.DB.prepare("SELECT wtink_id,name,position,avatar,banner,username,is_dev,is_admin,is_official,is_verified FROM profiles WHERE wtink_id=?1").bind(row.profile_id).first();
+    return json({ok:true,request:{id,profile:publicProfile(target),status,note,createdAt:0,reviewedAt:now}},200,origin);
+  }
+
+  const officialMatch=path.match(/^\/admin\/profiles\/([^/]+)\/official$/);
+  if(officialMatch && request.method==='PUT'){
+    const admin=await adminProfile(); if(!admin)return json({error:'FORBIDDEN'},403,origin);
+    const target=normalizeId(decodeURIComponent(officialMatch[1])); const input=await body(request); const official=Boolean(input?.official);
+    if(!validId(target)||target===DEV_WTINK_ID)return json({error:'FORBIDDEN'},403,origin);
+    await env.DB.prepare("UPDATE profiles SET is_official=?1,updated_at=?2 WHERE wtink_id=?3").bind(official?1:0,Date.now(),target).run();
+    const row=await env.DB.prepare("SELECT wtink_id,name,position,avatar,banner,username,is_dev,is_admin,is_official,is_verified FROM profiles WHERE wtink_id=?1").bind(target).first();
+    if(!row)return json({error:'USER_NOT_FOUND'},404,origin);
+    return json({ok:true,profile:publicProfile(row)},200,origin);
+  }
+
+  if(path==='/admin/spaces' && request.method==='GET'){
+    if(!(await adminProfile()))return json({error:'FORBIDDEN'},403,origin);
+    const [groups,channels]=await Promise.all([
+      env.DB.prepare("SELECT id,name,visibility,created_at FROM social_groups ORDER BY created_at DESC LIMIT 100").all(),
+      env.DB.prepare("SELECT id,name,slug,company_name,visibility,created_at FROM company_channels ORDER BY created_at DESC LIMIT 100").all()
+    ]);
+    return json({communities:groups.results||[],channels:channels.results||[]},200,origin);
+  }
+
   if (path === '/admin/overview' && request.method === 'GET') {
     if (!(await adminProfile())) return json({error:'FORBIDDEN'}, 403, origin);
-    const [profiles, friends, pending] = await Promise.all([
+    const [profiles, friends, pending, pendingVerification, official, verified, posts, communities, channels, messages, media] = await Promise.all([
       env.DB.prepare('SELECT COUNT(*) AS count FROM profiles').first(),
       env.DB.prepare("SELECT COUNT(*) AS count FROM friend_requests WHERE status = 'accepted'").first(),
-      env.DB.prepare("SELECT COUNT(*) AS count FROM friend_requests WHERE status = 'pending'").first()
+      env.DB.prepare("SELECT COUNT(*) AS count FROM friend_requests WHERE status = 'pending'").first(),
+      env.DB.prepare("SELECT COUNT(*) AS count FROM verification_requests WHERE status='pending'").first(),
+      env.DB.prepare("SELECT COUNT(*) AS count FROM profiles WHERE is_official=1").first(),
+      env.DB.prepare("SELECT COUNT(*) AS count FROM profiles WHERE is_verified=1").first(),
+      env.DB.prepare('SELECT COUNT(*) AS count FROM social_posts').first(),
+      env.DB.prepare('SELECT COUNT(*) AS count FROM social_groups').first(),
+      env.DB.prepare('SELECT COUNT(*) AS count FROM company_channels').first(),
+      env.DB.prepare('SELECT COUNT(*) AS count FROM social_messages').first(),
+      env.DB.prepare('SELECT COUNT(*) AS count FROM chat_media').first()
     ]);
-    return json({stats:{profiles:Number(profiles?.count||0),friendships:Number(friends?.count||0),pendingRequests:Number(pending?.count||0)}},200,origin);
+    return json({stats:{profiles:Number(profiles?.count||0),friendships:Number(friends?.count||0),pendingRequests:Number(pending?.count||0),pendingVerification:Number(pendingVerification?.count||0),official:Number(official?.count||0),verified:Number(verified?.count||0),posts:Number(posts?.count||0),communities:Number(communities?.count||0),channels:Number(channels?.count||0),messages:Number(messages?.count||0),media:Number(media?.count||0)}},200,origin);
   }
 
   const adminDetailMatch = path.match(/^\/admin\/profiles\/([^/]+)$/);
