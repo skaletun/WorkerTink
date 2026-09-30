@@ -16,7 +16,7 @@ if(!app.includes("message.includes('UNAUTHORIZED')||message.includes('HTTP_401')
 if(!app.includes("directoryToken:'',onePassEnabled:false")) throw new Error('expired-session recovery does not clear credentials');
 
 if(!network.includes('Promise.allSettled([getNetworkHome(token)')) throw new Error('network refresh failure isolation is missing');
-if(!network.includes('try{const savedRows=await getSavedNetworkPosts(token);setSaved(savedRows.posts)}catch{setSaved([])}')) throw new Error('saved posts must be optional during network refresh');
+if(!network.includes("if(savedResult.status==='fulfilled')setSaved(savedResult.value.posts);else setSaved([])")) throw new Error('saved posts must be optional during network refresh');
 if(network.includes('Promise.all([getNetworkHome(token),import(\'./directory\').then(m=>m.getSocialFeed(token,60)),getSavedNetworkPosts(token)])')) throw new Error('network refresh still fails atomically on saved posts');
 
 if(!update.includes("if(!('serviceWorker' in navigator)){try{localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID)}catch{};window.setTimeout(()=>window.location.reload(),250);return;}")) throw new Error('update fallback without Service Worker is missing');
