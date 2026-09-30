@@ -1577,7 +1577,7 @@ async function handle(request, env) {
       (SELECT COUNT(*) FROM social_group_members gm WHERE gm.group_id=g.id) AS members,
       EXISTS(SELECT 1 FROM social_group_members me WHERE me.group_id=g.id AND me.profile_id=?1) AS joined,
       CASE WHEN g.owner_id=?1 THEN 'owner' ELSE (SELECT role FROM social_group_members mr WHERE mr.group_id=g.id AND mr.profile_id=?1) END AS member_role,
-      p.name AS o_name,p.position AS o_position,p.avatar AS o_avatar,p.is_dev AS o_is_dev,p.is_admin AS o_is_admin
+      p.name AS o_name,p.position AS o_position,p.avatar AS o_avatar,p.banner AS o_banner,p.username AS o_username,p.is_dev AS o_is_dev,p.is_admin AS o_is_admin
       FROM social_groups g JOIN profiles p ON p.wtink_id=g.owner_id WHERE g.visibility='public' OR EXISTS(SELECT 1 FROM social_group_members x WHERE x.group_id=g.id AND x.profile_id=?1) ORDER BY g.created_at DESC LIMIT 100`).bind(owner.wtink_id).all();
     return json({groups:(rows.results||[]).map(r=>({id:r.id,name:r.name,slug:r.slug,description:r.description,visibility:r.visibility,owner:socialProfile({wtink_id:r.owner_id,name:r.o_name,position:r.o_position,avatar:r.o_avatar,banner:r.o_banner,username:r.o_username,is_dev:r.o_is_dev,is_admin:r.o_is_admin}),members:Number(r.members||0),joined:Boolean(r.joined),role:r.member_role||undefined,createdAt:Number(r.created_at||0)}))},200,origin);
   }
@@ -1599,7 +1599,7 @@ async function handle(request, env) {
     await env.DB.prepare('UPDATE social_groups SET name=?1,description=?2,visibility=?3,icon=?4,accent=?5,cover=?6,rules=?7,updated_at=?8 WHERE id=?9').bind(name,description,visibility,icon,accent,cover,rules,Date.now(),id).run();
     const row=await env.DB.prepare(`SELECT g.id,g.name,g.slug,g.description,g.visibility,g.icon,g.accent,g.cover,g.rules,g.created_at,g.owner_id,p.name AS o_name,p.position AS o_position,p.avatar AS o_avatar,p.username AS o_username,p.is_dev AS o_is_dev,p.is_admin AS o_is_admin,
       (SELECT COUNT(*) FROM social_group_members gm WHERE gm.group_id=g.id) AS members FROM social_groups g JOIN profiles p ON p.wtink_id=g.owner_id WHERE g.id=?1`).bind(id).first();
-    return json({group:{id:row.id,name:row.name,slug:row.slug,description:row.description,visibility:row.visibility,owner:socialProfile({wtink_id:row.owner_id,name:row.o_name,position:row.o_position,avatar:row.o_avatar,username:row.o_username,is_dev:row.o_is_dev,is_admin:row.o_is_admin}),members:Number(row.members||0),joined:true,role:'owner',createdAt:Number(row.created_at||0)}},200,origin);
+    return json({group:{id:row.id,name:row.name,slug:row.slug,description:row.description,visibility:row.visibility,icon:row.icon||'',accent:row.accent||'#2563eb',cover:row.cover||'',rules:row.rules||'',owner:socialProfile({wtink_id:row.owner_id,name:row.o_name,position:row.o_position,avatar:row.o_avatar,username:row.o_username,is_dev:row.o_is_dev,is_admin:row.o_is_admin}),members:Number(row.members||0),joined:true,role:'owner',createdAt:Number(row.created_at||0)}},200,origin);
   }
 
   const networkGroupDetail=path.match(/^\/network\/groups\/([^/]+)$/);
@@ -1610,7 +1610,7 @@ async function handle(request, env) {
     const member=await env.DB.prepare('SELECT role FROM social_group_members WHERE group_id=?1 AND profile_id=?2').bind(g.id,owner.wtink_id).first();
     if(g.visibility==='private'&&!member)return json({error:'INVITE_REQUIRED'},403,origin);
     const rows=await env.DB.prepare(`SELECT gm.role,gm.created_at,p.wtink_id,p.name,p.position,p.avatar,p.username,p.is_dev,p.is_admin FROM social_group_members gm JOIN profiles p ON p.wtink_id=gm.profile_id WHERE gm.group_id=?1 ORDER BY gm.created_at ASC LIMIT 200`).bind(g.id).all();
-    return json({group:{id:g.id,name:g.name,slug:g.slug,description:g.description,visibility:g.visibility,owner:socialProfile({wtink_id:g.owner_id,name:g.o_name,position:g.o_position,avatar:g.o_avatar,is_dev:g.o_is_dev,is_admin:g.o_is_admin}),members:(rows.results||[]).length,joined:Boolean(member),role:member?.role||null,createdAt:Number(g.created_at||0)},members:(rows.results||[]).map(r=>({role:r.role,profile:socialProfile({wtink_id:r.wtink_id,name:r.name,position:r.position,avatar:r.avatar,username:r.username,is_dev:r.is_dev,is_admin:r.is_admin})}))},200,origin);
+    return json({group:{id:g.id,name:g.name,slug:g.slug,description:g.description,visibility:g.visibility,icon:g.icon||'',accent:g.accent||'#2563eb',cover:g.cover||'',rules:g.rules||'',owner:socialProfile({wtink_id:g.owner_id,name:g.o_name,position:g.o_position,avatar:g.o_avatar,username:g.o_username,is_dev:g.o_is_dev,is_admin:g.o_is_admin}),members:(rows.results||[]).length,joined:Boolean(member),role:member?.role||null,createdAt:Number(g.created_at||0)},members:(rows.results||[]).map(r=>({role:r.role,profile:socialProfile({wtink_id:r.wtink_id,name:r.name,position:r.position,avatar:r.avatar,username:r.username,is_dev:r.is_dev,is_admin:r.is_admin})}))},200,origin);
   }
   const groupJoin=path.match(/^\/network\/groups\/([^/]+)\/join$/);
   if(groupJoin && (request.method==='POST'||request.method==='DELETE')){
@@ -1763,6 +1763,8 @@ async function handle(request, env) {
         CASE WHEN r.sender_id = ?1 THEN t.name ELSE s.name END AS name,
         CASE WHEN r.sender_id = ?1 THEN t.position ELSE s.position END AS position,
         CASE WHEN r.sender_id = ?1 THEN t.avatar ELSE s.avatar END AS avatar,
+        CASE WHEN r.sender_id = ?1 THEN t.banner ELSE s.banner END AS banner,
+        CASE WHEN r.sender_id = ?1 THEN t.username ELSE s.username END AS username,
         CASE WHEN r.sender_id = ?1 THEN t.is_dev ELSE s.is_dev END AS is_dev,
         CASE WHEN r.sender_id = ?1 THEN t.is_admin ELSE s.is_admin END AS is_admin,
         CASE WHEN r.sender_id = ?1 THEN t.last_seen ELSE s.last_seen END AS last_seen,
