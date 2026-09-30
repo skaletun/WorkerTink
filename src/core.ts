@@ -75,6 +75,14 @@ export function avgIncome(state:State,months=12,throughMonth?:string){
 
 function shiftHours(state:State,shift:ShiftValue){return shift==='full'?(state.scheduleType==='7/0'?24:8):shift==='off'?0:8}
 function periodSet(periods:Period[],start:Date,end:Date){const out=new Set<string>();for(const p of periods){if(!isValidYmd(p.start)||!isValidYmd(p.end)||p.end<p.start)continue;const a=parseYmd(p.start)>start?parseYmd(p.start):start,b=parseYmd(p.end)<end?parseYmd(p.end):end;if(a>b)continue;for(let d=new Date(a);d<=b;d=addDays(d,1))out.add(ymd(d))}return out}
+function sickRateForStage(stage:number){return stage<8?(stage<5?.6:.8):1}
+export function sickPayForDays(state:State,year:number,month:number,days:number){
+ const safeDays=Math.max(0,Math.floor(Number(days)||0));if(!safeDays)return 0;
+ const end=new Date(year,month+1,0),dailyBase=avgIncome(state,24,monthKey(year,month))*24/730*sickRateForStage(state.stage);
+ const minDaily=year===2026?27093/end.getDate():0;
+ const maxDaily=year===2026?6827.40:Infinity;
+ return Math.round(Math.min(maxDaily,Math.max(minDaily,dailyBase))*safeDays);
+}
 
 type GrossCalc={
  year:number;month:number;work:number;nightWork:number;holidayWork:number;vacDays:number;sickDays:number;
@@ -83,7 +91,7 @@ type GrossCalc={
 };
 function calcMonthGross(state:State,year:number,month:number):GrossCalc{
  const start=new Date(year,month,1),end=new Date(year,month+1,0),employmentStart=parseYmd(state.startDate);
- const sickRate=state.stage<8?(state.stage<5?.6:.8):1;
+ const sickRate=sickRateForStage(state.stage);
  if(!Number.isFinite(employmentStart.getTime())||end<employmentStart)return {year,month,work:0,nightWork:0,holidayWork:0,vacDays:0,sickDays:0,base:0,extraPay:0,holidayExtra:0,nightExtra:0,vacPay:0,sickPay:0,gross:0,sickRate,scheduled:0,scheduledHours:0,workHours:0,plannedWorkHours:0,extraWorkHours:0};
  let scheduled=0,scheduledHours=0,work=0,nightWork=0,holidayWork=0,holidayWorkHours=0,workHours=0,plannedWorkHours=0,extraWorkHours=0,vacDays=0,sickDays=0;
  for(let d=new Date(start);d<=end;d=addDays(d,1)){const scheduledShift=getCycleShift(state,d);if(scheduledShift!=='off'){scheduled++;scheduledHours+=shiftHours(state,scheduledShift)}}
@@ -106,8 +114,7 @@ function calcMonthGross(state:State,year:number,month:number):GrossCalc{
  const holidayExtra=Math.round(hourValue*holidayWorkHours*Math.max(0,state.holidayCoeff-1));
  const nightExtra=Math.round(hourValue*nightWork*8*Math.max(0,state.nightExtraPercent)/100);
  const vacPay=Math.round(avgIncome(state,12,monthKey(year,month))/29.3*vacDays);
- const sickDaily=Math.min(6827.40,Math.max(27093/(end.getDate()),avgIncome(state,24,monthKey(year,month))*24/730*sickRate));
- const sickPay=Math.round(sickDaily*sickDays);
+ const sickPay=sickPayForDays(state,year,month,sickDays);
  return {year,month,work,nightWork,holidayWork,vacDays,sickDays,base,extraPay,holidayExtra,nightExtra,vacPay,sickPay,gross:base+extraPay+holidayExtra+nightExtra+vacPay+sickPay,sickRate,scheduled:scheduledSafe,scheduledHours:scheduledHoursSafe,workHours,plannedWorkHours,extraWorkHours};
 }
 
