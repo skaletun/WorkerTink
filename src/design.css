@@ -1209,3 +1209,99 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 @media(prefers-reduced-motion:reduce){
   .notification-toast{animation:none!important;transition:none!important}
 }
+
+
+/* Mobile layout 3.2 — explicit phone composition. Desktop rules remain untouched. */
+@media (max-width:767px){
+  .content{
+    padding:0 10px calc(92px + env(safe-area-inset-bottom))!important;
+  }
+  .topbar{
+    position:sticky!important;
+    top:0!important;
+    z-index:120!important;
+    margin:0 -10px 12px!important;
+    padding:10px 12px!important;
+    min-height:62px!important;
+    border-bottom:1px solid var(--line)!important;
+    background:color-mix(in srgb,var(--surface) 92%,transparent)!important;
+    backdrop-filter:blur(18px)!important;
+    -webkit-backdrop-filter:blur(18px)!important;
+  }
+  .topbar h1{font-size:21px!important;letter-spacing:-.02em!important}
+  .top-actions .btn{display:none!important}
+  .top-profile{width:40px!important;height:40px!important}
+  .tab-stage{width:100%!important;min-width:0!important}
+  .dashboard-hero,.network-hero,.profile-hero,.settings-intro{
+    border-radius:18px!important;
+    padding:16px!important;
+  }
+  .dashboard-actions,.card-actions,.data-buttons,.form-actions{
+    flex-direction:column!important;
+    align-items:stretch!important;
+  }
+  .dashboard-actions .btn,.card-actions .btn,.data-buttons .btn,.data-buttons .file-btn,.form-actions .btn{
+    width:100%!important;
+    justify-content:center!important;
+  }
+  .dashboard-kpis,.settings-grid,.profile-grid,.absence-grid,.calendar-layout,.pay-layout,.enhance-grid{
+    grid-template-columns:1fr!important;
+  }
+  .dashboard-kpi,.settings-card,.period-editor,.month-card,.breakdown-card,.pay-date-card{
+    min-width:0!important;
+  }
+  .section-head{
+    align-items:flex-start!important;
+    flex-direction:column!important;
+    gap:8px!important;
+  }
+  .section-head .btn{width:100%!important}
+  .chat-shell-v2{
+    grid-template-columns:1fr!important;
+    height:calc(100dvh - 146px)!important;
+    min-height:0!important;
+    border-radius:18px!important;
+  }
+  .chat-shell-v2 .chat-list{
+    display:none!important;
+  }
+  .chat-shell-v2 .chat-main{
+    min-width:0!important;
+  }
+  .chat-header{
+    min-height:58px!important;
+    padding:9px 12px!important;
+  }
+  .chat-composer{
+    padding:8px!important;
+    padding-bottom:calc(8px + env(safe-area-inset-bottom))!important;
+  }
+  .chat-composer textarea{
+    min-height:44px!important;
+    max-height:120px!important;
+  }
+  .modal-backdrop{
+    padding:10px!important;
+    align-items:flex-end!important;
+  }
+  .modal-card{
+    width:100%!important;
+    max-width:none!important;
+    max-height:calc(100dvh - 20px)!important;
+    border-radius:22px!important;
+  }
+  .table-wrap,.calendar-table,.data-table{
+    overflow-x:auto!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  .mobile-nav{
+    z-index:5000!important;
+  }
+}
+@media (max-width:390px){
+  .content{padding-inline:8px!important}
+  .topbar{margin-inline:-8px!important}
+  .topbar h1{font-size:19px!important}
+  .mobile-nav{left:5px!important;right:5px!important}
+  .mobile-nav button{min-width:0!important}
+}
