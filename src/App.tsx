@@ -108,7 +108,14 @@ function App(){
   onNavigate={id=>navigate(id as Tab)}
   profile={<><Avatar profile={state.profile} size="sm"/><span><b><NameWithBadge profile={state.profile}/></b><small>{state.profile.position||'Профиль'}</small></span></>}
   profileAction={()=>navigate('profile')}
-  privacy={<div className="v7-privacy"><span className="status-dot"/><div><b>E2E для сообщений</b><small>Личные сообщения шифруются на устройстве</small></div></div>}
+  privacy={<div className="v7-privacy" role="status" aria-label="E2E шифрование включено">
+  <div className="v7-privacy-icon" aria-hidden="true">✓</div>
+  <div className="v7-privacy-copy">
+    <div><b>Личные сообщения</b><span>Защищены E2E</span></div>
+    <small>Шифрование выполняется на устройстве</small>
+  </div>
+  <span className="v7-privacy-dot" aria-hidden="true"/>
+</div>}
   searchAction={()=>navigate('people')}
   title={heading}
   kicker={kicker}
