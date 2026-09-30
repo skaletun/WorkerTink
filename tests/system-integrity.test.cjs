@@ -17,7 +17,10 @@ for(const x of ['redesign-home','Ваш график','Сценарий выпл
 for(const x of ['redesign-notifications','notification-timeline','timeline-item']) if(!notifications.includes(x)) throw new Error('rebuilt notification surface missing '+x);
 for(const x of ['redesign-chats','chats-mode-nav','Формат разговора']) if(!chats.includes(x)) throw new Error('rebuilt chats surface missing '+x);
 if(!chat.includes('chat-page-rebuilt')) throw new Error('rebuilt personal chat surface missing');
+if(!chat.includes('is-empty')) throw new Error('chat empty-state contract missing');
 if(!work.includes('redesign-work')) throw new Error('rebuilt work surface missing');
+if(!rebuildCss.includes('.v7-work-page.calendar-layout>.v7-page-header')) throw new Error('calendar header grid fix missing');
+if(!rebuildCss.includes('.redesign-chats .chats-mode-nav button')) throw new Error('chat mode tab styling missing');
 for(const x of ['.redesign-page-intro','.home-snapshot','.network-layout-v2','.notification-timeline','.chat-page-rebuilt','.redesign-work']) if(!rebuildCss.includes(x)) throw new Error('rebuilt design token missing '+x);
 
 if(!app.includes('syncTabUrl=(next:Tab)=>')) throw new Error('navigation URL sync is missing');
