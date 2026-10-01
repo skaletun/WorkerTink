@@ -49,7 +49,7 @@ if(!ui.includes('.social-layout{display:grid')) throw new Error('new social layo
 if(!ui.includes('.work-grid{display:grid')) throw new Error('new work layout missing');
 if(!network.includes('PostAttachment')||!network.includes('shift-note-editor')||!network.includes('post-attachments-v2')||!network.includes('groupAttachments')) throw new Error('rich post surface missing');
 if(!app.includes('Добавить баннер')||!app.includes('profile.username')||!app.includes('searchUser(profile.profileId)')||!app.includes('const cached=id===normalizeWTinkId(state.profile.profileId)')) throw new Error('profile customization or username hydration missing');
-for(const x of ['.redesign-page-intro','.home-snapshot','.notification-timeline','.chat-page-rebuilt','.redesign-work']) if(!rebuildCss.includes(x)) throw new Error('page compatibility token missing '+x);
+for(const x of ['.redesign-page-intro','.home-snapshot','.notification-timeline','.chat-page-rebuilt','.work-grid']) if(!ui.includes(x)) throw new Error('new page token missing '+x);
 
 if(!app.includes('syncTabUrl=(next:Tab)=>')) throw new Error('navigation URL sync is missing');
 if(!app.includes("const openChat=(profileId:string)=>{syncTabUrl('chat')")) throw new Error('chat navigation does not use the canonical URL sync');
