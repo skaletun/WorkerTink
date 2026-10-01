@@ -63,7 +63,7 @@ if(!pull.includes('EDGE_START')||!pull.includes('TRIGGER_DISTANCE')) throw new E
 if(!pull.includes("display-mode: standalone")) throw new Error('pull-to-refresh must be PWA-only');
 if(!pull.includes("event.preventDefault()")) throw new Error('pull-to-refresh must suppress native overscroll while pulling');
 if(!pull.includes("window.location.reload()")) throw new Error('pull-to-refresh reload action missing');
-if(!pull.includes('pull-refresh-indicator')||!pull.includes('data-phase="refreshing"')) throw new Error('pull-to-refresh animated indicator missing');
+if(!pull.includes('pull-refresh-indicator')||!pull.includes("setPhase('refreshing')")) throw new Error('pull-to-refresh animated indicator missing');
 
 
 if(!sw.includes("title:'WTinker'")) throw new Error('service worker default notification brand is stale');
