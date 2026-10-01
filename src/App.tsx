@@ -104,7 +104,7 @@ function App(){
  if(!state.setupComplete)return <SetupWizard state={state} setState={setState}/>;
  const heading=tab==='home'?'Главная':tab==='social'?'Лента':tab==='people'?'Люди':tab==='communities'?'Сообщества':tab==='work'?'Работа':tab==='calendar'?'Ваш график':tab==='pay'?'Зарплата':tab==='absence'?'Отпуск и больничные':tab==='friends'?'Контакты':tab==='chat'?'Сообщения':tab==='notifications'?'Уведомления':tab==='profile'?'Ваш профиль':tab==='admin'?'Админ-панель':'Настройки';
  const kicker=tab==='home'?'WTinker':tab==='social'?'Социальная сеть для работы':tab==='people'?'Люди · WTinkID + username':tab==='communities'?'Сообщества · люди и работа':tab==='work'?'Рабочий контур':tab==='calendar'?'Рабочий календарь':tab==='pay'?'Финансы':tab==='absence'?'Периоды отсутствия':tab==='friends'?'Контакты и коллеги':tab==='chat'?'Личные сообщения и файлы':tab==='notifications'?'Центр событий':tab==='profile'?'Профессиональный профиль':tab==='admin'?'Управление каталогом':'Параметры профиля';
- return <><V7Shell
+ return <><AppShell
   items={navItems.map(([id,label,sub])=>({id,label,sub,icon:<Icon name={id}/> }))}
   active={tab}
   onNavigate={id=>navigate(id as Tab)}
