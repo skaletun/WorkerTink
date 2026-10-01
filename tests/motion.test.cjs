@@ -1,6 +1,6 @@
 const fs = require("node:fs");
 const app = fs.readFileSync("src/App.tsx", "utf8");
-const css = fs.readFileSync("src/styles.css", "utf8");
+const css = fs.readFileSync("src/ui.css", "utf8");
 for (const token of ["BootScreen", "tab-stage", "shift-modal", "prefers-reduced-motion"]) {
   if (!app.includes(token) && !css.includes(token)) throw new Error(`Missing motion token: ${token}`);
 }
