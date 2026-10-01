@@ -57,7 +57,7 @@ export default function PullToRefresh({children}:{children:ReactNode}){
       const s=stateRef.current;
       if(!s.active)return;
       s.active=false;
-      if(s.moved&&distance>=TRIGGER_DISTANCE){
+      if(s.moved&&distanceRef.current>=TRIGGER_DISTANCE){
         s.refreshing=true;
         stateRef.current=s;
         setPhase('refreshing');
@@ -80,7 +80,7 @@ export default function PullToRefresh({children}:{children:ReactNode}){
       document.removeEventListener('touchcancel',onTouchEnd);
       if(rafRef.current!==undefined)cancelAnimationFrame(rafRef.current);
     };
-  },[distance]);
+  },[]);
 
   if((window.matchMedia?.('(display-mode: standalone)').matches||Boolean((navigator as any).standalone))&&((window.matchMedia?.('(pointer: coarse)').matches)||/android|iphone|ipad|ipod/i.test(navigator.userAgent))){
     const progress=Math.min(1,distance/TRIGGER_DISTANCE);
