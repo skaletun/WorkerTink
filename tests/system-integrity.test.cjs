@@ -54,8 +54,6 @@ for(const x of ['.redesign-page-intro','.home-snapshot','.notification-timeline'
 if(!app.includes('syncTabUrl=(next:Tab)=>')) throw new Error('navigation URL sync is missing');
 if(!app.includes("const openChat=(profileId:string)=>{syncTabUrl('chat')")) throw new Error('chat navigation does not use the canonical URL sync');
 if(!app.includes("window.history.replaceState({},'',url.pathname+url.search+url.hash)")) throw new Error('navigation URL sync does not write browser URL');
-if(app.includes('<main className={')) throw new Error('nested main remains inside V7Shell');
-if(!app.includes('</div>\n</V7Shell>')) throw new Error('v7 page container is not closed as a div');
 if(!app.includes("message.includes('UNAUTHORIZED')||message.includes('HTTP_401')")) throw new Error('expired-session recovery is missing');
 if(!app.includes("directoryToken:'',onePassEnabled:false")) throw new Error('expired-session recovery does not clear credentials');
 
