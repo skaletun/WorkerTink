@@ -287,7 +287,9 @@ async function authProfile(request, env) {
   const tokenHash = await sha256(token);
   const session = await env.DB.prepare('SELECT profile_id,session_id,device_name FROM auth_sessions WHERE token_hash = ?1 AND expires_at > ?2').bind(tokenHash,Date.now()).first();
   if (session) {
-    await env.DB.prepare('UPDATE auth_sessions SET last_seen = ?1 WHERE token_hash = ?2').bind(Date.now(), tokenHash).run();
+    const now = Date.now();
+    await env.DB.prepare('UPDATE auth_sessions SET last_seen = ?1, expires_at = ?2 WHERE token_hash = ?3').bind(now, now + AUTH_SESSION_TTL, tokenHash).run();
+    await env.DB.prepare('UPDATE profiles SET last_seen = ?1 WHERE wtink_id = ?2').bind(now, session.profile_id).run();
     return env.DB.prepare('SELECT wtink_id, name, position, avatar, banner, username, is_dev, is_admin, is_official, is_verified, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE wtink_id = ?1').bind(session.profile_id).first();
   }
   // Migrate legacy single-token sessions into the expiring session table on first use.
