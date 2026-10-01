@@ -85,6 +85,8 @@ assert.match(api,/REQUEST_ALREADY_REVIEWED/);
 assert.match(api,/WHERE id=\?5 AND status='pending'/);
 assert.match(api,/is_official, is_verified, token_hash/);
 assert.match(api,/company_channel_members WHERE channel_id=\?1 AND profile_id=\?2/);
+assert.match(api,/targetMember\.role==='owner'/);
+assert.match(api,/current\.role==='admin'&&targetMember\.role==='admin'/);
 assert.match(app,/Политику конфиденциальности/);
 assert.match(app,/Условия использования/);
 assert.match(app,/Заявка на верификацию/);
