@@ -1,6 +1,7 @@
 import {DEFAULT,createWTinkId,normalizeWTinkId,isValidYmd,type State,type Period,type PaymentDates,type ShiftValue,type FriendRequest} from './core.ts';
 
 export const STORAGE_KEY='workertink:v6';
+export const AUTH_TOKEN_KEY='workertink:auth-token';
 const LEGACY_KEYS=['workertink:v5','workertink:v4','workertink:v3','workertink:v2','workertink'] as const;
 const RECOVERY_KEY='workertink:recovery:last-invalid';
 const isDate=(s:unknown):s is string=>typeof s==='string'&&isValidYmd(s);
@@ -89,6 +90,22 @@ export function loadState():State{
  }
 }
 
-export function saveState(state:State){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(normalizeState(state)));return true}catch{return false}}
+export function saveState(state:State){
+ const normalized=normalizeState(state);
+ let saved=true;
+ try{localStorage.setItem(STORAGE_KEY,JSON.stringify(normalized))}catch{saved=false}
+ try{
+  if(normalized.directoryToken)localStorage.setItem(AUTH_TOKEN_KEY,normalized.directoryToken);
+  else localStorage.removeItem(AUTH_TOKEN_KEY);
+ }catch{/* auth token persistence is best-effort */}
+ return saved;
+}
+export function saveAuthToken(token:string){
+ try{if(token)localStorage.setItem(AUTH_TOKEN_KEY,token);else localStorage.removeItem(AUTH_TOKEN_KEY)}catch{/* ignore storage errors */}
+}
+export function clearAuthToken(){saveAuthToken('');}
+export function getAuthToken(){
+ try{return localStorage.getItem(AUTH_TOKEN_KEY)||''}catch{return ''}
+}
 export function exportableState(state:State){return normalizeState(state)}
 export function getRecoverySnapshot(){return localStorage.getItem(RECOVERY_KEY)}
