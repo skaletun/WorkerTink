@@ -456,3 +456,286 @@ img{max-width:100%}
   .channels-hero{padding:18px}.channels-hero h2{font-size:25px}.channel-customization{grid-template-columns:1fr}.public-profile-banner{height:190px}.public-profile-body{padding:20px}.public-profile-body h1{font-size:27px}.public-avatar{width:78px;height:78px;margin-top:-58px;border-radius:22px}.public-profile-facts{grid-template-columns:1fr}.public-profile-actions{display:grid;grid-template-columns:1fr}.public-profile-actions .btn{width:100%}.notification-controls{align-items:stretch;flex-direction:column}.notification-control-actions{width:100%}.notification-control-actions .redesign-btn{flex:1}.notification-count{justify-items:start}.notification-timeline .timeline-title{display:grid;gap:2px}.document-create{grid-template-columns:1fr}.document-create input:nth-child(3){grid-column:auto}.team-toolbar{display:grid}.team-member-add{min-width:0}.profile-stats,.admin-kpis,.admin-kpis-expanded{grid-template-columns:1fr 1fr}.pwa-install-banner{bottom:76px}.qr-controls{grid-template-columns:1fr}
 }
 @keyframes pulse{50%{opacity:.35}}@keyframes wave{to{transform:scaleY(1.8)}}
+
+
+/* MOBILE SHELL — production responsive layer */
+@media (max-width: 900px){
+  :root{--sidebar:0px}
+  html,body,#root{width:100%;min-width:0;max-width:100%;overflow-x:hidden}
+  .wt-shell{display:block;width:100%;min-height:100dvh;overflow-x:clip}
+  .wt-sidebar{display:none}
+  .wt-main{width:100%;min-width:0;padding-bottom:0}
+  .wt-topbar{
+    position:sticky;top:0;z-index:80;
+    min-height:64px;height:auto;
+    padding:10px 14px;
+    gap:10px;
+  }
+  .wt-context{min-width:0;flex:1}
+  .wt-context-kicker{font-size:8px;letter-spacing:.12em}
+  .wt-context h1{font-size:20px}
+  .wt-command-search{display:none}
+  .wt-topbar-actions{flex:none;gap:7px}
+  .wt-top-icon,.wt-top-avatar{width:40px;height:40px;flex:none;border-radius:12px}
+  .wt-top-icon svg{width:20px;height:20px;fill:currentColor}
+  .wt-top-avatar svg{width:22px;height:22px;fill:currentColor}
+  .wt-content{
+    width:100%;
+    min-width:0;
+    padding:0 12px calc(92px + env(safe-area-inset-bottom)) 12px;
+  }
+  .wt-content-inner{
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    padding-top:18px;
+    margin:0;
+  }
+
+  /* Mobile navigation must be a real app bar, not browser-default buttons. */
+  .wt-mobile-nav{
+    position:fixed;
+    left:10px;
+    right:10px;
+    bottom:calc(8px + env(safe-area-inset-bottom));
+    z-index:100;
+    display:grid;
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    align-items:stretch;
+    gap:3px;
+    min-height:68px;
+    padding:6px;
+    border:1px solid var(--line);
+    border-radius:22px;
+    background:color-mix(in srgb,var(--surface) 94%,transparent);
+    box-shadow:0 14px 38px rgba(16,24,40,.14);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+  }
+  .wt-mobile-nav button{
+    min-width:0;
+    min-height:56px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    padding:5px 2px;
+    border:0;
+    border-radius:16px;
+    background:transparent;
+    color:var(--muted);
+    font-size:8px;
+    font-weight:700;
+    line-height:1;
+    white-space:nowrap;
+  }
+  .wt-mobile-nav button svg{
+    display:block;
+    width:24px;
+    height:24px;
+    flex:none;
+    fill:currentColor;
+  }
+  .wt-mobile-nav button span{
+    display:block;
+    max-width:100%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .wt-mobile-nav button.active{
+    background:var(--accent-soft);
+    color:var(--accent);
+  }
+  .wt-mobile-nav button:active{transform:scale(.96)}
+
+  /* Page intro / actions */
+  .redesign-page-intro,.page-intro,.chat-page-intro{
+    display:block;
+    margin-bottom:16px;
+  }
+  .redesign-page-intro h1,.page-intro h2,.chat-page-intro h1{
+    font-size:30px;
+    line-height:1.04;
+    margin:3px 0 7px;
+    max-width:100%;
+  }
+  .redesign-page-intro p,.page-intro p,.chat-page-intro p{
+    max-width:100%;
+    font-size:13px;
+    line-height:1.55;
+  }
+  .redesign-intro-actions{
+    margin-top:13px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .redesign-intro-actions .btn,
+  .redesign-intro-actions .redesign-btn{width:100%;min-width:0}
+
+  /* Network/social surfaces */
+  .network-layout-v2,.social-layout,.network-layout{
+    grid-template-columns:minmax(0,1fr);
+    width:100%;
+    min-width:0;
+  }
+  .network-feed-column,.network-side-v2,.social-main,.social-side{min-width:0;width:100%}
+  .network-side-v2,.social-side{display:none}
+  .network-sections,.social-tabs,.chats-mode-nav,.friends-tabs,.segmented-control,.network-nav{
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    flex-wrap:nowrap;
+  }
+  .network-sections::-webkit-scrollbar,.social-tabs::-webkit-scrollbar,.chats-mode-nav::-webkit-scrollbar,
+  .friends-tabs::-webkit-scrollbar,.segmented-control::-webkit-scrollbar,.network-nav::-webkit-scrollbar{display:none}
+  .network-sections button,.social-tabs button,.chats-mode-nav button,.friends-tabs button,
+  .segmented-control button,.network-nav button{flex:0 0 auto}
+  .composer-v2,.social-compose,.network-compose,.network-post,.social-post{
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    padding:14px;
+  }
+  .composer-v2-head{align-items:flex-start}
+  .composer-v2-types{overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px;scrollbar-width:none}
+  .composer-v2-types::-webkit-scrollbar{display:none}
+  .composer-v2-types button{flex:0 0 auto}
+  .composer-v2-foot{
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .composer-v2-foot>*{min-width:0}
+  .feed-stack-v2{width:100%;min-width:0}
+  .post-v2,.post-v2-head{min-width:0}
+  .post-author-v2{min-width:0}
+  .post-body-v2,.social-post-body{overflow-wrap:anywhere;word-break:break-word}
+  .post-attachments-v2{grid-template-columns:1fr!important}
+  .people-search-v2{width:100%}
+  .people-search-v2 input{min-width:0}
+  .group-grid,.friends-list-grid{grid-template-columns:1fr}
+  .group-card,.community-detail,.community-detail-head,.community-members-card{min-width:0}
+  .community-detail-grid{grid-template-columns:1fr!important}
+  .space-customization{grid-template-columns:1fr!important}
+
+  /* Generic grids used throughout the product */
+  .home-main-grid,.home-content-grid,.work-grid,.work-kpis,.home-tools-grid,
+  .admin-kpis,.admin-kpis-expanded,.profile-stats,.absence-overview,
+  .teams-layout,.channels-layout,.admin-layout{
+    grid-template-columns:1fr!important;
+  }
+  .snapshot-card,.work-card,.redesign-panel,.stat-card,.quick-actions,.settings-card,
+  .calendar-shell,.pay-hero,.breakdown-card,.balance-card,.month-card{
+    min-width:0;
+    max-width:100%;
+  }
+
+  /* Chats */
+  .chat-shell-v2,.group-chat-page{
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    grid-template-columns:1fr;
+  }
+  .chat-contacts-v2,.group-chat-list{display:none}
+  .chat-shell-v2:not(.is-empty) .chat-back-mobile{display:grid;place-items:center}
+  .chat-main-v2{min-width:0;width:100%}
+  .chat-messages-v2{min-width:0}
+  .message-bubble-v2,.group-message{max-width:88%;overflow-wrap:anywhere}
+
+  /* Profile / modals / tables */
+  .public-profile-page,.public-profile-card,.profile-card{width:100%;min-width:0;max-width:100%}
+  .public-profile-facts{grid-template-columns:1fr 1fr}
+  .public-profile-actions{flex-wrap:wrap}
+  .modal,.modal-card,.dialog,.dialog-card{max-width:calc(100vw - 24px)!important}
+  .table-wrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+  /* Install/update overlays must stay above content but below the mobile nav. */
+  .pwa-install-banner{
+    left:12px;
+    right:12px;
+    bottom:calc(84px + env(safe-area-inset-bottom));
+    width:auto;
+    max-width:none;
+    padding:12px;
+    border-radius:16px;
+    gap:9px;
+  }
+  .pwa-install-banner p{font-size:10px;line-height:1.45}
+  .pwa-install-banner button{min-height:38px;flex:none}
+}
+
+@media (max-width:600px){
+  .wt-topbar{padding:9px 12px;min-height:60px}
+  .wt-context-kicker{font-size:7px}
+  .wt-context h1{font-size:19px}
+  .wt-top-icon,.wt-top-avatar{width:38px;height:38px;border-radius:11px}
+  .wt-content{
+    padding-left:10px;
+    padding-right:10px;
+    padding-bottom:calc(88px + env(safe-area-inset-bottom));
+  }
+  .wt-content-inner{padding-top:14px}
+
+  .wt-mobile-nav{
+    left:7px;
+    right:7px;
+    bottom:calc(6px + env(safe-area-inset-bottom));
+    min-height:64px;
+    border-radius:20px;
+    padding:5px;
+  }
+  .wt-mobile-nav button{min-height:52px;border-radius:15px;font-size:7px}
+  .wt-mobile-nav button svg{width:22px;height:22px}
+
+  .redesign-page-intro h1,.page-intro h2,.chat-page-intro h1{font-size:28px}
+  .redesign-page-intro p,.page-intro p,.chat-page-intro p{font-size:12px}
+  .redesign-intro-actions{grid-template-columns:1fr}
+  .redesign-intro-actions .btn,.redesign-intro-actions .redesign-btn{min-height:46px}
+
+  .network-sections,.social-tabs,.chats-mode-nav,.friends-tabs,.segmented-control,.network-nav{
+    border-radius:12px;
+  }
+  .network-sections button,.social-tabs button,.chats-mode-nav button,.friends-tabs button,
+  .segmented-control button,.network-nav button{
+    min-height:42px;
+    padding:0 13px;
+    font-size:10px;
+  }
+
+  .composer-v2,.social-compose,.network-compose,.network-post,.social-post{
+    border-radius:16px;
+    padding:12px;
+  }
+  .composer-v2-foot{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto auto;
+    gap:7px;
+  }
+  .composer-v2-foot .btn{min-width:0;padding:0 10px}
+  .composer-v2-foot select{min-width:0;max-width:100%}
+  .social-compose textarea{min-height:100px;font-size:14px}
+  .post-v2-head{gap:8px}
+  .post-actions-v2{flex-wrap:wrap}
+
+  .pwa-install-banner{
+    bottom:calc(78px + env(safe-area-inset-bottom));
+    padding:11px;
+  }
+  .pwa-install-banner p{font-size:9px}
+  .pwa-install-banner button{padding:0 11px}
+}
+
+/* SVGs in the application use path data; never let the generic QR/SVG rule resize navigation icons. */
+.wt-mobile-nav svg,.wt-topbar svg,.wt-nav-item svg,.wt-search-mini svg{
+  width:24px;
+  height:24px;
+  flex:none;
+  fill:currentColor;
+}
+.wt-nav-item svg{width:18px;height:18px}
