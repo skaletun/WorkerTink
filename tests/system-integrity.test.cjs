@@ -8,6 +8,8 @@ const spaceControls=fs.readFileSync(path.join(root,'src/SpaceControls.tsx'),'utf
 const styles=fs.readFileSync(path.join(root,'src/styles.css'),'utf8');
 const update=fs.readFileSync(path.join(root,'src/UpdateGate.tsx'),'utf8');
 const pull=fs.readFileSync(path.join(root,'src/PullToRefresh.tsx'),'utf8');
+const shell=fs.readFileSync(path.join(root,'src/V7Shell.tsx'),'utf8');
+const design=fs.readFileSync(path.join(root,'src/design.css'),'utf8');
 const sw=fs.readFileSync(path.join(root,'src/sw.js'),'utf8');
 const workflow=fs.readFileSync(path.join(root,'.github/workflows/deploy.yml'),'utf8');
 const packageJson=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
@@ -17,6 +19,8 @@ const notifications=fs.readFileSync(path.join(root,'src/NotificationsView.tsx'),
 const chats=fs.readFileSync(path.join(root,'src/ChatsHub.tsx'),'utf8');
 const chat=fs.readFileSync(path.join(root,'src/ChatView.tsx'),'utf8');
 const groupChat=fs.readFileSync(path.join(root,'src/GroupChatView.tsx'),'utf8');
+if(shell.includes('v7-shell')||!shell.includes('wt-shell')||!shell.includes('wt-mobile-nav')) throw new Error('legacy shell was not replaced');
+if(!design.includes('.wt-shell')||!design.includes('.wt-nav-item.active')||!design.includes('.wt-command-search')) throw new Error('new workspace design system missing');
 if(!app.includes('BannerEditorModal')) throw new Error('profile banner editor missing');
 if(!app.includes('Скопировать ссылку')) throw new Error('profile link copy action missing');
 if(!network.includes('Обложка')) throw new Error('community customization UI missing');
