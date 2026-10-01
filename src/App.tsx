@@ -66,28 +66,34 @@ function App(){
  useEffect(()=>{if(!saveState(state))setNotice('Не удалось сохранить профиль: хранилище браузера переполнено')},[state]);
  const directorySync=useRef('');
  useEffect(()=>{if(!directoryConfigured||!state.directoryToken||!state.profile.name)return;const signature=JSON.stringify(state.profile);if(directorySync.current===signature)return;let cancelled=false;(async()=>{try{await updateProfile(state.profile,state.directoryToken);if(!cancelled)directorySync.current=signature}catch{if(!cancelled)setNotice('Не удалось синхронизировать профиль с каталогом')}})();return()=>{cancelled=true}},[state.profile,state.directoryToken]);
- useEffect(()=>{setAuthProfileReady(false);if(!directoryConfigured||!state.directoryToken){setAuthProfileReady(true);return}let cancelled=false;let retryTimer:number|undefined;
+ useEffect(()=>{setAuthProfileReady(false);if(!directoryConfigured||!state.directoryToken){setAuthProfileReady(true);return}let cancelled=false;let retryTimer:number|undefined;let attempts=0;
  const syncAuth=async()=>{
   try{
    const result=await getAuthStatus(state.directoryToken);
    if(cancelled)return;
+   attempts=0;
    saveAuthToken(state.directoryToken);
    setState(current=>{const setup=result.setup;return {...current,profile:{...current.profile,...result.profile,isDev:isDevProfile(result.profile),isAdmin:isAdminProfile(result.profile)},onePassEnabled:result.security.onePassAvailable,...(setup?{salary:setup.salary,taxRate:setup.taxRate,stage:setup.stage,vacTotal:setup.vacTotal,startDate:setup.startDate,scheduleType:setup.scheduleType,scheduleShift:setup.scheduleShift,scheduleVakhtaMonths:setup.scheduleVakhtaMonths,schedulePairType:setup.schedulePairType,holidayCoeff:setup.holidayCoeff,nightExtraPercent:setup.nightExtraPercent,setupComplete:true}:{})}});
    setAuthProfileReady(true);
   }catch(error){
    if(cancelled)return;
    const message=String(error);
-   if(message.includes('UNAUTHORIZED')||message.includes('HTTP_401')){
+   if((message.includes('UNAUTHORIZED')||message.includes('HTTP_401'))&&attempts<1){
+    attempts+=1;
     retryTimer=window.setTimeout(()=>{if(!cancelled)void syncAuth()},1200);
     return;
    }
    setAuthProfileReady(true);
+   if(message.includes('UNAUTHORIZED')||message.includes('HTTP_401')){
+    clearAuthToken();
+    setState(current=>({...current,directoryToken:'',onePassEnabled:false}));
+   }
   }
  };
  void syncAuth();
  return()=>{cancelled=true;if(retryTimer!==undefined)window.clearTimeout(retryTimer)};
 },[state.directoryToken]);
- useEffect(()=>{if(!directoryConfigured||!authProfileReady||!state.directoryToken||!state.profile.profileId)return;let cancelled=false;(async()=>{try{const remote=await getOwnChatKey(state.directoryToken);if(cancelled)return;try{const id=await getChatIdentityMatching(state.profile.profileId,remote.key.publicKey);if(!cancelled)await putChatKey(id.publicKey,state.directoryToken);return}catch{} }catch{} try{const id=await getChatIdentity(state.profile.profileId);if(!cancelled)await putChatKey(id.publicKey,state.directoryToken)}catch{}})();return()=>{cancelled=true}},[authProfileReady,state.directoryToken,state.profile.profileId]);
+useEffect(()=>{if(!directoryConfigured||!authProfileReady||!state.directoryToken||!state.profile.profileId)return;let cancelled=false;(async()=>{try{const remote=await getOwnChatKey(state.directoryToken);if(cancelled)return;try{const id=await getChatIdentityMatching(state.profile.profileId,remote.key.publicKey);if(!cancelled)await putChatKey(id.publicKey,state.directoryToken);return}catch{} }catch{} try{const id=await getChatIdentity(state.profile.profileId);if(!cancelled)await putChatKey(id.publicKey,state.directoryToken)}catch{}})();return()=>{cancelled=true}},[authProfileReady,state.directoryToken,state.profile.profileId]);
  useEffect(()=>{if(!directoryConfigured||!state.directoryToken)return;const timer=window.setTimeout(()=>{void syncPushReminders(buildPushReminders(state),state.directoryToken).catch(()=>{})},1200);return()=>window.clearTimeout(timer)},[state.directoryToken,state.notifications.enabled,state.notifications.shifts,state.notifications.absences,state.notifications.payroll,state.notifications.groupMessages,state.notifications.channelInvites,state.notifications.social,state.notifications.events,state.startDate,state.scheduleType,state.scheduleShift,state.schedulePairType,state.scheduleVakhtaMonths,state.vacations,state.sickLeaves,state.paymentDates]);
  useEffect(()=>{if(!directoryConfigured||!state.directoryToken||!state.profile.profileId)return;let cancelled=false;const beat=async()=>{if(cancelled)return;try{await heartbeatPresence(state.directoryToken)}catch{}};void beat();const timer=window.setInterval(beat,20000);return()=>{cancelled=true;window.clearInterval(timer)}},[state.directoryToken,state.profile.profileId]);
  useEffect(()=>{if(!directoryConfigured||!state.directoryToken||!state.profile.profileId||!isElectronDesktop||!state.notifications.enabled)return;let cancelled=false;let initialized=false;const key='workertink:desktop:last-notification';const poll=async()=>{try{const result=await getSocialNotifications(state.directoryToken);if(cancelled)return;const rows=result.notifications||[];if(!rows.length)return;const lastTime=Number(localStorage.getItem(key+'-time')||0);const newest=rows[0];const fresh=initialized?rows.filter((n:any)=>Number(n.createdAt||0)>lastTime).slice(0,3):[];localStorage.setItem(key,String(newest.id));localStorage.setItem(key+'-time',String(newest.createdAt||Date.now()));if(initialized)for(const n of fresh){sounds.notification();showDesktopNotification({title:n.title||'WTinker',body:n.body||'Новое уведомление',url:n.url||'./?tab=notifications',tag:`wtink-${n.id}`});}initialized=true}catch{}};void poll();const timer=window.setInterval(()=>void poll(),25000);return()=>{cancelled=true;window.clearInterval(timer)}},[state.directoryToken,state.profile.profileId,state.notifications.enabled]);
