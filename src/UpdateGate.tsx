@@ -11,38 +11,22 @@ export default function UpdateGate({children}:UpdateGateProps){
   const [needRefresh,setNeedRefresh]=useState(false);
   const [phase,setPhase]=useState<Phase>('ready');
   const updateSWRef=useRef<(reloadPage?:boolean)=>Promise<void>>(async()=>{});
+  const disposedRef=useRef(false);
+  const updatingRef=useRef(false);
 
   const requestReload=()=>{
+    if(updatingRef.current)return;
+    updatingRef.current=true;
     setPhase('updating');
-    if(!('serviceWorker' in navigator)){try{localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID)}catch{};window.setTimeout(()=>window.location.reload(),250);return;}
     try{localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID)}catch{}
-    
-    let reloaded=false;
-    const reload=async()=>{
-      if(reloaded)return;
-      reloaded=true;
-      try{sessionStorage.clear()}catch{}
-      try{
-        const registrations=await navigator.serviceWorker.getRegistrations();
-        await Promise.all(registrations.map(reg=>reg.update().catch(()=>{})));
-      }catch{}
-      window.location.reload();
-    };
-    const onControllerChange=()=>{
-      navigator.serviceWorker.removeEventListener('controllerchange',onControllerChange);
-      void reload();
-    };
-    navigator.serviceWorker.addEventListener('controllerchange',onControllerChange);
-    void updateSWRef.current(false).then(()=>{
-      const controller=navigator.serviceWorker.controller;
-      if(controller)controller.postMessage({type:'workertink:cleanup-runtime-cache'});
-      window.setTimeout(()=>{
-        navigator.serviceWorker.removeEventListener('controllerchange',onControllerChange);
-        void reload();
-      },8000);
-    }).catch(()=>{
-      navigator.serviceWorker.removeEventListener('controllerchange',onControllerChange);
+    if(!('serviceWorker' in navigator)){
+      window.setTimeout(()=>window.location.reload(),350);
+      return;
+    }
+    void updateSWRef.current(true).catch(()=>{
+      updatingRef.current=false;
       setPhase('ready');
+      try{localStorage.removeItem(BUILD_STORAGE_KEY)}catch{}
     });
   };
 
@@ -50,22 +34,22 @@ export default function UpdateGate({children}:UpdateGateProps){
     try{
       const previous=localStorage.getItem(BUILD_STORAGE_KEY);
       if(previous===null)localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID);
-      else if(previous!==BUILD_ID){setNeedRefresh(true);setPhase('ready');}
+      else if(previous!==BUILD_ID)setNeedRefresh(true);
     }catch{}
     if(!('serviceWorker' in navigator))return;
     let disposed=false;
-    const registrationCleanup:{registration?:ServiceWorkerRegistration;interval?:number;check?:()=>void}={};
+    const registrationCleanup:{interval?:number;check?:()=>void}={};
     updateSWRef.current=registerSW({
       immediate:true,
       onNeedRefresh(){
-        if(disposed)return;
+        if(disposed||disposedRef.current)return;
+        updatingRef.current=false;
         setNeedRefresh(true);
         setPhase('ready');
       },
       onRegistered(registration){
         if(!registration)return;
         const check=()=>registration.update().catch(()=>{});
-        registrationCleanup.registration=registration;
         registrationCleanup.check=check;
         registrationCleanup.interval=window.setInterval(check,5*60*1000);
         window.addEventListener('focus',check);
@@ -78,6 +62,7 @@ export default function UpdateGate({children}:UpdateGateProps){
     });
     return()=>{
       disposed=true;
+      disposedRef.current=true;
       if(registrationCleanup.interval)window.clearInterval(registrationCleanup.interval);
       if(registrationCleanup.check){
         window.removeEventListener('focus',registrationCleanup.check);
@@ -99,7 +84,7 @@ export default function UpdateGate({children}:UpdateGateProps){
           <div className="update-gate-copy">
             <span className="update-gate-eyebrow">WTINKER</span>
             <h2 id="update-gate-title">{phase==='updating'?'Обновляем WTinker':'Доступно важное обновление'}</h2>
-            <p>{phase==='updating'?'Устанавливаем новую версию и очищаем устаревшие данные. Это займёт несколько секунд.':'Вышла новая версия приложения. Обновление обязательно, чтобы продолжить работу без ошибок.'}</p>
+            <p>{phase==='updating'?'Устанавливаем новую версию и переключаем приложение на новый Service Worker.':'Вышла новая версия приложения. Обновление нужно, чтобы продолжить работу на актуальной версии.'}</p>
           </div>
           <div className="update-gate-progress" aria-hidden="true">
             <span className={phase==='updating'?'is-active':''}/>
