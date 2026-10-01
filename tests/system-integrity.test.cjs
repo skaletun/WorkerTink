@@ -9,7 +9,6 @@ const styles=fs.readFileSync(path.join(root,'src/styles.css'),'utf8');
 const update=fs.readFileSync(path.join(root,'src/UpdateGate.tsx'),'utf8');
 const pull=fs.readFileSync(path.join(root,'src/PullToRefresh.tsx'),'utf8');
 const sw=fs.readFileSync(path.join(root,'src/sw.js'),'utf8');
-const sw=fs.readFileSync(path.join(root,'src/sw.js'),'utf8');
 const workflow=fs.readFileSync(path.join(root,'.github/workflows/deploy.yml'),'utf8');
 const packageJson=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
 
