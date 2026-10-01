@@ -118,3 +118,19 @@
 :root[data-theme=dark] .banner-editor-modal,:root[data-theme=dark] .banner-editor-preview{background:#11151c;border-color:#2a303a}
 :root[data-theme=dark] .public-profile-rebuilt .public-profile-banner{background:#151a22;border-color:#2a303a}
 :root[data-theme=dark] .public-profile-rebuilt .public-profile-banner span{background:rgba(17,21,28,.86);border-color:#4a5564;color:#aeb8c6}
+
+/* Installed PWA pull-to-refresh */
+html,body,#root{overscroll-behavior-y:contain}
+.pull-refresh-root{min-height:100dvh;position:relative}
+.pull-refresh-indicator{position:fixed;left:50%;top:0;z-index:2147482500;width:min(330px,calc(100vw - 32px));padding:8px 12px 9px;display:grid;grid-template-columns:28px 1fr;grid-template-rows:auto 3px;column-gap:8px;align-items:center;border:1px solid var(--wt-line,#dfe4eb);border-radius:14px;background:color-mix(in srgb,var(--wt-surface,#fff) 94%,transparent);box-shadow:0 12px 32px rgba(15,23,42,.16);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);pointer-events:none;opacity:0;transition:transform .16s ease,opacity .16s ease}
+.pull-refresh-indicator[data-phase="pulling"],.pull-refresh-indicator[data-phase="ready"],.pull-refresh-indicator[data-phase="refreshing"]{opacity:1}
+.pull-refresh-icon{width:28px;height:28px;display:grid;place-items:center;border-radius:9px;background:var(--wt-accent-soft,#edf4ff);color:var(--wt-accent,#2563eb);font-size:17px;font-weight:900}
+.pull-refresh-text{font-size:10px;font-weight:800;color:var(--wt-text,#18202c)}
+.pull-refresh-progress{grid-column:1/-1;display:block;height:3px;margin-top:6px;border-radius:999px;background:var(--wt-accent,#2563eb);transform-origin:left center;transition:transform .08s linear}
+.pull-refresh-indicator[data-phase="refreshing"] .pull-refresh-icon{animation:pull-refresh-spin .7s linear infinite}
+.pull-refresh-indicator[data-phase="refreshing"] .pull-refresh-progress{transform:scaleX(1)!important;animation:pull-refresh-pulse .7s ease-in-out infinite alternate}
+@keyframes pull-refresh-spin{to{transform:rotate(360deg)}}
+@keyframes pull-refresh-pulse{from{opacity:.45}to{opacity:1}}
+:root[data-theme="dark"] .pull-refresh-indicator{background:color-mix(in srgb,#11151c 94%,transparent);border-color:#2a303a;box-shadow:0 12px 32px rgba(0,0,0,.4)}
+:root[data-theme="dark"] .pull-refresh-text{color:#f4f6f8}
+@media(prefers-reduced-motion:reduce){.pull-refresh-indicator{transition:none}.pull-refresh-indicator[data-phase="refreshing"] .pull-refresh-icon,.pull-refresh-indicator[data-phase="refreshing"] .pull-refresh-progress{animation:none}}
