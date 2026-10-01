@@ -16,6 +16,7 @@ const home=fs.readFileSync(path.join(root,'src/HomeView.tsx'),'utf8');
 const notifications=fs.readFileSync(path.join(root,'src/NotificationsView.tsx'),'utf8');
 const chats=fs.readFileSync(path.join(root,'src/ChatsHub.tsx'),'utf8');
 const chat=fs.readFileSync(path.join(root,'src/ChatView.tsx'),'utf8');
+const groupChat=fs.readFileSync(path.join(root,'src/GroupChatView.tsx'),'utf8');
 if(!app.includes('BannerEditorModal')) throw new Error('profile banner editor missing');
 if(!app.includes('Скопировать ссылку')) throw new Error('profile link copy action missing');
 if(!network.includes('Обложка')) throw new Error('community customization UI missing');
@@ -33,6 +34,7 @@ for(const x of ['redesign-home','Ваш график','Сценарий выпл
 for(const x of ['redesign-notifications','notification-timeline','timeline-item']) if(!notifications.includes(x)) throw new Error('rebuilt notification surface missing '+x);
 for(const x of ['redesign-chats','chats-mode-nav','Формат разговора']) if(!chats.includes(x)) throw new Error('rebuilt chats surface missing '+x);
 if(!chat.includes('chat-page-rebuilt')) throw new Error('rebuilt personal chat surface missing');
+if(!groupChat.includes('URL.revokeObjectURL')||!groupChat.includes('mediaUrlsRef')) throw new Error('group chat media object URL cleanup missing');
 if(!chat.includes('is-empty')) throw new Error('chat empty-state contract missing');
 if(!work.includes('redesign-work')) throw new Error('rebuilt work surface missing');
 if(!rebuildCss.includes('.v7-work-page.calendar-layout>.v7-page-header')) throw new Error('calendar header grid fix missing');
