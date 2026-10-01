@@ -79,6 +79,8 @@ export function loadState():State{
   const raw=localStorage.getItem(STORAGE_KEY)??LEGACY_KEYS.map(key=>localStorage.getItem(key)).find(Boolean);
   if(!raw)return cloneDefault();
   const normalized=normalizeState(JSON.parse(raw));
+  const persistedAuth=getAuthToken();
+  if(persistedAuth)normalized.directoryToken=persistedAuth;
   if(!localStorage.getItem(STORAGE_KEY)){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(normalized))}catch{/* keep normalized in memory */}}
   return normalized;
  }catch(error){
