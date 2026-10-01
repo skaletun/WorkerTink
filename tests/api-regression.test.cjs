@@ -45,6 +45,13 @@ assert.match(customizationMigration,/ALTER TABLE social_posts ADD COLUMN attachm
 assert.match(customizationMigration,/ALTER TABLE social_posts ADD COLUMN shift_note/);
 assert.match(api,/UPDATE social_groups SET name=\?1,description=\?2,visibility=\?3,icon=\?4,accent=\?5,cover=\?6,rules=\?7/);
 assert.match(api,/UPDATE company_channels SET name=\?1,company_name=\?2,description=\?3,visibility=\?4,icon=\?5,accent=\?6,cover=\?7,topic=\?8/);
+assert.match(api,/channel\.owner_id!==owner\.wtink_id&&!roleFlags\(owner\)\.isAdmin/);
+assert.doesNotMatch(api,/channel\.owner_id!==owner\.wtink_id && \(!member/);
+assert.match(api,/const channelDelete=path\.match/);
+assert.match(api,/DELETE FROM company_channel_members WHERE channel_id=\?1/);
+assert.match(api,/const networkGroupDelete=path\.match/);
+assert.match(api,/DELETE FROM social_posts WHERE group_id=\?1/);
+assert.match(api,/roleFlags\(owner\)\.isAdmin/);
 assert.match(api,/function cleanShiftNote/);
 
 const verificationMigration=fs.readFileSync(path.join(root,'directory-api/migrations/0023_profile_verification.sql'),'utf8');
@@ -76,5 +83,8 @@ assert.match(app,/Политику конфиденциальности/);
 assert.match(app,/Условия использования/);
 assert.match(app,/Заявка на верификацию/);
 assert.match(app,/ProfileQrModal/);
+assert.match(app,/editable onClose/);
+assert.match(app,/token=\{state\.directoryToken\}/);
+assert.match(app,/Баннер обновлён локально/);
 assert.match(app,/Admin Control Center/);
 console.log('WorkerTink verification/profile release tests: OK');
