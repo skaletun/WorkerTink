@@ -1406,9 +1406,11 @@ async function handle(request, env) {
   }
   if (chatMediaAction && request.method === 'GET' && !chatMediaAction[2]) {
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const mediaId=decodeURIComponent(chatMediaAction[1]);
-    const media=await env.DB.prepare('SELECT id,sender_id,receiver_id,mime,size,total_chunks,complete FROM chat_media WHERE id=?1').bind(mediaId).first();
+    const media=await env.DB.prepare('SELECT id,sender_id,receiver_id,group_id,mime,size,total_chunks,complete FROM chat_media WHERE id=?1').bind(mediaId).first();
     if(!media||!Number(media.complete))return json({error:'MEDIA_NOT_FOUND'},404,origin);
-    const participant=normalizeId(media.sender_id)===normalizeId(owner.wtink_id)||normalizeId(media.receiver_id)===normalizeId(owner.wtink_id); if(!participant)return json({error:'FORBIDDEN'},403,origin);
+    let participant=normalizeId(media.sender_id)===normalizeId(owner.wtink_id)||normalizeId(media.receiver_id)===normalizeId(owner.wtink_id);
+    if(!participant&&media.group_id){const member=await env.DB.prepare('SELECT 1 FROM chat_group_members WHERE group_id=?1 AND profile_id=?2').bind(media.group_id,owner.wtink_id).first();participant=Boolean(member)}
+    if(!participant)return json({error:'FORBIDDEN'},403,origin);
     const rows=await env.DB.prepare('SELECT chunk_index,data FROM chat_media_chunks WHERE media_id=?1 ORDER BY chunk_index ASC').bind(mediaId).all();
     const parts=(rows.results||[]).map(r=>base64ToBytes(r.data)); const total=parts.reduce((n,p)=>n+p.length,0); const out=new Uint8Array(total); let offset=0; for(const part of parts){out.set(part,offset);offset+=part.length;}
     return binary(out,200,origin,media.mime||'application/octet-stream');
