@@ -1159,3 +1159,8 @@ img,video,canvas,svg{max-width:100%}
   .channels-layout{grid-template-columns:1fr}
   .channels-list{border-radius:0;border-left:0;border-right:0}
 }
+
+/* Channel post controls */
+.channel-post{position:relative}
+.channel-post-delete{margin-top:8px;border:0;background:transparent;color:var(--muted);font-size:12px;cursor:pointer;padding:2px 0}
+.channel-post-delete:hover{color:#c43d3d}
