@@ -7,6 +7,8 @@ const channels=fs.readFileSync(path.join(root,'src/ChannelsView.tsx'),'utf8');
 const spaceControls=fs.readFileSync(path.join(root,'src/SpaceControls.tsx'),'utf8');
 const styles=fs.readFileSync(path.join(root,'src/styles.css'),'utf8');
 const update=fs.readFileSync(path.join(root,'src/UpdateGate.tsx'),'utf8');
+const pull=fs.readFileSync(path.join(root,'src/PullToRefresh.tsx'),'utf8');
+const sw=fs.readFileSync(path.join(root,'src/sw.js'),'utf8');
 const sw=fs.readFileSync(path.join(root,'src/sw.js'),'utf8');
 const workflow=fs.readFileSync(path.join(root,'.github/workflows/deploy.yml'),'utf8');
 const packageJson=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
@@ -53,8 +55,17 @@ if(!network.includes('Promise.allSettled([getNetworkHome(token)')) throw new Err
 if(!network.includes("if(savedResult.status==='fulfilled')setSaved(savedResult.value.posts);else setSaved([])")) throw new Error('saved posts must be optional during network refresh');
 if(network.includes('Promise.all([getNetworkHome(token),import(\'./directory\').then(m=>m.getSocialFeed(token,60)),getSavedNetworkPosts(token)])')) throw new Error('network refresh still fails atomically on saved posts');
 
-if(!update.includes("if(!('serviceWorker' in navigator)){try{localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID)}catch{};window.setTimeout(()=>window.location.reload(),250);return;}")) throw new Error('update fallback without Service Worker is missing');
+if(!update.includes("updateSWRef.current(true)")) throw new Error('PWA update must activate the waiting worker and reload');
+if(update.includes("updateSWRef.current(false)")) throw new Error('PWA update must not leave the worker waiting after confirmation');
+if(!update.includes("localStorage.removeItem(BUILD_STORAGE_KEY)")) throw new Error('failed update must reset build marker');
+if(!sw.includes("event.data?.type==='SKIP_WAITING'")||!sw.includes('self.skipWaiting()')) throw new Error('custom prompt service worker missing SKIP_WAITING handler');
 if(!update.includes('WTINKER')) throw new Error('UpdateGate brand was not migrated');
+if(!pull.includes('EDGE_START')||!pull.includes('TRIGGER_DISTANCE')) throw new Error('PWA pull-to-refresh thresholds missing');
+if(!pull.includes("display-mode: standalone")) throw new Error('pull-to-refresh must be PWA-only');
+if(!pull.includes("event.preventDefault()")) throw new Error('pull-to-refresh must suppress native overscroll while pulling');
+if(!pull.includes("window.location.reload()")) throw new Error('pull-to-refresh reload action missing');
+if(!pull.includes('pull-refresh-indicator')||!pull.includes('data-phase="refreshing"')) throw new Error('pull-to-refresh animated indicator missing');
+
 
 if(!sw.includes("title:'WTinker'")) throw new Error('service worker default notification brand is stale');
 if(packageJson.scripts?.api!=='npm run directory:dev') throw new Error('root api script must use the production-equivalent Directory API');
