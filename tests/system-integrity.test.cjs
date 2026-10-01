@@ -10,6 +10,7 @@ const update=fs.readFileSync(path.join(root,'src/UpdateGate.tsx'),'utf8');
 const pull=fs.readFileSync(path.join(root,'src/PullToRefresh.tsx'),'utf8');
 const shell=fs.readFileSync(path.join(root,'src/AppShell.tsx'),'utf8');
 const design=fs.readFileSync(path.join(root,'src/design.css'),'utf8');
+if(fs.existsSync(path.join(root,'src/V7Shell.tsx'))) throw new Error('legacy V7 shell file still exists');
 const sw=fs.readFileSync(path.join(root,'src/sw.js'),'utf8');
 const workflow=fs.readFileSync(path.join(root,'.github/workflows/deploy.yml'),'utf8');
 const packageJson=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
