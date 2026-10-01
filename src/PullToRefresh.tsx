@@ -18,7 +18,8 @@ export default function PullToRefresh({children}:{children:ReactNode}){
     const coarse=window.matchMedia?.('(pointer: coarse)').matches;
     if(!standalone||!coarse)return;
 
-    const scheduleDistance=(next:number)=>{\n      distanceRef.current=next;
+    const scheduleDistance=(next:number)=>{
+      distanceRef.current=next;
       if(rafRef.current!==undefined)cancelAnimationFrame(rafRef.current);
       rafRef.current=requestAnimationFrame(()=>setDistance(next));
     };
