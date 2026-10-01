@@ -9,6 +9,7 @@ const MAX_DISTANCE=110;
 export default function PullToRefresh({children}:{children:ReactNode}){
   const [distance,setDistance]=useState(0);
   const [phase,setPhase]=useState<PullPhase>('idle');
+  const distanceRef=useRef(0);
   const stateRef=useRef({active:false,startX:0,startY:0,lastY:0,moved:false,refreshing:false});
   const rafRef=useRef<number|undefined>(undefined);
 
