@@ -290,8 +290,18 @@ async function authProfile(request, env) {
     await env.DB.prepare('UPDATE auth_sessions SET last_seen = ?1 WHERE token_hash = ?2').bind(Date.now(), tokenHash).run();
     return env.DB.prepare('SELECT wtink_id, name, position, avatar, banner, username, is_dev, is_admin, is_official, is_verified, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE wtink_id = ?1').bind(session.profile_id).first();
   }
-  // Backward compatibility for the original single-token sessions.
-  return env.DB.prepare('SELECT wtink_id, name, position, avatar, username, is_dev, is_admin, is_official, is_verified, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE token_hash = ?1').bind(tokenHash).first();
+  // Migrate legacy single-token sessions into the expiring session table on first use.
+  // The old profile token is replaced immediately so it cannot remain a permanent bearer credential.
+  const legacy = await env.DB.prepare('SELECT wtink_id, name, position, avatar, banner, username, is_dev, is_admin, is_official, is_verified, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE token_hash = ?1').bind(tokenHash).first();
+  if (!legacy) return null;
+  const now = Date.now();
+  const sessionId = crypto.randomUUID();
+  await env.DB.prepare('INSERT OR IGNORE INTO auth_sessions(token_hash,profile_id,created_at,expires_at,session_id,device_name,last_seen) VALUES (?1,?2,?3,?4,?5,?6,?3)')
+    .bind(tokenHash, legacy.wtink_id, now, now + AUTH_SESSION_TTL, sessionId, 'Legacy session').run();
+  const replacementTokenHash = await sha256(randomToken());
+  await env.DB.prepare('UPDATE profiles SET token_hash=?1, updated_at=?2 WHERE wtink_id=?3 AND token_hash=?4')
+    .bind(replacementTokenHash, now, legacy.wtink_id, tokenHash).run();
+  return env.DB.prepare('SELECT wtink_id, name, position, avatar, banner, username, is_dev, is_admin, is_official, is_verified, token_hash, pin_hash, pin_salt, pin_failed_attempts, pin_locked_until, webauthn_user_id, created_at, updated_at, last_seen FROM profiles WHERE wtink_id = ?1').bind(legacy.wtink_id).first();
 }
 
 
