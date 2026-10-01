@@ -22,8 +22,6 @@ import {getChatIdentity,getChatIdentityMatching} from './chatCrypto';
 
 const scheduleTypeOptions=['5/2','4/1','3/2','3/1','6/1','2/2','7/0'] as const;
 const applyScheduleType=(state:State,type:State['scheduleType']):Partial<State>=>({scheduleType:type,scheduleShift:type!=='7/0'&&state.scheduleShift==='full'?'day':state.scheduleShift});
-import './styles.css';
-import './design.css';
 
 type Tab='home'|'social'|'people'|'communities'|'work'|'calendar'|'pay'|'absence'|'friends'|'chat'|'notifications'|'profile'|'settings'|'admin';
 type PeriodDraft={start:string;end:string};
