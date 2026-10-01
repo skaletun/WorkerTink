@@ -34,7 +34,7 @@ if(!ui.includes('.profile-cover{')||!ui.includes('background-size:cover')) throw
 if(!app.includes('deleteNetworkGroup')||!app.includes('deleteCompanyChannel')) throw new Error('admin space moderation actions missing');
 if(!network.includes('post-attachment-v2')) throw new Error('flexible post attachment rendering missing');
 const work=fs.readFileSync(path.join(root,'src/WorkHubView.tsx'),'utf8');
-const rebuildCss=fs.readFileSync(path.join(root,'src/rebuild.css'),'utf8');
+const rebuildCss=ui;
 
 for(const x of ['redesign-home','Ваш график','Сценарий выплаты','Резервная копия']) if(!home.includes(x)) throw new Error('rebuilt home surface missing '+x);
 for(const x of ['redesign-notifications','notification-timeline','timeline-item']) if(!notifications.includes(x)) throw new Error('rebuilt notification surface missing '+x);
