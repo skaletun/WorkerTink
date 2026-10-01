@@ -27,7 +27,7 @@ export default function AppShell({items,active,onNavigate,profile,profileAction,
   const renderItem=(item:NavItem)=>(
     <button key={item.id} className={active===item.id?'wt-nav-item active':'wt-nav-item'} aria-current={active===item.id?'page':undefined} onClick={()=>onNavigate(item.id)}>
       <i aria-hidden="true">{item.icon}</i>
-      <span><b>{item.label}</b><small>{item.sub}</small></span>
+      <span><b>{item.label}</b><small>{item.sub}</small></span><span className="wt-nav-arrow" aria-hidden="true">›</span>
     </button>
   );
   return <div className="wt-shell">
@@ -35,13 +35,13 @@ export default function AppShell({items,active,onNavigate,profile,profileAction,
 
     <aside className="wt-sidebar">
       <button className="wt-brand" onClick={()=>onNavigate('home')} aria-label="WTinker — Главная">
-        <span className="wt-brand-mark">W</span>
+        <span className="wt-brand-mark"><span>W</span><i/></span>
         <span className="wt-brand-copy"><b>WTinker</b><small>people × work</small></span>
       </button>
 
       <button className="wt-profile" onClick={profileAction} aria-label="Открыть профиль">
         {profile}
-        <span className="wt-profile-chevron">›</span>
+        <span className="wt-profile-chevron" aria-hidden="true">↗</span>
       </button>
 
       <button className="wt-search-mini" onClick={searchAction} aria-label="Открыть поиск">
@@ -64,7 +64,7 @@ export default function AppShell({items,active,onNavigate,profile,profileAction,
     <main id="wt-main" className="wt-main">
       <header className="wt-topbar">
         <div className="wt-context">
-          <span>{kicker}</span>
+          <span className="wt-context-kicker">{kicker}</span>
           <h1>{title}</h1>
         </div>
         <div className="wt-topbar-actions">
