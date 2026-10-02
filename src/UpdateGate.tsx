@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState,type ReactNode} from 'react';
+import {Icon} from './Icon';
 import {registerSW} from 'virtual:pwa-register';
 
 type Phase='ready'|'updating';
@@ -117,7 +118,7 @@ export default function UpdateGate({children}:UpdateGateProps){
   {needRefresh&&<div className="update-gate" role="dialog" aria-modal="true" aria-labelledby="update-gate-title">
    <div className="update-gate-backdrop"/>
    <section className="update-gate-card">
-    <div className="update-gate-icon" aria-hidden="true"><span className="update-gate-icon-ring"/><span className="update-gate-icon-arrow">↻</span></div>
+    <div className="update-gate-icon" aria-hidden="true"><span className="update-gate-icon-ring"/><span className="update-gate-icon-arrow"><Icon name="refresh" size={18}/></span></div>
     <div className="update-gate-copy">
      <span className="update-gate-eyebrow">WTINKER</span>
      <h2 id="update-gate-title">{phase==='updating'?'Обновляем WTinker':'Доступно важное обновление'}</h2>
