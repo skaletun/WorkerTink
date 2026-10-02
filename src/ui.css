@@ -173,6 +173,10 @@ body{overflow-x:clip}
 
 /* ---------- social/network ---------- */
 .social-layout,.network-layout{grid-template-columns:minmax(0,var(--feed)) 274px;justify-content:center;align-items:start}
+.social-hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:end;padding:20px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);box-shadow:var(--shadow);margin-bottom:10px}
+.social-hero h1{margin:0;font-size:26px;line-height:1.05;letter-spacing:-.05em}
+.social-hero p{margin:6px 0 0;max-width:650px;color:var(--muted);font-size:11px;line-height:1.55}
+.social-hero-actions{display:flex;gap:7px;flex-wrap:wrap}
 .social-main,.social-side{display:grid;gap:12px}
 .social-compose,.network-compose,.composer-v2{padding:16px}
 .social-compose textarea,.composer-v2 textarea{width:100%;min-height:94px;margin-top:10px;padding:11px;border:1px solid var(--line);border-radius:9px;background:var(--surface-soft);resize:vertical;font-size:13px}
