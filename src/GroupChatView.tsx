@@ -1,5 +1,4 @@
 import {Icon} from './Icon';
-import {Icon} from './Icon';
 import {useEffect,useRef,useState} from 'react';
 import type {UserProfile} from './core';
 import {addChatGroupMember,clearChatGroup,createChatGroup,deleteChatGroupMessage,getChatGroup,getChatGroupMessages,getChatKey,getChatGroups,putChatGroupKey,putChatGroupMemberKey,sendChatGroupMessage,uploadChatMedia,getChatMedia,type GroupChat,type GroupChatDetail,type GroupChatMessage} from './directory';
