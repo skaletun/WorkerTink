@@ -122,5 +122,20 @@ test('WTinker bug-archive interaction states',async({browser})=>{
   await mobilePage.goto('?tab=home',{waitUntil:'networkidle'});
   await mobilePage.waitForTimeout(300);
   await mobilePage.screenshot({path:'visual-audit-artifacts/android-mobile-pwa.png',fullPage:true});
+
+  await mobilePage.getByRole('button',{name:'Понятно'}).click().catch(()=>{});
+  await mobilePage.goto('?tab=calendar',{waitUntil:'networkidle'});
+  await mobilePage.getByRole('button',{name:'Понятно'}).click().catch(()=>{});
+  await mobilePage.locator('button.calendar-day:not(.pre-start)').first().click();
+  await mobilePage.waitForTimeout(250);
+  await mobilePage.screenshot({path:'visual-audit-artifacts/android-mobile-shift-editor.png',fullPage:true});
+
+  await mobilePage.getByRole('button',{name:'Закрыть'}).click().catch(()=>{});
+  await mobilePage.goto('?tab=profile',{waitUntil:'networkidle'});
+  await mobilePage.getByRole('button',{name:'Понятно'}).click().catch(()=>{});
+  await mobilePage.getByRole('button',{name:'QR-код'}).first().click();
+  await mobilePage.waitForTimeout(250);
+  await mobilePage.screenshot({path:'visual-audit-artifacts/android-mobile-profile-qr.png',fullPage:true});
+
   await mobile.close();
 });
