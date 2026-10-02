@@ -129,3 +129,6 @@ a{color:inherit}img,video,canvas,svg{max-width:100%}
 @keyframes wt-page-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 .tab-stage{animation:wt-page-in .16s ease-out both}
 .shift-modal{max-height:min(720px,calc(100dvh - 96px));overflow:auto}
+
+@keyframes wt-modal-in{from{opacity:0;transform:translateY(8px) scale(.99)}to{opacity:1;transform:none}}
+.v7-modal-backdrop{animation:wt-page-in .16s ease-out both}.modal-backdrop>div{animation:wt-modal-in .18s ease-out both}
