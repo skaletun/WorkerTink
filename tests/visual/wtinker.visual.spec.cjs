@@ -123,4 +123,4 @@ test('WTinker bug-archive interaction states',async({browser})=>{
   await mobilePage.waitForTimeout(300);
   await mobilePage.screenshot({path:'visual-audit-artifacts/android-mobile-pwa.png',fullPage:true});
   await mobile.close();
-};
+});
