@@ -79,3 +79,48 @@ test('WTinker public/legal/special and registration screens',async({browser})=>{
     await context.close();
   }
 });
+
+test('WTinker bug-archive interaction states',async({browser})=>{
+  const context=await browser.newContext({viewport:{width:1440,height:900},colorScheme:'light'});
+  const page=await context.newPage();
+  await prepare(page,'light');
+
+  await page.goto('?tab=social',{waitUntil:'networkidle'});
+  await page.getByRole('button',{name:'Обмен сменами'}).click();
+  await page.waitForTimeout(250);
+  await page.screenshot({path:'visual-audit-artifacts/light-desktop-shift-exchange.png',fullPage:true});
+
+  await page.goto('?tab=calendar',{waitUntil:'networkidle'});
+  await page.locator('button.calendar-day:not(.pre-start)').first().click();
+  await page.waitForTimeout(250);
+  await page.screenshot({path:'visual-audit-artifacts/light-desktop-shift-editor.png',fullPage:true});
+
+  await page.goto('?tab=profile',{waitUntil:'networkidle'});
+  await page.getByRole('button',{name:'QR-код'}).first().click();
+  await page.waitForTimeout(250);
+  await page.screenshot({path:'visual-audit-artifacts/light-desktop-profile-qr.png',fullPage:true});
+
+  await context.close();
+
+  const mobile=await browser.newContext({
+    viewport:{width:390,height:844},
+    colorScheme:'light',
+    userAgent:'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/140.0.0.0 Mobile Safari/537.36'
+  });
+  const mobilePage=await mobile.newPage();
+  await mobilePage.addInitScript(({payload})=>{
+    try{
+      localStorage.clear();
+      localStorage.setItem('workertink:v6',JSON.stringify(payload));
+      localStorage.setItem('workertink:auth-token',payload.directoryToken);
+    }catch{}
+  },{payload:state});
+  await mobilePage.route('**/*',(route)=>{
+    if(route.request().url().includes('workertink-directory.workertink-directory.workers.dev'))return route.abort();
+    return route.continue();
+  });
+  await mobilePage.goto('?tab=home',{waitUntil:'networkidle'});
+  await mobilePage.waitForTimeout(300);
+  await mobilePage.screenshot({path:'visual-audit-artifacts/android-mobile-pwa.png',fullPage:true});
+  await mobile.close();
+};
