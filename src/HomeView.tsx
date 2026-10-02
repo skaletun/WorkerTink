@@ -17,36 +17,107 @@ export default function HomeView({state,patch,onNotice,go}:Props){
  const tips=useMemo(()=>{const list:string[]=[];if(month.sickDays)list.push('В этом месяце есть больничные — проверьте средний заработок и даты выплат.');if(month.vacDays)list.push('В текущем месяце есть отпуск — проверьте остаток дней.');if(month.nightWork)list.push('Есть ночные смены — убедитесь, что процент ночной доплаты актуален.');if(year.averageMonthlyNet&&year.averageMonthlyNet<state.salary*(1-state.taxRate/100)*.8)list.push('Средний доход ниже обычного оклада — проверьте ручные выходы и отсутствия.');return list.length?list:['График и выплаты синхронизированы. Можно открыть ленту и поделиться рабочей новостью.']},[month,year,state]);
  const saveTip=()=>{if(!tip.trim())return;patch({shiftNotes:{...state.shiftNotes,[iso(now)]:`${state.shiftNotes[iso(now)]||''}${state.shiftNotes[iso(now)]?'\n':''}${tip.trim()}`}});setTip('');onNotice('Совет сохранён в заметках текущего дня')};
  const backup=async()=>{if(!backupPassword){onNotice('Введите пароль для шифрования резервной копии');return}try{download(`workertink-backup-${iso(now)}.wtbackup`,await encryptBackup(state,backupPassword));setBackupPassword('');onNotice('Зашифрованная резервная копия создана')}catch{onNotice('Не удалось создать резервную копию')}};
- return <section className="redesign-page redesign-home">
-  <div className="redesign-page-intro">
-   <div><span className="redesign-overline">Сегодня · {now.toLocaleDateString('ru-RU')}</span><h1>Ваш день в WTinker</h1><p>Рабочий ритм, деньги и люди — без переходов между несвязанными инструментами.</p></div>
-   <div className="redesign-intro-actions"><button className="redesign-btn redesign-btn-primary" onClick={()=>go('social')}>Открыть ленту</button><button className="redesign-btn" onClick={()=>go('calendar')}>График</button></div>
+ return <section className="canva-page canva-home">
+  <header className="canva-page-head">
+    <div>
+      <span className="canva-kicker">Home Dashboard</span>
+      <h1>Ваш рабочий день в одном окне</h1>
+      <p>Расписание, выплаты и рабочие действия — без лишних переходов.</p>
+    </div>
+    <div className="canva-head-actions">
+      <button className="canva-button canva-button-primary" onClick={()=>go('calendar')}>Открыть календарь</button>
+      <button className="canva-button" onClick={()=>go('social')}>Открыть ленту</button>
+    </div>
+  </header>
+
+  <section className="canva-kpi-grid" aria-label="Ключевые показатели">
+    <button className="canva-kpi" onClick={()=>go('pay')}>
+      <span>На руки · {MONTHS[month.month]}</span>
+      <strong>{formatMoney(month.net)}</strong>
+      <small>{month.work} смен · текущий месяц</small>
+    </button>
+    <button className="canva-kpi" onClick={()=>go('pay')}>
+      <span>Годовой доход</span>
+      <strong>{formatMoney(year.net)}</strong>
+      <small>{formatMoney(year.averageMonthlyNet)} в среднем / мес.</small>
+    </button>
+    <button className="canva-kpi" onClick={()=>go('absence')}>
+      <span>Отпуск</span>
+      <strong>{Math.max(0,state.vacTotal-vacationUsedDays(state))} дн.</strong>
+      <small>доступно по вашему профилю</small>
+    </button>
+    <button className="canva-kpi" onClick={()=>go('calendar')}>
+      <span>Выходные</span>
+      <strong>{daysOff(state,30)}</strong>
+      <small>в ближайшие 30 дней</small>
+    </button>
+  </section>
+
+  <div className="canva-home-main">
+    <section className="canva-shift-card">
+      <div className="canva-section-head">
+        <div><span className="canva-kicker">Today's Shift</span><h2>Текущая смена</h2></div>
+        <span className="canva-state">{getScheduledShift(state,now)==='off'?'Выходной':'В работе'}</span>
+      </div>
+      <div className="canva-shift-time">{getScheduledShift(state,now)==='off'?'—':getScheduledShift(state,now)==='night'?'20:00 – 08:00':getScheduledShift(state,now)==='full'?'09:00 – 09:00':'09:00 – 17:00'{'}'}</div>
+      <div className="canva-shift-meta">
+        <div><span>Начало</span><b>{getScheduledShift(state,now)==='off'?'—':'08:58'}</b></div>
+        <div><span>Статус</span><b>{getScheduledShift(state,now)==='off'?'Выходной':'Активна'}</b></div>
+        <div><span>Отметка</span><b>{getScheduledShift(state,now)==='off'?'Нет':'Сегодня'}</b></div>
+      </div>
+      <div className="canva-shift-actions">
+        <button className="canva-button canva-button-primary" onClick={()=>go('calendar')}>Изменить смену</button>
+        <button className="canva-button" onClick={()=>go('absence')}>Оформить отсутствие</button>
+      </div>
+    </section>
+
+    <aside className="canva-actions-card">
+      <div className="canva-section-head"><div><span className="canva-kicker">Quick Actions</span><h2>Действия</h2></div></div>
+      <div className="canva-action-list">
+        <button onClick={()=>go('calendar')}><span>01</span><div><b>График</b><small>Сегодня и следующие смены</small></div><Icon name="chevronRight" size={15}/></button>
+        <button onClick={()=>go('absence')}><span>02</span><div><b>Отсутствие</b><small>Отпуск или больничный</small></div><Icon name="chevronRight" size={15}/></button>
+        <button onClick={()=>go('pay')}><span>03</span><div><b>Зарплата</b><small>Текущий период и начисления</small></div><Icon name="chevronRight" size={15}/></button>
+        <button onClick={()=>go('social')}><span>04</span><div><b>Сеть</b><small>Новости команды и сообщества</small></div><Icon name="chevronRight" size={15}/></button>
+      </div>
+    </aside>
   </div>
-  <div className="home-snapshot">
-   <article className="snapshot-card snapshot-primary"><span>На руки в этом месяце</span><strong>{formatMoney(month.net)}</strong><small>{month.work} смен · {month.sickDays} дн. больничного</small></article>
-   <article className="snapshot-card"><span>Годовой доход</span><strong>{formatMoney(year.net)}</strong><small>{formatMoney(year.averageMonthlyNet)} в среднем / мес.</small></article>
-   <article className="snapshot-card"><span>Отпуск</span><strong>{Math.max(0,state.vacTotal-vacationUsedDays(state))}</strong><small>дней осталось</small></article>
-   <article className="snapshot-card"><span>Выходные</span><strong>{daysOff(state,30)}</strong><small>в ближайшие 30 дней</small></article>
+
+  <div className="canva-home-lower">
+    <section className="canva-activity-card">
+      <div className="canva-section-head"><div><span className="canva-kicker">Recent Activity</span><h2>Последние события</h2></div><button className="canva-text-button" onClick={()=>go('notifications')}>Все события</button></div>
+      <div className="canva-activity-list">
+        {(tips.slice(0,4).length?tips.slice(0,4):['График и выплаты синхронизированы.','Система готова к работе.']).map((item,i)=><button key={i} onClick={()=>go(i<2?'notifications':'work')}><span className="canva-activity-dot"/><div><b>{item}</b><small>{i===0?'Сейчас':i===1?'Сегодня':'Ранее'}</small></div><time>{i===0?'10:32':i===1?'09:47':i===2?'09:15':'08:58'}</time></button>)}
+      </div>
+    </section>
+
+    <section className="canva-summary-card">
+      <div className="canva-section-head"><div><span className="canva-kicker">This week</span><h2>Доход и баланс</h2></div></div>
+      <div className="canva-summary-number">{formatMoney(forecast.net)}</div>
+      <p>Прогноз на {forecastMonths} мес. · среднее {formatMoney(forecast.avg)} / мес.</p>
+      <input className="canva-range" type="range" min="1" max="12" value={forecastMonths} onChange={e=>setForecastMonths(Number(e.target.value))}/>
+      <div className="canva-summary-grid">
+        <div><span>Отпуск</span><b>{Math.max(0,state.vacTotal-vacationUsedDays(state))} дн.</b></div>
+        <div><span>Больничный</span><b>{formatMoney(sickPay)}</b></div>
+        <div><span>Ставка</span><b>{Math.round(sickRate*100)}%</b></div>
+      </div>
+    </section>
   </div>
-  <div className="home-main-grid">
-   <section className="redesign-panel home-schedule">
-    <div className="redesign-panel-head"><div><span className="redesign-overline">Ближайшие дни</span><h2>Ваш график</h2></div><button className="redesign-link" onClick={()=>go('calendar')}>Открыть календарь <Icon name="chevronRight" size={14}/></button></div>
-    <div className="schedule-strip">{Array.from({length:7},(_,i)=>{const d=addDays(now,i);const s=getScheduledShift(state,d);return <button key={i} className={i===0?'today':''} onClick={()=>go('calendar')}><span>{d.toLocaleDateString('ru-RU',{weekday:'short'})}</span><b>{d.getDate()}</b><em className={s==='off'?'off':s==='night'?'night':'work'}>{s==='off'?'Выходной':s==='night'?'Ночь':s==='full'?'Сутки':'День'}</em></button>})}</div>
-   </section>
-   <aside className="redesign-panel home-priority"><div className="redesign-panel-head"><div><span className="redesign-overline">Сейчас важно</span><h2>Проверьте</h2></div></div><div className="priority-list"><div><b>{month.nightWork?'Ночная доплата':'График'}</b><span>{month.nightWork?'Есть ночные смены в текущем месяце.':'График не требует изменений.'}</span></div><div><b>{month.vacDays?'Отпуск':'Доход'}</b><span>{month.vacDays?'В этом месяце есть дни отпуска.':'Расходы и выплаты можно проверить в разделе «Зарплата».'}</span></div><div><b>Люди</b><span>Откройте ленту, чтобы увидеть рабочие новости и обсуждения.</span></div></div><button className="redesign-btn redesign-btn-soft" onClick={()=>go('social')}>Перейти в сеть</button></aside>
-  </div>
-  <div className="home-content-grid">
-   <section className="redesign-panel"><div className="redesign-panel-head"><div><span className="redesign-overline">Прогноз</span><h2>Доход на {forecastMonths} мес.</h2></div><strong className="metric-large">{formatMoney(forecast.net)}</strong></div><input className="redesign-range" type="range" min="1" max="12" value={forecastMonths} onChange={e=>setForecastMonths(Number(e.target.value))}/><div className="range-meta"><span>1 мес.</span><span>Среднее {formatMoney(forecast.avg)} / мес.</span><span>12 мес.</span></div></section>
-   <section className="redesign-panel"><div className="redesign-panel-head"><div><span className="redesign-overline">Отпуск</span><h2>Спланировать заранее</h2></div><span className="panel-status">Доступно {Math.max(0,state.vacTotal-vacationUsedDays(state))} дн.</span></div><div className="inline-form"><input type="date" value={vacStart} onChange={e=>setVacStart(e.target.value)}/><input type="number" min="1" max="60" value={vacLength} onChange={e=>setVacLength(Number(e.target.value)||1)}/></div>{plannedVacation?<p className="panel-copy"><b>{plannedVacation.period.start} → {plannedVacation.period.end}</b><br/>{plannedVacation.days} оплачиваемых дней</p>:<p className="panel-copy">Выберите начало и длительность, чтобы увидеть прогноз по календарным дням.</p>}</section>
-   <section className="redesign-panel"><div className="redesign-panel-head"><div><span className="redesign-overline">Сценарий</span><h2>Что изменится?</h2></div><strong className="metric-large">{formatMoney(scenario.net)}</strong></div><label className="redesign-field">Оклад<input type="number" value={scenarioSalary} onChange={e=>setScenarioSalary(Number(e.target.value)||0)}/></label><label className="redesign-field">Ночная доплата · {scenarioNight}%<input className="redesign-range" type="range" min="0" max="100" value={scenarioNight} onChange={e=>setScenarioNight(Number(e.target.value))}/></label><p className="panel-copy">Расчёт сценария не меняет ваши реальные настройки.</p></section>
-   <section className="redesign-panel"><div className="redesign-panel-head"><div><span className="redesign-overline">Безопасность</span><h2>Аккаунт под контролем</h2></div></div><div className="security-summary"><div><b>OnePass</b><span>{state.onePassEnabled?'Включён':'Можно подключить'}</span></div><div><b>Данные</b><span>Хранятся локально и синхронизируются только нужные профильные поля.</span></div></div><button className="redesign-btn redesign-btn-soft" onClick={()=>go('settings')}>Открыть настройки</button></section>
-  </div>
-  <div className="home-content-grid home-tools-grid">
-   <section className="redesign-panel"><div className="redesign-panel-head"><div><span className="redesign-overline">Больничный</span><h2>Сценарий выплаты</h2></div><strong className="metric-large">{formatMoney(sickPay)}</strong></div><input className="redesign-range" type="range" min="1" max="30" value={sickDays} onChange={e=>setSickDays(Number(e.target.value))}/><div className="range-meta"><span>1 день</span><span>{sickDays} дней · коэффициент {Math.round(sickRate*100)}%</span><span>30 дней</span></div><p className="panel-copy">Прогноз по текущему среднему заработку и стажу. Реальные данные профиля не изменяются.</p></section>
-   <section className="redesign-panel"><div className="redesign-panel-head"><div><span className="redesign-overline">Статистика</span><h2>{now.getFullYear()} год</h2></div><button className="redesign-link" onClick={()=>go('pay')}>Подробнее <Icon name="chevronRight" size={14}/></button></div><div className="security-summary"><div><b>{year.work}</b><span>смен</span></div><div><b>{formatMoney(year.net)}</b><span>на руки</span></div><div><b>{year.vacDays}</b><span>дней отпуска</span></div><div><b>{year.sickDays}</b><span>дней больничного</span></div></div></section>
-   <section className="redesign-panel"><div className="redesign-panel-head"><div><span className="redesign-overline">Личная заметка</span><h2>Сохранить мысль</h2></div></div><input className="panel-input" value={tip} onChange={e=>setTip(e.target.value)} placeholder={tips[0]}/><div className="inline-form inline-form-single"><button className="redesign-btn redesign-btn-soft" onClick={saveTip}>Сохранить в сегодняшний день</button></div><p className="panel-copy">{tips[0]}</p></section>
-   <section className="redesign-panel"><div className="redesign-panel-head"><div><span className="redesign-overline">Резервная копия</span><h2>Зашифровать локальные данные</h2></div></div><p className="panel-copy">AES-GCM + PBKDF2. Пароль остаётся на устройстве и не передаётся на сервер.</p><div className="backup-row"><input className="panel-input" type="password" value={backupPassword} onChange={e=>setBackupPassword(e.target.value)} placeholder="Пароль резервной копии"/><button className="redesign-btn redesign-btn-primary" onClick={()=>void backup()}>Экспорт</button></div></section>
-  </div>
-  <div className="redesign-social-callout"><div><span className="redesign-overline">WTinker · социальная сеть для работы</span><h2>Рабочие новости должны быть рядом с людьми.</h2><p>Публикации, сообщества, сообщения и рабочие действия живут в одном контексте — так меньше переключений и потерянных договорённостей.</p></div><button className="redesign-btn redesign-btn-primary" onClick={()=>go('social')}>Открыть ленту <Icon name="chevronRight" size={14}/></button></div>
- </section>;
+
+  <section className="canva-note-card">
+    <div>
+      <span className="canva-kicker">Work notes</span>
+      <h2>Добавить рабочий контекст</h2>
+      <p>Сохраните короткую заметку прямо из главной страницы — она останется связанной с сегодняшней датой.</p>
+    </div>
+    <div className="canva-note-form">
+      <input value={tip} onChange={e=>setTip(e.target.value)} placeholder="Например: передать смену следующему оператору"/>
+      <button className="canva-button canva-button-primary" onClick={saveTip}>Сохранить заметку</button>
+    </div>
+  </section>
+
+  <section className="canva-security-row">
+    <div className="canva-security-copy"><span className="canva-kicker">Backup</span><b>Зашифрованная резервная копия</b><small>Резервная копия создаётся локально и не меняет рабочие расчёты.</small></div>
+    <div className="canva-backup-form"><input type="password" value={backupPassword} onChange={e=>setBackupPassword(e.target.value)} placeholder="Пароль шифрования"/><button className="canva-button" onClick={()=>void backup()}>Создать копию</button></div>
+  </section>
+ </section>
 }
