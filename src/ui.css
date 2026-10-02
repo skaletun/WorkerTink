@@ -1323,3 +1323,8 @@ body{font-size:var(--text-size);line-height:1.5}
  .channels-list{max-height:220px;border-radius:0}
  .channel-detail{border-radius:0}
 }
+
+.chat-mode-nav{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin:0 0 10px;padding:3px;border:1px solid var(--line);border-radius:9px;background:var(--surface)}
+.chat-mode-nav button{min-height:32px;border:0;border-radius:7px;background:transparent;color:var(--muted);font-size:10px;font-weight:750;cursor:pointer}
+.chat-mode-nav button.active{background:var(--surface-2);color:var(--text);box-shadow:0 1px 2px rgba(16,24,40,.05)}
+@media(max-width:600px){.chat-mode-nav{margin-inline:0}.chat-mode-nav button{min-height:36px;font-size:10px}}
