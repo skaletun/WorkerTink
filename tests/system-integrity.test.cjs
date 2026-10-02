@@ -62,6 +62,9 @@ if(!network.includes("if(savedResult.status==='fulfilled')setSaved(savedResult.v
 if(network.includes('Promise.all([getNetworkHome(token),import(\'./directory\').then(m=>m.getSocialFeed(token,60)),getSavedNetworkPosts(token)])')) throw new Error('network refresh still fails atomically on saved posts');
 
 if(!update.includes("updateSWRef.current(true)")) throw new Error('PWA update must activate the waiting worker and reload');
+if(!update.includes('onRegisteredSW(swUrl,registration)')) throw new Error('PWA update registration lifecycle hook is missing');
+if(!update.includes("cache:'no-store'")) throw new Error('PWA update check must bypass HTTP cache');
+if(!update.includes("'cache-control':'no-cache'")) throw new Error('PWA update check must send no-cache header');
 if(update.includes("updateSWRef.current(false)")) throw new Error('PWA update must not leave the worker waiting after confirmation');
 if(!update.includes("localStorage.removeItem(BUILD_STORAGE_KEY)")) throw new Error('failed update must reset build marker');
 if(!sw.includes("event.data?.type==='SKIP_WAITING'")||!sw.includes('self.skipWaiting()')) throw new Error('custom prompt service worker missing SKIP_WAITING handler');
