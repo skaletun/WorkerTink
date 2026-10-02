@@ -41,14 +41,14 @@ export default function NetworkView({token,profile,onNotice,onChat,onProfile,ini
     </div>
   </header>
   <nav className="canva-filter-row" aria-label="Разделы сети">
-    ([["feed","Лента"],["people","Люди"],["groups","Сообщества"],["events","События"],["swaps","Обмен сменами"],["saved","Сохранённое"]] as [Area,string][]).map(([id,label])=><button key={id} className={area===id?"active":""} onClick={()=>setArea(id)}>{label}</button>)
+    {([["feed","Лента"],["people","Люди"],["groups","Сообщества"],["events","События"],["swaps","Обмен сменами"],["saved","Сохранённое"]] as [Area,string][]).map(([id,label])=><button key={id} className={area===id?"active":""} onClick={()=>setArea(id)}>{label}</button>)}
   </nav>
   {area==='feed'&&<div className="canva-network-grid">
     <main className="canva-feed-column">
       <section className="canva-composer">
         <div className="canva-composer-head"><Avatar p={profile}/><div><b>{profile.name}</b><span>Что хотите рассказать коллегам?</span></div></div>
         <div className="canva-composer-tabs">
-          ([["post","Пост"],["announcement","Объявление"],["question","Вопрос"],["shift","Смена"]] as const).map(([id,label])=><button key={id} className={kind===id?"active":""} onClick={()=>setKind(id)}>{label}</button>)
+          {([["post","Пост"],["announcement","Объявление"],["question","Вопрос"],["shift","Смена"]] as const).map(([id,label])=><button key={id} className={kind===id?"active":""} onClick={()=>setKind(id)}>{label}</button>)}
         </div>
         <textarea value={draft} onChange={e=>setDraft(e.target.value.slice(0,4000))} placeholder={kind==='question'?'Задайте вопрос команде':kind==='announcement'?'Сообщите важную новость':kind==='shift'?'Расскажите о смене':'Поделитесь новостью, идеей или рабочим обновлением'}/>
         {kind==='shift'&&<div className="canva-shift-inline shift-note-editor"><input type="date" value={shiftNote.date} onChange={e=>setShiftNote(n=>({...n,date:e.target.value}))}/><select value={shiftNote.shift} onChange={e=>setShiftNote(n=>({...n,shift:e.target.value}))}><option>День</option><option>Ночь</option><option>Сутки</option><option>Выходной</option></select><input value={shiftNote.summary} onChange={e=>setShiftNote(n=>({...n,summary:e.target.value.slice(0,1200)}))} placeholder="Контекст смены"/></div>}
