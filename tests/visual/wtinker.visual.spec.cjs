@@ -85,7 +85,7 @@ test('WTinker bug-archive interaction states',async({browser})=>{
   const page=await context.newPage();
   await prepare(page,'light');
 
-  await page.goto('?tab=social',{waitUntil:'networkidle'});
+  await page.goto('?tab=communities',{waitUntil:'networkidle'});
   await page.getByRole('button',{name:'Обмен сменами'}).click();
   await page.waitForTimeout(250);
   await page.screenshot({path:'visual-audit-artifacts/light-desktop-shift-exchange.png',fullPage:true});
