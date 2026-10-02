@@ -1,3 +1,4 @@
+import {Icon} from './Icon';
 import {useMemo,useState} from 'react';
 import {calcMonth,calcYear,formatMoney,getScheduledShift,parseYmd,addDays,ymd,vacationCalendarDays,vacationUsedDays,vacationProjectedUsedDays,sickPayForDays,type State} from './core';
 
