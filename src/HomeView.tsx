@@ -17,7 +17,7 @@ export default function HomeView({state,patch,onNotice,go}:Props){
  const tips=useMemo(()=>{const list:string[]=[];if(month.sickDays)list.push('В этом месяце есть больничные — проверьте средний заработок и даты выплат.');if(month.vacDays)list.push('В текущем месяце есть отпуск — проверьте остаток дней.');if(month.nightWork)list.push('Есть ночные смены — убедитесь, что процент ночной доплаты актуален.');if(year.averageMonthlyNet&&year.averageMonthlyNet<state.salary*(1-state.taxRate/100)*.8)list.push('Средний доход ниже обычного оклада — проверьте ручные выходы и отсутствия.');return list.length?list:['График и выплаты синхронизированы. Можно открыть ленту и поделиться рабочей новостью.']},[month,year,state]);
  const saveTip=()=>{if(!tip.trim())return;patch({shiftNotes:{...state.shiftNotes,[iso(now)]:`${state.shiftNotes[iso(now)]||''}${state.shiftNotes[iso(now)]?'\n':''}${tip.trim()}`}});setTip('');onNotice('Совет сохранён в заметках текущего дня')};
  const backup=async()=>{if(!backupPassword){onNotice('Введите пароль для шифрования резервной копии');return}try{download(`workertink-backup-${iso(now)}.wtbackup`,await encryptBackup(state,backupPassword));setBackupPassword('');onNotice('Зашифрованная резервная копия создана')}catch{onNotice('Не удалось создать резервную копию')}};
- return <section className="canva-page canva-home">
+ return <section className="canva-page canva-home redesign-page redesign-home">
   <header className="canva-page-head">
     <div>
       <span className="canva-kicker">Home Dashboard</span>
