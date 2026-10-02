@@ -6,7 +6,7 @@ module.exports=defineConfig({
   expect:{timeout:5000},
   fullyParallel:false,
   workers:1,
-  retries:process.env.CI?'1':0,
+  retries:process.env.CI?1:0,
   reporter:[['line'],['html',{outputFolder:'playwright-report',open:'never'}]],
   outputDir:'visual-audit-artifacts',
   use:{
