@@ -428,8 +428,10 @@ function SettingsView({state,patch,exportData,importData,importNotes,exportAllNo
  <div className="settings-card full-width"><SectionTitle eyebrow="Верификация" title="Статусы профиля"/><div className="verification-self"><div><b>{state.profile.isOfficial?<><Icon name="check" size={12}/> Официальный аккаунт</>:state.profile.isVerified?<><Icon name="check" size={12}/> Подтверждённый аккаунт</>:'Статус не назначен'}</b><small>{state.profile.isVerified?'OnePass активен: статус снимается после удаления последнего устройства.':'Официальный статус можно запросить у команды WTinker.'}</small></div>{!state.profile.isOfficial&&<div className="verification-request"><textarea maxLength={1000} value={verificationNote} onChange={e=>setVerificationNote(e.target.value)} placeholder="Коротко расскажите, зачем нужен официальный статус"/><Button primary onClick={()=>void requestVerification()} disabled={verificationBusy||verificationStatus==='pending'}>{verificationStatus==='pending'?'Заявка на рассмотрении':'Заявка на верификацию'}</Button></div>}</div></div>
  <div className="settings-card full-width"><SectionTitle eyebrow="Правила платформы" title="Документы и редакции"/><p className="hint">При регистрации была принята редакция 1.0. Здесь можно открыть актуальные документы в отдельном WTinker surface.</p><div className="data-buttons"><a className="btn quiet" href={window.location.origin+(window.location.pathname.toLowerCase().startsWith('/workertink')?'/WorkerTink':'')+'/rules/privacy'}>Политика конфиденциальности</a><a className="btn quiet" href={window.location.origin+(window.location.pathname.toLowerCase().startsWith('/workertink')?'/WorkerTink':'')+'/rules/terms'}>Условия использования</a></div></div>
  <div className="settings-card"><SectionTitle eyebrow="Внешний вид" title="Тема"/><Field label="Тема"><select value={state.theme} onChange={e=>patch({theme:e.target.value as State['theme']})}><option value="auto">Системная</option><option value="light">Светлая</option><option value="dark">Тёмная</option></select></Field></div>
- </div</main>
-</div>></section>
+ </div>
+ </main>
+ </div>
+ </section>
 }
 
 function Toggle({label,checked,onChange}:{label:string;checked:boolean;onChange:(value:boolean)=>void}){return <label className="toggle-row"><span>{label}</span><input type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)}/><i aria-hidden="true"/></label>}
