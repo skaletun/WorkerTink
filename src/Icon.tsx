@@ -3,7 +3,7 @@ import type {SVGProps} from 'react';
 export type IconName=
   |'home'|'social'|'people'|'communities'|'chat'|'friends'|'profile'|'calendar'|'pay'|'absence'|'work'|'notifications'|'settings'|'admin'
   |'search'|'bell'|'bellOff'|'lock'|'shield'|'image'|'video'|'paperclip'|'attachment'|'send'|'message'|'mail'|'comment'|'heart'|'share'
-  |'more'|'mic'|'play'|'pause'|'refresh'|'download'|'close'|'check'|'chevronLeft'|'chevronRight'|'externalLink'|'chevronDown'|'pin';
+  |'more'|'mic'|'play'|'pause'|'refresh'|'download'|'close'|'check'|'chevronLeft'|'chevronRight'|'externalLink'|'chevronDown'|'star'|'pin';
 
 const paths:Record<IconName,string[]>={
  home:['M3 11 12 3l9 8v9H3v-9Z','M9 20v-6h6v6'],
@@ -47,6 +47,7 @@ const paths:Record<IconName,string[]>={
  chevronRight:['m9 18 6-6-6-6'],
  chevronDown:['m6 9 6 6 6-6'],
  externalLink:['M14 5h5v5','m19 5-8 8','M19 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h4'],
+ star:['m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z'],
  pin:['m15 4 5 5-3 3v5l-2 2-2-2v-5l-3-3','m7 7 5 5']
 };
 
