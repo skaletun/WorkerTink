@@ -132,3 +132,5 @@ a{color:inherit}img,video,canvas,svg{max-width:100%}
 
 @keyframes wt-modal-in{from{opacity:0;transform:translateY(8px) scale(.99)}to{opacity:1;transform:none}}
 .v7-modal-backdrop{animation:wt-page-in .16s ease-out both}.modal-backdrop>div{animation:wt-modal-in .18s ease-out both}
+
+.social-hero{display:grid;gap:6px;padding:18px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
