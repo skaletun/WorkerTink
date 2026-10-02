@@ -10,7 +10,7 @@ export function showDesktopNotification(input:DesktopNotification){
  const bridge=(window as Window & {workertinkDesktop?:{notify?: (payload:DesktopNotification)=>void}}).workertinkDesktop;
  if(isElectronDesktop && bridge?.notify){bridge.notify(input);return true;}
  if(!desktopNotificationSupported() || Notification.permission!=='granted') return false;
- const n=new Notification(input.title,{body:input.body||'',tag:input.tag||undefined,icon:'./icon-192.png'});
+ const n=new Notification(input.title,{body:input.body||'',tag:input.tag||undefined,icon:'./icon.svg'});
  if(input.url)n.onclick=()=>{window.focus();window.location.href=input.url!;};
  return true;
 }
