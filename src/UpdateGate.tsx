@@ -1,6 +1,6 @@
 import {useEffect,useRef,useState,type ReactNode} from 'react';
-import {Icon} from './Icon';
 import {registerSW} from 'virtual:pwa-register';
+import {Icon} from './Icon';
 
 type Phase='ready'|'updating';
 type UpdateGateProps={children:ReactNode};
@@ -8,108 +8,110 @@ type UpdateGateProps={children:ReactNode};
 const BUILD_ID=import.meta.env.VITE_BUILD_ID||'dev';
 const BUILD_STORAGE_KEY='workertink:last-seen-build';
 const RELOAD_KEY='workertink:update-reload';
+const UPDATE_CHECK_INTERVAL=2*60*1000;
 
 export default function UpdateGate({children}:UpdateGateProps){
  const [needRefresh,setNeedRefresh]=useState(false);
  const [phase,setPhase]=useState<Phase>('ready');
- const registrationRef=useRef<ServiceWorkerRegistration|null>(null);
  const updateSWRef=useRef<(reloadPage?:boolean)=>Promise<void>>(async()=>{});
+ const registrationRef=useRef<ServiceWorkerRegistration|null>(null);
  const disposedRef=useRef(false);
  const updatingRef=useRef(false);
 
- const finishReload=async()=>{
-   try{localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID);sessionStorage.setItem(RELOAD_KEY,BUILD_ID)}catch{}
-   const registration=registrationRef.current;
-   if(registration){
-     try{
-       const keys=await caches.keys();
-       await Promise.all(keys.filter(key=>!key.includes('precache')).map(key=>caches.delete(key)));
-     }catch{}
-     if(registration.waiting){
-       registration.waiting.postMessage({type:'SKIP_WAITING'});
-       await new Promise<void>(resolve=>{
-         let done=false;
-         const complete=()=>{if(done)return;done=true;resolve()};
-         navigator.serviceWorker.addEventListener('controllerchange',complete,{once:true});
-         window.setTimeout(complete,1200);
-       });
-     }
-   }
-   window.location.reload();
+ const markCurrentBuild=()=>{
+   try{
+     localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID);
+     sessionStorage.setItem(RELOAD_KEY,BUILD_ID);
+   }catch{}
+ };
+
+ const resetFailedUpdate=()=>{
+   updatingRef.current=false;
+   setPhase('ready');
+   try{
+     localStorage.removeItem(BUILD_STORAGE_KEY);
+     sessionStorage.removeItem(RELOAD_KEY);
+   }catch{}
  };
 
  const requestReload=()=>{
    if(updatingRef.current)return;
    updatingRef.current=true;
    setPhase('updating');
-   void (async()=>{
+   markCurrentBuild();
+   void updateSWRef.current(true).catch(async()=>{
+     const registration=registrationRef.current;
      try{
-       const registration=registrationRef.current;
-       if(registration){
-         await registration.update().catch(()=>{});
-         if(registration.waiting){
-           registration.waiting.postMessage({type:'SKIP_WAITING'});
-           await new Promise<void>(resolve=>{
-             let done=false;
-             const complete=()=>{if(done)return;done=true;resolve()};
-             navigator.serviceWorker.addEventListener('controllerchange',complete,{once:true});
-             window.setTimeout(complete,1500);
-           });
-         }else{
-           await updateSWRef.current(true).catch(()=>{});
-         }
+       if(registration?.waiting){
+         registration.waiting.postMessage({type:'SKIP_WAITING'});
+         await new Promise<void>(resolve=>{
+           let settled=false;
+           const done=()=>{if(settled)return;settled=true;resolve()};
+           navigator.serviceWorker.addEventListener('controllerchange',done,{once:true});
+           window.setTimeout(done,1800);
+         });
+       }else if(registration){
+         await registration.update();
        }
-       await finishReload();
-     }catch{
-       updatingRef.current=false;
-       setPhase('ready');
-       try{localStorage.removeItem(BUILD_STORAGE_KEY);localStorage.removeItem(RELOAD_KEY)}catch{}
-     }
-   })();
+     }catch{}
+     window.location.reload();
+   }).catch(()=>resetFailedUpdate());
  };
 
  useEffect(()=>{
-   if(sessionStorage.getItem(RELOAD_KEY)===BUILD_ID){
-     try{sessionStorage.removeItem(RELOAD_KEY)}catch{}
-     try{localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID)}catch{}
-   }
+   disposedRef.current=false;
+   try{
+     const reloadedFor= sessionStorage.getItem(RELOAD_KEY);
+     if(reloadedFor===BUILD_ID){
+       sessionStorage.removeItem(RELOAD_KEY);
+       localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID);
+     }
+   }catch{}
+
    try{
      const previous=localStorage.getItem(BUILD_STORAGE_KEY);
-     if(previous===null)localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID);
-     else if(previous!==BUILD_ID)setNeedRefresh(true);
+     if(previous===null){
+       localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID);
+     }else if(previous!==BUILD_ID){
+       setNeedRefresh(true);
+     }
    }catch{}
+
    if(!('serviceWorker' in navigator))return;
-   let disposed=false;
-   const cleanup:{interval?:number;check?:()=>void}={};
+
+   let intervalId:number|undefined;
+   const check=async(swUrl:string,registration:ServiceWorkerRegistration|undefined)=>{
+     if(disposedRef.current||!registration||registration.installing||!navigator.onLine)return;
+     try{
+       const response=await fetch(swUrl,{cache:'no-store',headers:{cache:'no-store','cache-control':'no-cache'}});
+       if(response.ok)await registration.update();
+     }catch{}
+   };
+
    updateSWRef.current=registerSW({
      immediate:true,
      onNeedRefresh(){
-       if(disposed||disposedRef.current)return;
+       if(disposedRef.current)return;
        setNeedRefresh(true);
        setPhase('ready');
        updatingRef.current=false;
      },
      onOfflineReady(){},
-     onRegistered(registration){
-       if(!registration)return;
+     onRegisteredSW(swUrl,registration){
+       if(disposedRef.current||!registration)return;
        registrationRef.current=registration;
-       const check=()=>registration.update().catch(()=>{});
-       cleanup.check=check;
-       cleanup.interval=window.setInterval(check,2*60*1000);
-       window.addEventListener('focus',check);
-       window.addEventListener('online',check);
-       void check();
+       const runCheck=()=>void check(swUrl,registration);
+       intervalId=window.setInterval(runCheck,UPDATE_CHECK_INTERVAL);
+       window.addEventListener('focus',runCheck);
+       window.addEventListener('online',runCheck);
+       runCheck();
      },
      onRegisterError(error){console.warn('[WTinker] Service Worker registration failed',error)}
    });
+
    return()=>{
-     disposed=true;
      disposedRef.current=true;
-     if(cleanup.interval)window.clearInterval(cleanup.interval);
-     if(cleanup.check){
-       window.removeEventListener('focus',cleanup.check);
-       window.removeEventListener('online',cleanup.check);
-     }
+     if(intervalId)window.clearInterval(intervalId);
    };
  },[]);
 
