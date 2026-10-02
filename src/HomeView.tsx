@@ -106,7 +106,7 @@ export default function HomeView({state,patch,onNotice,go}:Props){
   <section className="canva-tools-grid">
     <article className="canva-tool-card"><span className="canva-kicker">Прогноз</span><h3>Доход на {forecastMonths} мес.</h3><strong>{formatMoney(forecast.net)}</strong><small>Среднее {formatMoney(forecast.avg)} / мес.</small><input className="canva-range" type="range" min="1" max="12" value={forecastMonths} onChange={e=>setForecastMonths(Number(e.target.value))}/></article>
     <article className="canva-tool-card"><span className="canva-kicker">Спланировать заранее</span><h3>Отпуск</h3><div className="canva-inline-fields"><input type="date" value={vacStart} onChange={e=>setVacStart(e.target.value)}/><input type="number" min="1" max="60" value={vacLength} onChange={e=>setVacLength(Number(e.target.value)||1)}/></div><small>{plannedVacation?plannedVacation.period.start+' → '+plannedVacation.period.end:'Выберите дату и длительность'}</small></article>
-    <article className="canva-tool-card"><span className="canva-kicker">Сценарий</span><h3>Что изменится?</h3><label>Оклад<input type="number" value={scenarioSalary} onChange={e=>setScenarioSalary(Number(e.target.value)||0)}/></label><label>Ночная доплата · {scenarioNight}%<input type="range" min="0" max="100" value={scenarioNight} onChange={e=>setScenarioNight(Number(e.target.value))}/></label><strong>{formatMoney(scenario.net)}</strong></article>
+    <article className="canva-tool-card"><span className="canva-kicker">Сценарий выплаты</span><h3>Что изменится?</h3><label>Оклад<input type="number" value={scenarioSalary} onChange={e=>setScenarioSalary(Number(e.target.value)||0)}/></label><label>Ночная доплата · {scenarioNight}%<input type="range" min="0" max="100" value={scenarioNight} onChange={e=>setScenarioNight(Number(e.target.value))}/></label><strong>{formatMoney(scenario.net)}</strong></article>
     <article className="canva-tool-card"><span className="canva-kicker">Безопасность</span><h3>Аккаунт под контролем</h3><div className="canva-security-line"><b>OnePass</b><span>{state.onePassEnabled?'Включён':'Выключен'}</span></div><div className="canva-security-line"><b>E2E</b><span>Личные сообщения защищены</span></div><button className="canva-button" onClick={()=>go('settings')}>Открыть настройки</button></article>
   </section>
 
@@ -123,7 +123,7 @@ export default function HomeView({state,patch,onNotice,go}:Props){
   </section>
 
   <section className="canva-security-row">
-    <div className="canva-security-copy"><span className="canva-kicker">Backup</span><b>Зашифрованная резервная копия</b><small>Резервная копия создаётся локально и не меняет рабочие расчёты.</small></div>
+    <div className="canva-security-copy"><span className="canva-kicker">Резервная копия</span><b>Зашифрованная резервная копия</b><small>Резервная копия создаётся локально и не меняет рабочие расчёты.</small></div>
     <div className="canva-backup-form"><input type="password" value={backupPassword} onChange={e=>setBackupPassword(e.target.value)} placeholder="Пароль шифрования"/><button className="canva-button" onClick={()=>void backup()}>Создать копию</button></div>
   </section>
  </section>
