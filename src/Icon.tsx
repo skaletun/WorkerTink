@@ -1,13 +1,14 @@
 import type {SVGProps} from 'react';
 
 export type IconName=
-  |'home'|'social'|'people'|'communities'|'chat'|'friends'|'profile'|'calendar'|'pay'|'absence'|'work'|'notifications'|'settings'|'admin'
+  |'home'|'social'|'people'|'communities'|'chat'|'friends'|'profile'|'calendar'|'pay'|'absence'|'work'|'notifications'|'settings'|'admin'|'users'
   |'search'|'bell'|'bellOff'|'lock'|'shield'|'image'|'video'|'paperclip'|'attachment'|'send'|'message'|'mail'|'comment'|'heart'|'share'
   |'more'|'mic'|'play'|'pause'|'refresh'|'download'|'close'|'check'|'chevronLeft'|'chevronRight'|'externalLink'|'chevronDown'|'star'|'pin';
 
 const paths:Record<IconName,string[]>={
  home:['M3 11 12 3l9 8v9H3v-9Z','M9 20v-6h6v6'],
  social:['M4 6h16v10H8l-4 4V6Z','M8 10h8','M8 13h5'],
+ users:['M16 21v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1','M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8','M16 11h6','M19 8v6'],
  people:['M16 21v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1','M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8','M22 21v-1a4 4 0 0 0-3-3.87','M16 3.13a4 4 0 0 1 0 7.75'],
  communities:['M4 5h16v12H4Z','M8 9h8','M8 12h5','M12 17v4','M9 21h6'],
  chat:['M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-4 3v-3H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z'],
