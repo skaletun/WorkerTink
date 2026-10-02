@@ -156,3 +156,7 @@ a{color:inherit}img,video,canvas,svg{max-width:100%}
 .wt-mobile-nav{max-width:100vw;overflow:hidden}
 .mobile-menu-backdrop{max-width:100vw;overflow:hidden}
 .mobile-menu-sheet{max-width:100vw;overflow:hidden}
+
+.wt-topbar-actions{min-width:0;flex:0 0 auto}
+.wt-top-icon,.wt-top-avatar{min-width:38px;max-width:38px;flex:0 0 38px;overflow:hidden}
+.wt-top-avatar>*{min-width:0;max-width:100%}
