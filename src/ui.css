@@ -1319,3 +1319,60 @@ html,#root{width:100%;max-width:100%;overflow-x:clip}
   .compact-notification-options,.compact-inline{grid-template-columns:1fr}
   .qr-controls{grid-template-columns:1fr}
 }
+
+
+/* ---- settings refinement ---- */
+.redesign-settings .section-title>div:first-child{flex:1;min-width:0}
+.redesign-settings .data-buttons{align-items:center;max-width:100%}
+.redesign-settings .verification-self{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(280px,360px);
+  gap:12px;
+  align-items:start;
+}
+.redesign-settings .verification-self>div:first-child{min-width:0}
+.redesign-settings .verification-self>div:first-child>b,
+.redesign-settings .verification-self>div:first-child>small{
+  display:block;
+  overflow-wrap:anywhere;
+}
+.redesign-settings .verification-self>div:first-child>small{
+  margin-top:5px;color:var(--muted);font-size:9px;line-height:1.4;
+}
+.redesign-settings .verification-request{min-width:0}
+.redesign-settings .verification-request textarea{width:100%;box-sizing:border-box}
+.income-grid>label{display:grid;gap:5px;min-width:0}
+.income-grid>label>span{min-width:0;overflow-wrap:anywhere;font-size:9px;color:var(--muted)}
+.income-grid>label>input{min-width:0;box-sizing:border-box}
+.shift-modal{
+  width:min(880px,100%);
+  max-height:calc(100dvh - 24px);
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:var(--surface);
+  box-shadow:var(--shadow);
+}
+.shift-editor{min-width:0}
+.shift-editor-meta{flex-wrap:wrap}
+.shift-editor-meta>.field{min-width:150px}
+.shift-editor-meta>.editor-source{min-width:0;overflow-wrap:anywhere}
+.shift-modal .markdown-workspace{min-height:0}
+.shift-modal .markdown-wysiwyg-wrap{min-height:0}
+.shift-modal .markdown-wysiwyg{overflow:auto;max-height:min(44dvh,440px)}
+.shift-modal>.modal-actions{background:var(--surface);flex-wrap:wrap}
+.shift-modal>.modal-actions>*{flex:none}
+@media(max-width:700px){
+  .shift-modal{max-height:calc(100dvh - 14px);border-radius:14px}
+  .shift-modal .markdown-wysiwyg{max-height:36dvh;min-height:150px}
+  .shift-modal .markdown-shortcuts{display:none}
+  .shift-modal .editor-label{align-items:flex-start;flex-wrap:wrap}
+}
+@media(max-width:900px){
+  .redesign-settings .verification-self{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .redesign-settings .section-title{align-items:flex-start}
+  .redesign-settings .section-title{flex-wrap:wrap}
+  .redesign-settings .verification-self{grid-template-columns:1fr}
+}
