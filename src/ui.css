@@ -1522,3 +1522,30 @@ html,#root{width:100%;max-width:100%;overflow-x:clip}
   .pwa-install-banner>div:last-child{align-self:end}
 }
 @media(max-width:360px){.pwa-install-banner{grid-template-columns:1fr}.pwa-install-banner>div:last-child{justify-content:flex-start}}
+
+
+/* Final compact shift-editor geometry: no artificial blank canvas */
+.shift-modal{
+  grid-template-rows:auto auto auto auto;
+  height:auto;
+  max-height:calc(100dvh - 24px);
+}
+.shift-modal .markdown-workspace{
+  height:min(420px,52dvh);
+  max-height:min(420px,52dvh);
+}
+.shift-modal .markdown-wysiwyg{
+  min-height:0;
+  max-height:none;
+  overflow:auto;
+}
+@media(max-width:700px){
+  .shift-modal{
+    height:auto;
+    max-height:calc(100dvh - 14px);
+  }
+  .shift-modal .markdown-workspace{
+    height:min(360px,44dvh);
+    max-height:min(360px,44dvh);
+  }
+}
