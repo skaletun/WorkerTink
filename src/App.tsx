@@ -170,11 +170,48 @@ useEffect(()=>{if(!directoryConfigured||!authProfileReady||!state.directoryToken
 }
 
 function ProfileModal({profile,onClose,onChat,onNotice}:{profile:UserProfile;onClose:()=>void;onChat:()=>void;onNotice:(s:string)=>void}){
- const [resolved,setResolved]=useState<UserProfile>(profile); const [copied,setCopied]=useState(false); const [resolving,setResolving]=useState(false); const [qrOpen,setQrOpen]=useState(false);
- useEffect(()=>{let cancelled=false;setResolved(profile);setCopied(false);setResolving(!profile.username||!profile.banner);void searchUser(profile.profileId).then(r=>{if(!cancelled)setResolved(prev=>({...prev,...r.profile}))}).catch(()=>{}).finally(()=>{if(!cancelled)setResolving(false)});return()=>{cancelled=true}},[profile.profileId]);
+ const [resolved,setResolved]=useState<UserProfile>(profile);
+ const [copied,setCopied]=useState(false);
+ const [resolving,setResolving]=useState(false);
+ const [qrOpen,setQrOpen]=useState(false);
+ useEffect(()=>{
+  let cancelled=false;
+  setResolved(profile);
+  setCopied(false);
+  setResolving(!profile.username||!profile.banner);
+  void searchUser(profile.profileId).then(r=>{if(!cancelled)setResolved(prev=>({...prev,...r.profile}))}).catch(()=>{}).finally(()=>{if(!cancelled)setResolving(false)});
+  return()=>{cancelled=true};
+ },[profile.profileId]);
  const publicUrl=resolved.username?window.location.origin+(window.location.hostname.endsWith('github.io')?'/WorkerTink':'')+'/user/'+encodeURIComponent(resolved.username):'';
- const copy=async()=>{if(!publicUrl)return;try{await copyText(publicUrl);onNotice('Публичная ссылка скопирована');setCopied(true);window.setTimeout(()=>setCopied(false),1800)}catch{onNotice('Не удалось скопировать ссылку')}};
- return <div className="modal-backdrop profile-modal-backdrop" onMouseDown={e=>e.target===e.currentTarget&&onClose()}><section className="profile-modal-card" role="dialog" aria-modal="true"><button className="modal-close" onClick={onClose}>×</button><div className="profile-modal-cover" style={resolved.banner?{backgroundImage:`url(${resolved.banner})`}:undefined}/><div className="profile-modal-main"><Avatar profile={resolved} size="lg"/><span className="eyebrow">Рабочий профиль</span><h2><NameWithBadge profile={resolved}/></h2><p>{resolved.position||'Сотрудник'}</p><small>{resolved.username?`@${resolved.username}`:resolved.profileId}</small><div className="profile-modal-actions"><Button primary onClick={onChat}>Открыть чат</Button><button className="btn quiet" disabled={!publicUrl} onClick={()=>void copy()}>{copied?'Ссылка скопирована':'Скопировать ссылку'}</button>{publicUrl?<><a className="btn quiet" href={publicUrl} target="_blank" rel="noreferrer">Публичный профиль</a><button className="btn quiet" onClick={()=>setQrOpen(true)}>QR-код</button></>:<span className="profile-link-missing">{resolving?'Обновляем профиль…':'Username не найден'}</span>}</div></div></section>{qrOpen&&<ProfileQrModal profile={resolved} onClose={()=>setQrOpen(false)}/>}</div>
+ const copy=async()=>{
+  if(!publicUrl)return;
+  try{await copyText(publicUrl);onNotice('Публичная ссылка скопирована');setCopied(true);window.setTimeout(()=>setCopied(false),1800)}
+  catch{onNotice('Не удалось скопировать ссылку')}
+ };
+ return <div className="modal-backdrop profile-modal-backdrop" onMouseDown={e=>e.target===e.currentTarget&&onClose()}>
+  <section className="profile-modal-card" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title">
+   <button className="modal-close" onClick={onClose} aria-label="Закрыть"><Icon name="close" size={16}/></button>
+   <div className="profile-modal-cover" style={resolved.banner?{backgroundImage:`url(${resolved.banner})`}:undefined}>{!resolved.banner&&<span>Добавьте баннер профиля</span>}</div>
+   <div className="profile-modal-main">
+    <Avatar profile={resolved} size="lg"/>
+    <span className="redesign-overline">WTinker · рабочий профиль</span>
+    <h2 id="profile-modal-title"><NameWithBadge profile={resolved}/></h2>
+    <p>{resolved.position||'Должность не указана'}</p>
+    <small>{resolved.username?`@${resolved.username}`:'Username не задан'}</small>
+    <div className="profile-modal-facts">
+      <div><small>WTinkID</small><b>{normalizeWTinkId(resolved.profileId)||resolved.profileId}</b></div>
+      <div><small>Username</small><b>{resolved.username?`@${resolved.username}`:'Не задан'}</b></div>
+      <div><small>Публичный адрес</small><b>{publicUrl||'Недоступен без username'}</b></div>
+    </div>
+    <div className="profile-modal-actions">
+      <Button primary onClick={onChat}>Открыть чат</Button>
+      <button className="btn quiet" disabled={!publicUrl} onClick={()=>void copy()}>{copied?'Ссылка скопирована':'Скопировать ссылку'}</button>
+      {publicUrl?<><a className="btn quiet" href={publicUrl} target="_blank" rel="noreferrer">Публичный профиль</a><button className="btn quiet" onClick={()=>setQrOpen(true)}>QR-код</button></>:<span className="profile-link-missing">{resolving?'Обновляем профиль…':'Username не найден'}</span>}
+    </div>
+   </div>
+  </section>
+  {qrOpen&&<ProfileQrModal profile={resolved} onClose={()=>setQrOpen(false)}/>}
+ </div>
 }
 function BootScreen(){return <div className="wt-boot-screen" role="status" aria-label="WTinker загружается"><div className="boot-orbit"><div className="boot-logo-wrap"><img src="./icon.svg" alt="WTinker" className="boot-logo"/></div></div><div className="boot-copy"><strong>WTinker</strong><span>Подготавливаем ваше пространство</span></div><div className="boot-progress"><i/></div></div>}
 
