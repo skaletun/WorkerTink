@@ -28,6 +28,19 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npm test
       - run: npm run build
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Visual audit — desktop/mobile × light/dark
+        run: npm run visual:audit
+      - name: Upload visual audit artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtinker-visual-audit
+          path: |
+            visual-audit-artifacts
+            playwright-report
+          if-no-files-found: warn
       - name: Verify release version
         run: node -e "const p=require('./package.json'); if(p.version!=='7.5.0') throw new Error('Expected WTinker 7.5.0 got '+p.version)"
       - name: Verify Directory API health
