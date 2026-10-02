@@ -1,6 +1,7 @@
+import {Icon,type IconName} from './Icon';
 import {useState} from 'react';
 
-const ICONS=['#','💼','📢','💬','🚀','🛠️','🧠','🎯','🎨','🔥','📋','🏢','⭐','🧩','📣','⚙️'];
+const ICONS=['#','briefcase','megaphone','message','rocket','tools','brain','target','palette','flame','clipboard','building','star','puzzle','announce','settings'] as const;
 const THEMES=[
   {id:'default',label:'Классика',accent:'#2563eb'},
   {id:'ocean',label:'Океан',accent:'#0ea5e9'},
