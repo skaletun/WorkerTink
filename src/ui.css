@@ -156,7 +156,9 @@ body{overflow-x:clip}
 .snapshot-card small,.home-kpis small,.work-kpis small{display:block;color:var(--faint);font-size:9px}
 .snapshot-primary{background:var(--accent);border-color:var(--accent);color:#fff}
 .snapshot-primary span,.snapshot-primary small{color:rgba(255,255,255,.78)}
-.home-main-grid,.home-content-grid,.work-grid,.social-layout,.network-layout,.pay-layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.82fr);gap:12px;margin-top:12px}
+.home-main-grid,.home-content-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.82fr);gap:12px;margin-top:12px}
+.work-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:0}
+.pay-layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.82fr);gap:12px;margin-top:12px}
 .home-content-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 .work-grid{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:0}
 .work-card.wide{grid-column:1/-1}
