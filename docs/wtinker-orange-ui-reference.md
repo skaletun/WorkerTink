@@ -4,7 +4,7 @@ Canva reference: https://canva.link/ro4ydbi384dcov7
 
 Design ID: DAHW3kk_R0U
 
-The 7.6.0 interface is rebuilt against this reference. The implementation keeps the product's existing behavior and route structure while replacing the visual system.
+The 7.6.2 interface is rebuilt against this reference. The implementation keeps the product's existing behavior and route structure while replacing the visual system.
 
 ## Core tokens
 

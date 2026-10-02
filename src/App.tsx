@@ -146,7 +146,7 @@ useEffect(()=>{if(!directoryConfigured||!authProfileReady||!state.directoryToken
   searchAction={()=>navigate('people')}
   title={heading}
   kicker={kicker}
-  version="7.6.0"
+  version="7.6.2"
   mobileItems={([['home','Главная'],['social','Сеть'],['chat','Чаты'],['work','Работа'],['profile','Профиль']] as [Tab,string][]).map(([id,label])=>({id,label,icon:<Icon name={id}/> }))}
   mobileMore={<button className={mobileMenuOpen||['people','communities','calendar','pay','absence','friends','notifications','settings','admin'].includes(tab)?'active':''} onClick={()=>setMobileMenuOpen(v=>!v)} aria-expanded={mobileMenuOpen} aria-label="Все разделы"><Icon name="settings"/><span>Ещё</span></button>}
 >
@@ -428,7 +428,7 @@ function SettingsView({state,patch,exportData,importData,importNotes,exportAllNo
   <button><span>Уведомления</span><small>Push и события</small></button>
   <button><span>Данные</span><small>Импорт и экспорт</small></button>
   <button><span>Профиль</span><small>Верификация</small></button>
-  <div className="canva-settings-rail-note"><b>WTinker 7.6.0</b><span>Единая система настроек без скрытых переходов.</span></div>
+  <div className="canva-settings-rail-note"><b>WTinker 7.6.2</b><span>Единая система настроек без скрытых переходов.</span></div>
  </aside>
  <main className="canva-settings-body"><div className="settings-grid compact-settings">
  <div className="settings-card security-card full-width">

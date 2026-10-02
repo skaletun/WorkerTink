@@ -42,7 +42,7 @@ jobs:
             playwright-report
           if-no-files-found: warn
       - name: Verify release version
-        run: node -e "const p=require('./package.json'); if(p.version!=='7.6.0') throw new Error('Expected WTinker 7.6.0 got '+p.version)"
+        run: node -e "const p=require('./package.json'); if(p.version!=='7.6.2') throw new Error('Expected WTinker 7.6.2 got '+p.version)"
       - name: Verify Directory API health
         run: |
           for i in $(seq 1 10); do
