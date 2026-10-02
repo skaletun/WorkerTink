@@ -55,7 +55,7 @@ export default function UpdateGate({children}:UpdateGateProps){
              window.setTimeout(complete,1500);
            });
          }else{
-           await updateSWRef.current(false).catch(()=>{});
+           await updateSWRef.current(true).catch(()=>{});
          }
        }
        await finishReload();
