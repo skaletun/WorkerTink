@@ -124,3 +124,8 @@ a{color:inherit}img,video,canvas,svg{max-width:100%}
   .calendar-week,.calendar-grid{gap:3px}.calendar-day,.empty-day{min-height:72px}.calendar-day{padding:6px;font-size:10px}.month-head h2{font-size:23px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
+
+/* Motion contract */
+@keyframes wt-page-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.tab-stage{animation:wt-page-in .16s ease-out both}
+.shift-modal{max-height:min(720px,calc(100dvh - 96px));overflow:auto}
