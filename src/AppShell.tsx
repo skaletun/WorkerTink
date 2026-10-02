@@ -1,3 +1,4 @@
+import {Icon} from './Icon';
 import type {ReactNode} from 'react';
 
 type NavItem={id:string;label:string;sub:string;icon:ReactNode};
@@ -27,7 +28,7 @@ export default function AppShell({items,active,onNavigate,profile,profileAction,
   const renderItem=(item:NavItem)=>(
     <button key={item.id} className={active===item.id?'wt-nav-item active':'wt-nav-item'} aria-current={active===item.id?'page':undefined} onClick={()=>onNavigate(item.id)}>
       <i aria-hidden="true">{item.icon}</i>
-      <span><b>{item.label}</b><small>{item.sub}</small></span><span className="wt-nav-arrow" aria-hidden="true">›</span>
+      <span><b>{item.label}</b><small>{item.sub}</small></span><span className="wt-nav-arrow" aria-hidden="true"><Icon name="chevronRight" size={14}/></span>
     </button>
   );
   return <div className="wt-shell">
@@ -41,11 +42,11 @@ export default function AppShell({items,active,onNavigate,profile,profileAction,
 
       <button className="wt-profile" onClick={profileAction} aria-label="Открыть профиль">
         {profile}
-        <span className="wt-profile-chevron" aria-hidden="true">↗</span>
+        <span className="wt-profile-chevron" aria-hidden="true"><Icon name="externalLink" size={14}/></span>
       </button>
 
       <button className="wt-search-mini" onClick={searchAction} aria-label="Открыть поиск">
-        <span>⌕</span><b>Поиск</b><kbd>⌘ K</kbd>
+        <Icon name="search" size={16}/><b>Поиск</b><kbd>⌘ K</kbd>
       </button>
 
       <nav className="wt-nav" aria-label="Основная навигация">
@@ -69,9 +70,9 @@ export default function AppShell({items,active,onNavigate,profile,profileAction,
         </div>
         <div className="wt-topbar-actions">
           <button className="wt-command-search" onClick={searchAction} aria-label="Поиск">
-            <span>⌕</span><span>Поиск людей, публикаций, сообществ и работы…</span><kbd>⌘ K</kbd>
+            <Icon name="search" size={16}/><span>Поиск людей, публикаций, сообществ и работы…</span><kbd>⌘ K</kbd>
           </button>
-          <button className="wt-top-icon" onClick={()=>onNavigate('notifications')} aria-label="Уведомления">◌</button>
+          <button className="wt-top-icon" onClick={()=>onNavigate('notifications')} aria-label="Уведомления"><Icon name="bell" size={18}/></button>
           <button className="wt-top-avatar" onClick={profileAction} aria-label="Профиль">{profile}</button>
         </div>
       </header>
