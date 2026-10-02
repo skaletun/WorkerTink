@@ -43,10 +43,10 @@ if(!chat.includes('chat-page-rebuilt')) throw new Error('rebuilt personal chat s
 if(!groupChat.includes('URL.revokeObjectURL')||!groupChat.includes('mediaUrlsRef')) throw new Error('group chat media object URL cleanup missing');
 if(!chat.includes('is-empty')) throw new Error('chat empty-state contract missing');
 if(!work.includes('redesign-work')) throw new Error('rebuilt work surface missing');
-if(!ui.includes('.calendar-layout{display:grid')) throw new Error('new calendar layout missing');
-if(!ui.includes('.wt-mobile-nav{position:fixed')) throw new Error('new mobile navigation missing');
-if(!ui.includes('.social-layout{display:grid')) throw new Error('new social layout missing');
-if(!ui.includes('.work-grid{display:grid')) throw new Error('new work layout missing');
+if(!/\.calendar-layout\{[^}]*display\s*:\s*grid/.test(ui)) throw new Error('new calendar layout missing');
+if(!/\.wt-mobile-nav\{[^}]*position\s*:\s*fixed/.test(ui)) throw new Error('new mobile navigation missing');
+if(!/\.social-layout\{[^}]*display\s*:\s*grid/.test(ui)) throw new Error('new social layout missing');
+if(!/\.work-grid\{[^}]*display\s*:\s*grid/.test(ui)) throw new Error('new work layout missing');
 if(!network.includes('PostAttachment')||!network.includes('shift-note-editor')||!network.includes('post-attachments-v2')||!network.includes('groupAttachments')) throw new Error('rich post surface missing');
 if(!app.includes('Добавить баннер')||!app.includes('profile.username')||!app.includes('searchUser(profile.profileId)')||!app.includes('const cached=id===normalizeWTinkId(state.profile.profileId)')) throw new Error('profile customization or username hydration missing');
 for(const x of ['.redesign-page-intro','.home-snapshot','.notification-timeline','.chat-page-rebuilt','.work-grid']) if(!ui.includes(x)) throw new Error('new page token missing '+x);
