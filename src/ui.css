@@ -136,3 +136,6 @@ a{color:inherit}img,video,canvas,svg{max-width:100%}
 .social-hero{display:grid;gap:6px;padding:18px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
 
 .profile-cover{min-height:220px;background-color:var(--surface-3);background-size:cover;background-position:center;border-radius:inherit}
+
+.social-layout{display:grid}
+.work-grid{display:grid}
