@@ -1,17 +1,10 @@
+import {Icon} from './Icon';
 import {useEffect,useRef,useState} from 'react';
 import {getSocialNotifications,readSocialNotification,type SocialNotification} from './directory';
 
 type Props={token:string;onOpen:(notification:SocialNotification)=>void};
 
-const icon=(kind:string)=>{
-  if(kind.includes('message'))return '💬';
-  if(kind.includes('friend'))return '👥';
-  if(kind.includes('event'))return '📅';
-  if(kind.includes('channel'))return '🏢';
-  if(kind.includes('shift'))return '🔄';
-  if(kind.includes('pay'))return '💰';
-  return '🔔';
-};
+const iconName=(kind:string)=>kind.includes('message')?'message':kind.includes('friend')?'people':kind.includes('event')?'calendar':kind.includes('channel')?'communities':kind.includes('shift')?'refresh':kind.includes('pay')?'pay':'bell';
 
 export default function NotificationToasts({token,onOpen}:Props){
   const [items,setItems]=useState<SocialNotification[]>([]);
@@ -65,9 +58,9 @@ export default function NotificationToasts({token,onOpen}:Props){
   if(!items.length)return null;
   return <div className="notification-toasts" aria-live="polite" aria-label="Новые уведомления">
     {items.map(n=><button key={n.id} type="button" className={"notification-toast "+(exiting[n.id]?'is-exiting':'')} onClick={()=>void open(n)}>
-      <span className="notification-toast-icon" aria-hidden="true">{icon(n.kind)}</span>
+      <span className="notification-toast-icon" aria-hidden="true"><Icon name={iconName(n.kind)} size={16}/></span>
       <span className="notification-toast-copy"><strong>{n.title}</strong><span>{n.body}</span></span>
-      <span className="notification-toast-arrow" aria-hidden="true">›</span>
+      <span className="notification-toast-arrow" aria-hidden="true"><Icon name="chevronRight" size={14}/></span>
     </button>)}
   </div>;
 }
