@@ -165,3 +165,11 @@ a{color:inherit}img,video,canvas,svg{max-width:100%}
   .network-sections{flex-wrap:wrap;overflow:hidden;height:auto}
   .network-sections button{flex:0 0 auto}
 }
+
+.toast{position:fixed;right:16px;bottom:16px;z-index:500;display:flex;align-items:center;gap:10px;max-width:min(420px,calc(100vw - 32px));padding:11px 13px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--text);box-shadow:var(--shadow);font-size:11px;text-align:left}
+.toast span{display:grid;place-items:center;flex:none}
+.notification-toasts{position:fixed;right:16px;top:78px;z-index:450;display:grid;gap:7px;width:min(360px,calc(100vw - 32px))}
+.notification-toast{display:grid;grid-template-columns:32px minmax(0,1fr) 18px;align-items:center;gap:9px;width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--text);box-shadow:var(--shadow);text-align:left}
+.notification-toast-icon{display:grid;place-items:center;width:32px;height:32px;border-radius:8px;background:var(--surface-2)}
+.notification-toast-copy{min-width:0}.notification-toast-copy strong,.notification-toast-copy span{display:block}.notification-toast-copy strong{font-size:10px}.notification-toast-copy span{margin-top:2px;color:var(--muted);font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.notification-toast-arrow{display:grid;place-items:center;color:var(--faint)}
+@media(max-width:600px){.toast{right:12px;bottom:76px;max-width:calc(100vw - 24px)}.notification-toasts{right:12px;top:68px;width:calc(100vw - 24px)}}
