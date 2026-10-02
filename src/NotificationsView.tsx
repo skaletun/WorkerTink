@@ -13,7 +13,7 @@ export default function NotificationsView({token,onNotice,onOpen}:Props){
  const read=async(id:string)=>{try{await readSocialNotification(id,token);setItems(xs=>xs.map(x=>x.id===id?{...x,readAt:Date.now()}:x))}catch{onNotice('Не удалось отметить уведомление')}};
  const readAll=async()=>{try{await readAllSocialNotifications(token);setItems(xs=>xs.map(x=>({...x,readAt:x.readAt||Date.now()})))}catch{onNotice('Не удалось отметить уведомления')}};
  const unreadCount=items.filter(x=>!x.readAt).length;
- return <section className="canva-page canva-notifications">
+ return <section className="canva-page canva-notifications redesign-page redesign-notifications">
   <header className="canva-page-head">
     <div><span className="canva-kicker">Notifications</span><h1>Центр событий</h1><p>Уведомления о сообщениях, заявках и рабочих изменениях собраны в одной последовательности.</p></div>
     <div className="canva-head-actions"><span className="canva-state">{unreadCount} непрочитанных</span><button className="canva-button" onClick={()=>void load()}>Обновить</button><button className="canva-button canva-button-primary" onClick={()=>void readAll()}>Прочитать всё</button></div>
