@@ -1164,3 +1164,162 @@ img,video,canvas,svg{max-width:100%}
 .channel-post{position:relative}
 .channel-post-delete{margin-top:8px;border:0;background:transparent;color:var(--muted);font-size:12px;cursor:pointer;padding:2px 0}
 .channel-post-delete:hover{color:#c43d3d}
+
+/* PRODUCT POLISH — hierarchy, rhythm and interaction quality */
+:root{
+  --content:1160px;
+  --sidebar:240px;
+  --page-gap:20px;
+  --radius:14px;
+  --radius-sm:10px;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 10px 30px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 60px rgba(16,24,40,.12);
+  --text-size:14px;
+}
+body{font-size:var(--text-size);line-height:1.5}
+.wt-sidebar{width:var(--sidebar);padding:20px 14px 16px}
+.wt-brand{height:48px;padding:0 10px;margin-bottom:14px}
+.wt-brand-copy b{font-size:16px;letter-spacing:-.03em}
+.wt-brand-copy small{font-size:10px}
+.wt-profile{min-height:58px;padding:9px 10px;border-radius:12px}
+.wt-profile-chevron{font-size:15px}
+.wt-search-mini{height:40px;margin:12px 2px 18px;padding:0 11px;border-radius:10px}
+.wt-search-mini b{font-size:12px}
+.wt-search-mini kbd,.wt-command-search kbd{font-size:9px}
+.wt-nav{gap:18px}
+.wt-nav-group{gap:4px}
+.wt-nav-label{padding:0 10px;font-size:10px;letter-spacing:.08em}
+.wt-nav-item{min-height:44px;padding:7px 10px;border-radius:10px}
+.wt-nav-item i{width:26px;height:26px}
+.wt-nav-item b{font-size:12px}
+.wt-nav-item small{font-size:9px;margin-top:1px}
+.wt-nav-arrow{font-size:14px}
+.wt-topbar{height:68px;padding:0 24px}
+.wt-context-kicker{font-size:9px;letter-spacing:.1em}
+.wt-context h1{font-size:20px;letter-spacing:-.04em}
+.wt-command-search{min-width:310px;height:40px;padding:0 12px;border-radius:10px}
+.wt-command-search>span:nth-child(2){font-size:11px}
+.wt-top-icon,.wt-top-avatar{width:40px;height:40px;border-radius:11px}
+.wt-content{padding:0 24px 28px}
+.wt-content-inner{padding-top:22px}
+
+.redesign-page-intro{margin-bottom:20px}
+.redesign-page-intro h1{font-size:32px;line-height:1.08;letter-spacing:-.055em}
+.redesign-page-intro p{max-width:680px;font-size:14px;line-height:1.55;color:var(--muted)}
+.redesign-overline,.eyebrow{font-size:10px;letter-spacing:.09em}
+.redesign-intro-actions{gap:8px}
+.redesign-btn,.btn{min-height:38px;padding:0 13px;border-radius:9px;font-size:11px;font-weight:750}
+.redesign-btn-primary,.btn.primary{box-shadow:0 1px 2px rgba(16,24,40,.12)}
+.redesign-btn-soft,.btn.quiet{background:var(--surface-2)}
+
+.network-layout-v2{grid-template-columns:minmax(0,680px) 250px;gap:24px;justify-content:center}
+.network-sections{height:46px;margin-bottom:14px;padding:4px;border:1px solid var(--line);border-radius:11px;background:var(--surface-2)}
+.network-sections button{height:36px;padding:0 13px;border-radius:8px;font-size:11px}
+.network-sections button.active{background:var(--surface);box-shadow:0 1px 3px rgba(16,24,40,.08);color:var(--text)}
+.composer-v2{padding:18px;border-radius:14px;border:1px solid var(--line);box-shadow:none}
+.composer-v2-head{gap:10px}
+.composer-v2-head b{font-size:12px}
+.composer-v2-head span{font-size:10px}
+.composer-v2 textarea{min-height:96px;font-size:14px;line-height:1.55}
+.composer-v2-types button{font-size:10px;padding:6px 9px}
+.feed-stack-v2{gap:0}
+.post-v2{padding:20px 4px;border-radius:0;border:0;border-bottom:1px solid var(--line);background:transparent}
+.post-v2-head{gap:10px}
+.post-author-v2 b{font-size:12px}
+.post-author-v2 small{font-size:10px}
+.post-body-v2{font-size:14px;line-height:1.65}
+.post-actions-v2 button{font-size:10px}
+.social-side{padding-top:2px}
+.social-side>section,.network-widget{border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:none}
+
+.chat-page-rebuilt{max-width:1040px;margin:0 auto}
+.chat-shell-v2{grid-template-columns:310px minmax(0,1fr);min-height:680px;border:1px solid var(--line);border-radius:16px;background:var(--surface);box-shadow:none;overflow:hidden}
+.chat-contacts-v2{padding:12px;background:var(--surface-2);border-right:1px solid var(--line)}
+.chat-list-head{padding:5px 6px 12px}
+.chat-list-head h2{font-size:20px}
+.chat-contact-v2{grid-template-columns:40px minmax(0,1fr) auto;min-height:58px;padding:8px;border-radius:10px}
+.chat-contact-v2 b{font-size:11px}
+.chat-contact-v2 small{font-size:9px}
+.chat-main-v2{background:var(--surface)}
+.chat-head-v2{min-height:66px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.chat-messages-v2{padding:20px 18px}
+.message-bubble-v2{font-size:13px;line-height:1.5;padding:9px 12px;border-radius:15px}
+.chat-composer-v2{padding:12px 14px;border-top:1px solid var(--line);background:var(--surface)}
+.chat-composer-v2 textarea{min-height:42px;max-height:130px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px}
+
+.channels-layout{grid-template-columns:260px minmax(0,1fr) 280px;gap:12px}
+.channels-list,.channel-detail,.channel-admin{border-radius:14px;box-shadow:none}
+.channels-list{padding:10px}
+.channel-list-item{min-height:58px;border-radius:10px}
+.channel-list-item b{font-size:11px}
+.channel-list-item small{font-size:9px}
+.channel-detail{padding:0;overflow:hidden}
+.channel-detail-head{padding:18px 20px}
+.channel-detail-head h2{font-size:22px}
+.channel-post{padding:18px 20px;border-bottom:1px solid var(--line)}
+.channel-post p{font-size:13px;line-height:1.6}
+.channel-post-delete{font-size:10px}
+
+.public-profile-page{max-width:1040px;padding:8px 0 60px}
+.public-profile-card{border-radius:18px;box-shadow:none}
+.public-profile-banner{height:280px}
+.public-profile-body{padding:26px 30px 32px}
+.public-profile-body h1{font-size:38px}
+.public-profile-facts{grid-template-columns:repeat(3,minmax(0,1fr));margin:24px 0}
+.public-profile-facts span{font-size:9px;padding:13px}
+.public-profile-facts b{font-size:11px}
+.public-profile-actions{gap:8px}
+.public-confirmations,.public-info{margin-top:26px;padding-top:20px}
+.public-info p{font-size:12px}
+
+.redesign-notifications .redesign-page-intro{align-items:end}
+.notification-count{min-width:120px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+.notification-count strong{font-size:24px}
+.timeline-item{padding:15px 14px}
+.timeline-title b{font-size:12px}
+.timeline-main p{font-size:12px;line-height:1.55}
+
+.settings-card,.work-card,.social-card,.redesign-panel,.snapshot-card,.pay-hero,.breakdown-card,.balance-card,.month-card{box-shadow:none}
+.settings-card h2,.work-card h2,.social-card h2{font-size:17px}
+.empty-state,.redesign-empty,.social-empty,.work-empty{padding:44px 20px;text-align:center;color:var(--muted)}
+.empty-state h2,.redesign-empty h2{font-size:18px;color:var(--text)}
+
+@media (max-width:900px){
+ .wt-sidebar{width:220px}
+ .wt-content{padding-inline:18px}
+ .redesign-page-intro h1{font-size:28px}
+ .network-layout-v2{grid-template-columns:1fr}
+ .social-side{display:none}
+ .channels-layout{grid-template-columns:240px minmax(0,1fr)}
+ .channel-admin{grid-column:1/-1}
+}
+@media (max-width:600px){
+ .wt-sidebar{display:none}
+ .wt-topbar{height:60px;padding:0 12px}
+ .wt-context h1{font-size:18px}
+ .wt-command-search{display:none}
+ .wt-content{padding:0 12px calc(88px + env(safe-area-inset-bottom))}
+ .wt-content-inner{padding-top:14px}
+ .redesign-page-intro{margin-bottom:14px}
+ .redesign-page-intro h1{font-size:25px}
+ .redesign-page-intro p{font-size:12px}
+ .redesign-intro-actions{display:grid;grid-template-columns:1fr 1fr}
+ .redesign-btn,.btn{min-height:42px}
+ .network-sections{margin-inline:-12px;border-radius:0;border-left:0;border-right:0}
+ .network-layout-v2{margin-inline:-12px}
+ .composer-v2{border-left:0;border-right:0;border-radius:0;padding:14px}
+ .composer-v2 textarea{min-height:88px}
+ .post-v2{padding:17px 12px}
+ .chat-page-rebuilt{margin-inline:-12px}
+ .chat-shell-v2{border-radius:0;border-left:0;border-right:0;min-height:calc(100dvh - 142px)}
+ .chat-head-v2{padding-inline:12px}
+ .public-profile-page{padding-top:0}
+ .public-profile-banner{height:190px}
+ .public-profile-body{padding:20px}
+ .public-profile-body h1{font-size:29px}
+ .public-profile-facts{grid-template-columns:1fr}
+ .public-profile-actions>*{flex:1 1 45%}
+ .channels-layout{grid-template-columns:1fr;margin-inline:-12px}
+ .channels-list{max-height:220px;border-radius:0}
+ .channel-detail{border-radius:0}
+}
