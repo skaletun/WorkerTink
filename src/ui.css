@@ -1,4 +1,5 @@
-/* WTinker UI — single source of truth. No legacy overrides. */
+:root{--bg:#f5f7fa;--surface:#fff;--surface-2:#f8fafc;--surface-3:#eef2f6;--text:#101828;--text-2:#344054;--muted:#667085;--faint:#98a2b3;--line:#e4e7ec;--line-strong:#d0d5dd;--accent:#315efb;--accent-2:#2449cf;--accent-soft:#eef2ff;--success:#16805c;--danger:#d13d4a;--warning:#a76b08;--radius:14px;--shadow:0 1px 2px rgba(16,24,40,.04),0 10px 30px rgba(16,24,40,.05);--sidebar:240px;--content:1160px;--social-feed:680px;--messenger-list:318px;--hairline:color-mix(in srgb,var(--line) 82%,transparent);--focus:0 0 0 3px rgba(37,99,235,.16);--control-h:40px;--text-size:14px}
+:root[data-theme="dark"]{--bg:#090c11;--surface:#11161d;--surface-2:#171d25;--surface-3:#202832;--text:#f2f4f7;--text-2:#d0d5dd;--muted:#98a2b3;--faint:#667085;--line:#29313d;--line-strong:#3b4655;--accent:#7d9cff;--accent-2:#a9baff;--accent-soft:#19233d;--success:#55c99a;--danger:#ff7d87;--warning:#e8b45f;--shadow:0 1px 2px rgba(0,0,0,.25),0 16px 42px rgba(0,0,0,.2)}
 *{box-sizing:border-box}
 html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);text-rendering:optimizeLegibility}
 body{margin:0;background:var(--bg);color:var(--text)}
@@ -7,15 +8,6 @@ button{cursor:pointer}
 img,video,canvas,svg{max-width:100%}
 500;600;700;800&display=swap');
 
-:root{
-  --bg:#f5f7fa;--surface:#fff;--surface-2:#f8fafc;--surface-3:#eef2f6;
-  --text:#101828;--muted:#667085;--faint:#98a2b3;
-  --line:#e4e7ec;--line-strong:#d0d5dd;--accent:#315efb;
-  --accent-soft:#eef2ff;--success:#16805c;--danger:#d13d4a;--warning:#a76b08;
-  --radius:16px;--shadow:0 1px 2px rgba(16,24,40,.025),0 8px 24px rgba(16,24,40,.045);
-  
-}
-:root[data-theme="dark"]{--bg:#090c11;--surface:#11161d;--surface-2:#171d25;--surface-3:#202832;--text:#f2f4f7;--muted:#98a2b3;--faint:#667085;--line:#29313d;--line-strong:#3b4655;--accent:#7d9cff;--accent-soft:#19233d;--success:#55c99a;--danger:#ff7d87;--warning:#e8b45f;--shadow:0 1px 2px rgba(0,0,0,.25),0 16px 42px rgba(0,0,0,.2)}
 *{box-sizing:border-box}
 html{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
 body{margin:0;background:var(--bg);color:var(--text);font-size:var(--text-size);line-height:1.5}
@@ -286,13 +278,12 @@ a{color:inherit}
 .timeline-main p{margin:3px 0;color:var(--muted);font-size:10px;line-height:1.55}
 .redesign-empty,.network-empty,.work-empty{padding:35px 18px;text-align:center;color:var(--muted);font-size:11px}
 .toast{position:fixed;right:18px;bottom:18px;z-index:120;padding:11px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);box-shadow:var(--shadow);font-size:10px}
-/* MOBILE */ @media(max-width:1050px){:root{}.wt-command-search{width:280px}.network-layout{grid-template-columns:1fr}.network-layout>aside{display:none}.group-grid,.friends-list-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* MOBILE */ @media(max-width:1050px){.wt-command-search{width:280px}.network-layout{grid-template-columns:1fr}.network-layout>aside{display:none}.group-grid,.friends-list-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){}
 @media(max-width:420px){.wt-mobile-nav{left:5px;right:5px;bottom:5px}
 .home-snapshot,.work-kpis{gap:6px}
 .snapshot-card strong{font-size:21px}
 .redesign-panel,.work-card,.social-card,.social-post,.social-compose,.network-widget,.network-compose,.network-post,.group-card,.community-detail-head,.community-members-card,.channels-hero,.channel-detail,.channel-invites,.person-card,.profile-card,.settings-card,.period-editor,.month-card,.balance-card,.stat-card,.quick-actions,.legend-card,.pay-hero,.breakdown-card,.pay-date-card,.admin-hero,.admin-directory,.admin-detail{padding:14px}}
-/* SECONDARY SURFACES */ .redesign-home,.redesign-work,.redesign-network,.redesign-chats{display:block}
 .social-page,.network-page{display:block}
 .social-hero{margin-bottom:14px}
 .social-hero-stats{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}
@@ -382,9 +373,7 @@ a{color:inherit}
     animation-duration: 0.01ms !important;animation-iteration-count:1 !important;scroll-behavior:auto !important;transition-duration:0.01ms !important}
 @keyframes wt-page-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes wt-modal-in { from { opacity: 0; transform: translateY(10px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
-/* REGRESSION SELECTOR CONTRACTS */ .social-layout{display:grid}
 .chat-page-rebuilt{display:grid;max-width:1040px;margin:0 auto}
-/* AUTH / ONBOARDING — restored responsive surface */ html,body,#root{width:100%;min-width:0;max-width:100%;overflow-x:clip}
 img{max-width:100%}
 .v7-auth-screen{min-height:100dvh;width:100%;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(440px,.95fr);background:var(--surface-2)}
 .v7-auth-aside{min-width:0;display:flex;flex-direction:column;justify-content:center;padding:clamp(36px,7vw,96px);background:var(--text);color:var(--surface)}
@@ -483,7 +472,6 @@ img{max-width:100%}
 .channels-layout{grid-template-columns:1fr;margin-inline:-12px}
 .channels-list{max-height:220px;border-radius:0}
 .channel-detail{border-radius:0}}
-/* LEGACY SURFACES RESTORED AFTER DESIGN-SYSTEM MIGRATION */ .network-single, .work-hub{width:100%;display:grid;gap:14px}
 .social-avatar-fallback{display:grid;place-items:center;background:var(--ui-surface-3);font-weight:850}
 .notification-controls{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:14px}
 .notification-control-actions{display:flex;gap:6px}
@@ -519,7 +507,6 @@ img{max-width:100%}
 .pull-refresh-indicator[data-phase=pulling], .pull-refresh-indicator[data-phase=ready], .pull-refresh-indicator[data-phase=refreshing]{opacity:1}
 .tab-stage{animation:wt-page-in .16s ease both;min-width:0}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.001ms!important;transition-duration:.001ms!important}}
-/* SECONDARY PRODUCT SURFACES — COMPLETE RESPONSIVE LAYER */ .v7-page-content{min-width:0}
 .v7-page-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
 .v7-header-actions{display:flex;gap:7px}
 /* Chat */ .chat-page-rebuilt{min-width:0}
@@ -826,7 +813,6 @@ img{max-width:100%}
   .channels-layout,.teams-layout,.admin-layout{grid-template-columns:1fr}.channels-list{display:flex;overflow:auto}.qr-card{width:min(260px,100%);max-height:90dvh;margin:auto}.admin-detail-grid{grid-template-columns:1fr}}
 @keyframes pulse{50%{opacity:.35}}
 @keyframes wave{to{transform:scaleY(1.8)}}
-/* MOBILE SHELL — production responsive layer */ @media (max-width: 900px){:root{}
   html,body,#root{width:100%;min-width:0;max-width:none;overflow-x:auto;width:auto;min-height:56px;padding-bottom:2px;top:0;z-index:100;height:24px;padding:12px;gap:9px;}
   .wt-context{min-width:0;flex:none};letter-spacing:.12em}
   .wt-context h1{font-size:20px}
@@ -1018,7 +1004,6 @@ img{max-width:100%}
 .work-card{padding:15px;border-radius:12px}
 .notification-timeline{border-radius:11px}
 .timeline-item{padding:13px}}
-/* FINAL RESPONSIVE CONTRACT — authoritative surface rules */ :root{}
 *,*::before,*::after{box-sizing:border-box}
 html,body,#root{max-width:100%;overflow-x:clip}
 button,input,textarea,select{font:inherit;min-width:0;outline:none}
@@ -1039,7 +1024,6 @@ img,video,canvas,svg{max-width:100%}
 .mobile-menu-grid button b{font-size:9px}
 .mobile-menu-grid button small{margin-top:2px;color:var(--faint);font-size:7px}
 .pwa-install-banner{z-index:90}
-/* Surface completion layer: classes intentionally used by TSX but absent from the legacy design system */ .v7-privacy{display:flex;align-items:center;gap:9px;padding:9px 10px;border:1px solid var(--line);border-radius:13px;background:var(--surface-2);min-width:0}
 .v7-privacy-icon{display:grid;place-items:center;width:24px;height:24px;flex:0 0 auto;border-radius:8px;background:var(--accent-soft);color:var(--accent);font-weight:800}
 .v7-privacy-copy{min-width:0;display:grid;gap:2px}
 .v7-privacy-copy>div{display:flex;gap:7px;align-items:baseline;min-width:0}
@@ -1112,7 +1096,6 @@ img,video,canvas,svg{max-width:100%}
 .social-notification>b,.social-notification small{display:block;overflow:hidden;text-overflow:ellipsis}
 .social-notification small{margin-top:2px;color:var(--muted);white-space:nowrap}
 .social-notification time{color:var(--faint);font-size:8px;white-space:nowrap}
-/* Final product-wide visual contract */ .wt-sidebar{box-shadow:1px 0 0 rgba(16,24,40,.015)}
 .wt-profile:focus-visible,.wt-search-mini:focus-visible,.wt-nav-item:focus-visible,.wt-command-search:focus-visible,.wt-top-icon:focus-visible,.wt-top-avatar:focus-visible{outline-offset:3px}
 .redesign-page-intro{min-width:0;margin-bottom:20px}
 .redesign-page-intro>div:first-child{min-width:0}
@@ -1128,7 +1111,7 @@ img,video,canvas,svg{max-width:100%}
 .channels-layout{grid-template-columns:220px minmax(0,1fr)}}
 /* Auth / profile surfaces: keep the brand editorial and non-decorative */ .v7-auth-aside{border-right:1px solid color-mix(in srgb,var(--surface) 14%,transparent)}
 .v7-auth-aside h1{max-width:560px;font-size:clamp(34px,4vw,58px);line-height:.98;letter-spacing:-.065em}
-/* SOCIAL / MESSENGER REFERENCE SYSTEM Inspired by the density and information hierarchy of X + Telegram, without copying their branding or assets. */ :root{--social-feed:680px;--hairline:color-mix(in srgb,var(--line) 82%,transparent)}
+/* SOCIAL / MESSENGER REFERENCE SYSTEM Inspired by the density and information hierarchy of X + Telegram, without copying their branding or assets. */ 
 .network-feed-column{width:100%;max-width:var(--social-feed)}
 .network-sections button{min-height:46px;padding:0 13px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--muted);font-size:11px;font-weight:750;height:36px;border-radius:8px}
 .network-sections button:hover{background:var(--surface-2);color:var(--text)}
@@ -1144,7 +1127,6 @@ img,video,canvas,svg{max-width:100%}
 /* Channel post controls */ .channel-post{position:relative}
 .channel-post-delete{margin-top:8px;border:0;background:transparent;color:var(--muted);font-size:10px;cursor:pointer;padding:2px 0}
 .channel-post-delete:hover{color:#c43d3d}
-/* PRODUCT POLISH — hierarchy, rhythm and interaction quality */ :root{--radius:14px;--shadow:0 1px 2px rgba(16,24,40,.04),0 10px 30px rgba(16,24,40,.05);}
 .wt-command-search>span:nth-child(2){font-size:11px}
 .redesign-page-intro h1{font-size:32px;line-height:1.08;letter-spacing:-.055em}
 .redesign-page-intro p{max-width:680px;font-size:14px;line-height:1.55;color:var(--muted)}
@@ -1167,7 +1149,7 @@ img,video,canvas,svg{max-width:100%}
 .empty-state,.redesign-empty,.social-empty,.work-empty{padding:44px 20px;text-align:center;color:var(--muted)}
 .empty-state h2,.redesign-empty h2{font-size:18px;color:var(--text)}
 .chat-mode-nav button.active{background:var(--surface-2);color:var(--text);box-shadow:0 1px 2px rgba(16,24,40,.05)}
-/* PRODUCT SYSTEM — shared states, forms and accessibility */ :root{}
+/* PRODUCT SYSTEM — shared states, forms and accessibility */ 
 button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--accent,#2563eb);outline-offset:2px;box-shadow:var(--focus)}
 .redesign-panel,.work-card,.settings-card,.social-card,.network-widget,.snapshot-card,.notification-count{transition:border-color .16s ease,background .16s ease,transform .16s ease,box-shadow .16s ease}
 .redesign-panel:hover,.work-card:hover,.settings-card:hover,.social-card:hover,.network-widget:hover{border-color:color-mix(in srgb,var(--line) 70%,var(--text) 30%)}
