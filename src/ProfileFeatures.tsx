@@ -75,7 +75,7 @@ export function ProfileQrModal({profile,onClose,editable=false}:{profile:UserPro
        <label>Карточка<select value={card} onChange={e=>setCard(e.target.value as typeof card)}><option>Minimal</option><option>Soft</option><option>Poster</option></select></label>
       </div>:
       <p className="qr-readonly-note">Настройки QR доступны только владельцу профиля.</p>}
-    <div className="modal-actions"><button className="btn quiet" onClick={()=>void navigator.clipboard?.writeText(url)}>Копировать ссылку</button><button className="btn primary" onClick={download}>Экспорт SVG</button></div>
+    <div className="modal-actions"><button className="btn quiet" onClick={()=>void (async()=>{try{await navigator.clipboard?.writeText(url)}catch{}})()}>Копировать ссылку</button><button className="btn primary" onClick={download}>Экспорт SVG</button></div>
    </div>
   </section>
  </div>
