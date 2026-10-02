@@ -10,6 +10,8 @@ async function prepare(page,theme){
   await page.route('**/*',(route)=>{if(route.request().url().includes('workertink-directory.workertink-directory.workers.dev'))return route.abort();return route.continue();});
 }
 
+async function clickIfVisible(page,selector){const locator=page.locator(selector).first();if(await locator.count()&&await locator.isVisible().catch(()=>false))await locator.click({timeout:1500}).catch(()=>{});}
+
 async function audit(page,label){
   await page.waitForTimeout(900);
   await expect(page.locator('#root')).not.toBeEmpty();
@@ -123,14 +125,14 @@ test('WTinker bug-archive interaction states',async({browser})=>{
   await mobilePage.waitForTimeout(300);
   await mobilePage.screenshot({path:'visual-audit-artifacts/android-mobile-pwa.png',fullPage:true});
 
-  await mobilePage.getByRole('button',{name:'Понятно'}).click().catch(()=>{});
+  await clickIfVisible(mobilePage,'button:has-text("Понятно")');
   await mobilePage.goto('?tab=calendar',{waitUntil:'networkidle'});
   await mobilePage.getByRole('button',{name:'Понятно'}).click().catch(()=>{});
   await mobilePage.locator('button.calendar-day:not(.pre-start)').first().click();
   await mobilePage.waitForTimeout(250);
   await mobilePage.screenshot({path:'visual-audit-artifacts/android-mobile-shift-editor.png',fullPage:true});
 
-  await mobilePage.getByRole('button',{name:'Закрыть'}).click().catch(()=>{});
+  await clickIfVisible(mobilePage,'.modal-close');
   await mobilePage.goto('?tab=profile',{waitUntil:'networkidle'});
   await mobilePage.getByRole('button',{name:'Понятно'}).click().catch(()=>{});
   await mobilePage.getByRole('button',{name:'QR-код'}).first().click();
