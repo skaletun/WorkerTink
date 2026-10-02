@@ -10,7 +10,7 @@ export default function WorkHubView({state,calc,view,onNavigate,onNetwork,token,
  const upcoming=useMemo(()=>{const out:{date:Date;shift:string}[]=[];for(let i=0;i<14&&out.length<6;i++){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+i);const s=getScheduledShift(state,d);if(s!=='off')out.push({date:d,shift:s})}return out},[state]);
  const annual=useMemo(()=>calcYear(state,view.getFullYear()),[state,view]);
  const vacationLeft=Math.max(0,state.vacTotal-vacationUsedDays(state));
- return <section className="canva-page canva-work">
+ return <section className="canva-page canva-work redesign-page redesign-work">
   <header className="canva-page-head">
     <div><span className="canva-kicker">Work + Calendar + Payroll</span><h1>Рабочий контур</h1><p>Смены, доход и отсутствия собраны в одной рабочей области.</p></div>
     <div className="canva-head-actions"><button className="canva-button" onClick={()=>onNavigate('calendar')}>Календарь</button><button className="canva-button canva-button-primary" onClick={()=>onNavigate('pay')}>Зарплата</button></div>
