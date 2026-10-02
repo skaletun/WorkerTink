@@ -19,14 +19,13 @@ import ChatView from './ChatView';
 import ChatsHub from './ChatsHub';
 import AppShell from './AppShell';
 import {getChatIdentity,getChatIdentityMatching} from './chatCrypto';
+import {Icon} from './Icon';
 
 const scheduleTypeOptions=['5/2','4/1','3/2','3/1','6/1','2/2','7/0'] as const;
 const applyScheduleType=(state:State,type:State['scheduleType']):Partial<State>=>({scheduleType:type,scheduleShift:type!=='7/0'&&state.scheduleShift==='full'?'day':state.scheduleShift});
 
 type Tab='home'|'social'|'people'|'communities'|'work'|'calendar'|'pay'|'absence'|'friends'|'chat'|'notifications'|'profile'|'settings'|'admin';
 type PeriodDraft={start:string;end:string};
-const icons={home:'M3 11 12 3l9 8v9H3v-9Zm6 9v-6h6v6',social:'M4 6h16v10H8l-4 4V6Zm4 4h8m-8 3h5',people:'M16 21v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1m8-8a4 4 0 1 0 0-8 4 4 0 0 0 0 8m6-3h4m-2-2v4',communities:'M4 5h16v12H4zM8 9h8m-8 3h5m3 8H8',chat:'M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-4 3v-3H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm3 5h8m-8 3h5',friends:'M16 21v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1m8-8a4 4 0 1 0 0-8 4 4 0 0 0 0 8m6-3h4m-2-2v4',profile:'M20 21a8 8 0 0 0-16 0m8-9a4 4 0 1 0 0-8 4 4 0 0 0 0 8',calendar:'M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13H4V6a1 1 0 0 1 1-1 1Z',pay:'M4 7h15a1 1 0 0 1 1 1v10H4a1 1 0 0 1-1-1V7Zm0 0V5a2 2 0 0 1 2-2h11',absence:'M8 3v4m8-4v4M4 10h16M6 5h12a2 2 0 0 1 2 2v11H4V7a2 2 0 0 1 2-2Zm3 9h4',settings:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0-5v2m0 14v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M3 12h2m14 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4',notifications:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 12h6',admin:'M12 3 20 7v5c0 4.4-3.4 7.8-8 9-4.6-1.2-8-4.6-8-9V7l8-4Zm0 5v4m0 4h.01',work:'M4 6h16v13H4zM8 3v3m8-3v3M7 10h4m-4 4h7'} as const;
-function Icon({name}:{name:keyof typeof icons}){return <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons[name]}/></svg>}
 const DEV_WTINK_ID='WTinkID-214994';
 const isDevProfile=(profile:Pick<UserProfile,'profileId'>)=>normalizeWTinkId(profile.profileId).toUpperCase()===DEV_WTINK_ID.toUpperCase();
 const isAdminProfile=(profile:Pick<UserProfile,'profileId'>)=>normalizeWTinkId(profile.profileId).toUpperCase()===DEV_WTINK_ID.toUpperCase();
