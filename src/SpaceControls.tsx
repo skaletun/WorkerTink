@@ -2,6 +2,7 @@ import {Icon,type IconName} from './Icon';
 import {useState} from 'react';
 
 const ICONS=['#','briefcase','megaphone','message','rocket','tools','brain','target','palette','flame','clipboard','building','star','puzzle','announce','settings'] as const;
+const ICON_GLYPHS:Record<string,IconName>={briefcase:'attachment',megaphone:'bellOff',message:'message',rocket:'send',tools:'settings',brain:'shield',target:'check',palette:'image',flame:'refresh',clipboard:'calendar',building:'users',star:'check',puzzle:'settings',announce:'message',settings:'settings'};
 const THEMES=[
   {id:'default',label:'Классика',accent:'#2563eb'},
   {id:'ocean',label:'Океан',accent:'#0ea5e9'},
@@ -13,7 +14,7 @@ const THEMES=[
 
 export function SpaceIconPicker({value,onChange}:{value:string;onChange:(value:string)=>void}){
  const [open,setOpen]=useState(false);
- return <div className="space-control"><button type="button" className="space-picker-button" onClick={()=>setOpen(v=>!v)} aria-expanded={open} aria-haspopup="true"><span className="space-picker-preview">{value||'#'}</span><span>Иконка</span></button>{open&&<div className="space-picker-popover" role="menu">{ICONS.map(icon=><button type="button" key={icon} className={value===icon?'active':''} onClick={()=>{onChange(icon);setOpen(false)}} aria-label={'Выбрать иконку '+icon}>{icon}</button>)}<button type="button" className="space-picker-reset" onClick={()=>{onChange('#');setOpen(false)}}>Сбросить</button></div>}</div>
+ return <div className="space-control"><button type="button" className="space-picker-button" onClick={()=>setOpen(v=>!v)} aria-expanded={open} aria-haspopup="true"><span className="space-picker-preview">{value&&value!=='#'?<Icon name={ICON_GLYPHS[value]||'settings'} size={18}/>:<span>#</span>}</span><span>Иконка</span></button>{open&&<div className="space-picker-popover" role="menu">{ICONS.map(icon=><button type="button" key={icon} className={value===icon?'active':''} onClick={()=>{onChange(icon);setOpen(false)}} aria-label={'Выбрать иконку '+icon}>{icon==='#'?<span>#</span>:<Icon name={ICON_GLYPHS[icon]||'settings'} size={18}/>}</button>)}<button type="button" className="space-picker-reset" onClick={()=>{onChange('#');setOpen(false)}}>Сбросить</button></div>}</div>
 }
 
 export function SpaceThemePicker({value,onChange}:{value:string;onChange:(accent:string)=>void}){
