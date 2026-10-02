@@ -17,7 +17,8 @@
     "desktop:win": "electron-builder --win nsis portable --publish never",
     "desktop:mac": "electron-builder --mac dmg zip --publish never",
     "desktop:linux": "electron-builder --linux AppImage deb --publish never",
-    "desktop": "electron-builder --publish never"
+    "desktop": "electron-builder --publish never",
+    "visual:audit": "playwright test --config=playwright.config.cjs"
   },
   "dependencies": {
     "react": "^19.1.1",
@@ -33,7 +34,8 @@
     "typescript": "^5.8.3",
     "vite": "^7.1.5",
     "electron": "^44.4.5",
-    "electron-builder": "^26.15.3"
+    "electron-builder": "^26.15.3",
+    "@playwright/test": "1.63.0"
   },
   "description": "WTinker — социальная сеть для работы: люди, сообщества, общение и рабочие инструменты в одном пространстве.",
   "author": {
