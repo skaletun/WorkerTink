@@ -1,3 +1,4 @@
+import {Icon} from './Icon';
 import {useEffect,useState} from 'react';
 import type {UserProfile} from './core';
 import {SpaceIconPicker,SpaceThemePicker} from './SpaceControls';
