@@ -57,6 +57,10 @@ export default function AppShell({items,active,onNavigate,profile,profileAction,
 
     <main id="wt-main" className="wt-main">
       <header className="wt-topbar">
+        <div className="wt-mobile-brand">
+          <span className="wt-brand-mark" aria-hidden="true">W</span>
+          <span className="wt-brand-word">WTinker</span>
+        </div>
         <div className="wt-context">
           <span className="wt-context-kicker">{kicker}</span>
           <h1>{title}</h1>
