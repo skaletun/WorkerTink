@@ -21,7 +21,7 @@ export default function AppShell({items,active,onNavigate,profile,profileAction,
     <button key={item.id} className={active===item.id?'wt-nav-item active':'wt-nav-item'}
       aria-current={active===item.id?'page':undefined} onClick={()=>onNavigate(item.id)}>
       <span className="wt-nav-icon" aria-hidden="true">{item.icon}</span>
-      <span className="wt-nav-copy"><b>{item.label}</b><small>{item.sub}</small></span>
+      <span className="wt-nav-copy"><b>{item.label}</b></span>
     </button>
   );
 
