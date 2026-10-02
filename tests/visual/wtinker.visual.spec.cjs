@@ -16,7 +16,17 @@ async function audit(page,label){
   const result=await page.evaluate(()=>{
     const visible=(el)=>{const s=getComputedStyle(el);const r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity)>0&&r.width>0&&r.height>0};
     const elements=[...document.querySelectorAll('*')].filter(visible);
-    const overflows=elements.filter(el=>{const r=el.getBoundingClientRect();return r.right>window.innerWidth+2||r.left<-2}).slice(0,12).map(el=>({tag:el.tagName,cls:String(el.className||''),right:Math.round(el.getBoundingClientRect().right),left:Math.round(el.getBoundingClientRect().left)}));
+    const overflows=elements.filter(el=>{
+      const r=el.getBoundingClientRect();
+      if(!(r.right>window.innerWidth+2||r.left<-2)) return false;
+      let node=el.parentElement;
+      while(node){
+        const s=getComputedStyle(node);
+        if(['hidden','clip'].includes(s.overflow)||['hidden','clip'].includes(s.overflowX)||['hidden','clip'].includes(s.overflowY)) return false;
+        node=node.parentElement;
+      }
+      return true;
+    }).slice(0,12).map(el=>({tag:el.tagName,cls:String(el.className||''),right:Math.round(el.getBoundingClientRect().right),left:Math.round(el.getBoundingClientRect().left)}));
     const gradients=elements.filter(el=>/gradient\(/i.test(getComputedStyle(el).backgroundImage)).length;
     const buttons=[...document.querySelectorAll('button')].filter(visible);
     const unlabeledIconButtons=buttons.filter(btn=>{const text=btn.textContent?.trim()||'';const label=btn.getAttribute('aria-label')||btn.getAttribute('title');return !text&&!label&&!btn.querySelector('svg')}).length;
@@ -55,7 +65,7 @@ test('WTinker public/legal/special and registration screens',async({browser})=>{
     const page=await context.newPage();
     await prepare(page,theme);
     for(const [path,label] of [['/user/visual_audit','public-profile'],['/rules/privacy','privacy'],['/rules/terms','terms'],['/community/visual-community','community-route'],['/chat/group/visual-group','group-chat-route'],['/channel/visual-channel','channel-route']]){
-      await page.goto(path,{waitUntil:'networkidle'});
+      await page.goto('/?wtRoute='+encodeURIComponent(path),{waitUntil:'networkidle'});
       await audit(page,theme+'-desktop-'+label);
     }
     await context.close();
