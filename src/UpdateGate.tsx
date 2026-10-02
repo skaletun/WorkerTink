@@ -62,7 +62,7 @@ export default function UpdateGate({children}:UpdateGateProps){
      }catch{
        updatingRef.current=false;
        setPhase('ready');
-       try{localStorage.removeItem(RELOAD_KEY)}catch{}
+       try{localStorage.removeItem(BUILD_STORAGE_KEY);localStorage.removeItem(RELOAD_KEY)}catch{}
      }
    })();
  };
