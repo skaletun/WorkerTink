@@ -103,6 +103,13 @@ export default function HomeView({state,patch,onNotice,go}:Props){
     </section>
   </div>
 
+  <section className="canva-tools-grid">
+    <article className="canva-tool-card"><span className="canva-kicker">Прогноз</span><h3>Доход на {forecastMonths} мес.</h3><strong>{formatMoney(forecast.net)}</strong><small>Среднее {formatMoney(forecast.avg)} / мес.</small><input className="canva-range" type="range" min="1" max="12" value={forecastMonths} onChange={e=>setForecastMonths(Number(e.target.value))}/></article>
+    <article className="canva-tool-card"><span className="canva-kicker">Спланировать заранее</span><h3>Отпуск</h3><div className="canva-inline-fields"><input type="date" value={vacStart} onChange={e=>setVacStart(e.target.value)}/><input type="number" min="1" max="60" value={vacLength} onChange={e=>setVacLength(Number(e.target.value)||1)}/></div><small>{plannedVacation?plannedVacation.period.start+' → '+plannedVacation.period.end:'Выберите дату и длительность'}</small></article>
+    <article className="canva-tool-card"><span className="canva-kicker">Сценарий</span><h3>Что изменится?</h3><label>Оклад<input type="number" value={scenarioSalary} onChange={e=>setScenarioSalary(Number(e.target.value)||0)}/></label><label>Ночная доплата · {scenarioNight}%<input type="range" min="0" max="100" value={scenarioNight} onChange={e=>setScenarioNight(Number(e.target.value))}/></label><strong>{formatMoney(scenario.net)}</strong></article>
+    <article className="canva-tool-card"><span className="canva-kicker">Безопасность</span><h3>Аккаунт под контролем</h3><div className="canva-security-line"><b>OnePass</b><span>{state.onePassEnabled?'Включён':'Выключен'}</span></div><div className="canva-security-line"><b>E2E</b><span>Личные сообщения защищены</span></div><button className="canva-button" onClick={()=>go('settings')}>Открыть настройки</button></article>
+  </section>
+
   <section className="canva-note-card">
     <div>
       <span className="canva-kicker">Work notes</span>
