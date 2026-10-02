@@ -1,8 +1,8 @@
 import {Icon} from './Icon';
 import {useMemo,useState} from 'react';
-import {calcMonth,calcYear,formatMoney,getScheduledShift,parseYmd,addDays,ymd,vacationCalendarDays,vacationUsedDays,vacationProjectedUsedDays,sickPayForDays,type State} from './core';
+import {calcMonth,calcYear,formatMoney,getScheduledShift,parseYmd,addDays,ymd,vacationCalendarDays,vacationUsedDays,vacationProjectedUsedDays,sickPayForDays,MONTHS,type State} from './core';
 
-type Props={state:State;patch:(p:Partial<State>)=>void;onNotice:(s:string)=>void;go:(tab:'social'|'calendar'|'pay'|'absence'|'profile'|'settings')=>void};
+type Props={state:State;patch:(p:Partial<State>)=>void;onNotice:(s:string)=>void;go:(tab:'home'|'social'|'people'|'communities'|'chat'|'work'|'calendar'|'pay'|'absence'|'friends'|'notifications'|'profile'|'settings'|'admin')=>void};
 const iso=(d:Date)=>ymd(d);
 function download(name:string,blob:Blob){const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
 async function encryptBackup(state:State,password:string){const enc=new TextEncoder();const salt=crypto.getRandomValues(new Uint8Array(16));const iv=crypto.getRandomValues(new Uint8Array(12));const base=await crypto.subtle.importKey('raw',enc.encode(password),'PBKDF2',false,['deriveKey']);const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:100000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt']);const data=enc.encode(JSON.stringify(state));const cipher=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,data));const out=new Uint8Array(4+salt.length+iv.length+cipher.length);out.set([87,84,66,49]);out.set(salt,4);out.set(iv,20);out.set(cipher,32);return new Blob([out],{type:'application/octet-stream'})}
