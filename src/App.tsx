@@ -363,7 +363,17 @@ function SettingsView({state,patch,exportData,importData,importNotes,exportAllNo
  const revokeSession=async(id:string)=>{try{await revokeAuthSession(id,state.directoryToken);await loadSessions();onNotice('Сессия отозвана')}catch{onNotice('Не удалось отозвать сессию')}};
  const logout=async()=>{try{if(state.directoryToken)await logoutSession(state.directoryToken)}catch{}clearAuthToken();patch({directoryToken:'',onePassEnabled:false});onNotice('Вы вышли из аккаунта')};
  const requestVerification=async()=>{setVerificationBusy(true);try{await submitVerificationRequest(verificationNote,state.directoryToken);setVerificationStatus('pending');setVerificationNote('');onNotice('Заявка на официальный аккаунт отправлена')}catch(e){const code=String(e);onNotice(code.includes('REQUEST_EXISTS')?'Заявка уже находится на рассмотрении':code.includes('ALREADY_OFFICIAL')?'Аккаунт уже официальный':'Не удалось отправить заявку')}finally{setVerificationBusy(false)}};
- return <section className="redesign-page redesign-settings"><div className="redesign-page-intro"><div><span className="redesign-overline">Настройки · аккаунт</span><h1>Ваши параметры</h1><p>Безопасность, расчёты, график и уведомления организованы по реальным задачам.</p></div></div><div className="settings-grid compact-settings">
+ return <section className="redesign-page redesign-settings"><div className="redesign-page-intro"><div><span className="redesign-overline">Настройки · аккаунт</span><h1>Ваши параметры</h1><p>Безопасность, расчёты, график и уведомления организованы по реальным задачам.</p></div></div><div className="canva-settings-shell">
+ <aside className="canva-settings-rail">
+  <span className="canva-kicker">Settings</span>
+  <button className="active"><span>Аккаунт</span><small>WTinkID и безопасность</small></button>
+  <button><span>Работа</span><small>Доход и график</small></button>
+  <button><span>Уведомления</span><small>Push и события</small></button>
+  <button><span>Данные</span><small>Импорт и экспорт</small></button>
+  <button><span>Профиль</span><small>Верификация</small></button>
+  <div className="canva-settings-rail-note"><b>WTinker 7.6.0</b><span>Единая система настроек без скрытых переходов.</span></div>
+ </aside>
+ <main className="canva-settings-body"><div className="settings-grid compact-settings">
  <div className="settings-card security-card full-width">
   <SectionTitle eyebrow="Безопасность" title="Вход в аккаунт"/>
   <div className="security-summary">
@@ -398,7 +408,8 @@ function SettingsView({state,patch,exportData,importData,importNotes,exportAllNo
  <div className="settings-card full-width"><SectionTitle eyebrow="Верификация" title="Статусы профиля"/><div className="verification-self"><div><b>{state.profile.isOfficial?<><Icon name="check" size={12}/> Официальный аккаунт</>:state.profile.isVerified?<><Icon name="check" size={12}/> Подтверждённый аккаунт</>:'Статус не назначен'}</b><small>{state.profile.isVerified?'OnePass активен: статус снимается после удаления последнего устройства.':'Официальный статус можно запросить у команды WTinker.'}</small></div>{!state.profile.isOfficial&&<div className="verification-request"><textarea maxLength={1000} value={verificationNote} onChange={e=>setVerificationNote(e.target.value)} placeholder="Коротко расскажите, зачем нужен официальный статус"/><Button primary onClick={()=>void requestVerification()} disabled={verificationBusy||verificationStatus==='pending'}>{verificationStatus==='pending'?'Заявка на рассмотрении':'Заявка на верификацию'}</Button></div>}</div></div>
  <div className="settings-card full-width"><SectionTitle eyebrow="Правила платформы" title="Документы и редакции"/><p className="hint">При регистрации была принята редакция 1.0. Здесь можно открыть актуальные документы в отдельном WTinker surface.</p><div className="data-buttons"><a className="btn quiet" href={window.location.origin+(window.location.pathname.toLowerCase().startsWith('/workertink')?'/WorkerTink':'')+'/rules/privacy'}>Политика конфиденциальности</a><a className="btn quiet" href={window.location.origin+(window.location.pathname.toLowerCase().startsWith('/workertink')?'/WorkerTink':'')+'/rules/terms'}>Условия использования</a></div></div>
  <div className="settings-card"><SectionTitle eyebrow="Внешний вид" title="Тема"/><Field label="Тема"><select value={state.theme} onChange={e=>patch({theme:e.target.value as State['theme']})}><option value="auto">Системная</option><option value="light">Светлая</option><option value="dark">Тёмная</option></select></Field></div>
- </div></section>
+ </div</main>
+</div>></section>
 }
 
 function Toggle({label,checked,onChange}:{label:string;checked:boolean;onChange:(value:boolean)=>void}){return <label className="toggle-row"><span>{label}</span><input type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)}/><i aria-hidden="true"/></label>}
