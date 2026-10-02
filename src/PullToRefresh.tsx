@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState,type ReactNode} from 'react';
+import {Icon} from './Icon';
 
 type PullPhase='idle'|'pulling'|'ready'|'refreshing';
 
@@ -86,7 +87,7 @@ export default function PullToRefresh({children}:{children:ReactNode}){
 
   if((window.matchMedia?.('(display-mode: standalone)').matches||Boolean((navigator as any).standalone))&&((window.matchMedia?.('(pointer: coarse)').matches)||/android|iphone|ipad|ipod/i.test(navigator.userAgent))){
     const progress=Math.min(1,distance/TRIGGER_DISTANCE);
-    return <div className="pull-refresh-root"><div className="pull-refresh-indicator" data-phase={phase} style={{transform:`translate3d(-50%,${Math.max(-8,distance-18)}px,0)`}} aria-live="polite" aria-hidden={phase==='idle'}><span className="pull-refresh-icon">{phase==='refreshing'?'↻':phase==='ready'?'↓':'⌄'}</span><span className="pull-refresh-text">{phase==='refreshing'?'Обновляем…':phase==='ready'?'Отпустите для обновления':'Потяните для обновления'}</span><i className="pull-refresh-progress" style={{transform:`scaleX(${Math.max(.08,progress)})`}}/></div>{children}</div>;
+    return <div className="pull-refresh-root"><div className="pull-refresh-indicator" data-phase={phase} style={{transform:`translate3d(-50%,${Math.max(-8,distance-18)}px,0)`}} aria-live="polite" aria-hidden={phase==='idle'}><span className="pull-refresh-icon"><Icon name={phase==='refreshing'?'refresh':'chevronDown'} size={17}/></span><span className="pull-refresh-text">{phase==='refreshing'?'Обновляем…':phase==='ready'?'Отпустите для обновления':'Потяните для обновления'}</span><i className="pull-refresh-progress" style={{transform:`scaleX(${Math.max(.08,progress)})`}}/></div>{children}</div>;
   }
   return <>{children}</>;
 }
