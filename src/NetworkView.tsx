@@ -28,7 +28,7 @@ export default function NetworkView({token,profile,onNotice,onChat,onProfile,ini
  const makeEvent=async()=>{if(!eventForm.title||!eventForm.startsAt)return;try{const r=await createNetworkEvent({title:eventForm.title,description:eventForm.description,kind:eventForm.kind,startsAt:new Date(eventForm.startsAt).getTime(),location:eventForm.location,groupId:eventForm.groupId||null},token);setEvents(e=>[r.event,...e].sort((a,b)=>a.startsAt-b.startsAt));setEventForm({title:'',description:'',kind:'Обучение',startsAt:'',location:'',groupId:''});onNotice('Событие создано')}catch(e){onNotice(String(e).replace('Error:',''))}};
  const makeSwap=async()=>{if(!swapForm.date)return;try{const r=await createShiftSwap(swapForm,token);setSwaps(s=>[r.swap,...s]);setSwapForm({date:'',shift:'День',requestedShift:'День',note:''});onNotice('Запрос на обмен сменой опубликован')}catch(e){onNotice(String(e).replace('Error:',''))}};
  const searchPeople=async()=>{try{const r=await searchNetworkPeople(search,token);setPeople(r.people);setArea('people')}catch{onNotice('Не удалось найти сотрудников')}};
- return <section className="canva-page canva-network">
+ return <section className="canva-page canva-network redesign-page redesign-network">
   <header className="canva-page-head canva-network-head">
     <div>
       <span className="canva-kicker">Social Feed</span>
