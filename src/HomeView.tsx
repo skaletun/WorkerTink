@@ -59,7 +59,7 @@ export default function HomeView({state,patch,onNotice,go}:Props){
         <div><span className="canva-kicker">Ваш график · Today's Shift</span><h2>Текущая смена</h2></div>
         <span className="canva-state">{getScheduledShift(state,now)==='off'?'Выходной':'В работе'}</span>
       </div>
-      <div className="canva-shift-time">{getScheduledShift(state,now)==='off'?'—':getScheduledShift(state,now)==='night'?'20:00 – 08:00':getScheduledShift(state,now)==='full'?'09:00 – 09:00':'09:00 – 17:00'{'}'}</div>
+      <div className="canva-shift-time">{getScheduledShift(state,now)==='off'?'—':getScheduledShift(state,now)==='night'?'20:00 – 08:00':getScheduledShift(state,now)==='full'?'09:00 – 09:00':'09:00 – 17:00'}</div>
       <div className="canva-shift-meta">
         <div><span>Начало</span><b>{getScheduledShift(state,now)==='off'?'—':'08:58'}</b></div>
         <div><span>Статус</span><b>{getScheduledShift(state,now)==='off'?'Выходной':'Активна'}</b></div>
