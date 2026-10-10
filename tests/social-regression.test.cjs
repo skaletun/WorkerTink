@@ -7,6 +7,7 @@ const directoryModules=fs.readdirSync(path.join(root,'src/directory')).filter(fi
 const app=fs.readFileSync(path.join(root,'src/App.tsx'),'utf8');
 const social=fs.readFileSync(path.join(root,'src/SocialView.tsx'),'utf8');
 const chat=fs.readFileSync(path.join(root,'src/ChatView.tsx'),'utf8');
+const chatParts=fs.readFileSync(path.join(root,'src/views/chat/ChatParts.tsx'),'utf8');
 const home=fs.readFileSync(path.join(root,'src/HomeView.tsx'),'utf8');
 const migration=fs.readFileSync(path.join(root,'directory-api/migrations/0010_social_network.sql'),'utf8');
 const chatMigration=fs.readFileSync(path.join(root,'directory-api/migrations/0012_chat_e2ee_qr.sql'),'utf8');
@@ -22,7 +23,7 @@ if(!social.includes('mentionQuery')||!social.includes('mention-suggestions')||!s
 for(const x of ['getSocialFeed','createSocialPost','toggleSocialLike','addSocialComment','getSocialNotifications','getChatMessages','sendChatMessage','putChatKey']) if(!directoryModules.includes(x)) throw new Error(`missing client API ${x}`);
 for(const x of ['Лента','Уведомления','Люди']) if(!social.includes(x)) throw new Error(`missing social section ${x}`);
 if(social.includes("section==='messages'")) throw new Error('community chat section must be removed');
-for(const x of ['E2E','Фото','Видео','Голос','Остановить и отправить']) if(!chat.includes(x)) throw new Error(`missing protected chat feature ${x}`);
+for(const x of ['E2E','Фото','Видео','Голос','Остановить и отправить']) if(!(chat+chatParts).includes(x)) throw new Error(`missing protected chat feature ${x}`);
 for(const x of ['Прогноз','Спланировать заранее','Сценарий','Безопасность','Резервная копия']) if(!home.includes(x)) throw new Error(`missing home capability ${x}`);
 console.log('WorkerTink social/protected-chat regression tests: OK');
 
