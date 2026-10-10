@@ -1,5 +1,5 @@
-import type {PostAttachment,ShiftNote,SocialPost,SocialComment,SocialNotification,SocialMessage} from './types';
-import {request} from './client';
+import type {PostAttachment,ShiftNote,SocialPost,SocialComment,SocialNotification,SocialMessage} from './types.ts';
+import {request} from './client.ts';
 
 export function getSocialFeed(token:string,limit=20){return request<{posts:SocialPost[]}>(`/social/feed?limit=${limit}`,{headers:{Authorization:`Bearer ${token}`}})}
 
