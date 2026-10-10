@@ -1,8 +1,7 @@
 import {Icon} from './Icon';
-import {useEffect,useMemo,useState,type CSSProperties} from 'react';
-import {SpaceIconPicker,SpaceThemePicker} from './SpaceControls';
+import {useEffect,useMemo,useState} from 'react';
 import type {UserProfile} from './core';
-import {addSocialComment,createNetworkEvent,createNetworkGroup,createShiftSwap,createSocialPost,deleteSocialPost,deleteNetworkGroup,getNetworkGroups,getNetworkGroup,getNetworkHome,getSavedNetworkPosts,joinNetworkEvent,joinNetworkGroup,leaveNetworkGroup,claimShiftSwap,saveNetworkPost,searchNetworkPeople,toggleSocialLike,getSocialComments,updateNetworkGroup,type DirectoryFriend,type NetworkEvent,type NetworkGroup,type NetworkPerson,type ShiftSwap,type SocialComment,type SocialPost,type PostAttachment,type ShiftNote} from './directory';
+import {addSocialComment,createNetworkEvent,createNetworkGroup,createShiftSwap,createSocialPost,deleteSocialPost,deleteNetworkGroup,getNetworkGroups,getNetworkGroup,getNetworkHome,getSavedNetworkPosts,joinNetworkEvent,joinNetworkGroup,leaveNetworkGroup,claimShiftSwap,saveNetworkPost,searchNetworkPeople,toggleSocialLike,getSocialComments,updateNetworkGroup,type NetworkEvent,type NetworkGroup,type NetworkPerson,type ShiftSwap,type SocialComment,type SocialPost} from './directory';
 
 type Props={token:string;profile:UserProfile;onNotice:(text:string)=>void;onChat?:(profileId:string)=>void;onProfile?:(profile:UserProfile)=>void;initialGroupSlug?:string;initialArea?:Area};
 type Area='feed'|'groups'|'events'|'swaps'|'saved'|'people';
