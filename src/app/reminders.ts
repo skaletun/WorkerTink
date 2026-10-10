@@ -1,5 +1,5 @@
-import type {State} from '../core.tsx';
-import {getScheduledShift,ymd} from '../core.tsx';
+import type {State} from '../core.ts';
+import {getScheduledShift,ymd} from '../core.ts';
 
 export function buildPushReminders(state:State){
  const reminders:{id:string;kind:'shift'|'absence'|'payroll';dueAt:number;title:string;body:string;tag:string}[]=[];
