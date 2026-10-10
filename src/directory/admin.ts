@@ -1,6 +1,6 @@
-import type {AdminProfile,VerificationRequest} from './types';
-import type {UserProfile} from '../core';
-import {request} from './client';
+import type {AdminProfile,VerificationRequest} from './types.ts';
+import type {UserProfile} from '../core.ts';
+import {request} from './client.ts';
 
 export function getAdminOverview(token:string){return request<{stats:{profiles:number;friendships:number;pendingRequests:number;pendingVerification:number;official:number;verified:number;posts:number;communities:number;channels:number;messages:number;media:number}}>('/admin/overview',{headers:{Authorization:`Bearer ${token}`}})}
 
