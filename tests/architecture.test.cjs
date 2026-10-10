@@ -19,6 +19,7 @@ for (const [name, limit] of [
   ['src/views/network/NetworkParts.tsx', 22000],
   ['src/views/chat/ChatParts.tsx', 14000],
   ['src/views/chat/ChatTypes.ts', 1000],
+  ['src/views/channels/channelUtils.ts', 2000],
 ]) assertBelow(name, limit);
 
 const app = read('src/App.tsx');
@@ -47,6 +48,7 @@ const sourceDirs = [
   'src/views/settings',
   'src/views/network',
   'src/views/chat',
+  'src/views/channels',
   'src/directory',
   'src/styles',
 ];
