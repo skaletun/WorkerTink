@@ -1,6 +1,6 @@
-import type {DirectoryFriend,RequestResult} from './types';
-import type {FriendRequest,UserProfile} from '../core';
-import {request} from './client';
+import type {DirectoryFriend,RequestResult} from './types.ts';
+import type {FriendRequest,UserProfile} from '../core.ts';
+import {request} from './client.ts';
 
 export function heartbeatPresence(token:string){return request<{ok:boolean;lastSeen:number}>('/presence/heartbeat',{method:'POST',headers:{Authorization:`Bearer ${token}`}})}
 
