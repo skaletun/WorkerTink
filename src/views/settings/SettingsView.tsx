@@ -1,11 +1,11 @@
 import {useEffect,useState} from 'react';
 import {startRegistration} from '@simplewebauthn/browser';
-import {isElectronDesktop,showDesktopNotification} from '../../desktop.tsx';
-import {getOwnVerificationStatus,submitVerificationRequest} from '../../directory.tsx';
-import {MONTHS,State,normalizeWTinkId,monthKey} from '../../core.tsx';
-import {clearAuthToken} from '../../storage.tsx';
-import {directoryConfigured,sendTestPush,logoutSession,setAccountPin,getAuthStatus,getOnePassOptions,verifyOnePassRegistration,getOnePassDevices,removeOnePassDevice,removeOnePass,getAuthSessions,revokeAuthSession} from '../../directory.tsx';
-import {enablePush,disablePush,syncPushPreferences,pushSupported,type NotificationSettings} from '../../notifications.tsx';
+import {isElectronDesktop,showDesktopNotification} from '../../desktop.ts';
+import {getOwnVerificationStatus,submitVerificationRequest} from '../../directory.ts';
+import {MONTHS,State,normalizeWTinkId,monthKey} from '../../core.ts';
+import {clearAuthToken} from '../../storage.ts';
+import {directoryConfigured,sendTestPush,logoutSession,setAccountPin,getAuthStatus,getOnePassOptions,verifyOnePassRegistration,getOnePassDevices,removeOnePassDevice,removeOnePass,getAuthSessions,revokeAuthSession} from '../../directory.ts';
+import {enablePush,disablePush,syncPushPreferences,pushSupported,type NotificationSettings} from '../../notifications.ts';
 import {Icon} from '../../Icon.tsx';
 import {Button,Field,SectionTitle,Toggle,scheduleTypeOptions,applyScheduleType} from '../../app/AppShared.tsx';
 export function SettingsView({state,patch,exportData,importData,importNotes,exportAllNotes,reopenSetup,onNotice,isAdmin}:{state:State;patch:(p:Partial<State>)=>void;exportData:()=>void;importData:(f:File)=>void;importNotes:(f:File)=>void;exportAllNotes:()=>void;reopenSetup:()=>void;onNotice:(s:string)=>void;isAdmin:boolean}){
