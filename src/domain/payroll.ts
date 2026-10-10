@@ -1,5 +1,5 @@
 import type {State,Period,PaymentDates,ShiftValue} from './types.ts';
-import {addDays,daysBetween,isHoliday,isValidYmd,monthKey,parseYmd,ymd} from './foundation.ts';
+import {addDays,daysBetween,isHoliday,isValidYmd,monthKey,parseYmd,ymd,pad} from './foundation.ts';
 import {getCycleShift,getScheduledShift,getShift} from './schedule.ts';
 
 function monthIndex(year:number,month:number){return year*12+month}
