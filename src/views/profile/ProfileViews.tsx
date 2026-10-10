@@ -1,7 +1,7 @@
 import {useEffect,useState,type Dispatch,type SetStateAction} from 'react';
 import {ProfileQrModal} from '../../ProfileFeatures.tsx';
-import {State,normalizeWTinkId,getScheduledShift,ymd,vacationUsedDays,type UserProfile} from '../../core.tsx';
-import {updateProfile,searchUser,deleteProfile} from '../../directory.tsx';
+import {State,normalizeWTinkId,getScheduledShift,ymd,vacationUsedDays,type UserProfile} from '../../core.ts';
+import {updateProfile,searchUser,deleteProfile} from '../../directory.ts';
 import {Icon} from '../../Icon.tsx';
 import {isDevProfile,NameWithBadge,Button,Field,copyText,Avatar,ConfirmModal} from '../../app/AppShared.tsx';
 import {readImageSource,AvatarEditorModal,BannerEditorModal} from '../auth/AuthViews.tsx';
