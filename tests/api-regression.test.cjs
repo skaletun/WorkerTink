@@ -5,7 +5,7 @@ const root=path.join(__dirname,'..');
 const api=fs.readFileSync(path.join(root,'directory-api/src/index.js'),'utf8');
 const legacy=fs.readFileSync(path.join(root,'server/index.mjs'),'utf8');
 const app=fs.readFileSync(path.join(root,'src/App.tsx'),'utf8');
-const appFeatures=['src/views/profile/ProfileViews.tsx','src/views/auth/AuthViews.tsx','src/views/admin/AdminView.tsx'].map(file=>fs.readFileSync(path.join(root,file),'utf8')).join('\n');
+const appFeatures=['src/views/profile/ProfileViews.tsx','src/views/auth/AuthViews.tsx','src/views/admin/AdminView.tsx','src/views/settings/SettingsView.tsx'].map(file=>fs.readFileSync(path.join(root,file),'utf8')).join('\n');
 const chat=fs.readFileSync(path.join(root,'src/ChatView.tsx'),'utf8');
 const sw=fs.readFileSync(path.join(root,'src/sw.js'),'utf8');
 const customizationMigration=fs.readFileSync(path.join(root,'directory-api/migrations/0022_social_customization.sql'),'utf8');
