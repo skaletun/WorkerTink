@@ -3,6 +3,7 @@ const path=require('node:path');
 const root=path.resolve(__dirname,'..');
 const app=fs.readFileSync(path.join(root,'src/App.tsx'),'utf8');
 const network=fs.readFileSync(path.join(root,'src/NetworkView.tsx'),'utf8');
+const networkParts=fs.readFileSync(path.join(root,'src/views/network/NetworkParts.tsx'),'utf8');
 const channels=fs.readFileSync(path.join(root,'src/ChannelsView.tsx'),'utf8');
 const spaceControls=fs.readFileSync(path.join(root,'src/SpaceControls.tsx'),'utf8');
 const uiEntry=fs.readFileSync(path.join(root,'src/ui.css'),'utf8');
@@ -35,14 +36,14 @@ if(!ui.includes('.social-hero')||!ui.includes('.work-kpis')||!ui.includes('.noti
 for(const legacy of ['styles.css','design.css','v7.css','rebuild.css']) if(fs.existsSync(path.join(root,'src',legacy))) throw new Error(`legacy stylesheet remains: ${legacy}`);
 if(!appFeatures.includes('BannerEditorModal')) throw new Error('profile banner editor missing');
 if(!appFeatures.includes('Скопировать ссылку')) throw new Error('profile link copy action missing');
-if(!network.includes('Обложка')) throw new Error('community customization UI missing');
+if(!networkParts.includes('Обложка')) throw new Error('community customization UI missing');
 if(!channels.includes('Оформить канал')) throw new Error('channel customization UI missing');
 if(!spaceControls.includes('SpaceIconPicker')||!spaceControls.includes('SpaceThemePicker')) throw new Error('space picker controls missing');
 if(!channels.includes('canManage')||!channels.includes('deleteCompanyChannel')) throw new Error('channel owner guard missing');
-if(!network.includes('SpaceIconPicker')||!network.includes('SpaceThemePicker')||!network.includes('Удалить сообщество')) throw new Error('community owner customization controls missing');
+if(!networkParts.includes('SpaceIconPicker')||!networkParts.includes('SpaceThemePicker')||!networkParts.includes('Удалить сообщество')) throw new Error('community owner customization controls missing');
 if(!ui.includes('.profile-cover{')||!ui.includes('background-size:cover')) throw new Error('profile banner rendering CSS fix missing');
 if(!appFeatures.includes('deleteNetworkGroup')||!appFeatures.includes('deleteCompanyChannel')) throw new Error('admin space moderation actions missing');
-if(!network.includes('post-attachment-v2')) throw new Error('flexible post attachment rendering missing');
+if(!networkParts.includes('post-attachment-v2')) throw new Error('flexible post attachment rendering missing');
 const work=fs.readFileSync(path.join(root,'src/WorkHubView.tsx'),'utf8');
 const rebuildCss=ui;
 
@@ -57,7 +58,7 @@ if(!/\.calendar-layout\{[^}]*display\s*:\s*grid/.test(ui)) throw new Error('new 
 if(!/\.wt-mobile-nav\{[^}]*position\s*:\s*fixed/.test(ui)) throw new Error('new mobile navigation missing');
 if(!/\.social-layout\{[^}]*display\s*:\s*grid/.test(ui)) throw new Error('new social layout missing');
 if(!/\.work-grid\{[^}]*display\s*:\s*grid/.test(ui)) throw new Error('new work layout missing');
-if(!network.includes('PostAttachment')||!network.includes('shift-note-editor')||!network.includes('post-attachments-v2')||!network.includes('groupAttachments')) throw new Error('rich post surface missing');
+if(!networkParts.includes('PostAttachment')||!network.includes('shift-note-editor')||!networkParts.includes('post-attachments-v2')||!networkParts.includes('groupAttachments')) throw new Error('rich post surface missing');
 if(!appFeatures.includes('Добавить баннер')||!appFeatures.includes('profile.username')||!appFeatures.includes('searchUser(profile.profileId)')) throw new Error('profile customization or username hydration missing');
 for(const x of ['.redesign-page-intro','.home-snapshot','.notification-timeline','.chat-page-rebuilt','.work-grid']) if(!ui.includes(x)) throw new Error('new page token missing '+x);
 
