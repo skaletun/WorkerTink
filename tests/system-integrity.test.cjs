@@ -6,7 +6,7 @@ const network=fs.readFileSync(path.join(root,'src/NetworkView.tsx'),'utf8');
 const channels=fs.readFileSync(path.join(root,'src/ChannelsView.tsx'),'utf8');
 const spaceControls=fs.readFileSync(path.join(root,'src/SpaceControls.tsx'),'utf8');
 const uiEntry=fs.readFileSync(path.join(root,'src/ui.css'),'utf8');
-const ui=uiEntry.replace(/@import\\s+['\"](.+?)['\"]\\s*;/g,(_,file)=>fs.readFileSync(path.resolve(root,'src',file),'utf8'));
+const ui=uiEntry.replace(/@import\s+['"](.+?)['"]\s*;/g,(_,file)=>fs.readFileSync(path.resolve(root,'src',file),'utf8'));
 const update=fs.readFileSync(path.join(root,'src/UpdateGate.tsx'),'utf8');
 const pull=fs.readFileSync(path.join(root,'src/PullToRefresh.tsx'),'utf8');
 const shell=fs.readFileSync(path.join(root,'src/AppShell.tsx'),'utf8');
@@ -23,7 +23,7 @@ const workViews=fs.readFileSync(path.join(root,'src/views/work/WorkViews.tsx'),'
 const settingsView=fs.readFileSync(path.join(root,'src/views/settings/SettingsView.tsx'),'utf8');
 const shiftEditor=fs.readFileSync(path.join(root,'src/views/work/ShiftEditor.tsx'),'utf8');
 const appShared=fs.readFileSync(path.join(root,'src/app/AppShared.tsx'),'utf8');
-const appFeatures=[profileViews,authViews,adminView,peopleViews,workViews,settingsView,shiftEditor,appShared].join('\\n');
+const appFeatures=[profileViews,authViews,adminView,peopleViews,workViews,settingsView,shiftEditor,appShared].join('\n');
 const home=fs.readFileSync(path.join(root,'src/HomeView.tsx'),'utf8');
 const notifications=fs.readFileSync(path.join(root,'src/NotificationsView.tsx'),'utf8');
 const chats=fs.readFileSync(path.join(root,'src/ChatsHub.tsx'),'utf8');
