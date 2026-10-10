@@ -1,5 +1,5 @@
-import type {SocialPost,NetworkGroup,NetworkEvent,ShiftSwap,NetworkPerson,NetworkHome,NetworkGroupDetail} from './types';
-import {request} from './client';
+import type {SocialPost,NetworkGroup,NetworkEvent,ShiftSwap,NetworkPerson,NetworkHome,NetworkGroupDetail} from './types.ts';
+import {request} from './client.ts';
 
 export function getNetworkHome(token:string){return request<NetworkHome>('/network/home',{headers:{Authorization:`Bearer ${token}`}})}
 
