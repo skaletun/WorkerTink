@@ -1,5 +1,5 @@
 import {Icon} from '../../Icon.tsx';
-import type {CSSProperties} from 'react';
+import {useState,type CSSProperties} from 'react';
 import {SpaceIconPicker,SpaceThemePicker} from '../../SpaceControls.tsx';
 import type {UserProfile} from '../../core.ts';
 import type {NetworkEvent,NetworkGroup,ShiftSwap,SocialComment,SocialPost,PostAttachment} from '../../directory.ts';
