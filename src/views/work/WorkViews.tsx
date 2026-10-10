@@ -1,5 +1,5 @@
 import {useMemo} from 'react';
-import {DOW,MONTHS,State,calcMonth,calcYear,formatMoney,getShift,getScheduledShift,isHoliday,holidayName,ymd,shiftLabel,vacationUsedDays} from '../../core.tsx';
+import {DOW,MONTHS,State,calcMonth,calcYear,formatMoney,getShift,getScheduledShift,isHoliday,holidayName,ymd,shiftLabel,vacationUsedDays} from '../../core.ts';
 import {Icon} from '../../Icon.tsx';
 import {Button,Field,SectionTitle,type PeriodDraft} from '../../app/AppShared.tsx';
 export function CalendarView({state,view,days,calc,shiftMonth,onPay,onAbsence,onEdit}:{state:State;view:Date;days:(Date|null)[];calc:ReturnType<typeof calcMonth>;shiftMonth:(n:number)=>void;onPay:()=>void;onAbsence:()=>void;onEdit:(date:string)=>void}){
