@@ -1,3 +1,5 @@
+import type {State} from './types';
+
 export const MONTHS=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 export const DOW=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
 export const monthKey=(y:number,m:number)=>`${y}-${pad(m+1)}`;
