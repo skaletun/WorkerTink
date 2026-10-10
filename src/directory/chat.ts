@@ -1,5 +1,5 @@
-import type {ChatMute,ChatKey,ChatServerMessage,ChatPin,ChatReaction} from './types';
-import {DIRECTORY_URL,request} from './client';
+import type {ChatMute,ChatKey,ChatServerMessage,ChatPin,ChatReaction} from './types.ts';
+import {DIRECTORY_URL,request} from './client.ts';
 
 export function putChatKey(publicKey:JsonWebKey,token:string){return request<{ok:boolean;key:ChatKey}>('/chat/keys',{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({publicKey})})}
 
