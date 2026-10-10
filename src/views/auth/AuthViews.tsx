@@ -1,10 +1,10 @@
 import {useEffect,useState,type Dispatch,type SetStateAction} from 'react';
 import {startAuthentication} from '@simplewebauthn/browser';
-import {State,createWTinkId,normalizeWTinkId,formatMoney,type UserProfile} from '../../core';
-import {saveAuthToken,clearAuthToken} from '../../storage';
-import {directoryConfigured,registerProfile,loginAccount,saveAccountSetup,getOnePassAvailability,getOnePassLoginOptions,verifyOnePassLogin} from '../../directory';
-import {Icon} from '../../Icon';
-import {isDevProfile,isAdminProfile,Button,Field,Avatar,scheduleTypeOptions,applyScheduleType} from '../../app/AppShared';
+import {State,createWTinkId,normalizeWTinkId,formatMoney,type UserProfile} from '../../core.tsx';
+import {saveAuthToken,clearAuthToken} from '../../storage.tsx';
+import {directoryConfigured,registerProfile,loginAccount,saveAccountSetup,getOnePassAvailability,getOnePassLoginOptions,verifyOnePassLogin} from '../../directory.tsx';
+import {Icon} from '../../Icon.tsx';
+import {isDevProfile,isAdminProfile,Button,Field,Avatar,scheduleTypeOptions,applyScheduleType} from '../../app/AppShared.tsx';
 
 export function BootScreen(){return <div className="wt-boot-screen" role="status" aria-label="WTinker загружается"><div className="boot-orbit"><div className="boot-logo-wrap"><img src="./icon.svg" alt="WTinker" className="boot-logo"/></div></div><div className="boot-copy"><strong>WTinker</strong><span>Подготавливаем ваше пространство</span></div><div className="boot-progress"><i/></div></div>}
 
