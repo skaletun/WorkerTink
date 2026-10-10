@@ -1,5 +1,5 @@
-import type {WorkTeam,WorkDocument} from './types';
-import {request} from './client';
+import type {WorkTeam,WorkDocument} from './types.ts';
+import {request} from './client.ts';
 
 export function getWorkTeams(token:string){return request<{teams:WorkTeam[]}>('/work/teams',{headers:{Authorization:`Bearer ${token}`}})}
 
