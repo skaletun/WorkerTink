@@ -29,6 +29,7 @@ const home=fs.readFileSync(path.join(root,'src/HomeView.tsx'),'utf8');
 const notifications=fs.readFileSync(path.join(root,'src/NotificationsView.tsx'),'utf8');
 const chats=fs.readFileSync(path.join(root,'src/ChatsHub.tsx'),'utf8');
 const chat=fs.readFileSync(path.join(root,'src/ChatView.tsx'),'utf8');
+const chatParts=fs.readFileSync(path.join(root,'src/views/chat/ChatParts.tsx'),'utf8');
 const groupChat=fs.readFileSync(path.join(root,'src/GroupChatView.tsx'),'utf8');
 if(shell.includes('v7-shell')||!shell.includes('wt-shell')||!shell.includes('wt-mobile-nav')) throw new Error('legacy shell was not replaced');
 if(!ui.includes('.wt-shell')||!ui.includes('.wt-nav-item.active')||!ui.includes('.wt-command-search')) throw new Error('new workspace design system missing');
