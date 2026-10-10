@@ -1,5 +1,5 @@
-import type {CompanyChannel,ChannelRole,ChannelPost,CompanyInvite} from './types';
-import {request} from './client';
+import type {CompanyChannel,ChannelRole,ChannelPost,CompanyInvite} from './types.ts';
+import {request} from './client.ts';
 
 export function getCompanyChannels(token:string){return request<{channels:CompanyChannel[]}>('/company/channels',{headers:{Authorization:`Bearer ${token}`}})}
 
