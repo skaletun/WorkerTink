@@ -1,6 +1,6 @@
-import type {SearchResult,VerificationRequest,RegisterResult,SetupData,LoginResult,AuthSession,OnePassDevice} from './types';
-import type {UserProfile} from '../core';
-import {request} from './client';
+import type {SearchResult,VerificationRequest,RegisterResult,SetupData,LoginResult,AuthSession,OnePassDevice} from './types.ts';
+import type {UserProfile} from '../core.ts';
+import {request} from './client.ts';
 
 export function searchUser(profileId:string){return request<SearchResult>(`/profiles/${encodeURIComponent(profileId.trim())}`)}
 
