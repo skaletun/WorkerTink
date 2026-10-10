@@ -7,6 +7,7 @@ const legacy=fs.readFileSync(path.join(root,'server/index.mjs'),'utf8');
 const app=fs.readFileSync(path.join(root,'src/App.tsx'),'utf8');
 const appFeatures=['src/views/profile/ProfileViews.tsx','src/views/auth/AuthViews.tsx','src/views/admin/AdminView.tsx','src/views/settings/SettingsView.tsx'].map(file=>fs.readFileSync(path.join(root,file),'utf8')).join('\n');
 const chat=fs.readFileSync(path.join(root,'src/ChatView.tsx'),'utf8');
+const chatParts=fs.readFileSync(path.join(root,'src/views/chat/ChatParts.tsx'),'utf8');
 const sw=fs.readFileSync(path.join(root,'src/sw.js'),'utf8');
 const customizationMigration=fs.readFileSync(path.join(root,'directory-api/migrations/0022_social_customization.sql'),'utf8');
 assert.match(api,/access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS'/);
@@ -43,7 +44,7 @@ assert.doesNotMatch(app,/workertink:peer-action/);
 assert.match(chat,/E2E/);
 assert.match(chat,/sendChatMessage/);
 assert.match(chat,/chat-file-input/);
-assert.match(chat,/Применить заметку/);
+assert.match(chatParts,/Применить заметку/);
 assert.match(sw,/precacheAndRoute/);
 console.log('WorkerTink API regression tests: OK');
 
