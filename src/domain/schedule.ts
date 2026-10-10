@@ -1,5 +1,5 @@
-import type {State,Period,ShiftValue,ShiftType} from './types';
-import {addDays,addMonths,daysBetween,isHoliday,isValidYmd,parseYmd,ymd} from './foundation';
+import type {State,Period,ShiftValue,ShiftType} from './types.ts';
+import {addDays,addMonths,daysBetween,isHoliday,isValidYmd,parseYmd,ymd} from './foundation.ts';
 
 export function getCycleShift(state:State,date:Date):ShiftValue{
  const start=parseYmd(state.startDate); if(!Number.isFinite(start.getTime()))return 'off';
