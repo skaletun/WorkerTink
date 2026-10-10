@@ -1,13 +1,13 @@
 import {useEffect,useState} from 'react';
 import {startRegistration} from '@simplewebauthn/browser';
-import {isElectronDesktop,showDesktopNotification} from '../../desktop';
-import {getOwnVerificationStatus,submitVerificationRequest} from '../../directory';
-import {MONTHS,State,normalizeWTinkId,monthKey} from '../../core';
-import {clearAuthToken} from '../../storage';
-import {directoryConfigured,sendTestPush,logoutSession,setAccountPin,getAuthStatus,getOnePassOptions,verifyOnePassRegistration,getOnePassDevices,removeOnePassDevice,removeOnePass,getAuthSessions,revokeAuthSession} from '../../directory';
-import {enablePush,disablePush,syncPushPreferences,pushSupported,type NotificationSettings} from '../../notifications';
-import {Icon} from '../../Icon';
-import {Button,Field,SectionTitle,Toggle,scheduleTypeOptions,applyScheduleType} from '../../app/AppShared';
+import {isElectronDesktop,showDesktopNotification} from '../../desktop.tsx';
+import {getOwnVerificationStatus,submitVerificationRequest} from '../../directory.tsx';
+import {MONTHS,State,normalizeWTinkId,monthKey} from '../../core.tsx';
+import {clearAuthToken} from '../../storage.tsx';
+import {directoryConfigured,sendTestPush,logoutSession,setAccountPin,getAuthStatus,getOnePassOptions,verifyOnePassRegistration,getOnePassDevices,removeOnePassDevice,removeOnePass,getAuthSessions,revokeAuthSession} from '../../directory.tsx';
+import {enablePush,disablePush,syncPushPreferences,pushSupported,type NotificationSettings} from '../../notifications.tsx';
+import {Icon} from '../../Icon.tsx';
+import {Button,Field,SectionTitle,Toggle,scheduleTypeOptions,applyScheduleType} from '../../app/AppShared.tsx';
 export function SettingsView({state,patch,exportData,importData,importNotes,exportAllNotes,reopenSetup,onNotice,isAdmin}:{state:State;patch:(p:Partial<State>)=>void;exportData:()=>void;importData:(f:File)=>void;importNotes:(f:File)=>void;exportAllNotes:()=>void;reopenSetup:()=>void;onNotice:(s:string)=>void;isAdmin:boolean}){
  const [pushBusy,setPushBusy]=useState(false);const [securityBusy,setSecurityBusy]=useState(false);const [onePassDevices,setOnePassDevices]=useState<Awaited<ReturnType<typeof getOnePassDevices>>['devices']>([]);const [sessions,setSessions]=useState<Awaited<ReturnType<typeof getAuthSessions>>['sessions']>([]);const [pinSet,setPinSet]=useState(true);const [newPin,setNewPin]=useState('');const [newPinRepeat,setNewPinRepeat]=useState('');const [verificationStatus,setVerificationStatus]=useState<'none'|'pending'|'approved'|'rejected'>('none');const [verificationNote,setVerificationNote]=useState('');const [verificationBusy,setVerificationBusy]=useState(false);
  const pushAvailable=pushSupported()&&directoryConfigured&&Boolean(state.directoryToken);const notifications=state.notifications;
