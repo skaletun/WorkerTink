@@ -1,8 +1,8 @@
 import {useEffect,useRef,useState,type Dispatch,type SetStateAction} from 'react';
-import {State,getShift,getScheduledShift,isHoliday,holidayName,shiftLabel,type ShiftValue} from '../../core';
-import {markdownToHtml,htmlToMarkdown,ensureEditorTables,addTableRow,addTableColumn,removeTable} from '../../markdown';
-import {Icon} from '../../Icon';
-import {Button,download} from '../../app/AppShared';
+import {State,getShift,getScheduledShift,isHoliday,holidayName,shiftLabel,type ShiftValue} from '../../core.tsx';
+import {markdownToHtml,htmlToMarkdown,ensureEditorTables,addTableRow,addTableColumn,removeTable} from '../../markdown.tsx';
+import {Icon} from '../../Icon.tsx';
+import {Button,download} from '../../app/AppShared.tsx';
 export function ShiftEditor({state,date,setState,close,onNotice}:{state:State;date:string;setState:Dispatch<SetStateAction<State>>;close:()=>void;onNotice:(s:string)=>void}){
  const [shift,setShift]=useState<ShiftValue>(getShift(state,new Date(`${date}T12:00:00`)));
  const [note,setNote]=useState(state.shiftNotes[date]??'');
