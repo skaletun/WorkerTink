@@ -16,6 +16,7 @@ for (const [name, limit] of [
   ['src/ui.css', 1000],
   ['src/domain/payroll.ts', 16000],
   ['src/views/auth/AuthViews.tsx', 30000],
+  ['src/views/network/NetworkParts.tsx', 22000],
 ]) assertBelow(name, limit);
 
 const app = read('src/App.tsx');
@@ -28,6 +29,7 @@ for (const modulePath of [
   './views/work/ShiftEditor',
   './views/settings/SettingsView',
   './app/reminders',
+  './views/network/NetworkParts',
 ]) {
   if (!app.includes(modulePath)) throw new Error(`App route orchestrator is missing module: ${modulePath}`);
 }
@@ -40,6 +42,7 @@ const sourceDirs = [
   'src/views/people',
   'src/views/work',
   'src/views/settings',
+  'src/views/network',
   'src/directory',
   'src/styles',
 ];
