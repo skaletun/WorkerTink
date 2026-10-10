@@ -1,4 +1,4 @@
-import type {FriendRequest,UserProfile,State} from '../core';
+import type {FriendRequest,UserProfile,State} from '../core.ts';
 
 export type SearchResult={profile:UserProfile};
 
