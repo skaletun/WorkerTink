@@ -1,6 +1,6 @@
-import type {State,Period,PaymentDates,ShiftValue} from './types';
-import {addDays,daysBetween,isHoliday,isValidYmd,monthKey,parseYmd,ymd} from './foundation';
-import {getCycleShift,getScheduledShift,getShift} from './schedule';
+import type {State,Period,PaymentDates,ShiftValue} from './types.ts';
+import {addDays,daysBetween,isHoliday,isValidYmd,monthKey,parseYmd,ymd} from './foundation.ts';
+import {getCycleShift,getScheduledShift,getShift} from './schedule.ts';
 
 function monthIndex(year:number,month:number){return year*12+month}
 function historyValue(state:State,index:number){const y=Math.floor(index/12),m=((index%12)+12)%12,key=monthKey(y,m),value=state.incomeHistory[key];return Number.isFinite(value)&&value>=0?value:state.salary}
