@@ -1,0 +1,32 @@
+name: Pull request validation
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Unit and regression tests
+        run: npm test
+      - name: TypeScript and production build
+        run: npm run build
+      - name: Install Playwright Chromium
+        run: npx --yes playwright@1.63.0 install --with-deps chromium
+      - name: Desktop/mobile visual regression
+        run: npm run visual:audit
