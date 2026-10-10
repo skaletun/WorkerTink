@@ -1,8 +1,8 @@
 import {useEffect,useState,type Dispatch,type SetStateAction} from 'react';
 import {startAuthentication} from '@simplewebauthn/browser';
-import {State,createWTinkId,normalizeWTinkId,formatMoney,type UserProfile} from '../../core.tsx';
-import {saveAuthToken,clearAuthToken} from '../../storage.tsx';
-import {directoryConfigured,registerProfile,loginAccount,saveAccountSetup,getOnePassAvailability,getOnePassLoginOptions,verifyOnePassLogin} from '../../directory.tsx';
+import {State,createWTinkId,normalizeWTinkId,formatMoney,type UserProfile} from '../../core.ts';
+import {saveAuthToken,clearAuthToken} from '../../storage.ts';
+import {directoryConfigured,registerProfile,loginAccount,saveAccountSetup,getOnePassAvailability,getOnePassLoginOptions,verifyOnePassLogin} from '../../directory.ts';
 import {Icon} from '../../Icon.tsx';
 import {isDevProfile,isAdminProfile,Button,Field,Avatar,scheduleTypeOptions,applyScheduleType} from '../../app/AppShared.tsx';
 
