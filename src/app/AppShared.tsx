@@ -1,5 +1,5 @@
 import type {ReactNode} from 'react';
-import {normalizeWTinkId,type State,type UserProfile} from '../core.tsx';
+import {normalizeWTinkId,type State,type UserProfile} from '../core.ts';
 import {Icon} from '../Icon.tsx';
 
 export const scheduleTypeOptions=['5/2','4/1','3/2','3/1','6/1','2/2','7/0'] as const;
