@@ -1,7 +1,7 @@
 import {useMemo} from 'react';
-import {DOW,MONTHS,State,calcMonth,calcYear,formatMoney,getShift,getScheduledShift,isHoliday,holidayName,ymd,shiftLabel,vacationUsedDays} from '../../core';
-import {Icon} from '../../Icon';
-import {Button,Field,SectionTitle,type PeriodDraft} from '../../app/AppShared';
+import {DOW,MONTHS,State,calcMonth,calcYear,formatMoney,getShift,getScheduledShift,isHoliday,holidayName,ymd,shiftLabel,vacationUsedDays} from '../../core.tsx';
+import {Icon} from '../../Icon.tsx';
+import {Button,Field,SectionTitle,type PeriodDraft} from '../../app/AppShared.tsx';
 export function CalendarView({state,view,days,calc,shiftMonth,onPay,onAbsence,onEdit}:{state:State;view:Date;days:(Date|null)[];calc:ReturnType<typeof calcMonth>;shiftMonth:(n:number)=>void;onPay:()=>void;onAbsence:()=>void;onEdit:(date:string)=>void}){
  return <section className="canva-page canva-calendar">
   <header className="canva-page-head"><div><span className="canva-kicker">Work Calendar</span><h1>Ваш график</h1><p>Смены, изменения и рабочие заметки собраны в календарной области.</p></div><div className="canva-head-actions"><button className="canva-button" onClick={onAbsence}>Отсутствия</button><button className="canva-button canva-button-primary" onClick={onPay}>Зарплата</button></div></header>
