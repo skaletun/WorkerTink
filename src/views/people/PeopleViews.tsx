@@ -1,6 +1,6 @@
 import {useEffect,useState,type Dispatch,type SetStateAction} from 'react';
-import {State,normalizeWTinkId,type UserProfile,type ChatMessage} from '../../core.tsx';
-import {searchUser,getUserByUsername,sendFriendRequest,respondFriendRequest,getDirectoryFriends} from '../../directory.tsx';
+import {State,normalizeWTinkId,type UserProfile,type ChatMessage} from '../../core.ts';
+import {searchUser,getUserByUsername,sendFriendRequest,respondFriendRequest,getDirectoryFriends} from '../../directory.ts';
 import {NameWithBadge,Button,Avatar} from '../../app/AppShared.tsx';
 export function FriendsView({state,setState,onNotice,onOpenChat,onProfile}:{state:State;setState:Dispatch<SetStateAction<State>>;onNotice:(s:string)=>void;onOpenChat:(profileId:string)=>void;onProfile:(profile:UserProfile)=>void}){
  const [friendTab,setFriendTab]=useState<'friends'|'incoming'|'outgoing'>('friends');const [search,setSearch]=useState('');const [found,setFound]=useState<UserProfile|null>(null);const [friends,setFriends]=useState<Awaited<ReturnType<typeof getDirectoryFriends>>['friends']>([]);const [searching,setSearching]=useState(false);
