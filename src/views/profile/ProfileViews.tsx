@@ -1,10 +1,10 @@
 import {useEffect,useState,type Dispatch,type SetStateAction} from 'react';
-import {ProfileQrModal} from '../../ProfileFeatures';
-import {State,normalizeWTinkId,getScheduledShift,ymd,vacationUsedDays,type UserProfile} from '../../core';
-import {updateProfile,searchUser,deleteProfile} from '../../directory';
-import {Icon} from '../../Icon';
-import {isDevProfile,NameWithBadge,Button,Field,copyText,Avatar,ConfirmModal} from '../../app/AppShared';
-import {readImageSource,AvatarEditorModal,BannerEditorModal} from '../auth/AuthViews';
+import {ProfileQrModal} from '../../ProfileFeatures.tsx';
+import {State,normalizeWTinkId,getScheduledShift,ymd,vacationUsedDays,type UserProfile} from '../../core.tsx';
+import {updateProfile,searchUser,deleteProfile} from '../../directory.tsx';
+import {Icon} from '../../Icon.tsx';
+import {isDevProfile,NameWithBadge,Button,Field,copyText,Avatar,ConfirmModal} from '../../app/AppShared.tsx';
+import {readImageSource,AvatarEditorModal,BannerEditorModal} from '../auth/AuthViews.tsx';
 
 export function ProfileModal({profile,onClose,onChat,onNotice}:{profile:UserProfile;onClose:()=>void;onChat:()=>void;onNotice:(s:string)=>void}){
  const [resolved,setResolved]=useState<UserProfile>(profile);
