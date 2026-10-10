@@ -1,8 +1,8 @@
-import {Icon} from '../../Icon';
+import {Icon} from '../../Icon.tsx';
 import type {CSSProperties} from 'react';
-import {SpaceIconPicker,SpaceThemePicker} from '../../SpaceControls';
-import type {UserProfile} from '../../core';
-import type {NetworkEvent,NetworkGroup,ShiftSwap,SocialComment,SocialPost,PostAttachment} from '../../directory';
+import {SpaceIconPicker,SpaceThemePicker} from '../../SpaceControls.tsx';
+import type {UserProfile} from '../../core.ts';
+import type {NetworkEvent,NetworkGroup,ShiftSwap,SocialComment,SocialPost,PostAttachment} from '../../directory.ts';
 
 export function NetworkAvatar({p,size='md'}:{p:UserProfile;size?:'sm'|'md'|'lg'}){return p.avatar?<img className={`network-avatar ${size}`} src={p.avatar} alt=""/>:<span className={`network-avatar ${size} fallback`}>{(p.name||'?').slice(0,1).toUpperCase()}</span>}
 export function NetworkName({p}:{p:UserProfile}){return <span className="network-name">{p.name}{p.isDev&&<b className="dev-badge">dev</b>}</span>}
