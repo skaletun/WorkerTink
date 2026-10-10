@@ -1,7 +1,7 @@
 import {useEffect,useState,type Dispatch,type SetStateAction} from 'react';
-import {State,normalizeWTinkId,type UserProfile,type ChatMessage} from '../../core';
-import {searchUser,getUserByUsername,sendFriendRequest,respondFriendRequest,getDirectoryFriends} from '../../directory';
-import {NameWithBadge,Button,Avatar} from '../../app/AppShared';
+import {State,normalizeWTinkId,type UserProfile,type ChatMessage} from '../../core.tsx';
+import {searchUser,getUserByUsername,sendFriendRequest,respondFriendRequest,getDirectoryFriends} from '../../directory.tsx';
+import {NameWithBadge,Button,Avatar} from '../../app/AppShared.tsx';
 export function FriendsView({state,setState,onNotice,onOpenChat,onProfile}:{state:State;setState:Dispatch<SetStateAction<State>>;onNotice:(s:string)=>void;onOpenChat:(profileId:string)=>void;onProfile:(profile:UserProfile)=>void}){
  const [friendTab,setFriendTab]=useState<'friends'|'incoming'|'outgoing'>('friends');const [search,setSearch]=useState('');const [found,setFound]=useState<UserProfile|null>(null);const [friends,setFriends]=useState<Awaited<ReturnType<typeof getDirectoryFriends>>['friends']>([]);const [searching,setSearching]=useState(false);
  const loadFriends=async()=>{if(!state.directoryToken)return;try{const r=await getDirectoryFriends(state.directoryToken);setFriends(r.friends)}catch{onNotice('Не удалось загрузить список друзей')}};
