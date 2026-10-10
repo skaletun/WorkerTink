@@ -1,8 +1,8 @@
 import {useEffect,useState} from 'react';
-import {getAdminVerification,reviewVerification,setOfficialStatus,getAdminSpaces} from '../../directory';
-import {getAdminOverview,getAdminProfiles,getAdminProfileDetail,revokeAdminSession,deleteAdminProfile,deleteNetworkGroup,deleteCompanyChannel} from '../../directory';
-import {Icon} from '../../Icon';
-import {DEV_WTINK_ID,NameWithBadge,Button,SectionTitle,Avatar} from '../../app/AppShared';
+import {getAdminVerification,reviewVerification,setOfficialStatus,getAdminSpaces} from '../../directory.tsx';
+import {getAdminOverview,getAdminProfiles,getAdminProfileDetail,revokeAdminSession,deleteAdminProfile,deleteNetworkGroup,deleteCompanyChannel} from '../../directory.tsx';
+import {Icon} from '../../Icon.tsx';
+import {DEV_WTINK_ID,NameWithBadge,Button,SectionTitle,Avatar} from '../../app/AppShared.tsx';
 
 export function AdminView({token,onNotice}:{token:string;onNotice:(s:string)=>void}){
  const [section,setSection]=useState<'overview'|'users'|'verification'|'spaces'>('overview');const [stats,setStats]=useState<any>(null);const [profiles,setProfiles]=useState<Awaited<ReturnType<typeof getAdminProfiles>>['profiles']>([]);const [query,setQuery]=useState('');const [busy,setBusy]=useState(false);const [selected,setSelected]=useState<string|null>(null);const [detail,setDetail]=useState<Awaited<ReturnType<typeof getAdminProfileDetail>>|null>(null);const [requests,setRequests]=useState<Awaited<ReturnType<typeof getAdminVerification>>['requests']>([]);const [spaces,setSpaces]=useState<{communities:any[];channels:any[]}>({communities:[],channels:[]});
