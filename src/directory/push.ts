@@ -1,5 +1,5 @@
-import type {PushSubscriptionData} from './types';
-import {request} from './client';
+import type {PushSubscriptionData} from './types.ts';
+import {request} from './client.ts';
 
 export function getPushPublicKey(token:string){return request<{publicKey:string}>('/push/public-key',{headers:{Authorization:`Bearer ${token}`}}).then(x=>x.publicKey)}
 
