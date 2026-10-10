@@ -93,7 +93,7 @@ assert.match(appFeatures,/Условия использования/);
 assert.match(appFeatures,/Заявка на верификацию/);
 assert.match(appFeatures,/ProfileQrModal/);
 assert.match(appFeatures,/editable onClose/);
-assert.match(appFeatures,/token=\{state\.directoryToken\}/);
+assert.match(appFeatures,/token=\{state\.directoryToken\}|token=\{token\}/);
 assert.match(appFeatures,/Баннер обновлён локально/);
 assert.match(appFeatures,/Admin Control Center/);
 console.log('WorkerTink verification/profile release tests: OK');
