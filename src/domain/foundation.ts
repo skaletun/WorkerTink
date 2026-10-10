@@ -3,7 +3,7 @@ import type {State} from './types.ts';
 export const MONTHS=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 export const DOW=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
 export const monthKey=(y:number,m:number)=>`${y}-${pad(m+1)}`;
-const pad=(n:number)=>String(n).padStart(2,'0');
+export const pad=(n:number)=>String(n).padStart(2,'0');
 const todayYmd=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
 export const createWTinkId=()=>`WTinkID-${Math.floor(100000+Math.random()*900000)}`;
 export const normalizeWTinkId=(value:string)=>{const match=String(value||'').trim().match(/^WTINKID-(\d{6})$/i);return match?`WTinkID-${match[1]}`:''};
