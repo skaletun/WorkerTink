@@ -1,5 +1,5 @@
-import type {PeerSession} from './types';
-import {request} from './client';
+import type {PeerSession} from './types.ts';
+import {request} from './client.ts';
 
 export function createPeerSession(target:string,offer:string,token:string){return request<{session:PeerSession}>('/peer-sessions',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({to:target,offer})})}
 
