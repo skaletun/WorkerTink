@@ -1,5 +1,15 @@
 @import './styles/00-foundation.css';
+@import './styles/01-controls-and-layout.css';
+@import './styles/02-messaging-and-work.css';
+@import './styles/03-channels-admin-editor.css';
+@import './styles/04-auth-responsive-utilities.css';
 @import './styles/10-page-compositions.css';
+@import './styles/11-work-directory.css';
+@import './styles/12-profile-notifications.css';
+@import './styles/13-calendar-payroll-timeoff.css';
+@import './styles/14-settings.css';
+@import './styles/15-admin.css';
+@import './styles/16-friends.css';
 @import './styles/20-workspace-interactions.css';
 @import './styles/30-chat-profile-overlays.css';
 @import './styles/40-responsive-refinements.css';
