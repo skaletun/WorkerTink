@@ -5,7 +5,7 @@ import {canonicalWTinkId} from './core.ts';
 import {sounds,unlockSounds} from './sounds.ts';
 import {getChatKey,getChatMessages,getDirectoryFriends,putChatKey,sendChatMessage,clearChat,uploadChatMedia,deleteChatMessage,editChatMessage,getChatReactions,setChatReaction,removeChatReaction,getChatPins,pinChatMessage,unpinChatMessage,setChatMute,getChatMute,removeFriend,blockProfile,type ChatKey,type ChatServerMessage,type DirectoryFriend} from './directory.ts';
 import {decryptChat,encryptChat,encryptChatMedia,getChatIdentity,getChatIdentityCandidates,decryptChatWithIdentity,type ChatEnvelope} from './chatCrypto.ts';
-import type {LocalMessage} from './views/chat/ChatTypes.ts';
+import type {LocalMessage,Plain} from './views/chat/ChatTypes.ts';
 import {ChatAvatar as Avatar,ChatName as Name,fmtTime,fmtDate,MessageCard} from './views/chat/ChatParts.tsx';
 
 type Props={token:string;profile:UserProfile;onNotice:(text:string)=>void;state?:State;onStateChange?:(patch:Partial<State>)=>void;onBackToFriends?:()=>void;onProfile?:(profile:UserProfile)=>void};
