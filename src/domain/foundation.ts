@@ -1,4 +1,4 @@
-import type {State} from './types';
+import type {State} from './types.ts';
 
 export const MONTHS=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 export const DOW=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
