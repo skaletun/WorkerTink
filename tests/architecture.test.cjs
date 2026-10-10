@@ -17,6 +17,8 @@ for (const [name, limit] of [
   ['src/domain/payroll.ts', 16000],
   ['src/views/auth/AuthViews.tsx', 30000],
   ['src/views/network/NetworkParts.tsx', 22000],
+  ['src/views/chat/ChatParts.tsx', 14000],
+  ['src/views/chat/ChatTypes.ts', 1000],
 ]) assertBelow(name, limit);
 
 const app = read('src/App.tsx');
@@ -33,6 +35,7 @@ for (const modulePath of [
   if (!app.includes(modulePath)) throw new Error(`App route orchestrator is missing module: ${modulePath}`);
 }
 if (!read('src/NetworkView.tsx').includes('./views/network/NetworkParts')) throw new Error('NetworkView is missing its feature module');
+if (!read('src/ChatView.tsx').includes('./views/chat/ChatParts.tsx') || !read('src/ChatView.tsx').includes('./views/chat/ChatTypes.ts')) throw new Error('ChatView is missing chat submodules');
 
 const sourceDirs = [
   'src/domain',
@@ -43,6 +46,7 @@ const sourceDirs = [
   'src/views/work',
   'src/views/settings',
   'src/views/network',
+  'src/views/chat',
   'src/directory',
   'src/styles',
 ];
