@@ -29,10 +29,10 @@ for (const modulePath of [
   './views/work/ShiftEditor',
   './views/settings/SettingsView',
   './app/reminders',
-  './views/network/NetworkParts',
 ]) {
   if (!app.includes(modulePath)) throw new Error(`App route orchestrator is missing module: ${modulePath}`);
 }
+if (!read('src/NetworkView.tsx').includes('./views/network/NetworkParts')) throw new Error('NetworkView is missing its feature module');
 
 const sourceDirs = [
   'src/domain',
