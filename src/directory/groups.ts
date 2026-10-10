@@ -1,6 +1,6 @@
-import type {ChatServerMessage,GroupChat,GroupChatDetail,GroupChatMessage} from './types';
-import type {UserProfile} from '../core';
-import {request} from './client';
+import type {ChatServerMessage,GroupChat,GroupChatDetail,GroupChatMessage} from './types.ts';
+import type {UserProfile} from '../core.ts';
+import {request} from './client.ts';
 
 export function getChatGroups(token:string){return request<{groups:GroupChat[]}>('/chat/groups',{headers:{Authorization:`Bearer ${token}`}})}
 
