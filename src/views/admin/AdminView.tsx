@@ -1,6 +1,6 @@
 import {useEffect,useState} from 'react';
-import {getAdminVerification,reviewVerification,setOfficialStatus,getAdminSpaces} from '../../directory.tsx';
-import {getAdminOverview,getAdminProfiles,getAdminProfileDetail,revokeAdminSession,deleteAdminProfile,deleteNetworkGroup,deleteCompanyChannel} from '../../directory.tsx';
+import {getAdminVerification,reviewVerification,setOfficialStatus,getAdminSpaces} from '../../directory.ts';
+import {getAdminOverview,getAdminProfiles,getAdminProfileDetail,revokeAdminSession,deleteAdminProfile,deleteNetworkGroup,deleteCompanyChannel} from '../../directory.ts';
 import {Icon} from '../../Icon.tsx';
 import {DEV_WTINK_ID,NameWithBadge,Button,SectionTitle,Avatar} from '../../app/AppShared.tsx';
 
