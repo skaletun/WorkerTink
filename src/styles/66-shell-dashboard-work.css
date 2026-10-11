@@ -48,7 +48,7 @@
 .canva-home .canva-kpi:after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);opacity:.7}
 .canva-home .canva-kpi strong{font-size:clamp(26px,2.5vw,36px)}
 .canva-home-main,.canva-home-lower{display:contents}
-.canva-home .canva-shift-card{grid-column:span 8;min-height:330px;padding:clamp(23px,3vw,36px);border-radius:24px;background:linear-gradient(135deg,var(--surface),color-mix(in srgb,var(--accent-soft) 38%,var(--surface)))}
+.canva-home .canva-shift-card{grid-column:span 8;min-height:330px;padding:clamp(23px,3vw,36px);border-radius:24px;background:var(--surface-soft)}
 .canva-home .canva-shift-time{font-size:clamp(44px,5vw,68px);margin:42px 0 32px}
 .canva-home .canva-actions-card{grid-column:span 4;padding:23px}
 .canva-home .canva-action-list button{min-height:66px;border-radius:12px}
