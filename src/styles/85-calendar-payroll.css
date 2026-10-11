@@ -13,3 +13,7 @@
 .canva-pay-metric span, .canva-pay-breakdown span { color: var(--muted); font-size: 11px; }
 .canva-pay-breakdown { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
 .canva-pay-breakdown > div { display: grid; gap: 4px; padding: 12px; background: var(--paper-2); border-radius: 6px; }
+
+/* Calendar layout: dense, legible, and responsive. */
+.calendar-layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:12px;align-items:start}
+.calendar-layout > * { min-width: 0; }

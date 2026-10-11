@@ -12,3 +12,9 @@
 :root[data-theme="dark"] .canva-button-primary { color: #101216; background: var(--brand); border-color: var(--brand); }
 .canva-button-primary:hover { background: var(--brand-hover); border-color: var(--brand-hover); }
 .canva-text-button { padding: 5px 0; color: var(--brand); background: transparent; border: 0; font-size: 12px; font-weight: 650; }
+
+/* Editorial intro and dashboard summary structures. */
+.redesign-page-intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; padding: 0 0 18px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+.redesign-page-intro h1 { margin: 0; font-size: clamp(28px,3vw,40px); line-height: 1.04; letter-spacing: -.06em; }
+.redesign-page-intro p { max-width: 650px; margin: 8px 0 0; color: var(--muted); line-height: 1.6; }
+.home-snapshot { display: grid; grid-template-columns: minmax(0,1.5fr) minmax(260px,1fr); gap: 12px; align-items: start; }
