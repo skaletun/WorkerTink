@@ -1,0 +1,93 @@
+/* Common component scale: large hit targets, quiet dividers and fewer nested boxes. */
+.canva-section-head h2{font-size:19px;letter-spacing:-.045em}
+.canva-page .canva-section-head{margin-bottom:12px}
+.canva-page .annual-kpis>div{padding:19px}
+.canva-page .annual-kpis b{font-size:22px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline-offset:3px}
+@media(max-width:1100px){
+ .canva-home .canva-shift-card{grid-column:span 7}
+ .canva-home .canva-actions-card{grid-column:span 5}
+ .canva-home .canva-tools-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .canva-work .canva-work-overview{grid-template-columns:minmax(0,1fr) 250px}
+ .canva-work .canva-work-week{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .canva-pay .canva-pay-grid{grid-template-columns:minmax(0,1fr) minmax(260px,.8fr)}
+ .canva-profile-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:900px){
+ .canva-home .canva-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .canva-home .canva-shift-card,.canva-home .canva-actions-card,.canva-home .canva-activity-card,.canva-home .canva-summary-card{grid-column:1/-1}
+ .canva-home .canva-note-card{grid-template-columns:1fr}
+ .canva-work .canva-work-overview{grid-template-columns:1fr}
+ .canva-work .canva-work-side{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .canva-work .canva-work-lower{grid-template-columns:1fr}
+ .canva-pay .canva-pay-overview{grid-template-columns:1fr 1fr}
+ .canva-pay .canva-pay-hero{grid-column:1/-1}
+ .canva-pay .canva-pay-grid{grid-template-columns:1fr}
+ .canva-settings-shell,.canva-admin-shell{grid-template-columns:1fr}
+ .canva-settings-rail,.canva-admin-rail{position:static}
+ .social-layout{grid-template-columns:minmax(0,1fr)}
+ .social-side{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .canva-friends-layout{grid-template-columns:1fr}
+ .canva-friends-rail{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:700px){
+ :root{--wt-gap:10px}
+ .wt-content-inner{padding-top:20px}
+ .canva-page-head{align-items:flex-start;flex-direction:column;gap:14px;padding-bottom:17px;margin-bottom:17px}
+ .canva-page-head h1{font-size:31px}
+ .canva-head-actions{justify-content:flex-start;width:100%}
+ .canva-head-actions .canva-button{flex:1}
+ .canva-home .canva-kpi{min-height:122px;padding:15px;border-radius:15px}
+ .canva-home .canva-kpi strong{font-size:25px;margin:14px 0 7px}
+ .canva-home .canva-shift-card{min-height:0;padding:19px;border-radius:18px}
+ .canva-home .canva-shift-time{font-size:40px;margin:29px 0 24px}
+ .canva-home .canva-actions-card,.canva-home .canva-activity-card,.canva-home .canva-summary-card{padding:17px;border-radius:18px}
+ .canva-home .canva-tools-grid{grid-template-columns:1fr}
+ .canva-home .canva-tool-card{padding:17px}
+ .canva-home .canva-note-card{padding:18px;border-radius:18px}
+ .canva-work .canva-work-calendar,.canva-work .canva-work-card{padding:16px;border-radius:18px}
+ .canva-work .canva-work-week{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+ .canva-work .canva-work-week button{min-height:118px;padding:9px}
+ .canva-work .canva-work-week b{font-size:25px}
+ .canva-work .canva-work-side{grid-template-columns:1fr}
+ .canva-calendar .canva-calendar-grid{gap:3px}
+ .canva-calendar .canva-calendar-grid button{min-height:62px;padding:5px;border-radius:8px}
+ .canva-calendar .canva-calendar-grid button>span:last-child{font-size:8px;overflow-wrap:anywhere}
+ .canva-calendar .canva-calendar-summary{grid-template-columns:1fr 1fr}
+ .canva-calendar .canva-calendar-summary>div{border-bottom:1px solid var(--line);padding:12px}
+ .canva-calendar .canva-calendar-actions{grid-template-columns:1fr}
+ .canva-pay .canva-pay-overview{grid-template-columns:1fr 1fr}
+ .canva-pay .canva-pay-hero{grid-column:1/-1;padding:22px;border-radius:18px}
+ .canva-pay .canva-pay-metric{padding:17px;border-radius:16px}
+ .canva-pay .canva-pay-breakdown,.canva-pay .canva-pay-form{padding:17px;border-radius:18px}
+ .social-hero{align-items:flex-start;flex-direction:column;padding:22px 18px;border-radius:19px}
+ .social-hero h2{font-size:31px}
+ .social-hero-stats{gap:18px}
+ .social-layout{gap:10px}
+ .social-side{grid-template-columns:1fr}
+ .social-compose,.social-post{padding:16px;border-radius:17px}
+ .social-compose textarea{min-height:90px;font-size:14px}
+ .canva-friends-rail{grid-template-columns:1fr}
+ .canva-friends-rail>button{border-left:0;border-top:1px solid var(--line);padding:11px 0}
+ .canva-profile-cover{min-height:155px}
+ .canva-profile-identity{display:grid;grid-template-columns:64px minmax(0,1fr);padding:0 16px 18px;gap:12px}
+ .canva-profile-identity>.avatar{grid-row:1}
+ .canva-profile-buttons{grid-column:1/-1;display:flex;flex-wrap:wrap}
+ .canva-profile-buttons>*{flex:1}
+ .canva-profile-card{padding:17px;border-radius:17px}
+ .canva-settings-rail,.canva-admin-rail{grid-template-columns:repeat(2,minmax(0,1fr));border-radius:16px}
+ .chat-shell-v2{grid-template-columns:minmax(0,1fr);min-height:64dvh;border-radius:17px}
+ .chat-contacts-v2{max-height:210px;overflow:auto;border-right:0;border-bottom:1px solid var(--line)}
+ .chat-main-v2{min-height:430px}
+ .chat-messages-v2,.group-chat-messages{padding:13px}
+ .chats-mode-nav{border-radius:13px}
+ .canva-calendar .canva-calendar-note{font-size:7px}
+}
+@media(max-width:390px){
+ .canva-home .canva-kpi-grid{gap:7px}
+ .canva-home .canva-kpi{padding:12px}
+ .canva-home .canva-kpi strong{font-size:22px}
+ .canva-pay .canva-money-list>div{font-size:10px;gap:8px}
+ .canva-calendar .canva-calendar-grid button{min-height:54px}
+}
+@media(prefers-reduced-motion:reduce){.wt-page-frame{animation:none}}
