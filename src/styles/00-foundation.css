@@ -73,3 +73,36 @@ body{overflow-x:clip}
 .wt-content-inner{width:min(var(--content),100%);margin:0 auto;padding-top:22px}
 .wt-mobile-nav{display:none}
 
+
+
+/* ---------- refreshed application shell ---------- */
+.wt-sidebar{padding:18px 14px;background:var(--surface);border-right:1px solid var(--line)}
+.wt-brand{min-height:48px;padding:0 10px}
+.wt-brand-mark{width:36px;height:36px;border-radius:12px;background:var(--accent);color:var(--on-accent);box-shadow:none}
+.wt-brand-word{font-size:20px;letter-spacing:-.055em}
+.wt-profile{min-height:60px;border-radius:14px;background:var(--surface-soft);border-color:transparent}
+.wt-search-mini,.wt-command-search{border:1px solid var(--line);border-radius:999px;background:var(--surface-soft)}
+.wt-search-mini{height:42px;padding-inline:13px}
+.wt-nav{gap:22px}
+.wt-nav-label{padding:0 12px 8px;font-size:10px;letter-spacing:.09em}
+.wt-nav-item{grid-template-columns:34px minmax(0,1fr);min-height:45px;padding:6px 10px;border-radius:999px;font-size:13px}
+.wt-nav-icon{width:32px;height:32px;border:0;border-radius:50%;background:transparent}
+.wt-nav-item.active{background:var(--accent-soft);border-color:transparent;color:var(--accent-strong)}
+.wt-nav-item.active .wt-nav-icon{background:transparent;color:var(--accent-strong)}
+.wt-nav-copy b{font-size:13px;font-weight:750}
+.wt-sidebar-footer{padding:14px 10px 3px;font-size:10px}
+.wt-topbar{min-height:76px;padding:12px clamp(18px,3vw,42px);background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:saturate(160%) blur(18px)}
+.wt-context-kicker{font-size:10px;letter-spacing:.09em}
+.wt-context h1{font-size:22px;letter-spacing:-.04em;font-weight:800}
+.wt-command-search{height:42px;padding-inline:15px;font-size:12px}
+.wt-top-icon,.wt-top-avatar{width:42px;height:42px;border-radius:50%;background:var(--surface-soft);border-color:transparent}
+.wt-top-icon:hover,.wt-top-avatar:hover{background:var(--accent-soft);border-color:transparent}
+.wt-content{padding:0 clamp(16px,3vw,42px) 80px}
+.wt-content-inner{padding-top:28px}
+.wt-mobile-nav{border-top:1px solid var(--line);background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:saturate(160%) blur(18px)}
+.wt-mobile-nav button{border-radius:14px;color:var(--muted);font-weight:650}
+.wt-mobile-nav button.active{background:var(--accent-soft);color:var(--accent-strong)}
+button,input,select,textarea{transition:background-color .16s ease,border-color .16s ease,color .16s ease,box-shadow .16s ease}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 60%,transparent);outline-offset:2px}
+@media(max-width:900px){.wt-topbar{min-height:64px}.wt-content-inner{padding-top:18px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
