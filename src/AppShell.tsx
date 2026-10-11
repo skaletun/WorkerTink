@@ -30,7 +30,7 @@ export default function AppShell({items,active,onNavigate,profile,profileAction,
 
     <nav className="wt-rail" aria-label="Быстрые разделы">
       <button className="wt-rail-brand" onClick={()=>onNavigate('home')} aria-label="WTinker — Главная"><span className="wt-brand-mark">W</span></button>
-      {['home','social','chat','work'].map(id=>{const item=byId.get(id);return item?<button key={id} className={active===id?'wt-rail-action active':'wt-rail-action'} onClick={()=>onNavigate(id)} aria-label={item.label} title={item.label}>{item.icon}</button>:null})}
+      {(['home','social','chat','work'] as const).map(id=>{const item=byId.get(id);return item?<button key={id} className={active===id?'wt-rail-action active':'wt-rail-action'} onClick={()=>onNavigate(id)} aria-label={item.label} title={item.label}>{item.icon}</button>:null})}
       <span className="wt-rail-spacer"/>
       <button className="wt-rail-action" onClick={profileAction} aria-label="Профиль" title="Профиль">{profile}</button>
     </nav>
