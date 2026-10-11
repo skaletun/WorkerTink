@@ -1,0 +1,16 @@
+/* SOCIAL: timeline is dominant, discovery is a persistent utility column; composer reads as an editor. */
+.social-page{max-width:1280px}
+.social-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:28px;padding:clamp(24px,3.4vw,42px);border-radius:24px;margin-bottom:18px}
+.social-hero h2{font-size:clamp(30px,3.8vw,46px);letter-spacing:-.075em;line-height:.99}
+.social-hero p{font-size:13px;max-width:660px;line-height:1.7}
+.social-hero-stats{display:flex;gap:24px;flex:none}
+.social-hero-stats span{min-width:82px;padding-left:17px;border-left:1px solid var(--line)}
+.social-hero-stats b{font-size:28px;letter-spacing:-.06em}
+.social-tabs{top:77px;padding:7px 0}
+.social-layout{grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+.social-main,.social-side{display:grid;gap:14px;align-content:start}
+.social-compose{padding:22px;border-radius:20px;box-shadow:none}
+.social-compose textarea{min-height:108px;border:0;background:transparent;font-size:15px;line-height:1.6;resize:vertical}
+.social-post{padding:22px;border-radius:20px;box-shadow:none}
+.social-post-body{font-size:14px;line-height:1.8}
+.social-side .social-card{padding:20px;border-radius:20px;box-shadow:none}
