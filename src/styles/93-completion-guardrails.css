@@ -73,7 +73,7 @@ input[type="date"], input[type="datetime-local"], input[type="time"], select) {
 
 /* Keep overlays and dialogs within the visual viewport. */
 dialog { max-width: min(720px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); overflow: auto; }
-[role="dialog"] { max-width: min(720px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); overflow: auto; }
+.confirm-modal, .profile-modal-card, .chat-profile-card { max-width: min(720px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); overflow: auto; }
 .shift-modal { max-width: min(720px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow: auto; }
 .canva-page :where(.modal-actions, .dialog-actions, .canva-head-actions) {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
@@ -113,6 +113,7 @@ dialog { max-width: min(720px, calc(100vw - 24px)); max-height: calc(100dvh - 32
   .wt-shell { display: block; padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
   .wt-rail, .wt-sidebar { display: none; }
   .wt-topbar { min-height: 58px; padding: 8px 12px; }
+  .wt-command-search { width: 38px; }
   .wt-content { padding: 0 12px 24px; }
   .wt-content-inner { padding-top: 16px; }
   .canva-page-head { display: grid; align-items: start; gap: 12px; padding-bottom: 16px; margin-bottom: 16px; }
@@ -131,7 +132,7 @@ dialog { max-width: min(720px, calc(100vw - 24px)); max-height: calc(100dvh - 32
   .chat-messages-v2 { max-height: 52dvh; padding: 12px; }
   .canva-page :where(.modal-actions, .dialog-actions) { align-items: stretch; }
   .canva-page :where(.modal-actions, .dialog-actions) > button { flex: 1 1 140px; }
-  dialog, [role="dialog"], .shift-modal { max-width: calc(100vw - 16px); max-height: calc(100dvh - 16px); }
+  dialog, .confirm-modal, .profile-modal-card, .chat-profile-card, .avatar-editor-modal, .banner-editor-modal, .shift-modal { max-width: calc(100vw - 16px); max-height: calc(100dvh - 16px); }
 }
 @media (prefers-reduced-motion: reduce) {
   button:active:not(:disabled) { transform: none; }
