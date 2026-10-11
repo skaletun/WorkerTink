@@ -1,0 +1,61 @@
+/* WorkerTink: page-by-page structural compositions. This file intentionally changes layout, not just skin. */
+:root{--wt-gap:16px;--wt-panel-radius:20px;--wt-section-space:24px}
+.wt-content-inner{padding-top:32px}
+.wt-page-frame{width:100%;min-width:0}
+.canva-page-head{padding:0 0 23px;margin-bottom:24px;border-bottom:1px solid var(--line);align-items:center}
+.canva-page-head h1{font-size:clamp(30px,3.5vw,44px);font-weight:850;letter-spacing:-.07em;line-height:1}
+.canva-page-head p{font-size:13px;line-height:1.65;max-width:600px}
+.canva-kicker{font-size:9px;letter-spacing:.17em;margin-bottom:9px}
+.canva-head-actions{gap:8px}
+.canva-button{min-height:42px;padding-inline:16px;border-radius:12px;font-size:11px}
+.canva-button-primary{box-shadow:0 5px 14px color-mix(in srgb,var(--accent) 18%,transparent)}
+/* HOME: a dashboard grid with a wide live-shift stage, compact action rail and distinct analytical band. */
+.canva-home{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--wt-gap);align-items:start}
+.canva-home>.canva-page-head,.canva-home>.canva-kpi-grid,.canva-home>.canva-tools-grid,.canva-home>.canva-note-card{grid-column:1/-1}
+.canva-home>.canva-page-head{margin-bottom:0}
+.canva-home>.canva-kpi-grid{gap:12px}
+.canva-home .canva-kpi{min-height:128px;padding:20px 21px;border-radius:17px;box-shadow:none;position:relative;overflow:hidden}
+.canva-home .canva-kpi:after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);opacity:.75}
+.canva-home .canva-kpi strong{font-size:clamp(25px,2.4vw,34px);margin:16px 0 8px}
+.canva-home-main,.canva-home-lower{display:contents}
+.canva-home .canva-shift-card{grid-column:span 8;min-height:330px;padding:clamp(22px,3vw,34px);border-radius:22px;box-shadow:none;background:linear-gradient(135deg,var(--surface),color-mix(in srgb,var(--accent-soft) 36%,var(--surface)))}
+.canva-home .canva-shift-time{font-size:clamp(42px,5vw,66px);margin:40px 0 32px;letter-spacing:-.08em}
+.canva-home .canva-actions-card{grid-column:span 4;padding:22px;border-radius:22px;box-shadow:none}
+.canva-home .canva-action-list button{min-height:66px;grid-template-columns:30px minmax(0,1fr) 16px;border-radius:12px}
+.canva-home .canva-activity-card{grid-column:span 7;padding:22px;border-radius:20px;box-shadow:none}
+.canva-home .canva-summary-card{grid-column:span 5;padding:22px;border-radius:20px;box-shadow:none}
+.canva-home .canva-tools-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.canva-home .canva-tool-card{min-width:0;padding:19px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}
+.canva-home .canva-note-card{display:grid;grid-template-columns:minmax(0,.75fr) minmax(0,1.25fr);align-items:center;gap:24px;padding:24px;border-radius:20px;box-shadow:none}
+/* WORK: time is the primary canvas; pay and absence stay in a distinct right-hand summary rail. */
+.canva-work .canva-work-overview{grid-template-columns:minmax(0,1fr) 290px;gap:16px}
+.canva-work .canva-work-calendar{padding:24px;border-radius:22px;box-shadow:none}
+.canva-work .canva-work-week{gap:8px;margin:20px 0}
+.canva-work .canva-work-week button{min-height:145px;padding:13px;border-radius:14px;display:flex;flex-direction:column;justify-content:flex-start}
+.canva-work .canva-work-week b{font-size:30px;letter-spacing:-.06em}
+.canva-work .canva-work-summary{padding:24px;border-radius:20px;box-shadow:none}
+.canva-work .canva-work-summary h2,.canva-work .canva-work-summary h3{margin-top:30px}
+.canva-work .canva-work-lower{gap:16px;margin-top:16px}
+.canva-work .canva-work-card{padding:23px;border-radius:20px;box-shadow:none}
+/* CALENDAR: separate month controls, full-width date matrix and a strong financial summary strip. */
+.canva-calendar .canva-calendar-shell{padding:clamp(14px,2vw,26px);border-radius:22px;box-shadow:none}
+.canva-calendar .canva-calendar-head{padding-bottom:17px;margin-bottom:17px;border-bottom:1px solid var(--line)}
+.canva-calendar .canva-calendar-head h2{font-size:clamp(28px,3vw,38px)}
+.canva-calendar .canva-calendar-grid{gap:7px}
+.canva-calendar .canva-calendar-grid button{min-height:clamp(70px,7.4vw,104px);padding:10px;border-radius:12px}
+.canva-calendar .canva-calendar-grid button>span:last-child{font-size:10px}
+.canva-calendar .canva-calendar-summary{border-radius:18px;box-shadow:none;margin-top:16px}
+.canva-calendar .canva-calendar-actions{gap:12px;margin-top:12px}
+.canva-calendar .canva-calendar-actions button{padding:16px;border-radius:14px}
+/* PAYROLL: hero total, calculation ledger and editable payment plan are three different visual zones. */
+.canva-pay .canva-pay-overview{grid-template-columns:minmax(0,1.5fr) repeat(2,minmax(170px,.7fr));gap:12px}
+.canva-pay .canva-pay-hero{padding:clamp(23px,3vw,36px);border-radius:22px;box-shadow:none;background:linear-gradient(135deg,var(--accent-soft),var(--surface))}
+.canva-pay .canva-pay-hero strong{font-size:clamp(34px,4.4vw,54px);letter-spacing:-.075em}
+.canva-pay .canva-pay-metric{padding:23px;border-radius:20px;box-shadow:none}
+.canva-pay .canva-pay-grid{grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);gap:16px;margin-top:16px}
+.canva-pay .canva-pay-breakdown,.canva-pay .canva-pay-form{padding:24px;border-radius:20px;box-shadow:none}
+.canva-pay .canva-money-list>div{padding:14px 0;font-size:12px}
+.canva-pay .annual-card{margin-top:16px;border-radius:22px;box-shadow:none}
+/* TIME OFF: the calendar/planner and existing periods become a two-column workflow, not one long stack. */
+.canva-absence .canva-absence-grid,.canva-absence .absence-layout,.canva-absence .canva-timeoff-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.75fr);gap:16px;align-items:start}
+.canva-absence .canva-panel,.canva-absence .absence-card,.canva-absence .absence-form,.canva-absence .absence-list{border-radius:20px;box-shadow:none}
