@@ -33,10 +33,11 @@ async function audit(page,label){
     const buttons=[...document.querySelectorAll('button')].filter(visible);
     const unlabeledIconButtons=buttons.filter(btn=>{const text=btn.textContent?.trim()||'';const label=btn.getAttribute('aria-label')||btn.getAttribute('title');return !text&&!label&&!btn.querySelector('svg')}).length;
     const root=getComputedStyle(document.documentElement);
-    return {text:document.body.innerText.trim().length,overflow:document.documentElement.scrollWidth-window.innerWidth,overflows,gradients,unlabeledIconButtons,bg:root.getPropertyValue('--bg').trim(),surface:root.getPropertyValue('--surface').trim()};
+    const wideElements=elements.filter(el=>{const r=el.getBoundingClientRect();return el.scrollWidth>el.clientWidth+2||r.right>window.innerWidth+2||r.left<-2;}).slice(0,24).map(el=>{const r=el.getBoundingClientRect();return {tag:el.tagName,cls:String(el.className||''),id:el.id||'',left:Math.round(r.left),right:Math.round(r.right),width:Math.round(r.width),clientWidth:el.clientWidth,scrollWidth:el.scrollWidth,overflowX:getComputedStyle(el).overflowX};});
+    return {text:document.body.innerText.trim().length,viewport:window.innerWidth,documentWidth:document.documentElement.scrollWidth,bodyWidth:document.body.scrollWidth,overflow:document.documentElement.scrollWidth-window.innerWidth,overflows,wideElements,gradients,unlabeledIconButtons,bg:root.getPropertyValue('--bg').trim(),surface:root.getPropertyValue('--surface').trim()};
   });
   expect(result.text).toBeGreaterThan(20);
-  expect(result.overflow).toBeLessThanOrEqual(2);
+  expect(result.overflow,JSON.stringify({viewport:result.viewport,documentWidth:result.documentWidth,bodyWidth:result.bodyWidth,overflows:result.overflows,wideElements:result.wideElements})).toBeLessThanOrEqual(2);
   expect(result.overflows).toEqual([]);
   expect(result.gradients).toBe(0);
   expect(result.unlabeledIconButtons).toBe(0);
@@ -128,7 +129,9 @@ test('WTinker bug-archive interaction states',async({browser})=>{
   await clickIfVisible(mobilePage,'button:has-text("Понятно")');
   await mobilePage.goto('?tab=calendar',{waitUntil:'networkidle'});
   await mobilePage.getByRole('button',{name:'Понятно'}).click().catch(()=>{});
-  await mobilePage.locator('button.calendar-day:not(.pre-start)').first().click();
+  const mobileShiftDay=mobilePage.locator('button.calendar-day:not(.pre-start)');
+  await mobileShiftDay.first().waitFor({state:'visible',timeout:10000});
+  await mobileShiftDay.first().click({timeout:10000});
   await mobilePage.waitForTimeout(250);
   await mobilePage.screenshot({path:'visual-audit-artifacts/android-mobile-shift-editor.png',fullPage:true});
 
