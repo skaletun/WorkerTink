@@ -1,0 +1,109 @@
+/* WTinker premium design system v1 — structure-first, product-specific, responsive. */
+:root{
+  color-scheme:light;
+  --bg:#f6f7f8;--surface:#fff;--surface-raised:#fff;--surface-soft:#f0f2f4;--surface-muted:#e7eaee;
+  --text:#17191d;--text-2:#383d45;--muted:#6b727c;--faint:#8c929b;--line:#e1e4e8;--line-strong:#c9ced5;
+  --accent:#235ee7;--accent-strong:#1748bd;--accent-soft:#eaf0ff;--accent-soft-2:#d8e3ff;--on-accent:#fff;
+  --success:#16794a;--success-soft:#e4f5eb;--danger:#b92e3a;--danger-soft:#fff0f1;--warning:#8c5c06;--warning-soft:#fff4d8;--info:#235ee7;
+  --sidebar:248px;--content:1440px;--feed:680px;--radius:8px;--radius-sm:5px;--control-h:42px;
+  --shadow:none;--shadow-small:none;--ease:cubic-bezier(.2,.7,.2,1);
+  --wt-font:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --wt-mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+  --wt-space-1:4px;--wt-space-2:8px;--wt-space-3:12px;--wt-space-4:16px;--wt-space-5:20px;--wt-space-6:24px;--wt-space-8:32px;
+}
+:root[data-theme=dark]{
+  color-scheme:dark;--bg:#101215;--surface:#171a1f;--surface-raised:#1c2026;--surface-soft:#22262d;--surface-muted:#2a2f37;
+  --text:#f2f4f7;--text-2:#d5d9df;--muted:#9da5b0;--faint:#7d8692;--line:#2a2f37;--line-strong:#414852;
+  --accent:#83a7ff;--accent-strong:#a4bdff;--accent-soft:#202b44;--accent-soft-2:#2b3b5c;--on-accent:#101828;
+  --success:#6ad39a;--success-soft:#1b3327;--danger:#ff9299;--danger-soft:#3a2025;--warning:#f0c66c;--warning-soft:#382e1b;--info:#83a7ff;
+}
+html{font-family:var(--wt-font);background:var(--bg);color:var(--text);text-rendering:optimizeLegibility}
+body{background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;letter-spacing:-.005em}
+button,input,select,textarea{font:inherit}
+button{transition:background-color .14s ease,border-color .14s ease,color .14s ease}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+::selection{background:var(--accent-soft-2);color:var(--text)}
+.wt-shell{grid-template-columns:var(--sidebar) minmax(0,1fr);gap:0;max-width:none;background:var(--bg)}
+.wt-sidebar{padding:18px 12px 14px;border-right:1px solid var(--line);background:var(--surface)}
+.wt-brand{min-height:44px;padding:0 10px;margin-bottom:22px;gap:11px}
+.wt-brand-mark{width:31px;height:31px;border-radius:7px;background:var(--accent);box-shadow:none;font-size:14px}
+.wt-brand-word{font-size:17px;letter-spacing:-.055em;font-weight:780}
+.wt-sidebar nav,.wt-nav,.wt-sidebar-nav{gap:3px}
+.wt-sidebar a,.wt-sidebar button,.wt-nav a,.wt-nav button{border-radius:6px}
+.wt-main,.wt-content,.app-main{min-width:0}
+.wt-topbar,.wt-header,.app-topbar{background:var(--surface);border-bottom:1px solid var(--line);box-shadow:none}
+.wt-main-inner,.wt-content-inner{width:min(100%,var(--content));margin-inline:auto;padding:28px clamp(18px,3vw,44px) 48px}
+.wt-page-title,.redesign-page-intro h1,.page-intro h2,.chat-page-intro h1{font-size:clamp(25px,2.5vw,34px);line-height:1.08;letter-spacing:-.055em;font-weight:760}
+.redesign-page-intro,.page-intro,.chat-page-intro{align-items:flex-start;margin-bottom:24px;gap:20px}
+.redesign-page-intro p,.page-intro p,.chat-page-intro p{font-size:13px;line-height:1.55;color:var(--muted)}
+.redesign-overline,.eyebrow,.kicker{font-family:var(--wt-mono);font-size:10px!important;letter-spacing:.06em!important;font-weight:600!important;color:var(--muted)!important}
+.btn,.redesign-btn,.primary-auth,.secondary-auth,.registration-submit,.setup-actions button,.security-actions button,.profile-actions button,.chat-tools-v2 button,.channel-tools button,.channel-admin button,.community-actions button,.group-card-actions button,.admin-detail-actions button,.request-actions button{
+ min-height:38px;padding:0 13px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);color:var(--text);font-size:12px;font-weight:650;letter-spacing:0;box-shadow:none
+}
+.btn:hover,.redesign-btn:hover,.primary-auth:hover,.secondary-auth:hover,.registration-submit:hover,.setup-actions button:hover,.security-actions button:hover,.profile-actions button:hover,.chat-tools-v2 button:hover,.channel-tools button:hover,.channel-admin button:hover,.community-actions button:hover,.group-card-actions button:hover,.admin-detail-actions button:hover,.request-actions button:hover{border-color:var(--accent);background:var(--surface-soft)}
+.primary,.redesign-btn-primary,.primary-auth,.registration-submit{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.primary:hover,.redesign-btn-primary:hover,.primary-auth:hover,.registration-submit:hover{background:var(--accent-strong);border-color:var(--accent-strong);color:var(--on-accent)}
+.quiet,.redesign-btn-soft,.secondary-auth{background:var(--surface-soft)}
+.redesign-link{color:var(--accent);font-weight:650}
+input,select,textarea,.field input,.field select,.field textarea{border-radius:6px}
+input:not([type=checkbox]):not([type=radio]),select,textarea{min-height:40px}
+:where(.redesign-panel,.snapshot-card,.work-card,.social-card,.social-post,.social-compose,.network-widget,.network-compose,.network-post,.group-card,.community-detail-head,.community-members-card,.channels-hero,.channel-detail,.channel-invites,.person-card,.friend-card,.profile-card,.profile-hero-card,.settings-card,.period-editor){
+ border-radius:8px;box-shadow:none
+}
+.redesign-panel,.snapshot-card,.work-card,.social-card,.social-post,.social-compose,.network-widget,.network-compose,.network-post,.group-card,.community-detail-head,.community-members-card,.channels-hero,.channel-detail,.channel-invites,.person-card,.friend-card,.profile-card,.profile-hero-card,.settings-card,.period-editor{
+ border:1px solid var(--line);background:var(--surface)
+}
+.social-post,.network-post{padding:18px 20px}
+.social-compose,.network-compose{padding:14px 16px}
+.snapshot-card,.work-card{padding:16px}
+.profile-hero-card,.community-detail-head,.channels-hero{border-radius:8px}
+:is(.social-post,.network-post,.social-card,.person-card,.friend-card,.group-card,.work-card,.settings-card):hover{border-color:var(--line-strong);box-shadow:none}
+:is(.social-post,.network-post) :is(p,.post-text,.message-text){line-height:1.65}
+:is(.stat-value,.metric-value,.salary-value,.pay-value,.calendar-day-number,.snapshot-value){font-variant-numeric:tabular-nums}
+:is(table,.data-table){border-collapse:separate;border-spacing:0}
+table th{font-size:10px;text-transform:uppercase;letter-spacing:.055em;color:var(--muted);font-weight:650}
+table td,table th{border-bottom:1px solid var(--line);padding:10px 12px}
+table tbody tr:hover{background:var(--surface-soft)}
+hr{border:0;border-top:1px solid var(--line)}
+.badge,.status-badge,.tag{border-radius:4px;font-size:10px;font-weight:650;letter-spacing:.01em}
+:where(.wt-sidebar,.wt-mobile-nav) .active,:where(.wt-sidebar,.wt-mobile-nav) [aria-current=page]{background:var(--accent-soft);color:var(--accent-strong);font-weight:700}
+:where(.wt-sidebar,.wt-mobile-nav) a,:where(.wt-sidebar,.wt-mobile-nav) button{min-height:40px}
+:where(.modal,.dialog,.popover,.dropdown-menu){border:1px solid var(--line);border-radius:9px;box-shadow:0 16px 50px rgba(0,0,0,.16)}
+:where(.empty-state,.empty){color:var(--muted)}
+/* Purposeful work surfaces: compact controls, strong calendar/payroll hierarchy. */
+:where(.calendar-grid,.calendar-month,.shift-calendar){border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+:where(.calendar-grid,.calendar-month,.shift-calendar) :where(th,.weekday,.calendar-weekday){background:var(--surface-soft);color:var(--muted);font-size:10px;font-weight:650}
+:where(.calendar-grid,.calendar-month,.shift-calendar) :where(td,.day,.calendar-day){border-color:var(--line)}
+:where(.shift-day,.shift-cell,.calendar-day){border-radius:3px}
+:where(.payroll-table,.salary-table,.work-table) td:last-child{font-variant-numeric:tabular-nums;font-weight:650}
+:where(.shift-day,.shift-cell)[data-shift="night"],:where(.night-shift){background:#e9eaff;color:#3948a7}
+:root[data-theme=dark] :where(.shift-day,.shift-cell)[data-shift="night"],:root[data-theme=dark] :where(.night-shift){background:#2b2f51;color:#c4caff}
+:where(.shift-day,.shift-cell)[data-shift="day"],:where(.day-shift){background:#e2f4e9;color:#21643f}
+:root[data-theme=dark] :where(.shift-day,.shift-cell)[data-shift="day"],:root[data-theme=dark] :where(.day-shift){background:#1d3a2a;color:#a6e5bb}
+:where(.salary-total,.payroll-total,.total-amount){font-variant-numeric:tabular-nums;font-weight:760;letter-spacing:-.035em}
+:where(.work-layout,.workspace-layout,.dashboard-layout){align-items:start}
+@media(min-width:1280px){
+ .wt-main-inner,.wt-content-inner{padding-top:34px}
+}
+@media(max-width:900px){
+ :root{--sidebar:76px}
+ .wt-sidebar{padding-inline:8px}
+ .wt-brand{justify-content:center;padding:0}
+ .wt-brand-word{display:none}
+ .wt-main-inner,.wt-content-inner{padding:22px 18px 36px}
+}
+@media(max-width:640px){
+ :root{--sidebar:0px}
+ .wt-shell{display:block}
+ .wt-sidebar{display:none}
+ .wt-main-inner,.wt-content-inner{padding:18px 13px calc(92px + env(safe-area-inset-bottom))}
+ .redesign-page-intro,.page-intro,.chat-page-intro{display:flex;flex-direction:column;align-items:stretch;gap:12px;margin-bottom:18px}
+ .redesign-page-intro h1,.page-intro h2,.chat-page-intro h1{font-size:27px}
+ .btn,.redesign-btn,.primary-auth,.secondary-auth,.registration-submit{min-height:42px}
+ :where(.social-post,.network-post){padding:15px}
+ :where(.snapshot-card,.work-card){padding:13px}
+ table td,table th{padding:8px 9px}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
