@@ -1,0 +1,68 @@
+/* WorkerTink Design System v9 — Telegram clarity × X editorial rhythm. */
+:root{
+ --bg:#f7f9fc;--surface:#fff;--surface-raised:#fff;--surface-soft:#f2f5f9;--surface-muted:#eaf0f7;
+ --text:#17212b;--text-2:#334456;--muted:#627488;--faint:#8292a3;--line:#e1e8f0;--line-strong:#cbd6e3;
+ --accent:#2481cc;--accent-strong:#1766a8;--accent-soft:#e7f3ff;--accent-soft-2:#cfe8ff;--on-accent:#fff;
+ --highlight:#f5b942;--highlight-soft:#fff5dc;--action:#17212b;--action-text:#fff;--action-hover:#26384a;
+ --success:#168765;--success-soft:#e4f7ef;--danger:#cf4d53;--danger-soft:#fff0f0;--danger-line:#f1c7ca;
+ --warning:#946313;--warning-soft:#fff5dd;--info:#426b91;--info-soft:#e9f3fc;
+ --radius-lg:20px;--radius:15px;--radius-sm:12px;--radius-xs:9px;--control-h:44px;
+ --shadow:0 18px 55px rgba(22,43,66,.16);--shadow-small:0 2px 8px rgba(22,43,66,.06);--shadow-up:0 -8px 28px rgba(22,43,66,.09);
+}
+:root[data-theme=dark]{
+ --bg:#0e1621;--surface:#17212b;--surface-raised:#1c2733;--surface-soft:#202d3b;--surface-muted:#263647;
+ --text:#f2f6fa;--text-2:#d0dbe6;--muted:#9aabba;--faint:#718498;--line:#263747;--line-strong:#3a5065;
+ --accent:#65b6f8;--accent-strong:#8ccaff;--accent-soft:#1a3852;--accent-soft-2:#254b6d;--on-accent:#071523;
+ --highlight:#ffca67;--highlight-soft:#3b301a;--action:#f2f6fa;--action-text:#0e1621;--action-hover:#dce9f4;
+ --success:#4ed3a0;--success-soft:#15372d;--danger:#ff8588;--danger-soft:#3c2027;--danger-line:#63323b;
+ --warning:#edc16d;--warning-soft:#3b301a;--info:#9ac6eb;--info-soft:#1b3042;
+ --shadow:0 18px 55px rgba(0,0,0,.4);--shadow-small:0 2px 8px rgba(0,0,0,.18);--shadow-up:0 -8px 28px rgba(0,0,0,.32);
+}
+html{scrollbar-gutter:stable}body{background:var(--bg);color:var(--text);letter-spacing:-.005em}
+button,input,select,textarea{transition:background-color .16s ease,border-color .16s ease,color .16s ease,box-shadow .16s ease}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 55%,transparent);outline-offset:2px}
+::selection{background:var(--accent-soft-2);color:var(--text)}
+.app-frame{max-width:1600px;background:var(--bg)}
+.app-navigation{padding:20px 14px 14px;background:var(--bg);border-color:var(--line)}
+.app-wordmark{font-size:25px;letter-spacing:-1.15px;padding:0 12px 22px}.app-wordmark svg{color:var(--accent)}
+.app-nav-link{min-height:46px;border-radius:999px;padding:9px 14px;gap:12px;font-size:15px}
+.app-nav-link>svg{width:21px;height:21px}.app-nav-link[aria-current=page]{background:var(--accent-soft);color:var(--accent-strong)}
+.app-nav-divider{margin:14px 12px 10px}.app-search{border:0;border-radius:999px;background:var(--surface-soft);padding:12px 14px}
+.app-account{border-color:var(--line)}.app-account-button{border-radius:999px}
+.app-mobile-header{background:var(--surface);backdrop-filter:saturate(150%) blur(16px)}
+.app-bottom-nav{background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:saturate(150%) blur(18px);border-color:var(--line)}
+.app-bottom-nav button{font-weight:600}.app-bottom-nav button[aria-current=page]{font-weight:800}
+.app-work-tabs{background:var(--surface);padding-inline:clamp(16px,3vw,38px);gap:clamp(16px,2.5vw,30px)}
+.app-work-tabs button[aria-current=page]{color:var(--accent);border-bottom-width:3px}
+.app-page{min-height:100%;background:var(--bg)}
+.redesign-page,.canva-page,.preferences-page,.social-page,.chat-page,.work-page{color:var(--text)}
+.redesign-page,.canva-page{max-width:1180px;margin-inline:auto;padding:28px clamp(16px,3vw,36px) 48px}
+.redesign-page h1,.canva-page h1{font-size:clamp(25px,3vw,32px);line-height:1.12;letter-spacing:-.045em;font-weight:800}
+.redesign-page h2,.canva-page h2{letter-spacing:-.025em}
+.canva-page-head,.redesign-page-head{margin-bottom:24px;gap:20px}
+.canva-kicker,.redesign-overline,.eyebrow{letter-spacing:.095em;font-size:10px;font-weight:800;color:var(--muted)}
+.card,.canva-profile-card,.canva-profile-hero,.preferences-section,.work-panel,.social-composer,.social-post,.chat-panel,.directory-panel,.settings-card{border-color:var(--line);border-radius:var(--radius);background:var(--surface);box-shadow:none}
+.card,.canva-profile-card,.work-panel,.directory-panel,.settings-card{padding:20px}
+.canva-profile-card,.canva-profile-hero{overflow:hidden}.canva-profile-grid{gap:18px}.canva-profile-rail{gap:14px}
+.btn,.canva-button,.identity-primary,.setup-submit,.primary-button{min-height:40px;border-radius:999px;padding:9px 17px;font-size:13px;font-weight:750;letter-spacing:0}
+.btn.primary,.canva-button-primary,.identity-primary,.setup-submit,.primary-button{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover,.canva-button-primary:hover,.identity-primary:hover,.setup-submit:hover,.primary-button:hover{background:var(--accent-strong);border-color:var(--accent-strong)}
+.btn:not(.primary):not(.quiet),.canva-button:not(.canva-button-primary){background:var(--surface);border:1px solid var(--line-strong);color:var(--text)}
+.btn.quiet,.canva-text-button{background:transparent;border-color:transparent;color:var(--accent)}
+.btn.danger,.danger-button,.identity-danger{color:var(--danger)}
+input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea{min-height:var(--control-h);border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);padding:10px 12px;box-shadow:none}
+input::placeholder,textarea::placeholder{color:var(--faint)}input:hover,select:hover,textarea:hover{border-color:var(--muted)}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);outline:0}
+input[type=checkbox],input[type=radio]{accent-color:var(--accent)}.field-label,.field>span{color:var(--muted)}
+.social-composer,.social-post{padding:20px}.social-post+.social-post{margin-top:10px}
+.profile-modal-card,.identity-dialog,.confirm-modal,.command-palette,.settings-dialog{border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow);background:var(--surface)}
+.modal-backdrop,.identity-backdrop{background:var(--overlay);backdrop-filter:blur(5px)}
+.modal-close{width:38px;height:38px;border-radius:50%;background:var(--surface-soft)}
+.wt-avatar,.avatar{border:1px solid var(--line)}
+.chat-layout,.messenger-layout{border-color:var(--line);background:var(--surface)}
+.chat-bubble,.message-bubble{border-radius:18px}.chat-bubble--own,.message-bubble--own{border-bottom-right-radius:6px}
+.chat-bubble:not(.chat-bubble--own),.message-bubble:not(.message-bubble--own){border-bottom-left-radius:6px}
+.badge,.status-badge,.canva-state,.identity-badges span{border-radius:999px;font-weight:700}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+@media(max-width:900px){.redesign-page,.canva-page{padding:22px 16px calc(30px + env(safe-area-inset-bottom))}.canva-page-head{align-items:flex-start;flex-direction:column}.canva-profile-grid{grid-template-columns:minmax(0,1fr)}.canva-profile-rail{grid-template-columns:minmax(0,1fr)}.card,.canva-profile-card,.work-panel,.directory-panel,.settings-card{padding:16px}.app-work-tabs{padding-inline:16px}}
+@media(max-width:520px){.redesign-page,.canva-page,.preferences-page{padding-inline:14px}.btn,.canva-button,.identity-primary{min-height:42px}.social-composer,.social-post{padding:15px}.canva-profile-buttons{flex-wrap:wrap}.canva-profile-buttons>*{flex:1 1 auto}}
