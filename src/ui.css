@@ -1,4 +1,4 @@
-/* Modular entrypoint: one replacement design system, split by responsibility. */
+/* Modular entrypoint: single replacement design system, split by responsibility. */
 @import './styles/80-foundation.css';
 @import './styles/81-app-shell.css';
 @import './styles/82-page-headings.css';
@@ -7,6 +7,7 @@
 @import './styles/85-calendar-payroll.css';
 @import './styles/86-social-messaging.css';
 @import './styles/87-forms-data.css';
+@import './styles/92-table-dialog.css';
 @import './styles/88-responsive-tablet.css';
 @import './styles/89-responsive-small.css';
 @import './styles/90-responsive-mobile.css';
