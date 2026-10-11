@@ -1,64 +1,23 @@
-/*
- * WTinker Orange System
- * Rebuilt from zero for the current product structure.
- * Rules: no gradients, no emoji UI, no decorative blobs, one token layer,
- * one component language, one responsive system.
- */
+/* WorkerTink interface foundation — Telegram clarity and X editorial hierarchy. */
 :root{
-  --bg:#f7f5f2;
-  --surface:#ffffff;
-  --surface-raised:#fffdfb;
-  --surface-soft:#f3f0ec;
-  --surface-muted:#ebe7e1;
-  --text:#211d19;
-  --text-2:#4f4740;
-  --muted:#766e66;
-  --faint:#958c83;
-  --line:#ddd7d0;
-  --line-strong:#c9c1b8;
-  --accent:#f97316;
-  --accent-strong:#c2410c;
-  --accent-soft:#fff0e4;
-  --accent-soft-2:#ffe1cc;
-  --success:#147a45;
-  --danger:#b42318;
-  --warning:#9a5b00;
-  --info:#4f5f73;
-  --sidebar:258px;
-  --content:1180px;
-  --feed:700px;
-  --radius:12px;
-  --radius-sm:9px;
-  --control-h:42px;
-  --shadow:0 1px 2px rgba(40,31,23,.06),0 8px 26px rgba(40,31,23,.055);
-  --shadow-small:0 1px 2px rgba(40,31,23,.05);
-  --ease:cubic-bezier(.22,.61,.36,1);
+  color-scheme:light;
+  --bg:#f5f7fa;--surface:#ffffff;--surface-raised:#ffffff;--surface-soft:#eef3f8;--surface-muted:#e4ebf3;
+  --text:#17212b;--text-2:#354657;--muted:#637487;--faint:#8796a5;--line:#dfe7ef;--line-strong:#c5d2df;
+  --accent:#2481cc;--accent-strong:#1766a8;--accent-soft:#e6f3ff;--accent-soft-2:#cbe6ff;--on-accent:#ffffff;
+  --success:#168765;--success-soft:#e1f6ed;--danger:#c9424d;--danger-soft:#fff0f1;--warning:#946313;--warning-soft:#fff4d9;--info:#426b91;
+  --sidebar:264px;--content:1240px;--feed:720px;--radius:16px;--radius-sm:12px;--control-h:44px;
+  --shadow:0 10px 32px rgba(24,50,75,.07);--shadow-small:0 2px 8px rgba(24,50,75,.055);--ease:cubic-bezier(.2,.7,.2,1);
 }
 :root[data-theme=dark]{
-  --bg:#151311;
-  --surface:#1c1916;
-  --surface-raised:#211e1a;
-  --surface-soft:#28231f;
-  --surface-muted:#332d27;
-  --text:#f4efe9;
-  --text-2:#d6cec5;
-  --muted:#aaa098;
-  --faint:#827970;
-  --line:#3a332d;
-  --line-strong:#4a4139;
-  --accent:#fb8a3d;
-  --accent-strong:#ff9a52;
-  --accent-soft:#3a2417;
-  --accent-soft-2:#4a2a18;
-  --success:#58bd7f;
-  --danger:#ff7d70;
-  --warning:#e4ae57;
-  --info:#9eb2ca;
-  --shadow:0 1px 2px rgba(0,0,0,.34),0 14px 34px rgba(0,0,0,.2);
-  --shadow-small:0 1px 2px rgba(0,0,0,.2);
+  color-scheme:dark;
+  --bg:#0e1621;--surface:#17212b;--surface-raised:#1c2733;--surface-soft:#202d3b;--surface-muted:#263647;
+  --text:#f2f6fa;--text-2:#d0dbe6;--muted:#9aabba;--faint:#718498;--line:#263747;--line-strong:#3a5065;
+  --accent:#65b6f8;--accent-strong:#8ccaff;--accent-soft:#1a3852;--accent-soft-2:#254b6d;--on-accent:#071523;
+  --success:#4ed3a0;--success-soft:#15372d;--danger:#ff8588;--danger-soft:#3c2027;--warning:#edc16d;--warning-soft:#3b301a;--info:#9ac6eb;
+  --shadow:0 14px 38px rgba(0,0,0,.28);--shadow-small:0 2px 8px rgba(0,0,0,.2);
 }
 *{box-sizing:border-box}
-html{background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;text-rendering:optimizeLegibility}
+html{background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;text-rendering:optimizeLegibility}
 body{margin:0;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
