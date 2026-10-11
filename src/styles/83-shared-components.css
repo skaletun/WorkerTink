@@ -1,0 +1,5 @@
+.canva-section-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 16px; }
+.canva-section-head h2, .canva-section-head h3 { margin: 4px 0 0; font-size: 18px; font-weight: 700; letter-spacing: -.035em; }
+.canva-section-head p { margin: 4px 0 0; color: var(--muted); }
+.canva-state { display: inline-flex; align-items: center; min-height: 25px; padding: 3px 8px; color: var(--green); background: var(--green-soft); font-size: 11px; font-weight: 650; border-radius: 4px; }
+.canva-empty { padding: 22px 14px; color: var(--muted); text-align: center; border: 1px dashed var(--line-strong); border-radius: 6px; }

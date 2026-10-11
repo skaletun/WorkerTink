@@ -1,0 +1,16 @@
+/* Social, messaging, profile and settings use the same primitives without card-on-card styling. */
+.social-page { max-width: 1160px; margin: 0 auto; }
+.social-hero { padding: 24px; margin-bottom: 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; }
+.social-hero h2 { max-width: 700px; font-size: clamp(25px,3vw,38px); line-height: 1.08; letter-spacing: -.06em; }
+.social-tabs { display: flex; gap: 4px; overflow-x: auto; margin-bottom: 12px; border-bottom: 1px solid var(--line); }
+.social-tabs button { flex: none; padding: 11px 13px; background: transparent; border: 0; border-bottom: 2px solid transparent; color: var(--muted); }
+.social-tabs button.active, .social-tabs button[aria-selected="true"] { color: var(--brand); border-bottom-color: var(--brand); }
+.social-layout { display: grid; grid-template-columns: minmax(0,1fr) 260px; align-items: start; gap: 12px; }
+.social-main, .social-sidebar { display: grid; gap: 12px; min-width: 0; }
+.social-compose, .social-post { padding: 16px; }
+.social-post + .social-post { margin-top: 10px; }
+.canva-chat-switch { margin-bottom: 12px; }
+.chats-mode-nav { display: flex; flex-wrap: wrap; gap: 8px; }
+.chats-mode-nav button { padding: 9px 12px; background: var(--paper-2); border: 1px solid var(--line); border-radius: 6px; }
+.chats-mode-nav button.active { color: var(--brand); background: var(--brand-soft); border-color: color-mix(in srgb,var(--brand) 24%,var(--line)); }
+.chat-shell-v2 { padding: 0; overflow: hidden; }

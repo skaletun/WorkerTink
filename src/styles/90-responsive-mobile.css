@@ -1,0 +1,38 @@
+@media (max-width: 600px) {
+  .wt-shell { display: block; padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+  .wt-rail { display: none; }
+  .wt-topbar { min-height: 58px; padding: 8px 12px; gap: 8px; }
+  .wt-context-kicker { display: none; }
+  .wt-context h1 { font-size: 17px; }
+  .wt-mobile-brand { display: flex; align-items: center; gap: 7px; }
+  .wt-mobile-brand .wt-brand-mark { width: 30px; height: 30px; font-size: 15px; }
+  .wt-mobile-brand .wt-brand-word { font-size: 15px; font-weight: 750; }
+  .wt-command-search { width: 38px; height: 38px; justify-content: center; padding: 0; }
+  .wt-command-search span, .wt-command-search kbd { display: none; }
+  .wt-topbar-actions { gap: 4px; }
+  .wt-top-icon, .wt-top-avatar { width: 36px; height: 36px; }
+  .wt-content { padding: 0 12px 20px; }
+  .wt-content-inner { padding-top: 17px; }
+  .canva-page-head { display: grid; gap: 14px; padding-bottom: 16px; margin-bottom: 16px; }
+  .canva-page-head h1 { font-size: 29px; }
+  .canva-page-head p { font-size: 12px; }
+  .canva-head-actions { display: flex; width: 100%; }
+  .canva-head-actions .canva-button { flex: 1; }
+  .canva-kpi-grid { gap: 7px; }
+  .canva-kpi { min-height: 110px; padding: 12px; gap: 6px; }
+  .canva-kpi strong { font-size: 23px; }
+  .canva-kpi small { font-size: 10px; }
+  .canva-shift-card, .canva-actions-card, .canva-activity-card, .canva-summary-card, .canva-note-card, .canva-work-calendar, .canva-work-summary, .canva-work-card, .canva-calendar-shell, .canva-pay-hero, .canva-pay-metric, .canva-pay-breakdown, .canva-pay-form, .canva-absence-overview, .period-editor, .annual-card, .settings-card, .canva-profile-card, .social-compose, .social-post, .social-card, .network-widget, .network-post, .group-card, .channels-hero, .channel-detail, .channel-invites, .canva-chat-switch { padding: 13px; }
+  .canva-shift-time { margin: 24px 0 18px; font-size: 42px; }
+  .canva-work-week { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .social-sidebar { grid-template-columns: minmax(0,1fr); }
+  .canva-calendar-head { align-items: flex-start; flex-direction: column; }
+  .canva-calendar-grid, .calendar-grid, .month-grid { gap: 2px; }
+  .canva-calendar-day, .calendar-day { min-height: 58px; padding: 4px; font-size: 10px; }
+  .canva-pay-breakdown { grid-template-columns: minmax(0,1fr); }
+  .canva-work-actions { padding: 0 12px; }
+  .wt-mobile-nav { position: fixed; z-index: 60; right: 0; bottom: 0; left: 0; display: flex; align-items: stretch; justify-content: space-around; gap: 2px; padding: 6px 5px calc(6px + env(safe-area-inset-bottom)); background: var(--paper); border-top: 1px solid var(--line); }
+  .wt-mobile-nav button { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-width: 0; min-height: 48px; padding: 3px 1px; color: var(--muted); background: transparent; border: 0; font-size: 9px; }
+  .wt-mobile-nav button.active { color: var(--brand); }
+  .wt-mobile-nav button svg { width: 19px; height: 19px; }
+}

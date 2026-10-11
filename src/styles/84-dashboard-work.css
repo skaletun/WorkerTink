@@ -1,0 +1,45 @@
+.canva-kpi-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; }
+.canva-kpi { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; min-height: 124px; padding: 17px; text-align: left; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; }
+.canva-kpi:hover { border-color: var(--line-strong); background: var(--paper-2); }
+.canva-kpi > span { color: var(--muted); font-size: 11px; font-weight: 600; }
+.canva-kpi strong { font-size: clamp(22px,2vw,30px); line-height: 1.15; letter-spacing: -.05em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.canva-kpi small { margin-top: auto; color: var(--muted); font-size: 11px; }
+.canva-home-main, .canva-home-lower, .canva-work-overview, .canva-work-lower { display: grid; grid-template-columns: minmax(0,1.55fr) minmax(260px,1fr); gap: 12px; margin-top: 12px; }
+.canva-shift-card, .canva-actions-card, .canva-activity-card, .canva-summary-card, .canva-note-card, .canva-security-row, .canva-work-calendar, .canva-work-summary, .canva-work-card, .canva-calendar-shell, .canva-pay-hero, .canva-pay-metric, .canva-pay-breakdown, .canva-pay-form, .canva-absence-overview, .period-editor, .annual-card, .settings-card, .canva-settings-rail, .canva-admin-rail, .canva-friends-search, .canva-friends-list, .canva-friends-rail, .canva-profile-card, .social-compose, .social-post, .social-card, .network-widget, .network-post, .group-card, .channels-hero, .channel-detail, .channel-invites, .chat-shell-v2, .canva-chat-switch { min-width: 0; padding: 18px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; }
+.canva-home-main { grid-template-columns: minmax(0,1.5fr) minmax(260px,.9fr); }
+.canva-home .canva-kpi-grid { margin-bottom: 12px; }
+.canva-shift-time { margin: 28px 0 22px; font-size: clamp(40px,5vw,62px); font-weight: 760; letter-spacing: -.07em; line-height: 1; font-variant-numeric: tabular-nums; }
+.canva-shift-card { background: var(--paper-2); }
+.canva-action-list { display: grid; gap: 0; }
+.canva-action-list button, .canva-work-actions > button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 54px; padding: 10px 0; text-align: left; background: transparent; border: 0; border-bottom: 1px solid var(--line); }
+.canva-action-list button:last-child, .canva-work-actions > button:last-child { border-bottom: 0; }
+.canva-action-list button:hover, .canva-work-actions > button:hover { color: var(--brand); }
+.canva-activity-card, .canva-summary-card, .canva-work-card { padding: 18px; }
+.canva-home-lower { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+.canva-tools-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; margin-top: 12px; }
+.canva-tool-card { display: block; min-width: 0; padding: 15px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; text-align: left; }
+.canva-tool-card:hover { border-color: var(--line-strong); background: var(--paper-2); }
+.canva-work-side { display: grid; gap: 12px; }
+.canva-work-summary h2 { margin: 10px 0; font-size: 30px; letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
+.canva-work-summary h3 { margin: 10px 0; font-size: 24px; }
+.canva-work-summary p { color: var(--muted); }
+.canva-work-week { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; margin-bottom: 16px; }
+.canva-work-week button { display: grid; gap: 4px; padding: 12px 9px; text-align: left; background: var(--paper-2); border: 1px solid var(--line); border-radius: 6px; }
+.canva-work-week button.active { background: var(--brand-soft); border-color: color-mix(in srgb,var(--brand) 30%,var(--line)); }
+.canva-work-week button b { font-size: 25px; letter-spacing: -.05em; }
+.canva-work-week button span, .canva-work-week button small, .canva-work-week button em { color: var(--muted); font-size: 10px; font-style: normal; }
+.canva-shift-row, .canva-note-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); }
+.canva-shift-row:last-child, .canva-note-row:last-child { border-bottom: 0; }
+.canva-shift-index { display: grid; place-items: center; width: 38px; height: 38px; flex: none; background: var(--paper-3); border-radius: 6px; font-weight: 700; }
+.canva-shift-row > div { display: grid; gap: 2px; min-width: 0; }
+.canva-shift-row b { font-size: 12px; }
+.canva-shift-row small, .canva-note-row time { color: var(--muted); font-size: 11px; }
+.canva-shift-row > strong { margin-left: auto; font-family: var(--mono); font-size: 11px; }
+.canva-note-row { align-items: flex-start; }
+.canva-note-row time { flex: none; padding-top: 2px; font-family: var(--mono); }
+.canva-note-row p { margin: 0; color: var(--ink-2); font-size: 12px; overflow-wrap: anywhere; }
+.canva-work-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0 18px; margin-top: 12px; padding: 0 16px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; }
+.canva-work-actions > button > span { color: var(--muted); font-family: var(--mono); font-size: 11px; }
+.canva-work-actions > button > div { display: grid; gap: 2px; min-width: 0; }
+.canva-work-actions b { font-size: 12px; }
+.canva-work-actions small { color: var(--muted); font-size: 11px; }

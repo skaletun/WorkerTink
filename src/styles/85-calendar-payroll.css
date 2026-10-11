@@ -1,0 +1,15 @@
+/* Calendar and payroll are data surfaces, not decorative dashboards. */
+.canva-calendar-shell { padding: 18px; }
+.canva-calendar-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.canva-calendar-head h2 { margin: 5px 0 0; font-size: 27px; letter-spacing: -.05em; }
+.canva-calendar-head h2 em { color: var(--muted); font-size: 18px; font-style: normal; font-weight: 500; }
+.canva-calendar-grid, .calendar-grid, .month-grid { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 4px; }
+.canva-calendar-grid > *, .calendar-grid > *, .month-grid > * { min-width: 0; }
+.canva-calendar-day, .calendar-day { min-height: 80px; padding: 7px; background: var(--paper-2); border: 1px solid var(--line); border-radius: 5px; }
+.canva-calendar-day button, .calendar-day button { width: 100%; text-align: left; }
+.canva-pay-hero { background: var(--paper-2); }
+.canva-pay-hero strong, .canva-pay-metric strong { font-size: clamp(25px,3vw,38px); letter-spacing: -.06em; font-variant-numeric: tabular-nums; }
+.canva-pay-metric { display: grid; gap: 6px; }
+.canva-pay-metric span, .canva-pay-breakdown span { color: var(--muted); font-size: 11px; }
+.canva-pay-breakdown { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.canva-pay-breakdown > div { display: grid; gap: 4px; padding: 12px; background: var(--paper-2); border-radius: 6px; }

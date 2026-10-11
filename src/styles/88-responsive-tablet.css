@@ -1,0 +1,8 @@
+@media (max-width: 1120px) {
+  :root { --nav: 204px; }
+  .wt-command-search { width: 260px; }
+  .canva-kpi-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .canva-tools-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .social-layout { grid-template-columns: minmax(0,1fr); }
+  .social-sidebar { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
