@@ -125,7 +125,7 @@ dialog { max-width: min(720px, calc(100vw - 24px)); max-height: calc(100dvh - 32
   .canva-calendar-head { align-items: flex-start; flex-direction: column; }
   .canva-calendar-grid, .calendar-grid, .month-grid { min-width: 420px; }
   .chat-shell-v2 { display: block; min-height: 0; }
-  .chat-shell-v2:not(.is-empty) .chat-contacts-v2 { display: none; }
+  .chat-contacts-v2 { max-height: 34dvh; overflow: auto; }
   .chat-contacts-v2 { border-right: 0; border-bottom: 1px solid var(--line); }
   .chat-main-v2 { min-height: 58dvh; }
   .chat-messages-v2 { max-height: 52dvh; padding: 12px; }
