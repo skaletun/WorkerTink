@@ -28,14 +28,18 @@ export default function AppShell({items,active,onNavigate,profile,profileAction,
   return <div className="wt-shell">
     <a className="wt-skip" href="#wt-main">К содержимому</a>
 
-    <aside className="wt-sidebar" aria-label="WTinker">
-      <button className="wt-brand" onClick={()=>onNavigate('home')} aria-label="WTinker — Главная">
-        <span className="wt-brand-mark" aria-hidden="true">W</span>
-        <span className="wt-brand-word">WTinker</span>
-      </button>
+    <nav className="wt-rail" aria-label="Быстрые разделы">
+      <button className="wt-rail-brand" onClick={()=>onNavigate('home')} aria-label="WTinker — Главная"><span className="wt-brand-mark">W</span></button>
+      {['home','social','chat','work'].map(id=>{const item=byId.get(id);return item?<button key={id} className={active===id?'wt-rail-action active':'wt-rail-action'} onClick={()=>onNavigate(id)} aria-label={item.label} title={item.label}>{item.icon}</button>:null})}
+      <span className="wt-rail-spacer"/>
+      <button className="wt-rail-action" onClick={profileAction} aria-label="Профиль" title="Профиль">{profile}</button>
+    </nav>
+
+    <aside className="wt-sidebar" aria-label="Навигация WTinker">
+      <div className="wt-sidebar-heading"><span className="wt-sidebar-eyebrow">РАБОЧЕЕ ПРОСТРАНСТВО</span><strong>Навигация</strong></div>
 
       <div className="wt-sidebar-user">
-        <button className="wt-profile" onClick={profileAction} aria-label="Открыть профиль">{profile}</button>
+        <button className="wt-profile" onClick={profileAction} aria-label="Открыть профиль">{profile}<span className="wt-profile-caption">Личный кабинет</span></button>
       </div>
 
       <button className="wt-search-mini" onClick={searchAction} aria-label="Открыть поиск">
@@ -76,7 +80,7 @@ export default function AppShell({items,active,onNavigate,profile,profileAction,
         </div>
       </header>
 
-      <div className="wt-content"><div className="wt-content-inner">{children}</div></div>
+      <div className="wt-content"><div className="wt-content-inner"><div className="wt-page-frame">{children}</div></div></div>
     </main>
 
     <nav className="wt-mobile-nav" aria-label="Мобильная навигация">
