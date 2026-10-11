@@ -5,7 +5,7 @@
 .canva-calendar .canva-calendar-grid button{min-height:clamp(74px,7vw,108px);padding:10px;border-radius:13px}
 .canva-calendar .canva-calendar-summary{margin-top:16px;border-radius:18px}
 .canva-pay .canva-pay-overview{grid-template-columns:minmax(0,1.5fr) repeat(2,minmax(170px,.7fr));gap:12px}
-.canva-pay .canva-pay-hero{padding:clamp(24px,3vw,38px);background:linear-gradient(135deg,var(--accent-soft),var(--surface));color:var(--text)}
+.canva-pay .canva-pay-hero{padding:clamp(24px,3vw,38px);background:var(--accent-soft);color:var(--text)}
 .canva-pay .canva-pay-hero .canva-kicker,.canva-pay .canva-pay-hero p{color:var(--muted)}
 .canva-pay .canva-pay-hero strong{font-size:clamp(36px,4.5vw,56px)}
 .canva-pay .canva-pay-grid{grid-template-columns:minmax(0,1.3fr) minmax(300px,.7fr);gap:14px;margin-top:14px}
