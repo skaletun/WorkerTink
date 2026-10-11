@@ -1,0 +1,114 @@
+/* Settings and admin are two-pane workbenches. Profile is identity + contextual data. */
+.canva-settings-shell,.canva-admin-shell{grid-template-columns:228px minmax(0,1fr);gap:17px;align-items:start}
+.canva-settings-rail,.canva-admin-rail{position:sticky;top:96px;padding:12px}
+.canva-settings-rail>button,.canva-admin-rail>button{padding:13px;border-radius:12px}
+.canva-settings-body .settings-card,.canva-admin-main .admin-directory,.canva-admin-main .admin-detail{padding:23px}
+.canva-profile-hero{border-radius:26px;overflow:hidden}
+.canva-profile-cover{min-height:245px}
+.canva-profile-identity{padding:0 28px 26px;gap:18px}
+.canva-profile-grid{grid-template-columns:minmax(0,1.25fr) minmax(290px,.75fr);gap:17px}
+.canva-profile-card{padding:24px}
+.canva-profile-metrics>div{padding:18px;border-radius:15px}
+/* Shared forms and editors are given room to breathe without overriding control behavior. */
+.settings-card{padding:23px}
+.settings-card.full-width{grid-column:1/-1}
+.period-editor,.annual-card,.admin-directory,.admin-detail,.security-card,.verification-self,.verification-request{min-width:0}
+.annual-table-wrap{max-width:100%;overflow:auto}
+table{max-width:100%}
+@media(max-width:1180px){
+ :root{--wt-nav-width:210px}
+ .wt-command-search{width:min(340px,28vw)}
+ .wt-content{padding-inline:23px}
+ .canva-work .canva-work-overview{grid-template-columns:minmax(0,1fr) 250px}
+ .canva-work .canva-work-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .social-layout{grid-template-columns:minmax(0,1fr) 250px}
+ .canva-people-grid{grid-template-columns:minmax(0,1fr) 250px}
+}
+@media(max-width:940px){
+ .wt-shell{grid-template-columns:64px minmax(0,1fr)}
+ .wt-sidebar{display:none}
+ .wt-rail{grid-column:1}
+ .wt-main{grid-column:2}
+ .wt-content{padding-inline:20px}
+ .canva-home .canva-shift-card{grid-column:span 7}
+ .canva-home .canva-actions-card{grid-column:span 5}
+ .canva-home .canva-activity-card,.canva-home .canva-summary-card{grid-column:1/-1}
+ .canva-home .canva-tools-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .canva-work .canva-work-overview,.canva-pay .canva-pay-grid{grid-template-columns:1fr}
+ .canva-work .canva-work-side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .canva-settings-shell,.canva-admin-shell{grid-template-columns:1fr}
+ .canva-settings-rail,.canva-admin-rail{position:static}
+ .social-layout,.canva-people-grid{grid-template-columns:minmax(0,1fr)}
+ .social-side{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .canva-profile-grid{grid-template-columns:1fr}
+}
+@media(max-width:700px){
+ .wt-shell{display:block;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+ .wt-rail{display:none}
+ .wt-main{width:100%}
+ .wt-topbar{min-height:62px;padding:9px 13px;gap:9px}
+ .wt-context-kicker{display:none}
+ .wt-context h1{font-size:18px}
+ .wt-command-search{width:41px;min-width:41px;height:41px;padding:0;justify-content:center;border-radius:13px}
+ .wt-command-search span,.wt-command-search kbd{display:none}
+ .wt-topbar-actions{gap:5px}
+ .wt-top-icon,.wt-top-avatar{width:38px;height:38px;border-radius:12px}
+ .wt-content{padding:0 13px 28px}
+ .wt-content-inner{padding-top:19px}
+ .canva-page-head{align-items:flex-start;flex-direction:column;gap:14px;padding-bottom:17px;margin-bottom:18px}
+ .canva-page-head h1{font-size:31px}
+ .canva-head-actions{justify-content:flex-start;width:100%}
+ .canva-head-actions .canva-button{flex:1}
+ .canva-home .canva-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .canva-home .canva-kpi{min-height:120px;padding:15px;border-radius:16px}
+ .canva-home .canva-kpi strong{font-size:26px;margin:14px 0 7px}
+ .canva-home .canva-shift-card,.canva-home .canva-actions-card,.canva-home .canva-activity-card,.canva-home .canva-summary-card{grid-column:1/-1;padding:18px;border-radius:19px}
+ .canva-home .canva-shift-card{min-height:0}
+ .canva-home .canva-shift-time{font-size:41px;margin:28px 0 23px}
+ .canva-home .canva-tools-grid{grid-template-columns:1fr}
+ .canva-home .canva-note-card{grid-template-columns:1fr;padding:18px}
+ .canva-home .canva-security-row{align-items:stretch;flex-direction:column}
+ .canva-work .canva-work-calendar,.canva-work .canva-work-card,.canva-work .canva-work-summary{padding:17px}
+ .canva-work .canva-work-week{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+ .canva-work .canva-work-week button{min-height:112px;padding:9px}
+ .canva-work .canva-work-week b{font-size:25px}
+ .canva-work .canva-work-side{grid-template-columns:1fr}
+ .canva-work .canva-work-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .canva-work .canva-work-actions button{min-height:112px;padding:12px}
+ .canva-calendar .canva-calendar-grid{gap:3px}
+ .canva-calendar .canva-calendar-grid button{min-height:59px;padding:4px;border-radius:8px}
+ .canva-calendar .canva-calendar-grid button>span:last-child{font-size:8px;overflow-wrap:anywhere}
+ .canva-calendar .canva-calendar-summary{grid-template-columns:1fr 1fr}
+ .canva-calendar .canva-calendar-summary>div{padding:11px;border-bottom:1px solid var(--line)}
+ .canva-calendar .canva-calendar-actions,.canva-absence .canva-absence-grid{grid-template-columns:1fr}
+ .canva-pay .canva-pay-overview{grid-template-columns:1fr 1fr}
+ .canva-pay .canva-pay-hero{grid-column:1/-1;padding:22px}
+ .canva-pay .canva-pay-metric{padding:16px}
+ .canva-absence .canva-absence-overview{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .canva-absence .canva-absence-overview>div{padding:12px}
+ .canva-absence .canva-absence-overview strong{font-size:26px}
+ .social-hero{align-items:flex-start;flex-direction:column;padding:22px 18px;border-radius:19px}
+ .social-hero h2{font-size:31px}
+ .social-hero-stats{gap:15px}
+ .social-tabs{top:61px}
+ .social-layout{gap:10px}
+ .social-side{grid-template-columns:1fr}
+ .social-compose,.social-post{padding:16px;border-radius:17px}
+ .chats-mode-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+ .chats-mode-copy{grid-column:1/-1;padding:8px 9px;margin:0;border-bottom:1px solid var(--line)}
+ .chats-mode-nav>button{padding:0 8px}
+ .chat-shell-v2{grid-template-columns:minmax(0,1fr);min-height:64dvh;border-radius:17px}
+ .chat-contacts-v2{max-height:210px;overflow:auto;border-right:0;border-bottom:1px solid var(--line)}
+ .chat-messages-v2,.group-chat-messages{padding:13px}
+ .canva-settings-rail,.canva-admin-rail{grid-template-columns:repeat(2,minmax(0,1fr));border-radius:16px}
+ .canva-settings-body .settings-card,.canva-admin-main .admin-directory,.canva-admin-main .admin-detail{padding:16px}
+ .canva-profile-cover{min-height:155px}
+ .canva-profile-identity{display:grid;grid-template-columns:64px minmax(0,1fr);padding:0 15px 18px;gap:12px}
+ .canva-profile-identity>.avatar{grid-row:1}
+ .canva-profile-buttons{grid-column:1/-1;display:flex;flex-wrap:wrap}
+ .canva-profile-buttons>*{flex:1}
+ .canva-profile-card{padding:17px}
+ .canva-people-grid{gap:10px}
+ .canva-directory-card,.canva-community-directory{padding:16px}
+}
+@media(prefers-reduced-motion:reduce){.wt-page-frame{animation:none}}
