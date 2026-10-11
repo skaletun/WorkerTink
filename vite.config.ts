@@ -1,4 +1,29 @@
 import {defineConfig} from 'vite';
 import react from '@vitejs/plugin-react';
 import {VitePWA} from 'vite-plugin-pwa';
-export default defineConfig({define:{'import.meta.env.VITE_BUILD_ID':JSON.stringify(process.env.VITE_BUILD_ID||'dev')},base:'./',plugins:[react(),VitePWA({registerType:'prompt',strategies:'injectManifest',srcDir:'src',filename:'sw.js',includeAssets:['icon.svg'],manifest:{name:'WTinker — социальная сеть для работы',short_name:'WTinker',start_url:'./',display:'standalone',theme_color:'#10151f',background_color:'#f6f7f9',lang:'ru',icons:[{src:'icon.svg',sizes:'any',type:'image/svg+xml'}]},injectManifest:{globPatterns:['**/*.{js,css,html,svg,png,ico}']}})]});
+
+export default defineConfig({
+  define:{'import.meta.env.VITE_BUILD_ID':JSON.stringify(process.env.VITE_BUILD_ID||'dev')},
+  base:'./',
+  plugins:[
+    react(),
+    VitePWA({
+      registerType:'prompt',
+      strategies:'injectManifest',
+      srcDir:'src',
+      filename:'sw.js',
+      includeAssets:['icon.svg'],
+      manifest:{
+        name:'WTinker — социальная сеть для работы',
+        short_name:'WTinker',
+        start_url:'./',
+        display:'standalone',
+        theme_color:'#285fe8',
+        background_color:'#f7f8fa',
+        lang:'ru',
+        icons:[{src:'icon.svg',sizes:'any',type:'image/svg+xml'}]
+      },
+      injectManifest:{globPatterns:['**/*.{js,css,html,svg,png,ico}']}
+    })
+  ]
+});
