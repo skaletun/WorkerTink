@@ -1,0 +1,138 @@
+/* WTinker v7 — cross-surface completion and regression guardrails.
+   Keep domain components intact; normalize the common interaction primitives here. */
+:root {
+  --control-height: 42px;
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--brand) 20%, transparent);
+}
+html { scroll-padding-top: 84px; }
+body { min-width: 320px; }
+#root { min-height: 100dvh; }
+button, input, select, textarea { min-width: 0; }
+button { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible,
+textarea:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+button:active:not(:disabled) { transform: translateY(1px); }
+button:disabled { cursor: not-allowed; }
+p, h1, h2, h3, h4 { overflow-wrap: anywhere; }
+pre, code { max-width: 100%; }
+pre { overflow: auto; }
+svg { flex-shrink: 0; }
+
+/* Prevent long data and nested layouts from pushing the application off-screen. */
+.wt-shell, .wt-main, .wt-content, .wt-content-inner, .wt-page-frame,
+.canva-page, .redesign-page, .social-page, .chat-page-rebuilt { min-width: 0; }
+.wt-content-inner > *, .wt-page-frame > * { max-width: 100%; }
+.canva-home-main > *, .canva-home-lower > *, .canva-work-overview > *,
+.canva-work-lower > *, .social-layout > *, .canva-profile-grid > *,
+.calendar-layout > *, .work-grid > * { min-width: 0; }
+.canva-page-head h1, .redesign-page-intro h1 { overflow-wrap: anywhere; }
+.canva-page :where(img, video, iframe, canvas) { max-width: 100%; }
+.canva-page :where(input, select, textarea) { width: auto; max-width: 100%; }
+.canva-page textarea { width: 100%; }
+.canva-page :where(input[type="text"], input[type="email"], input[type="password"],
+input[type="search"], input[type="url"], input[type="tel"], input[type="number"],
+input[type="date"], input[type="datetime-local"], input[type="time"], select) {
+  min-height: var(--control-height);
+}
+.canva-page input[type="checkbox"], .canva-page input[type="radio"],
+.canva-page input[type="range"], .canva-page input[type="file"] { width: auto; min-height: 0; }
+.canva-page input[type="checkbox"], .canva-page input[type="radio"] { accent-color: var(--brand); }
+.canva-page input[type="range"] { padding: 0; border: 0; background: transparent; cursor: pointer; }
+.canva-page input::placeholder, .canva-page textarea::placeholder { color: var(--muted); opacity: .85; }
+.canva-page fieldset { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 8px; }
+.canva-page legend { padding: 0 6px; color: var(--ink-2); font-weight: 650; }
+.canva-page label { display: inline-block; }
+.canva-page label:has(input[type="checkbox"]), .canva-page label:has(input[type="radio"]) {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 32px;
+}
+.canva-page button, .wt-topbar button, .wt-sidebar button, .wt-rail button, .wt-mobile-nav button {
+  touch-action: manipulation;
+}
+.canva-button { min-height: 42px; }
+.canva-text-button { min-height: 36px; }
+
+/* Accessible status, errors and empty states remain legible in both themes. */
+[role="alert"], .error, .form-error, .field-error { overflow-wrap: anywhere; }
+[aria-invalid="true"] { border-color: var(--red) !important; }
+:root[data-theme="dark"] .canva-button-primary { color: #111827; }
+:root[data-theme="dark"] .canva-state { color: var(--green); }
+.canva-empty { line-height: 1.65; }
+.canva-page :where(small, .muted, .text-muted) { overflow-wrap: anywhere; }
+
+/* Tables should scroll inside their own region instead of widening the viewport. */
+.canva-page table { width: 100%; }
+.canva-page :where(.table-wrap, .table-scroll, .table-container, .overflow-x-auto) {
+  max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain;
+}
+.canva-page td, .canva-page th { overflow-wrap: anywhere; }
+.canva-page th { white-space: normal; }
+.canva-page td :where(input, select) { min-width: 72px; }
+
+/* Keep overlays and dialogs within the visual viewport. */
+dialog { max-width: min(720px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); overflow: auto; }
+[role="dialog"] { max-width: min(720px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); overflow: auto; }
+.shift-modal { max-width: min(720px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow: auto; }
+.canva-page :where(.modal-actions, .dialog-actions, .canva-head-actions) {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+}
+.canva-page :where(.modal-actions, .dialog-actions) > button { min-height: 42px; }
+
+/* Social surfaces must collapse gracefully before content becomes unreadable. */
+.social-layout { grid-template-columns: minmax(0, 1fr) minmax(220px, 260px); }
+.social-main, .social-sidebar, .social-post, .social-compose { min-width: 0; }
+.social-post :where(p, a, strong, span) { overflow-wrap: anywhere; }
+.chat-shell-v2 { min-width: 0; }
+.chat-main-v2, .chat-contacts-v2, .chat-messages-v2 { min-width: 0; }
+.chat-messages-v2 { overflow-wrap: anywhere; }
+.chat-messages-v2 img { max-width: min(100%, 360px); height: auto; }
+.chat-main-v2 textarea { width: 100%; }
+
+/* Tablet shell: retain navigation until the mobile bottom bar takes over. */
+@media (max-width: 1120px) {
+  .wt-topbar { gap: 12px; }
+  .wt-command-search { width: min(260px, 26vw); }
+  .canva-profile-grid { grid-template-columns: minmax(0, 1fr) 240px; }
+}
+@media (max-width: 820px) {
+  .wt-shell { grid-template-columns: 58px minmax(0, 1fr); }
+  .wt-content { padding-right: 18px; padding-left: 18px; }
+  .wt-topbar { padding-right: 18px; padding-left: 18px; }
+  .canva-page-head { flex-wrap: wrap; }
+  .canva-head-actions { max-width: 100%; }
+  .canva-profile-grid, .canva-notification-layout, .calendar-layout,
+  .social-layout, .work-grid, .home-snapshot { grid-template-columns: minmax(0, 1fr); }
+  .social-sidebar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chat-shell-v2 { grid-template-columns: 220px minmax(0, 1fr); }
+  .canva-calendar-shell { overflow-x: auto; }
+  .canva-calendar-grid, .calendar-grid, .month-grid { min-width: 480px; }
+}
+@media (max-width: 600px) {
+  .wt-shell { display: block; padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+  .wt-rail, .wt-sidebar { display: none; }
+  .wt-topbar { min-height: 58px; padding: 8px 12px; }
+  .wt-content { padding: 0 12px 24px; }
+  .wt-content-inner { padding-top: 16px; }
+  .canva-page-head { display: grid; align-items: start; gap: 12px; padding-bottom: 16px; margin-bottom: 16px; }
+  .canva-page-head h1, .redesign-page-intro h1 { font-size: clamp(26px, 7vw, 34px); }
+  .canva-head-actions { display: flex; flex-wrap: wrap; width: 100%; }
+  .canva-head-actions > * { flex: 1 1 auto; }
+  .social-sidebar { grid-template-columns: minmax(0, 1fr); }
+  .canva-field-grid { grid-template-columns: minmax(0, 1fr); }
+  .canva-calendar-shell { padding: 12px; }
+  .canva-calendar-head { align-items: flex-start; flex-direction: column; }
+  .canva-calendar-grid, .calendar-grid, .month-grid { min-width: 420px; }
+  .chat-shell-v2 { display: block; min-height: 0; }
+  .chat-shell-v2:not(.is-empty) .chat-contacts-v2 { display: none; }
+  .chat-contacts-v2 { border-right: 0; border-bottom: 1px solid var(--line); }
+  .chat-main-v2 { min-height: 58dvh; }
+  .chat-messages-v2 { max-height: 52dvh; padding: 12px; }
+  .canva-page :where(.modal-actions, .dialog-actions) { align-items: stretch; }
+  .canva-page :where(.modal-actions, .dialog-actions) > button { flex: 1 1 140px; }
+  dialog, [role="dialog"], .shift-modal { max-width: calc(100vw - 16px); max-height: calc(100dvh - 16px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  button:active:not(:disabled) { transform: none; }
+}
