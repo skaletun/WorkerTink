@@ -111,6 +111,7 @@ useEffect(()=>{if(!directoryConfigured||!authProfileReady||!state.directoryToken
   active={tab}
   onNavigate={id=>navigate(id as Tab)}
   profile={<><Avatar profile={state.profile} size="sm"/><span><b><NameWithBadge profile={state.profile}/></b><small>{state.profile.username?'@'+state.profile.username:'@username'}</small></span></>}
+  profileAvatar={<Avatar profile={state.profile} size="sm"/>}
   profileAction={()=>navigate('profile')}
   privacy={<div className="wt-privacy" role="status" aria-label="E2E шифрование включено">
   <div className="wt-privacy-icon" aria-hidden="true"><Icon name="shield" size={17}/></div>
