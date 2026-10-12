@@ -1,0 +1,13 @@
+.wt-brand-word{font-size:21px;font-weight:750;letter-spacing:-1.1px}
+.wt-brand-period{color:var(--accent)}
+.wt-search-mini,.wt-command-search{display:flex;align-items:center;gap:10px;height:42px;min-width:0;padding:0 11px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);color:var(--ink-2);text-align:left}
+.wt-search-mini{width:100%}
+.wt-search-mini span,.wt-command-search span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt-search-mini kbd,.wt-command-search kbd{font:11px var(--font-mono);color:var(--muted);padding:2px 5px;border:1px solid var(--line-strong);border-radius:4px;white-space:nowrap}
+.wt-nav{display:flex;flex-direction:column;gap:23px}
+.wt-nav-group{display:flex;flex-direction:column;gap:3px}
+.wt-nav-label{padding:0 10px 6px;color:var(--muted);font:600 10px var(--font-mono);letter-spacing:.1em}
+.wt-nav-item{display:flex;align-items:center;gap:12px;width:100%;min-height:40px;padding:8px 10px;border:1px solid transparent;border-radius:var(--radius-sm);background:transparent;color:var(--ink-2);text-align:left;transition:background .15s,color .15s,border-color .15s}
+.wt-nav-item:hover{background:var(--surface-2);color:var(--ink)}
+.wt-nav-item.active{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 17%,transparent);color:var(--accent);font-weight:650}
+.wt-nav-icon{display:grid;place-items:center;width:20px;height:20px;flex:0 0 20px}
