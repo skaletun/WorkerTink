@@ -1,0 +1,16 @@
+.tab-stage .section-heading,.tab-stage .view-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:0 0 18px}
+.tab-stage .section-heading h2,.tab-stage .view-heading h2{margin:0}
+.tab-stage .empty-state{padding:36px 20px;text-align:center;border:1px dashed var(--line-strong);border-radius:var(--radius-md);background:var(--surface)}
+.tab-stage .empty-state p{max-width:48ch;margin-inline:auto}
+.tab-stage .field,.tab-stage .form-field{display:flex;flex-direction:column;gap:6px}
+.tab-stage .field label,.tab-stage .form-field label{font-size:12px;font-weight:600}
+.tab-stage .status,.tab-stage .badge,.tab-stage .pill{display:inline-flex;align-items:center;gap:5px;width:max-content;max-width:100%;padding:3px 8px;border:1px solid var(--line);border-radius:5px;background:var(--surface-2);font-size:11px;font-weight:600;color:var(--ink-2)}
+.tab-stage .success{color:var(--success)}
+.tab-stage .error{color:var(--danger)}
+.tab-stage .primary{color:white}
+.tab-stage .muted{color:var(--muted)}
+.tab-stage .divider{height:1px;background:var(--line);border:0;margin:16px 0}
+.tab-stage .list-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.tab-stage .list-row:last-child{border-bottom:0}
+.tab-stage .list-row> :last-child{margin-left:auto}
+.wt-mobile-nav{display:none}
