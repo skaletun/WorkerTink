@@ -1,0 +1,8 @@
+:where(.panel,.card,.surface,.section-card,.work-card,.stat-card,.metric-card,.widget,.settings-section,.pay-card,.absence-card,.calendar-panel){padding:18px}
+:where(.panel,.card,.surface,.section-card,.work-card,.stat-card,.metric-card,.widget,.settings-section,.pay-card,.absence-card,.calendar-panel) h2:first-child,:where(.panel,.card,.surface,.section-card,.work-card,.stat-card,.metric-card,.widget,.settings-section,.pay-card,.absence-card,.calendar-panel) h3:first-child{margin-top:0}
+.toast{position:fixed;z-index:100;right:20px;bottom:20px;display:flex;gap:14px;align-items:center;max-width:min(440px,calc(100vw - 32px));padding:13px 16px;background:var(--ink);color:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-sm);box-shadow:0 8px 28px #0002}
+.modal-backdrop,.mobile-menu-backdrop{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:#10131bb8;backdrop-filter:blur(4px)}
+.modal-card{width:min(100%,480px);max-height:min(90vh,820px);overflow:auto;padding:24px;background:var(--surface);color:var(--ink);box-shadow:0 20px 60px #0003}
+.modal-card input{width:100%;margin:12px 0}
+.modal-card .btn{margin-top:14px}
+.wt-privacy{display:flex;align-items:center;gap:9px;padding:10px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface-2)}
