@@ -3,7 +3,7 @@ import type {SVGProps} from 'react';
 export type IconName=
   |'home'|'social'|'people'|'communities'|'chat'|'friends'|'profile'|'calendar'|'pay'|'absence'|'work'|'notifications'|'settings'|'admin'|'users'
   |'search'|'bell'|'bellOff'|'lock'|'shield'|'image'|'video'|'paperclip'|'attachment'|'send'|'message'|'mail'|'comment'|'heart'|'share'
-  |'more'|'mic'|'play'|'pause'|'refresh'|'download'|'close'|'check'|'chevronLeft'|'chevronRight'|'externalLink'|'chevronDown'|'star'|'pin';
+  |'more'|'plus'|'mic'|'play'|'pause'|'refresh'|'download'|'close'|'check'|'chevronLeft'|'chevronRight'|'externalLink'|'chevronDown'|'star'|'pin';
 
 const paths:Record<IconName,string[]>={
  home:['M3 11 12 3l9 8v9H3v-9Z','M9 20v-6h6v6'],
@@ -37,6 +37,7 @@ const paths:Record<IconName,string[]>={
  heart:['M20.8 8.6c0 5-8.8 10.3-8.8 10.3S3.2 13.6 3.2 8.6A4.6 4.6 0 0 1 12 6.2a4.6 4.6 0 0 1 8.8 2.4Z'],
  share:['M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7','M12 3v12','m7 8 5-5 5 5'],
  more:['M5 12h.01','M12 12h.01','M19 12h.01'],
+ plus:['M12 5v14','M5 12h14'],
  mic:['M12 15a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z','M19 11a7 7 0 0 1-14 0','M12 18v3','M8 21h8'],
  play:['m8 5 11 7-11 7Z'],
  pause:['M8 5v14','M16 5v14'],
