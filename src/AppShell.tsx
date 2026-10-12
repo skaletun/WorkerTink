@@ -58,7 +58,7 @@ export default function AppShell({items,active,onNavigate,profile,profileAction,
           <button className="wt-top-avatar" onClick={profileAction} aria-label="Профиль">{profile}</button>
         </div>
       </header>
-      <div className="wt-content"><div className="wt-content-inner"><div className="wt-page-frame"><div className="wt-page-content ${active==='chat'?'wt-page-chat':''}"><div className="tab-stage" key={active}>{children}</div></div></div></div></div>
+      <div className="wt-content"><div className="wt-content-inner"><div className="wt-page-frame">{children}</div></div></div>
     </main>
     <nav className="wt-mobile-nav" aria-label="Мобильная навигация">
       {mobileItems.map(item=><button key={item.id} className={active===item.id?'active':''} onClick={()=>onNavigate(item.id)} aria-current={active===item.id?'page':undefined}>{item.icon}<span>{item.label}</span></button>)}
