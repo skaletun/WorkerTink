@@ -1,0 +1,11 @@
+.btn,button.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:8px 13px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--surface);color:var(--ink);font-weight:600;text-decoration:none;transition:background .14s,border-color .14s,color .14s}
+.btn:hover{background:var(--surface-2)}
+.btn.primary,.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover,.btn-primary:hover{background:var(--accent-hover)}
+.btn.quiet{background:transparent;border-color:transparent;color:var(--ink-2)}
+.btn.danger,.danger{color:var(--danger)}
+input:not([type=checkbox]):not([type=radio]),textarea,select{max-width:100%;min-height:40px;padding:9px 11px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--surface);color:var(--ink)}
+textarea{min-height:92px;resize:vertical}
+input::placeholder,textarea::placeholder{color:var(--muted)}
+label{color:var(--ink-2)}
+:where(.panel,.card,.surface,.section-card,.work-card,.stat-card,.metric-card,.widget,.modal-card,.dialog,.composer,.post-card,.feed-post,.community-card,.person-card,.chat-panel,.settings-section,.pay-card,.absence-card,.calendar-panel){background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md)}
