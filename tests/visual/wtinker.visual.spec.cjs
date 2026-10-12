@@ -128,7 +128,7 @@ test('WTinker bug-archive interaction states',async({browser})=>{
 
   await clickIfVisible(mobilePage,'button:has-text("Понятно")');
   await mobilePage.goto('?tab=calendar',{waitUntil:'networkidle'});
-  await mobilePage.getByRole('button',{name:'Понятно'}).click().catch(()=>{});
+  await mobilePage.getByRole('button',{name:'Понятно'}).click({timeout:1500}).catch(()=>{});
   const mobileShiftDay=mobilePage.locator('button.calendar-day:not(.pre-start)');
   await mobileShiftDay.first().waitFor({state:'visible',timeout:10000});
   await mobileShiftDay.first().click({timeout:10000});
@@ -137,7 +137,7 @@ test('WTinker bug-archive interaction states',async({browser})=>{
 
   await clickIfVisible(mobilePage,'.modal-close');
   await mobilePage.goto('?tab=profile',{waitUntil:'networkidle'});
-  await mobilePage.getByRole('button',{name:'Понятно'}).click().catch(()=>{});
+  await mobilePage.getByRole('button',{name:'Понятно'}).click({timeout:1500}).catch(()=>{});
   await mobilePage.getByRole('button',{name:'QR-код'}).first().click();
   await mobilePage.waitForTimeout(250);
   await mobilePage.screenshot({path:'visual-audit-artifacts/android-mobile-profile-qr.png',fullPage:true});
