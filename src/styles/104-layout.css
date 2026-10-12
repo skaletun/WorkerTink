@@ -1,0 +1,22 @@
+.wt-context h1{margin:0;font-size:22px;line-height:1.2;letter-spacing:-.7px;font-weight:750}
+.wt-topbar-actions{display:flex;align-items:center;gap:10px}
+.wt-command-search{width:min(32vw,360px);height:40px;background:var(--surface);font-size:12px}
+.wt-top-icon,.wt-top-avatar{display:grid;place-items:center;flex:0 0 auto;width:40px;height:40px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface)}
+.wt-top-icon:hover,.wt-top-avatar:hover{background:var(--surface-2)}
+.wt-top-avatar{overflow:hidden;padding:3px}
+.wt-top-avatar>*{max-width:100%}
+.wt-content{padding:24px clamp(20px,3vw,44px) 60px}
+.wt-content-inner{width:100%;max-width:1500px;margin:0 auto}
+.wt-page-frame{min-width:0}
+.wt-page-content{min-width:0;max-width:1180px;margin:0 auto}
+.wt-page-content.wt-page-chat{max-width:none}
+.tab-stage{min-width:0;animation:wt-enter .18s ease-out}
+@keyframes wt-enter{from{opacity:.7;transform:translateY(3px)}to{opacity:1;transform:none}}
+/* Shared controls and primitives used throughout feature modules. */
+h1,h2,h3,h4,p{overflow-wrap:anywhere}
+h2{font-size:22px;line-height:1.2;letter-spacing:-.55px}
+h3{font-size:16px;line-height:1.3;letter-spacing:-.2px}
+p{color:var(--ink-2)}
+.eyebrow,.wt-sidebar-eyebrow,.metadata{font:600 10px var(--font-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+small{font-size:12px}
+hr{border:0;border-top:1px solid var(--line)}
