@@ -4,7 +4,7 @@ import {Icon} from './Icon';
 type NavItem={id:string;label:string;sub:string;icon:ReactNode};
 type Props={
   items:NavItem[]; active:string; onNavigate:(id:string)=>void;
-  profile:ReactNode; profileAction:()=>void; privacy:ReactNode; children:ReactNode;
+  profile:ReactNode; profileAvatar:ReactNode; profileAction:()=>void; privacy:ReactNode; children:ReactNode;
   searchAction:()=>void; title:string; kicker:string; version:string;
   mobileItems:{id:string;label:string;icon:ReactNode}[]; mobileMore:ReactNode;
 };
@@ -15,7 +15,7 @@ const groups=[
   {label:'Личное',ids:['notifications','friends','profile','settings','admin']}
 ];
 
-export default function AppShell({items,active,onNavigate,profile,profileAction,privacy,children,searchAction,title,kicker,version,mobileItems,mobileMore}:Props){
+export default function AppShell({items,active,onNavigate,profile,profileAvatar,profileAction,privacy,children,searchAction,title,kicker,version,mobileItems,mobileMore}:Props){
   const byId=new Map(items.map(item=>[item.id,item]));
   const nav=(item:NavItem)=>(
     <button key={item.id} className={active===item.id?'wt-nav-item active':'wt-nav-item'}
@@ -76,7 +76,7 @@ export default function AppShell({items,active,onNavigate,profile,profileAction,
           <button className="wt-top-icon" onClick={()=>onNavigate('notifications')} aria-label="Уведомления">
             <Icon name="bell" size={18}/>
           </button>
-          <button className="wt-top-avatar" onClick={profileAction} aria-label="Профиль">{profile}</button>
+          <button className="wt-top-avatar" onClick={profileAction} aria-label="Профиль">{profileAvatar}</button>
         </div>
       </header>
 
