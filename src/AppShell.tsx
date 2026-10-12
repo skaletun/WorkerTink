@@ -10,9 +10,9 @@ type Props={
 };
 
 const groups=[
-  {label:'Сеть',ids:['home','social','people','communities','chat']},
-  {label:'Работа',ids:['work','calendar','pay','absence']},
-  {label:'Личное',ids:['notifications','friends','profile','settings','admin']}
+  {label:'ТВОЯ СЕТЬ',ids:['home','social','people','communities','chat']},
+  {label:'РАБОЧЕЕ',ids:['work','calendar','pay','absence']},
+  {label:'АККАУНТ',ids:['notifications','friends','profile','settings','admin']}
 ];
 
 export default function AppShell({items,active,onNavigate,profile,profileAction,privacy,children,searchAction,title,kicker,version,mobileItems,mobileMore}:Props){
@@ -27,67 +27,41 @@ export default function AppShell({items,active,onNavigate,profile,profileAction,
 
   return <div className="wt-shell">
     <a className="wt-skip" href="#wt-main">К содержимому</a>
-
-    <nav className="wt-rail" aria-label="Быстрые разделы">
-      <button className="wt-rail-brand" onClick={()=>onNavigate('home')} aria-label="WTinker — Главная"><span className="wt-brand-mark">W</span></button>
-      {(['home','social','chat','work'] as const).map(id=>{const item=byId.get(id);return item?<button key={id} className={active===id?'wt-rail-action active':'wt-rail-action'} onClick={()=>onNavigate(id)} aria-label={item.label} title={item.label}>{item.icon}</button>:null})}
-      <span className="wt-rail-spacer"/>
-      <button className="wt-rail-action" onClick={profileAction} aria-label="Профиль" title="Профиль">{profile}</button>
-    </nav>
-
     <aside className="wt-sidebar" aria-label="Навигация WTinker">
-      <div className="wt-sidebar-heading"><span className="wt-sidebar-eyebrow">РАБОЧЕЕ ПРОСТРАНСТВО</span><strong>Навигация</strong></div>
-
-      <div className="wt-sidebar-user">
-        <button className="wt-profile" onClick={profileAction} aria-label="Открыть профиль">{profile}<span className="wt-profile-caption">Личный кабинет</span></button>
-      </div>
-
-      <button className="wt-search-mini" onClick={searchAction} aria-label="Открыть поиск">
-        <Icon name="search" size={17}/><span>Поиск</span><kbd>Ctrl K</kbd>
+      <button className="wt-brand-lockup" onClick={()=>onNavigate('home')} aria-label="WTinker — Главная">
+        <span className="wt-brand-mark">w</span><span className="wt-brand-word">wtinker<span className="wt-brand-period">.</span></span>
       </button>
-
+      <button className="wt-search-mini" onClick={searchAction} aria-label="Найти людей и публикации">
+        <Icon name="search" size={17}/><span>Поиск по сети</span><kbd>⌘ K</kbd>
+      </button>
       <nav className="wt-nav" aria-label="Основная навигация">
         {groups.map(group=><section className="wt-nav-group" key={group.label}>
           <span className="wt-nav-label">{group.label}</span>
           {group.ids.map(id=>{const item=byId.get(id);return item?nav(item):null})}
         </section>)}
       </nav>
-
+      <button className="wt-compose-button" onClick={()=>onNavigate('social')}><Icon name="plus" size={17}/><span>Новая публикация</span></button>
       <div className="wt-sidebar-footer">
         {privacy}
-        <span>WTinker {version}</span>
+        <button className="wt-profile" onClick={profileAction} aria-label="Открыть профиль">{profile}<span className="wt-profile-caption">Мой профиль <span aria-hidden="true">↗</span></span></button>
+        <span className="wt-version">WTinker {version}</span>
       </div>
     </aside>
-
     <main id="wt-main" className="wt-main">
       <header className="wt-topbar">
-        <div className="wt-mobile-brand">
-          <span className="wt-brand-mark" aria-hidden="true">W</span>
-          <span className="wt-brand-word">WTinker</span>
-        </div>
-        <div className="wt-context">
-          <span className="wt-context-kicker">{kicker}</span>
-          <h1>{title}</h1>
-        </div>
+        <div className="wt-context"><span className="wt-context-kicker">{kicker}</span><h1>{title}</h1></div>
         <div className="wt-topbar-actions">
-          <button className="wt-command-search" onClick={searchAction} aria-label="Поиск">
-            <Icon name="search" size={17}/><span>Поиск людей, публикаций, сообществ и работы</span><kbd>Ctrl K</kbd>
+          <button className="wt-command-search" onClick={searchAction} aria-label="Найти людей, публикации, сообщества и работу">
+            <Icon name="search" size={17}/><span>Люди, публикации, сообщества…</span><kbd>Ctrl K</kbd>
           </button>
-          <button className="wt-top-icon" onClick={()=>onNavigate('notifications')} aria-label="Уведомления">
-            <Icon name="bell" size={18}/>
-          </button>
+          <button className="wt-top-icon" onClick={()=>onNavigate('notifications')} aria-label="Уведомления"><Icon name="bell" size={19}/></button>
           <button className="wt-top-avatar" onClick={profileAction} aria-label="Профиль">{profile}</button>
         </div>
       </header>
-
-      <div className="wt-content"><div className="wt-content-inner"><div className="wt-page-frame">{children}</div></div></div>
+      <div className="wt-content"><div className="wt-content-inner"><div className="wt-page-frame"><div className="wt-page-content ${active==='chat'?'wt-page-chat':''}"><div className="tab-stage" key={active}>{children}</div></div></div></div></div>
     </main>
-
     <nav className="wt-mobile-nav" aria-label="Мобильная навигация">
-      {mobileItems.map(item=><button key={item.id} className={active===item.id?'active':''}
-        onClick={()=>onNavigate(item.id)} aria-current={active===item.id?'page':undefined}>
-        {item.icon}<span>{item.label}</span>
-      </button>)}
+      {mobileItems.map(item=><button key={item.id} className={active===item.id?'active':''} onClick={()=>onNavigate(item.id)} aria-current={active===item.id?'page':undefined}>{item.icon}<span>{item.label}</span></button>)}
       {mobileMore}
     </nav>
   </div>;
