@@ -1,0 +1,2 @@
+@media(max-width:900px){.social-layout,.calendar-layout{grid-template-columns:minmax(0,1fr)}.work-grid{grid-template-columns:repeat(6,minmax(0,1fr))}}
+@media(max-width:600px){.work-kpis,.home-snapshot{grid-template-columns:minmax(0,1fr)}.redesign-page-intro{align-items:flex-start;flex-direction:column}}
