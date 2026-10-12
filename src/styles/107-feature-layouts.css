@@ -1,0 +1,18 @@
+.wt-privacy-icon{display:grid;place-items:center;width:28px;height:28px;background:var(--surface);border:1px solid var(--line);border-radius:6px}
+.wt-privacy-copy{flex:1;min-width:0}
+.wt-privacy-copy>div{display:flex;flex-direction:column}
+.wt-privacy-copy b{font-size:11px}
+.wt-privacy-copy span,.wt-privacy-copy small{font-size:10px;color:var(--muted)}
+.wt-privacy-dot{width:7px;height:7px;border-radius:50%;background:var(--success)}
+/* Existing product features, restyled in-place rather than wrapped in another layer. */
+.tab-stage>*,.wt-page-content>*{min-width:0}
+.tab-stage>section,.tab-stage>article{margin-bottom:18px}
+.tab-stage button:not(.wt-nav-item):not(.wt-compose-button):not(.wt-profile):not(.wt-brand-lockup):not(.wt-top-icon):not(.wt-top-avatar):not(.wt-command-search):not(.wt-search-mini):not(.wt-rail-action){transition:background-color .14s,border-color .14s,color .14s}
+.tab-stage table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.tab-stage th,.tab-stage td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left}
+.tab-stage th{font-size:11px;color:var(--muted);font-weight:650;background:var(--surface-2)}
+.tab-stage td{color:var(--ink-2)}
+.tab-stage tr:hover td{background:var(--surface-2)}
+.tab-stage .grid,.tab-stage [class*=grid-]{min-width:0}
+.tab-stage .avatar,.tab-stage [class*=avatar]{flex-shrink:0}
+.tab-stage .eyebrow{display:block;margin-bottom:6px}
