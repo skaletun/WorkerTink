@@ -29,11 +29,12 @@ async function audit(page,label){
       }
       return true;
     }).slice(0,12).map(el=>({tag:el.tagName,cls:String(el.className||''),right:Math.round(el.getBoundingClientRect().right),left:Math.round(el.getBoundingClientRect().left)}));
+    const beyond=elements.map(el=>({el,r:el.getBoundingClientRect()})).filter(x=>x.r.right>window.innerWidth+2||x.r.left<-2).sort((a,b)=>b.r.right-a.r.right).slice(0,20).map(({el,r})=>({tag:el.tagName,cls:String(el.className||'').slice(0,160),text:(el.textContent||'').trim().slice(0,40),right:Math.round(r.right),left:Math.round(r.left),width:Math.round(r.width),scrollWidth:el.scrollWidth}));
     const gradients=elements.filter(el=>/gradient\(/i.test(getComputedStyle(el).backgroundImage)).length;
     const buttons=[...document.querySelectorAll('button')].filter(visible);
     const unlabeledIconButtons=buttons.filter(btn=>{const text=btn.textContent?.trim()||'';const label=btn.getAttribute('aria-label')||btn.getAttribute('title');return !text&&!label&&!btn.querySelector('svg')}).length;
     const root=getComputedStyle(document.documentElement);
-    return {text:document.body.innerText.trim().length,overflow:document.documentElement.scrollWidth-window.innerWidth,overflows,gradients,unlabeledIconButtons,bg:root.getPropertyValue('--bg').trim(),surface:root.getPropertyValue('--surface').trim()};
+    return {text:document.body.innerText.trim().length,overflow:document.documentElement.scrollWidth-window.innerWidth,overflows,beyond,gradients,unlabeledIconButtons,bg:root.getPropertyValue('--bg').trim(),surface:root.getPropertyValue('--surface').trim()};
   });
   if(result.overflow>2||result.overflows.length) console.log('Viewport layout diagnostic',label,JSON.stringify(result));
   expect(result.text).toBeGreaterThan(20);
