@@ -15,7 +15,7 @@ export default function NotificationsView({token,onNotice,onOpen}:Props){
  const unreadCount=items.filter(x=>!x.readAt).length;
  return <section className="canva-page canva-notifications redesign-page redesign-notifications">
   <header className="canva-page-head">
-    <div><span className="canva-kicker">Notifications</span><h1>Центр событий</h1><p>Уведомления о сообщениях, заявках и рабочих изменениях собраны в одной последовательности.</p></div>
+    <div><span className="canva-kicker">УВЕДОМЛЕНИЯ</span><h1>Центр событий</h1><p>Уведомления о сообщениях, заявках и рабочих изменениях собраны в одной последовательности.</p></div>
     <div className="canva-head-actions"><span className="canva-state">{unreadCount} непрочитанных</span><button className="canva-button" onClick={()=>void load()}>Обновить</button><button className="canva-button canva-button-primary" onClick={()=>void readAll()}>Прочитать всё</button></div>
   </header>
   <div className="canva-notification-layout">
@@ -24,7 +24,7 @@ export default function NotificationsView({token,onNotice,onOpen}:Props){
       <button className={filter==='unread'?'active':''} onClick={()=>setFilter('unread')}><span>Непрочитанные</span><b>{unreadCount}</b></button>
       <div className="canva-notification-help"><span className="canva-kicker">Flow</span><b>Ничего важного не теряется</b><p>Откройте событие, чтобы перейти к связанному контексту.</p></div>
     </aside>
-    <main className="canva-notification-feed">
+    <section className="canva-notification-feed">
       {loading&&!items.length?<div className="canva-feed-list"><article className="canva-post canva-skeleton-card"><div/><div/><div/></article><article className="canva-post canva-skeleton-card"><div/><div/><div/></article></div>:loadError&&!items.length?<div className="canva-error">Уведомления временно недоступны. <button onClick={()=>void load()}>Повторить</button></div>:<div className="canva-event-list notification-timeline">{visible.map(n=><button type="button" className={`timeline-item ${n.readAt?"canva-event":"canva-event unread"}`} key={n.id} onClick={()=>void (async()=>{if(!n.readAt)await read(n.id);onOpen(n)})()}><span className="canva-event-marker"><Icon name={iconName(n.kind)} size={15}/></span><div><small>{n.actor?.name||'WTinker'} · {n.kind.replaceAll('_',' ')}</small><b>{n.title}</b><p>{n.body}</p></div><time>{ago(n.createdAt)}</time></button>)}{!visible.length&&<div className="canva-empty">Новых событий нет.</div>}</div>}
     </main>
   </div>
