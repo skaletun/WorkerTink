@@ -144,7 +144,7 @@ test('WTinker bug-archive interaction states',async({browser})=>{
   await mobile.close();
 });
 
-test('v8 structural navigation, responsive workday and theme smoke',async({browser})=>{
+test('v9 workspace architecture: real responsive navigation and working screens',async({browser})=>{
   for(const theme of ['light','dark']){
     for(const viewport of [{width:1440,height:900},{width:390,height:844}]){
       const context=await browser.newContext({viewport,colorScheme:theme});
@@ -153,44 +153,45 @@ test('v8 structural navigation, responsive workday and theme smoke',async({brows
       page.on('pageerror',error=>errors.push(String(error)));
       await prepare(page,theme);
       await page.goto('?tab=home',{waitUntil:'networkidle'});
-      await expect(page.locator('.wt-shell-v8')).toBeVisible();
-      await expect(page.locator('.wt-home-hero')).toBeVisible();
-      await expect(page.locator('.wt-home-income strong')).toBeVisible();
-      await expect(page.locator('.wt-week-day')).toHaveCount(7);
-      await expect(page.locator('.wt-home-ledger-list button')).toHaveCount(3);
-      const expectedCanvas=theme==='dark'?'#161b18':'#f2f0eb';
-      const values=await page.evaluate(()=>({
-        canvas:getComputedStyle(document.documentElement).getPropertyValue('--canvas').trim(),
+      await expect(page.locator('.wt-os-shell')).toBeVisible();
+      await expect(page.locator('.wt-control-hero')).toBeVisible();
+      await expect(page.locator('.wt-roster-slot')).toHaveCount(14);
+      await expect(page.locator('.wt-control-command-list>button')).toHaveCount(3);
+      const status=await page.evaluate(()=>({
+        paper:getComputedStyle(document.documentElement).getPropertyValue('--wt-desk-paper').trim(),
         overflow:document.documentElement.scrollWidth-window.innerWidth
       }));
-      expect(values.canvas).toBe(expectedCanvas);
-      expect(values.overflow).toBeLessThanOrEqual(2);
-      if(viewport.width>600){
-        await expect(page.locator('.wt-nav-horizontal')).toBeVisible();
-        await expect(page.locator('.wt-mobile-nav')).toBeHidden();
+      expect(status.paper).toBe(theme==='dark'?'#151e1c':'#f7f8f5');
+      expect(status.overflow).toBeLessThanOrEqual(2);
+      if(viewport.width>650){
+        await expect(page.locator('.wt-os-dock')).toBeVisible();
+        await expect(page.locator('.wt-os-directory')).toBeVisible();
+        await expect(page.locator('.wt-os-mobile-dock')).toBeHidden();
       }else{
-        await expect(page.locator('.wt-nav-horizontal')).toBeHidden();
-        await expect(page.locator('.wt-mobile-nav')).toBeVisible();
+        await expect(page.locator('.wt-os-dock')).toBeHidden();
+        await expect(page.locator('.wt-os-directory')).toBeHidden();
+        await expect(page.locator('.wt-os-mobile-dock')).toBeVisible();
       }
-      await page.screenshot({path:`visual-audit-artifacts/v8-${theme}-${viewport.width}-home.png`,fullPage:true});
-      await page.locator('.wt-week-day').first().click();
-      await expect(page.locator('.wt-viewhead h1')).toContainText('Ваш график');
+      await page.screenshot({path:`visual-audit-artifacts/v9-${theme}-${viewport.width}-home.png`,fullPage:true});
+      await page.locator('.wt-roster-slot').first().click();
+      await expect(page.locator('.wt-os-chapter h1')).toContainText('Ваш график');
       await expect(page.locator('.canva-calendar')).toBeVisible();
-      const footerIsOrdered=await page.evaluate(()=>{
-        const security=document.querySelector('.wt-footer-privacy')?.getBoundingClientRect();
-        const version=document.querySelector('.wt-shell-footer>span:last-child')?.getBoundingClientRect();
-        return Boolean(security&&version&&(security.right<=version.left+2||security.bottom<=version.top+2));
-      });
-      expect(footerIsOrdered,'Footer labels must not visually overlap').toBe(true);
-      if(viewport.width>600){
-        await page.locator('.wt-nav-account>summary').click();
-        const settings=page.locator('.wt-nav-account-popover .wt-nav-item').filter({hasText:'Настройки'});
-        await expect(settings).toBeVisible();
-        await settings.click();
-        await expect(page.locator('.wt-viewhead h1')).toHaveText('Настройки');
-        await expect(page.locator('.wt-nav-account')).not.toHaveAttribute('open');
+      await page.screenshot({path:`visual-audit-artifacts/v9-${theme}-${viewport.width}-calendar.png`,fullPage:true});
+      if(viewport.width>650){
+        await page.locator('.wt-os-directory .wt-os-link').filter({hasText:'Работа'}).first().click();
+      }else{
+        await page.locator('.wt-os-mobile-dock button').filter({hasText:'Работа'}).first().click();
       }
-      expect(errors).toEqual([]);
+      await expect(page.locator('.wt-operations-calendar-grid')).toBeVisible();
+      await page.screenshot({path:`visual-audit-artifacts/v9-${theme}-${viewport.width}-work.png`,fullPage:true});
+      if(viewport.width>650){
+        await page.locator('.wt-os-directory .wt-os-link').filter({hasText:'Зарплата'}).first().click();
+      }else{
+        await page.locator('.wt-operations-number-main button').click();
+      }
+      await expect(page.locator('.wt-pay-console-statement')).toBeVisible();
+      await page.screenshot({path:`visual-audit-artifacts/v9-${theme}-${viewport.width}-pay.png`,fullPage:true});
+      expect(errors,theme+'/'+viewport.width).toEqual([]);
       await context.close();
     }
   }
