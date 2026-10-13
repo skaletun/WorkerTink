@@ -1,0 +1,126 @@
+/* WTinker finance and leave — precise information hierarchy, native disclosure. */
+.canva-calendar-shell{border-radius:16px;padding:23px;box-shadow:0 5px 25px rgba(23,40,70,.025)}
+.canva-calendar-head h2{font-size:clamp(25px,2.8vw,32px);letter-spacing:-.045em}
+.canva-calendar-week span{font:740 11px var(--font-sans)}
+.canva-calendar-week,.canva-calendar-grid{gap:5px}
+.calendar-day{min-height:89px;padding:9px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);transition:background-color .15s,border-color .15s}
+.calendar-day:hover:not(:disabled){border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.calendar-day.today{position:relative;z-index:1;outline:2px solid var(--accent);outline-offset:0}
+.calendar-day.day,.calendar-day.full{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 18%,var(--line))}
+.calendar-day.night{background:color-mix(in srgb,var(--chart-4) 14%,var(--surface));border-color:color-mix(in srgb,var(--chart-4) 20%,var(--line))}
+.calendar-day[data-shift=off]{background:var(--canvas)}
+.calendar-day.day .day-top b,.calendar-day.full .day-top b{color:var(--accent)}
+.calendar-day.night .day-top b{color:var(--chart-4)}
+.calendar-day>span{font-size:11px;font-weight:600}
+.canva-calendar-summary{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:21px 0;padding:0;background:transparent;border:0}
+.canva-calendar-summary>div,.canva-calendar-summary>div:first-child,.canva-calendar-summary>div:last-child{min-width:0;padding:18px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.canva-calendar-summary strong{font-size:clamp(21px,2.3vw,28px);overflow-wrap:anywhere}
+.canva-calendar-summary small{font-size:12px}
+.canva-calendar-actions button{min-height:67px;border-radius:11px}
+.canva-calendar-actions button:hover{background:var(--accent-soft)}
+.canva-pay-overview{border-radius:15px}
+.canva-pay-hero{background:#172846}
+.canva-pay-hero .canva-kicker,.canva-pay-hero p{color:#b5c5dc}
+.canva-pay-hero strong{color:#fff;font-size:clamp(34px,4vw,48px)}
+.canva-pay-metric{background:var(--surface)}
+.canva-pay-metric span{font-size:12px;font-weight:750}
+.canva-pay-metric b{font-size:clamp(22px,2.4vw,28px)}
+.canva-pay-breakdown,.canva-pay-form,.annual-card{padding:24px;border-radius:15px}
+.canva-money-list>div{min-height:45px;padding:13px 0;font-size:13px}
+.canva-money-list .total{margin-top:10px;padding:16px}
+.canva-money-list .total b{font-size:21px}
+.annual-head h2{font-size:clamp(24px,2.8vw,32px)}
+.annual-kpis>div{gap:7px}
+.annual-kpis b{font-size:clamp(16px,2.1vw,23px);overflow-wrap:anywhere}
+.wt-pay-trend{margin-top:24px;padding:23px 24px 18px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px}
+.wt-pay-trend-title{display:flex;justify-content:space-between;align-items:start;gap:12px}
+.wt-pay-trend-title>div{display:flex;flex-direction:column;gap:4px}
+.wt-pay-trend-title>div>strong{font-size:17px;letter-spacing:-.04em}
+.wt-pay-trend-title>div>span,.wt-pay-trend-title>span{font-size:12px;color:var(--muted)}
+.wt-pay-trend-chart{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));align-items:end;gap:clamp(5px,1vw,13px);min-height:183px;margin-top:20px}
+.wt-pay-trend-month{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:9px;min-width:0;height:183px}
+.wt-pay-trend-track{position:relative;width:100%;min-width:0;height:156px;background:color-mix(in srgb,var(--line) 60%,transparent);border-radius:6px 6px 0 0;overflow:hidden}
+.wt-pay-trend-bar{position:absolute;bottom:0;left:0;right:0;background:var(--accent);border-radius:5px 5px 0 0;transition:height .2s}
+.wt-pay-trend-month>span{font-size:10px;font-weight:650;color:var(--muted)}
+.wt-annual-details{margin-top:20px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.wt-annual-details>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:59px;padding:14px 18px;list-style:none;cursor:pointer;color:var(--ink);font-weight:750;font-size:14px}
+.wt-annual-details>summary>span{display:flex;align-items:center;gap:10px}
+.wt-annual-details>summary::-webkit-details-marker{display:none}
+.wt-annual-details>summary:hover{background:var(--surface-2)}
+.wt-annual-details[open]>summary{border-bottom:1px solid var(--line)}
+.wt-annual-details[open]>summary>svg{transform:rotate(180deg)}
+.wt-annual-details-body{padding:18px}
+.wt-annual-details .annual-components{padding:0 0 18px}
+.wt-annual-details .annual-table-wrap{max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.wt-annual-details .annual-footnote{padding-top:15px}
+/* Vacation and sick leave */
+.canva-absence-overview{margin:20px 0 23px;padding:0;border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden}
+.canva-absence-overview>div,.canva-absence-overview>div:first-child{padding:22px 20px;justify-content:center}
+.canva-absence-overview>div.active{background:var(--accent-soft)}
+.canva-absence-overview>div span{font-size:12px;font-weight:750}
+.canva-absence-overview>div strong{font-size:clamp(27px,3vw,38px)}
+.canva-absence-overview>div small{font-size:12px}
+.period-editor{gap:15px;padding:23px;border-radius:15px}
+.wt-period-heading{display:flex;align-items:center;gap:13px}
+.wt-period-heading>div{min-width:0}
+.wt-period-heading h2{font-size:24px;line-height:1.18;letter-spacing:-.045em;margin-top:3px}
+.wt-period-symbol,.wt-period-calendar{display:grid;place-items:center;flex:0 0 45px;width:45px;height:45px;border-radius:11px;background:var(--accent-soft);color:var(--accent)}
+.period-editor>.hint{min-height:43px;font-size:13px;line-height:1.6;color:var(--muted)}
+.period-items{display:flex;flex-direction:column;gap:8px}
+.period-item{min-width:0;gap:10px;padding:12px;border-radius:10px}
+.period-item>div{flex:1;min-width:0}
+.period-item>div b{font-size:13px;line-height:1.4}
+.period-item>div small{font-size:11px}
+.period-item>button{display:grid;place-items:center;flex:0 0 35px;width:35px;height:35px;border:1px solid var(--line);border-radius:8px;color:var(--danger);background:var(--surface)}
+.period-item>button:hover{border-color:var(--danger);background:var(--danger-soft)}
+.wt-period-calendar{width:37px;height:37px;flex-basis:37px;border-radius:9px}
+.wt-period-empty{display:flex;flex-direction:column;align-items:center;gap:9px;padding:25px 16px;border:1px dashed var(--line-strong);border-radius:11px;text-align:center;background:var(--surface-2)}
+.wt-period-empty>svg{color:var(--accent)}
+.wt-period-empty>strong{font-size:13px}
+.wt-period-empty>span{font-size:11px;line-height:1.45;color:var(--muted)}
+.wt-period-create{display:flex;flex-direction:column;gap:14px;margin-top:4px;padding-top:18px;border-top:1px solid var(--line)}
+.wt-period-create>strong{font-size:15px}
+.wt-period-dates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.wt-period-dates label{display:flex;flex-direction:column;gap:7px;min-width:0;font-size:12px;color:var(--muted);font-weight:650}
+.wt-period-dates input{width:100%;min-width:0;min-height:44px;font-size:12px}
+.wt-period-create-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.wt-period-create-footer .btn{flex:0 0 auto;min-height:43px}
+.wt-period-validation{font-size:12px;color:var(--muted)}
+.wt-period-validation.is-invalid{color:var(--danger)}
+@media(max-width:1020px){
+ .canva-calendar-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .canva-absence-grid{grid-template-columns:1fr}
+ .canva-absence-overview{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:600px){
+ .canva-calendar-shell{padding:13px}
+ .canva-calendar-head h2{font-size:26px}
+ .canva-calendar-week,.canva-calendar-grid{gap:4px}
+ .canva-calendar-empty{min-height:64px}
+ .calendar-day{min-height:71px;gap:7px;padding:6px 4px;border-radius:6px}
+ .calendar-day .day-top b{font-size:13px}
+ .calendar-day>span{font-size:9px;line-height:1.2}
+ .canva-calendar-summary{gap:9px}
+ .canva-calendar-summary>div,.canva-calendar-summary>div:first-child,.canva-calendar-summary>div:last-child{padding:14px}
+ .canva-calendar-summary strong{font-size:21px}
+ .canva-pay-hero{padding:22px}
+ .canva-pay-hero strong{font-size:39px}
+ .canva-pay-metric{padding:19px}
+ .canva-pay-metric b{font-size:23px}
+ .canva-pay-breakdown,.canva-pay-form,.annual-card{padding:18px}
+ .canva-pay-grid{gap:12px}
+ .annual-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:0}
+ .annual-kpis>div{border-right:0;border-bottom:1px solid var(--line);padding:13px 0}
+ .annual-kpis>div:first-child{padding-left:0}
+ .wt-pay-trend{padding:16px 10px 13px}
+ .wt-pay-trend-chart{gap:4px}
+ .wt-pay-trend-track{height:138px}
+ .wt-pay-trend-month{height:163px}
+ .wt-pay-trend-month>span{font-size:9px}
+ .wt-annual-details-body{padding:12px}
+ .canva-absence-overview>div,.canva-absence-overview>div:first-child{padding:16px 12px}
+ .canva-absence-overview>div strong{font-size:27px}
+ .period-editor{padding:17px}
+ .wt-period-dates{grid-template-columns:1fr}
+ .wt-period-heading h2{font-size:22px}
+}
