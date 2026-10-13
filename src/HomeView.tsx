@@ -83,7 +83,7 @@ export default function HomeView({state,patch,onNotice,go}:Props){
      </div>
     </section>
     <section className="wt-home-section">
-     <div className="wt-section-heading"><div><span className="wt-overline">ПЛАНИРОВАНИЕ</span><h3>Отпуск и больничный</h3></div><button className="wt-link-button" onClick={()=>go('absence')}>Отсутствия <Icon name="chevronRight" size={16}/></button></div>
+     <div className="wt-section-heading"><div><span className="wt-overline">Спланировать заранее</span><h3>Отпуск и больничный</h3></div><button className="wt-link-button" onClick={()=>go('absence')}>Отсутствия <Icon name="chevronRight" size={16}/></button></div>
      <div className="wt-home-planner">
       <div className="wt-form-pair"><label>Начало отпуска<input type="date" value={vacStart} onChange={e=>setVacStart(e.target.value)}/></label><label>Календарных дней<input type="number" min="1" max="60" value={vacLength} onChange={e=>setVacLength(Math.max(1,Number(e.target.value)||1))}/></label></div>
       <p>{plannedVacation?`${plannedVacation.days} дней по расчёту · останется ${Math.round(plannedVacation.balance)} дней`:'Выберите дату начала — остаток рассчитается автоматически.'}</p>
@@ -95,6 +95,7 @@ export default function HomeView({state,patch,onNotice,go}:Props){
     <section className="wt-home-section wt-home-advice"><div className="wt-section-heading"><div><span className="wt-overline">КОНТЕКСТ</span><h3>Стоит проверить</h3></div></div><ul>{tips.length?tips.map((text,i)=><li key={i}>{text}</li>):<li>График и расчёты готовы. Посмотрите, что нового у коллег.</li>}</ul></section>
     <section className="wt-home-section"><div className="wt-section-heading"><div><span className="wt-overline">ЗАМЕТКА К СМЕНЕ</span><h3>Сохранить мысль</h3></div></div><label className="wt-sr-only" htmlFor="wt-quick-note">Текст заметки</label><textarea id="wt-quick-note" value={tip} onChange={e=>setTip(e.target.value)} placeholder="Что важно не забыть после смены?"/><button className="wt-button primary" disabled={!tip.trim()} onClick={saveTip}>Сохранить заметку</button></section>
     <section className="wt-home-section"><div className="wt-section-heading"><div><span className="wt-overline">Резервная копия</span><h3>Ваши данные</h3></div></div><p>Данные шифруются на устройстве перед экспортом.</p><label htmlFor="wt-backup-password">Пароль шифрования</label><input id="wt-backup-password" type="password" value={backupPassword} onChange={e=>setBackupPassword(e.target.value)} autoComplete="new-password"/><button className="wt-button secondary" onClick={()=>void backup()}>Создать копию <Icon name="download" size={16}/></button></section>
+    <section className="wt-home-section wt-home-security"><span className="wt-overline">Безопасность</span><h3>Аккаунт и защита</h3><p>OnePass: {state.onePassEnabled?'включён':'выключен'}. Личные сообщения используют E2E-шифрование.</p><button className="wt-button secondary" onClick={()=>go('settings')}>Настройки безопасности</button></section>
     <section className="wt-home-section"><span className="wt-overline">ЗА ГОД</span><h3>{formatMoney(year.net)}</h3><p>Чистый доход за {yearNumber} год по вашим настройкам.</p></section>
    </aside>
   </div>
