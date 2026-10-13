@@ -1,0 +1,110 @@
+/* WTinker / Dispatch room: working calendar is the primary surface, not a KPI widget. */
+.wt-operations{display:flex;flex-direction:column;gap:25px;width:100%;min-width:0}
+.wt-operations .wt-index-label{font:770 10px/1.4 var(--font-mono);letter-spacing:.09em;color:var(--wt-desk-accent)}
+.wt-operations-intro{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:0 0 24px;border-bottom:2px solid var(--wt-desk-ink)}
+.wt-operations-intro h2{font-size:clamp(35px,4.8vw,60px);letter-spacing:-.066em;line-height:.98;font-weight:790;margin:9px 0 12px}
+.wt-operations-intro h2 em{display:block;font:italic 400 clamp(32px,4vw,53px)/1.06 Georgia,serif;color:var(--wt-desk-accent);letter-spacing:-.055em}
+.wt-operations-intro p{font-size:12px;max-width:55ch;color:var(--wt-desk-muted)}
+.wt-operations-head-buttons{display:flex;gap:9px;flex-wrap:wrap}
+.wt-operations-head-buttons button{display:flex;align-items:center;gap:8px;min-height:43px;padding:10px 12px;border:1px solid var(--wt-desk-line);border-radius:9px;background:var(--wt-desk-paper);font-size:11px;font-weight:750}
+.wt-operations-head-buttons button:last-child{background:var(--wt-desk-accent);color:var(--wt-desk-accent-ink);border-color:var(--wt-desk-accent)}
+.wt-operations-numbers{display:grid;grid-template-columns:minmax(220px,1.7fr) repeat(3,minmax(110px,.75fr));min-width:0;background:var(--wt-desk-panel);border:1px solid var(--wt-desk-line);border-radius:12px;overflow:hidden}
+.wt-operations-numbers>div{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-height:140px;padding:24px 17px;border-right:1px solid var(--wt-desk-line);min-width:0}
+.wt-operations-numbers>div:last-child{border-right:0}
+.wt-operations-numbers>div>span{font-size:10px;color:var(--wt-desk-muted);font-weight:740;letter-spacing:.025em}
+.wt-operations-numbers strong{margin:9px 0 4px;font-size:clamp(27px,3.2vw,42px);line-height:1.08;font-weight:780;letter-spacing:-.06em;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.wt-operations-numbers strong small{font-size:14px;letter-spacing:0;font-weight:600}
+.wt-operations-numbers p{font-size:10px;color:var(--wt-desk-muted)}
+.wt-operations-numbers>.wt-operations-number-main{background:var(--wt-desk-ink);color:var(--wt-desk-paper);padding-left:25px}
+.wt-operations-number-main>span{color:var(--wt-desk-paper)!important;opacity:.73}
+.wt-operations-number-main>strong{font-size:clamp(27px,3.6vw,48px)}
+.wt-operations-number-main>button{display:flex;align-items:center;gap:4px;border:0;padding:5px 0;background:transparent;color:var(--wt-desk-paper);font-size:11px;font-weight:750}
+.wt-operations-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(225px,.7fr);gap:21px;align-items:start}
+.wt-operations-calendar{min-width:0;background:var(--wt-desk-paper);border:1px solid var(--wt-desk-line);border-radius:12px;padding:24px}
+.wt-operations-upcoming{min-width:0;padding:24px 20px;background:var(--wt-desk-panel);border:1px solid var(--wt-desk-line);border-radius:12px}
+.wt-operations-section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:13px;margin-bottom:20px}
+.wt-operations-section-head h3{margin-top:6px;font-size:clamp(19px,2vw,27px);line-height:1.1;letter-spacing:-.045em}
+.wt-operations-section-head h3 small{font-weight:550;font-size:14px;color:var(--wt-desk-muted)}
+.wt-operations-section-head>button{display:flex;align-items:center;gap:5px;min-height:33px;padding:4px 0;background:transparent;border:0;color:var(--wt-desk-accent);font-size:11px;font-weight:750;white-space:nowrap}
+.wt-operations-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;min-width:0}
+.wt-ops-dayname{text-align:center;padding:9px 0;color:var(--wt-desk-muted);font:730 11px var(--font-mono)}
+.wt-ops-empty{min-width:0;min-height:66px}
+.wt-ops-cell{min-width:0;min-height:71px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:4px;padding:10px 9px;background:var(--wt-desk-panel);border:1px solid var(--wt-desk-line);border-radius:6px;text-align:left;color:var(--wt-desk-ink)}
+.wt-ops-cell:hover{border-color:var(--wt-desk-accent);background:color-mix(in srgb,var(--wt-desk-accent) 9%,var(--wt-desk-panel))}
+.wt-ops-cell.is-today{outline:2px solid var(--wt-desk-accent);outline-offset:-2px}
+.wt-ops-cell strong{font-size:15px;font-weight:810;line-height:1;font-variant-numeric:tabular-nums}
+.wt-ops-cell i{display:block;width:23px;height:5px;border-radius:3px;background:var(--wt-desk-accent)}
+.wt-ops-cell.is-night i{background:#9485d3}
+.wt-ops-cell.is-full i{background:#e3a058}
+.wt-ops-cell.is-off i{background:var(--wt-desk-line)}
+.wt-ops-cell.is-off{background:var(--wt-desk-paper);opacity:.7}
+.wt-ops-cell>span{color:var(--wt-desk-muted);font-size:9px}
+.wt-operations-calendar-footer{display:flex;align-items:center;flex-wrap:wrap;gap:15px;margin-top:17px;padding-top:15px;border-top:1px solid var(--wt-desk-line)}
+.wt-operations-calendar-footer>div{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--wt-desk-muted)}
+.wt-operations-calendar-footer>strong{margin-left:auto;font-size:10px;color:var(--wt-desk-ink)}
+.wt-ops-legend-dot{width:10px;height:10px;display:inline-block;border-radius:3px;background:var(--wt-desk-accent)}
+.wt-ops-legend-dot.is-night{background:#9485d3}
+.wt-ops-legend-dot.is-off{background:var(--wt-desk-line)}
+.wt-operations-upcoming ol{padding:0;margin:0;list-style:none;border-top:1px solid var(--wt-desk-line)}
+.wt-operations-upcoming li{border-bottom:1px solid var(--wt-desk-line)}
+.wt-operations-upcoming li button{display:flex;align-items:center;gap:11px;width:100%;min-height:70px;padding:11px 2px;border:0;background:transparent;text-align:left}
+.wt-operations-upcoming li button:hover .wt-ops-when b{color:var(--wt-desk-accent)}
+.wt-ops-seq{font:690 10px var(--font-mono);color:var(--wt-desk-accent)}
+.wt-ops-when{display:flex;flex:1;flex-direction:column;min-width:0;gap:2px}
+.wt-ops-when b{font-size:15px;letter-spacing:-.04em}
+.wt-ops-when small{font-size:10px;color:var(--wt-desk-muted)}
+.wt-ops-shift-chip{font-size:9px;font-weight:730;padding:5px 7px;background:var(--wt-desk-accent);color:var(--wt-desk-accent-ink);border-radius:5px}
+.wt-ops-shift-chip.is-night{background:#776bb2;color:white}
+.wt-ops-shift-chip.is-full{background:#aa752b;color:white}
+.wt-operations-lower{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:21px}
+.wt-operations-ledger,.wt-operations-notes{min-width:0;padding:23px;background:var(--wt-desk-paper);border:1px solid var(--wt-desk-line);border-radius:12px}
+.wt-ops-ledger-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--wt-desk-line);font-size:12px}
+.wt-ops-ledger-row>span{color:var(--wt-desk-muted);min-width:0}
+.wt-ops-ledger-row>strong{font-size:17px;letter-spacing:-.04em;text-align:right;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.wt-ops-ledger-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:19px}
+.wt-ops-ledger-actions button{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:41px;padding:10px 12px;border:1px solid var(--wt-desk-line);border-radius:8px;background:var(--wt-desk-panel);font-size:11px;font-weight:750}
+.wt-ops-note{display:grid;grid-template-columns:75px minmax(0,1fr);align-items:start;gap:12px;padding:13px 0;border-bottom:1px solid var(--wt-desk-line)}
+.wt-ops-note time{font:690 11px var(--font-mono);color:var(--wt-desk-accent)}
+.wt-ops-note p{font-size:12px;color:var(--wt-desk-ink);white-space:pre-wrap;overflow-wrap:anywhere}
+.wt-ops-empty-note{font-size:12px;line-height:1.6;color:var(--wt-desk-muted);padding:15px 0}
+.wt-ops-social-link{display:flex;align-items:center;gap:8px;min-height:42px;padding:10px 0;border:0;background:transparent;font-size:11px;font-weight:750;color:var(--wt-desk-accent)}
+.wt-operations-team-space{border:1px solid var(--wt-desk-line);border-radius:12px;background:var(--wt-desk-paper);overflow:hidden}
+.wt-operations-team-space>button{display:flex;align-items:center;gap:12px;width:100%;min-height:82px;padding:18px 22px;border:0;background:transparent;text-align:left}
+.wt-operations-team-space>button>span:nth-child(2){flex:1;display:flex;flex-direction:column;gap:3px}
+.wt-operations-team-space>button>span:nth-child(2) b{font-size:14px}
+.wt-operations-team-space>button>span:nth-child(2) small{font-size:11px;color:var(--wt-desk-muted)}
+.wt-operations-team-space>button>span:last-child{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:750;color:var(--wt-desk-accent)}
+.wt-operations-team-space .work-teams{border:0;border-top:1px solid var(--wt-desk-line);border-radius:0}
+@media(max-width:1220px){
+ .wt-operations-layout{grid-template-columns:1fr}
+ .wt-operations-upcoming ol{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 15px}
+}
+@media(max-width:780px){
+ .wt-operations-intro{flex-direction:column;align-items:flex-start}
+ .wt-operations-numbers{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .wt-operations-numbers>.wt-operations-number-main{grid-column:1/-1;min-height:120px;border-right:0;border-bottom:1px solid var(--wt-desk-line)}
+ .wt-operations-numbers>div{min-height:112px;padding:16px 13px}
+ .wt-operations-numbers>div>strong{font-size:29px}
+ .wt-operations-lower{grid-template-columns:1fr}
+}
+@media(max-width:540px){
+ .wt-operations{gap:17px}
+ .wt-operations-intro h2{font-size:42px}
+ .wt-operations-head-buttons button{font-size:11px}
+ .wt-operations-calendar,.wt-operations-upcoming,.wt-operations-ledger,.wt-operations-notes{padding:17px 12px}
+ .wt-operations-calendar-grid{gap:3px}
+ .wt-ops-dayname{font-size:10px}
+ .wt-ops-empty{min-height:61px}
+ .wt-ops-cell{min-height:64px;padding:8px 4px}
+ .wt-ops-cell strong{font-size:14px}
+ .wt-ops-cell>span{font-size:8px}
+ .wt-ops-cell i{width:18px}
+ .wt-operations-calendar-footer{gap:9px}
+ .wt-operations-calendar-footer>strong{margin-left:0;width:100%}
+ .wt-operations-upcoming ol{grid-template-columns:1fr}
+ .wt-operations-number-main>strong{font-size:35px}
+ .wt-operations-numbers>div>strong{font-size:24px}
+ .wt-operations-numbers>div>strong small{font-size:10px}
+ .wt-operations-team-space>button{padding:14px}
+ .wt-operations-team-space>button>span:last-child{font-size:0}
+}
