@@ -51,7 +51,7 @@ export default function WorkHubView({state,calc,view,onNavigate,onNetwork,token,
    </section>
    <aside className="wt-work-insights" aria-label="Данные рабочего периода">
     <div className="wt-section-heading"><div><span className="wt-overline">АНАЛИТИКА · BKLIT UI</span><h3>Рабочий ритм</h3></div></div>
-    <div className="wt-ring-wrap"><RingChart data={ringData} size={240} strokeWidth={16} baseInnerRadius={68}><Ring index={0} showGlow={false}/><RingCenter defaultLabel="смен в месяце" formatValue={value=>Math.round(value).toString()}/></RingChart></div>
+    <div className="wt-ring-wrap"><RingChart data={ringData} size={240} strokeWidth={16} baseInnerRadius={68}><Ring index={0} showGlow={false}/><RingCenter defaultLabel="смен в месяце"/></RingChart></div>
     <div className="wt-ring-legend"><span><i/> Плановые смены</span><strong>{plannedShifts} из {daysInMonth}</strong></div>
     <p className="wt-insights-caption">Доля рабочих дней в выбранном месяце на основе вашего графика. Показатель не зависит от начисленной зарплаты.</p>
    </aside>
