@@ -25,7 +25,7 @@ function useReducedMotion(){
 export default function AppShell({items,active,onNavigate,profile,profileAction,privacy,children,searchAction,title,kicker,version,mobileItems,mobileMore}:Props){
  const reduced=useReducedMotion();
  const byId=new Map(items.map(item=>[item.id,item]));
- const isSocial=['home','social','people','communities','notifications','friends'].includes(active);
+ const isSocial=['home','notifications'].includes(active);
  useEffect(()=>{
   const listener=(event:KeyboardEvent)=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='k'){event.preventDefault();searchAction()}};
   document.addEventListener('keydown',listener);
