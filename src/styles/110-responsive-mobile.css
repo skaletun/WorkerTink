@@ -1,1 +1,39 @@
-@media(max-width:600px){:root{--sidebar-width:0px;--topbar-height:66px}.wt-sidebar{display:none}.wt-main{margin-left:0;padding-bottom:calc(68px + env(safe-area-inset-bottom))}.wt-topbar{min-height:var(--topbar-height);padding:10px 16px;gap:10px}.wt-context-kicker{display:none}.wt-context h1{font-size:20px}.wt-topbar-actions{gap:6px}.wt-command-search{width:38px;height:38px}.wt-top-icon,.wt-top-avatar{width:38px;height:38px}.wt-content{padding:16px 12px 28px}.wt-page-content{max-width:none}.wt-mobile-nav{position:fixed;inset:auto 0 0;z-index:50;display:flex;justify-content:space-around;align-items:stretch;gap:2px;min-height:calc(62px + env(safe-area-inset-bottom));padding:6px 5px calc(5px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--line)}.wt-mobile-nav>button{display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;min-height:48px;padding:4px 2px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--muted)}.wt-mobile-nav>button span{font-size:10px;font-weight:600;white-space:nowrap}.wt-mobile-nav>button.active{color:var(--accent);background:var(--accent-soft)}.wt-mobile-nav>button svg{width:19px;height:19px}.wt-mobile-nav .active{color:var(--accent)}.tab-stage{animation:none}.tab-stage :where(.panel,.card,.surface,.section-card,.work-card,.stat-card,.metric-card,.widget,.settings-section,.pay-card,.absence-card,.calendar-panel){padding:14px}.tab-stage .section-heading,.tab-stage .view-heading{align-items:flex-start;flex-direction:column;gap:10px}.tab-stage table{display:block;overflow-x:auto;white-space:nowrap}.modal-backdrop,.mobile-menu-backdrop{padding:12px}.modal-card{padding:20px}.toast{right:12px;bottom:calc(76px + env(safe-area-inset-bottom));left:12px;max-width:none}}
+/* Notifications, teams and mixed feature surfaces. */
+.canva-notification-layout{display:grid;grid-template-columns:235px minmax(0,1fr);gap:19px;align-items:start}
+.canva-notification-sidebar,.canva-notification-feed{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:14px;min-width:0}
+.canva-notification-sidebar{display:flex;flex-direction:column;gap:4px}
+.canva-notification-sidebar>button{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;text-align:left;border:0;border-radius:6px;background:transparent;font-size:12px}
+.canva-notification-sidebar>button.active{background:var(--accent-soft);color:var(--accent)}
+.canva-notification-sidebar>button b{font:11px var(--font-mono)}
+.canva-notification-help{border-top:1px solid var(--line);padding:17px 11px}
+.canva-notification-help b{display:block;margin:9px 0 4px;font-size:13px}.canva-notification-help p{font-size:12px}
+.notification-timeline{display:flex;flex-direction:column;gap:0}
+.timeline-item,.canva-event{width:100%;display:flex;align-items:flex-start;gap:12px;padding:14px 11px;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--line)}
+.timeline-item:last-child{border-bottom:0}.timeline-item:hover{background:var(--surface-2)}
+.timeline-item.unread{background:var(--accent-soft)}
+.canva-event-marker{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;color:var(--accent)}
+.timeline-item>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.timeline-item b{font-size:12px}.timeline-item small{font-size:10px}.timeline-item p{font-size:12px}
+.timeline-item time{color:var(--muted);font-size:10px;white-space:nowrap}
+.canva-post.canva-skeleton-card{display:flex;flex-direction:column;gap:11px;padding:18px;background:var(--surface);border:1px solid var(--line);border-radius:7px;margin:10px 0}
+.canva-skeleton-card>div{height:14px;border-radius:4px;background:var(--surface-3);animation:wt-skeleton 1.5s ease-in-out infinite alternate}
+.canva-skeleton-card>div:nth-child(2){width:85%}.canva-skeleton-card>div:nth-child(3){width:63%}
+.canva-error{padding:20px;background:var(--danger-soft);border:1px solid var(--danger);border-radius:6px;color:var(--danger)}
+.canva-error button{color:inherit;background:transparent;border:0;text-decoration:underline}
+@keyframes wt-skeleton{from{opacity:.4}to{opacity:.9}}
+.work-teams{border:1px solid var(--line);border-radius:9px;padding:20px;background:var(--surface)}
+.work-teams-head{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;margin-bottom:19px}
+.work-teams-head h3{font-size:19px;margin:6px 0 4px}.work-teams-head p{font-size:12px}
+.teams-layout{display:grid;grid-template-columns:minmax(210px,.7fr) minmax(0,1.3fr);gap:17px}
+.teams-list,.team-workspace{padding:16px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2)}
+.teams-list{display:flex;flex-direction:column;gap:9px}
+.teams-list button{padding:9px;border:1px solid var(--line);border-radius:6px;background:var(--surface);text-align:left}
+.teams-list button:hover{border-color:var(--accent)}
+.team-create,.team-member-add,.document-create{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.team-create input,.team-member-add input,.document-create input{flex:1 1 145px;min-width:0}
+.team-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.documents-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:14px}
+.document-card{display:flex;align-items:center;gap:12px;padding:11px;border:1px solid var(--line);border-radius:7px;background:var(--surface)}
+.document-icon{display:grid;place-items:center;width:32px;height:32px;border-radius:6px;background:var(--accent-soft);color:var(--accent)}
+.canva-profile-rail button,.canva-profile-main-column button{max-width:100%}
+.dev-badge{font-size:9px;font-family:var(--font-mono);padding:1px 5px;border:1px solid var(--accent);border-radius:4px;color:var(--accent)}
