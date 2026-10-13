@@ -25,7 +25,6 @@ function useReducedMotion(){
 export default function AppShell({items,active,onNavigate,profile,profileAction,privacy,children,searchAction,title,kicker,version,mobileItems,mobileMore}:Props){
  const reduced=useReducedMotion();
  const byId=new Map(items.map(item=>[item.id,item]));
- const isSocial=['home','notifications'].includes(active);
  useEffect(()=>{
   const listener=(event:KeyboardEvent)=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='k'){event.preventDefault();searchAction()}};
   document.addEventListener('keydown',listener);
@@ -58,17 +57,8 @@ export default function AppShell({items,active,onNavigate,profile,profileAction,
      <button type="button" className="wt-top-avatar" onClick={profileAction} aria-label="Открыть профиль">{profile}</button>
     </div>
    </header>
-   <div className={`wt-content${isSocial?' wt-content-with-aside':''}`}>
+   <div className="wt-content">
     <div className="wt-content-inner"><div className="wt-page-frame">{children}</div></div>
-    {isSocial&&<aside className="wt-discovery" aria-label="Быстрые переходы">
-     <section className="wt-discovery-block"><span className="wt-discovery-overline">WTINKER / СЕТЬ</span><h2>Твой круг</h2><p>Люди, опыт и разговоры вокруг работы.</p>
-      <button onClick={()=>onNavigate('people')}><Icon name="people" size={17}/><span>Найти коллег</span><Icon name="chevronRight" size={15}/></button>
-      <button onClick={()=>onNavigate('communities')}><Icon name="communities" size={17}/><span>Сообщества</span><Icon name="chevronRight" size={15}/></button>
-      <button onClick={()=>onNavigate('chat')}><Icon name="chat" size={17}/><span>Мои сообщения</span><Icon name="chevronRight" size={15}/></button>
-     </section>
-     <section className="wt-discovery-block wt-discovery-work"><span className="wt-discovery-overline">РАБОЧИЕ ИНСТРУМЕНТЫ</span><h3>Дела на сегодня</h3><p>Смена, выплаты и отпуск остаются под рукой.</p><button onClick={()=>onNavigate('work')}><Icon name="work" size={17}/><span>Открыть рабочую область</span><Icon name="chevronRight" size={15}/></button></section>
-     <p className="wt-discovery-footnote">WTinker · пространство для тех, кто работает</p>
-    </aside>}
    </div>
   </main>
   <nav className="wt-mobile-nav" aria-label="Быстрая мобильная навигация">

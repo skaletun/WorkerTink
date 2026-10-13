@@ -56,7 +56,7 @@ export default function HomeView({state,patch,onNotice,go}:Props){
   <header className="wt-home-opening">
    <span className="wt-overline">ЛИЧНОЕ ПРОСТРАНСТВО / {now.toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}</span>
    <h2>Привет, {state.profile.name.split(' ')[0]||'коллега'}<span className="wt-greeting-dot">.</span></h2>
-   <p>Твоя сеть и рабочий день — рядом. Начни с людей, новостей или своего графика.</p>
+   <p>Люди, смены и деньги — всё важное для рабочего дня в одном месте.</p>
    <div className="wt-home-launch">
     <button className="wt-button primary" onClick={()=>go('social')}><Icon name="social" size={18}/>К ленте</button>
     <button className="wt-button secondary" onClick={()=>go('people')}><Icon name="people" size={18}/>Найти людей</button>
@@ -77,26 +77,32 @@ export default function HomeView({state,patch,onNotice,go}:Props){
     <section className="wt-home-section">
      <div className="wt-section-heading"><div><span className="wt-overline">РАСЧЁТЫ</span><h3>Доход и планы</h3></div><button className="wt-link-button" onClick={()=>go('pay')}>Зарплата <Icon name="chevronRight" size={16}/></button></div>
      <div className="wt-home-forecast"><div><span>Прогноз выплат</span><strong>{formatMoney(forecast.net)}</strong><small>За {forecastMonths} мес. · {formatMoney(forecast.avg)} в среднем за месяц</small></div><label htmlFor="wt-forecast-range">Горизонт: {forecastMonths} мес.</label><input id="wt-forecast-range" type="range" min="1" max="12" value={forecastMonths} onChange={e=>setForecastMonths(Number(e.target.value))}/></div>
+     <details className="wt-home-disclosure"><summary>Изменить условия расчёта <Icon name="chevronDown" size={16}/></summary>
      <div className="wt-home-planner">
       <div className="wt-tool-heading"><span className="wt-overline">Сценарий выплаты</span><h4>Если изменить условия</h4><strong>{formatMoney(scenario.net)}</strong></div>
       <div className="wt-form-pair"><label>Оклад<input type="number" min="0" value={scenarioSalary} onChange={e=>setScenarioSalary(Number(e.target.value)||0)}/></label><label>Ночная доплата · {scenarioNight}%<input type="range" min="0" max="100" value={scenarioNight} onChange={e=>setScenarioNight(Number(e.target.value))}/></label></div>
      </div>
+     </details>
     </section>
     <section className="wt-home-section">
      <div className="wt-section-heading"><div><span className="wt-overline">Спланировать заранее</span><h3>Отпуск и больничный</h3></div><button className="wt-link-button" onClick={()=>go('absence')}>Отсутствия <Icon name="chevronRight" size={16}/></button></div>
+     <details className="wt-home-disclosure"><summary>Рассчитать отпуск и больничный <Icon name="chevronDown" size={16}/></summary>
      <div className="wt-home-planner">
       <div className="wt-form-pair"><label>Начало отпуска<input type="date" value={vacStart} onChange={e=>setVacStart(e.target.value)}/></label><label>Календарных дней<input type="number" min="1" max="60" value={vacLength} onChange={e=>setVacLength(Math.max(1,Number(e.target.value)||1))}/></label></div>
       <p>{plannedVacation?`${plannedVacation.days} дней по расчёту · останется ${Math.round(plannedVacation.balance)} дней`:'Выберите дату начала — остаток рассчитается автоматически.'}</p>
       <div className="wt-sick-inline"><label>Больничный · дней<input type="number" min="1" max="365" value={sickDays} onChange={e=>setSickDays(Math.max(1,Number(e.target.value)||1))}/></label><div><span>Оценка выплаты · {Math.round(sickRate*100)}%</span><strong>{formatMoney(sickPay)}</strong></div></div>
      </div>
+     </details>
     </section>
    </div>
    <aside className="wt-home-aside">
     <section className="wt-home-section wt-home-advice"><div className="wt-section-heading"><div><span className="wt-overline">КОНТЕКСТ</span><h3>Стоит проверить</h3></div></div><ul>{tips.length?tips.map((text,i)=><li key={i}>{text}</li>):<li>График и расчёты готовы. Посмотрите, что нового у коллег.</li>}</ul></section>
     <section className="wt-home-section"><div className="wt-section-heading"><div><span className="wt-overline">ЗАМЕТКА К СМЕНЕ</span><h3>Сохранить мысль</h3></div></div><label className="wt-sr-only" htmlFor="wt-quick-note">Текст заметки</label><textarea id="wt-quick-note" value={tip} onChange={e=>setTip(e.target.value)} placeholder="Что важно не забыть после смены?"/><button className="wt-button primary" disabled={!tip.trim()} onClick={saveTip}>Сохранить заметку</button></section>
+    <section className="wt-home-section"><span className="wt-overline">ЗА ГОД</span><h3>{formatMoney(year.net)}</h3><p>Чистый доход за {yearNumber} год по вашим настройкам.</p></section>
+    <details className="wt-home-utility"><summary><span><Icon name="shield" size={18}/> Данные и безопасность</span><Icon name="chevronDown" size={16}/></summary>
     <section className="wt-home-section"><div className="wt-section-heading"><div><span className="wt-overline">Резервная копия</span><h3>Ваши данные</h3></div></div><p>Данные шифруются на устройстве перед экспортом.</p><label htmlFor="wt-backup-password">Пароль шифрования</label><input id="wt-backup-password" type="password" value={backupPassword} onChange={e=>setBackupPassword(e.target.value)} autoComplete="new-password"/><button className="wt-button secondary" onClick={()=>void backup()}>Создать копию <Icon name="download" size={16}/></button></section>
     <section className="wt-home-section wt-home-security"><span className="wt-overline">Безопасность</span><h3>Аккаунт и защита</h3><p>OnePass: {state.onePassEnabled?'включён':'выключен'}. Личные сообщения используют E2E-шифрование.</p><button className="wt-button secondary" onClick={()=>go('settings')}>Настройки безопасности</button></section>
-    <section className="wt-home-section"><span className="wt-overline">ЗА ГОД</span><h3>{formatMoney(year.net)}</h3><p>Чистый доход за {yearNumber} год по вашим настройкам.</p></section>
+    </details>
    </aside>
   </div>
  </section>;
