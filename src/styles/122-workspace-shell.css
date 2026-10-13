@@ -104,3 +104,5 @@
  .wt-os-shell .pwa-install-banner{left:9px;bottom:calc(77px + env(safe-area-inset-bottom))}
 }
 @media(prefers-reduced-motion:reduce){.wt-os-shell *, .wt-os-shell *::before{scroll-behavior:auto!important}}
+.wt-os-shell .wt-skip{top:-120px;transform:none}
+.wt-os-shell .wt-skip:focus-visible{top:12px}
