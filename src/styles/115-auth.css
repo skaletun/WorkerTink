@@ -1,0 +1,58 @@
+/* WTinker identity: confident, accessible signup and sign-in surfaces. */
+.wt-auth-screen{background:var(--canvas);align-items:stretch}
+.wt-auth-aside{position:relative;align-items:flex-start;gap:21px;padding:clamp(38px,6.2vw,96px);background:#121f3b;color:#f8fbff}
+.wt-auth-aside .wt-auth-mark{width:59px;height:59px;border-radius:15px;font-size:33px;background:#2e60df}
+.wt-auth-aside .eyebrow{color:#93acd7;letter-spacing:.12em}
+.wt-auth-aside h2{max-width:12ch;font-size:clamp(38px,4.2vw,61px);line-height:1.12;font-weight:760;letter-spacing:-.06em;color:#f8fbff}
+.wt-auth-aside p{max-width:42ch;font-size:15px;line-height:1.7;color:#bac8df}
+.wt-auth-points{display:flex;flex-wrap:wrap;gap:8px 16px;margin:15px 0 0;padding:18px 0 0;border-top:1px solid #384967}
+.wt-auth-points>span{display:flex;align-items:center;gap:9px;font-size:12px;color:#cdd9eb}
+.wt-auth-points>span svg{color:#9ab8ff}
+.wt-auth-screen .wt-auth-card{width:min(calc(100% - 50px),510px);padding:26px;border-radius:16px;box-shadow:0 14px 44px rgba(17,34,55,.055)}
+.registration-card .setup-brand{gap:11px;margin-bottom:21px}
+.registration-card .setup-brand-mark{width:36px;height:36px;font-size:22px;border-radius:9px}
+.registration-card .setup-brand>span:last-child{font-size:18px;font-weight:750;letter-spacing:-.04em}
+.registration-hero{gap:8px;margin-bottom:19px}
+.registration-hero .eyebrow{font-size:11px;color:var(--accent);letter-spacing:.1em}
+.registration-hero h1{font-size:clamp(27px,2.8vw,35px);line-height:1.14;letter-spacing:-.053em}
+.registration-hero>p{font-size:13px;line-height:1.6;max-width:55ch}
+.registration-avatar{gap:16px;margin-bottom:18px;min-height:59px}
+.registration-avatar .avatar-actions{gap:8px}
+.registration-avatar .avatar-actions>*{font-size:12px}
+.avatar-upload{min-height:38px;padding:8px 14px;border:1px solid var(--line-strong);border-radius:9px;background:var(--surface-2);color:var(--ink-2);font-weight:700}
+.avatar-upload:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.registration-fields,.auth-fields{gap:15px}
+.registration-fields label,.auth-fields label{gap:7px;color:var(--ink);font-size:13px;font-weight:690}
+.registration-fields input,.auth-fields input{min-height:45px;border:1px solid var(--line-strong);border-radius:9px;background:var(--surface);font-size:14px;transition:border-color .15s,box-shadow .15s}
+.registration-fields input:focus,.auth-fields input:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.registration-fields label small,.auth-fields label small{font-size:11px;line-height:1.45;color:var(--muted);font-weight:450}
+.rules-consent{display:flex;align-items:flex-start;flex-direction:row;gap:10px;padding:14px;margin:18px 0 4px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;color:var(--ink-2);font-size:12px;line-height:1.55;font-weight:480}
+.rules-consent input[type=checkbox]{flex:0 0 auto;width:17px;height:17px;margin:2px 0 0}
+.rules-consent span{flex:1;min-width:0}
+.rules-consent a{font-weight:750}
+.registration-submit{min-height:46px;border-radius:9px;margin-top:11px;font-size:14px}
+.registration-submit.secondary-auth-action{background:transparent;border:1px solid var(--line);color:var(--ink-2);margin-top:8px}
+.registration-submit.secondary-auth-action:hover{background:var(--surface-2)}
+.registration-card .setup-foot{margin:16px 0 0;padding-top:13px;border-top:1px solid var(--line);font-size:11px;line-height:1.6;color:var(--muted)}
+.registration-card .auth-foot-actions{margin-top:16px}
+@media(min-width:761px){
+ .registration-card:not(.auth-card) .registration-fields{gap:13px}
+ .registration-card:not(.auth-card) .registration-fields label{min-width:0}
+ .registration-card:not(.auth-card) .registration-fields>:nth-child(3){grid-column:1/-1}
+}
+@media(max-width:760px){
+ .wt-auth-screen{min-height:100dvh}
+ .wt-auth-screen>.wt-auth-card{width:min(calc(100% - 28px),500px);padding:22px;margin:14px auto;border-radius:15px}
+ .registration-card .setup-brand{margin-bottom:22px}
+ .registration-hero{margin-bottom:19px}
+ .registration-hero h1{font-size:30px}
+ .registration-hero>p{font-size:13px}
+ .registration-card .setup-foot{font-size:11px}
+ .registration-fields{gap:15px}
+ .rules-consent{padding:13px;margin-top:17px}
+}
+@media(max-width:390px){
+ .wt-auth-screen>.registration-card.wt-auth-card{padding:19px}
+ .registration-hero h1{font-size:28px}
+ .rules-consent{padding:11px;gap:8px}
+}
