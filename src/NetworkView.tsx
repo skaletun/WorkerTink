@@ -26,17 +26,17 @@ export default function NetworkView({token,profile,onNotice,onChat,onProfile,ini
  return <section className="canva-page canva-network redesign-page redesign-network">
   <header className="canva-page-head canva-network-head">
     <div>
-      <span className="canva-kicker">WTINKER / ЛЕНТА</span>
-      <h1>Лента</h1>
-      <p>Рабочие новости, обсуждения, вложения и запросы на смены в одной ленте.</p>
+      <span className="canva-kicker">WTINKER / СООБЩЕСТВО</span>
+      <h1>{area==='people'?'Люди':area==='groups'?'Сообщества':area==='events'?'События':area==='swaps'?'Обмен сменами':area==='saved'?'Сохранённое':'Лента'}</h1>
+      <p>{area==='people'?'Находи коллег по имени, username и WTinkID и развивай профессиональные связи.':area==='groups'?'Профессиональные сообщества и команды для совместной работы.':area==='events'?'Ближайшие события и встречи сообщества.':area==='swaps'?'Заявки на обмен сменами и помощь коллегам.':area==='saved'?'Публикации, к которым хочется вернуться.':'Новости, рабочие обсуждения и опыт коллег — в одном месте.'}</p>
     </div>
-    <div className="canva-head-actions">
-      <button className="canva-button" onClick={()=>setArea('people')}>Найти человека</button>
-      <button className="canva-button canva-button-primary" onClick={()=>setArea('groups')}>Сообщества</button>
-    </div>
+    {area==='feed'&&<div className="canva-head-actions">
+      <button className="canva-button" onClick={()=>setArea('people')}><Icon name="people" size={16}/> Найти коллег</button>
+      <button className="canva-button canva-button-primary" onClick={()=>setArea('groups')}><Icon name="communities" size={16}/> Сообщества</button>
+    </div>}
   </header>
   <nav className="canva-filter-row" aria-label="Разделы сети">
-    {([["feed","Лента"],["people","Люди"],["groups","Сообщества"],["events","События"],["swaps","Обмен сменами"],["saved","Сохранённое"]] as [Area,string][]).map(([id,label])=><button key={id} className={area===id?"active":""} onClick={()=>setArea(id)}>{label}</button>)}
+    {([["feed","Лента"],["people","Люди"],["groups","Сообщества"],["events","События"],["swaps","Обмен сменами"],["saved","Сохранённое"]] as [Area,string][]).map(([id,label])=><button key={id} className={area===id?"active":""} aria-current={area===id?"page":undefined} onClick={()=>setArea(id)}>{label}</button>)}
   </nav>
   {area==='feed'&&<div className="canva-network-grid">
     <div className="canva-feed-column">
