@@ -1,0 +1,68 @@
+/* WTinker / Split calendar planner — month control and facts are a left-hand instrument rail. */
+.wt-shift-planner{min-width:0}
+.wt-shift-planner-overline{display:block;font:770 10px var(--font-mono);letter-spacing:.1em;color:var(--wt-desk-accent)}
+.wt-shift-planner-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:0 0 25px;border-bottom:2px solid var(--wt-desk-ink);margin-bottom:24px}
+.wt-shift-planner-heading h1{font-size:clamp(38px,5vw,63px);font-weight:790;line-height:.99;letter-spacing:-.065em;margin:12px 0}
+.wt-shift-planner-heading h1 em{display:block;font:italic 400 clamp(36px,4.5vw,55px)/1 Georgia,serif;letter-spacing:-.07em;color:var(--wt-desk-accent)}
+.wt-shift-planner-heading p{max-width:50ch;font-size:12px;line-height:1.6;color:var(--wt-desk-muted)}
+.wt-shift-planner-heading-actions{display:flex;gap:8px;flex-wrap:wrap}
+.wt-shift-planner-heading-actions button{display:flex;align-items:center;gap:7px;min-height:42px;padding:9px 12px;border:1px solid var(--wt-desk-line);border-radius:9px;background:var(--wt-desk-paper);font-size:11px;font-weight:750}
+.wt-shift-planner-heading-actions button:first-child{background:var(--wt-desk-accent);border-color:var(--wt-desk-accent);color:var(--wt-desk-accent-ink)}
+.wt-shift-planner-layout{display:grid;grid-template-columns:minmax(200px,.43fr) minmax(0,1.5fr);gap:21px;align-items:start}
+.wt-shift-planner-rail{display:flex;flex-direction:column;gap:0;background:var(--wt-desk-panel);border:1px solid var(--wt-desk-line);border-radius:12px;overflow:hidden;min-width:0}
+.wt-shift-rail-top{display:flex;flex-direction:column;align-items:flex-start;gap:9px;padding:22px;border-bottom:1px solid var(--wt-desk-line)}
+.wt-shift-rail-top>strong{font-size:clamp(25px,2.5vw,33px);line-height:1.1;letter-spacing:-.055em}
+.wt-shift-rail-top>small{font-size:12px;color:var(--wt-desk-muted)}
+.wt-shift-rail-controls{display:flex;gap:8px;margin-top:13px}
+.wt-shift-rail-controls button{display:grid;place-items:center;width:45px;height:40px;background:var(--wt-desk-paper);border:1px solid var(--wt-desk-line);border-radius:9px}
+.wt-shift-rail-stat{display:flex;flex-direction:column;gap:9px;padding:23px 22px;border-bottom:1px solid var(--wt-desk-line)}
+.wt-shift-rail-stat>span{font:730 10px var(--font-mono);letter-spacing:.08em;color:var(--wt-desk-muted)}
+.wt-shift-rail-stat>strong{font-size:clamp(26px,2.7vw,37px);font-weight:800;line-height:1.1;letter-spacing:-.06em;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.wt-shift-rail-stat button{display:flex;align-items:center;gap:5px;padding:6px 0;border:0;background:transparent;font-size:11px;font-weight:750;color:var(--wt-desk-accent)}
+.wt-shift-rail-facts{padding:22px}
+.wt-shift-rail-facts>.wt-shift-planner-overline{margin-bottom:16px}
+.wt-shift-rail-facts>div{display:flex;align-items:baseline;gap:12px;padding:12px 0;border-bottom:1px solid var(--wt-desk-line)}
+.wt-shift-rail-facts>div>b{font-size:24px;letter-spacing:-.05em;line-height:1}
+.wt-shift-rail-facts>div>span{font-size:11px;color:var(--wt-desk-muted)}
+.wt-shift-rail-guidance{display:flex;flex-direction:column;gap:12px;padding:20px 22px;background:var(--wt-desk-paper);border-top:1px solid var(--wt-desk-line)}
+.wt-shift-rail-guidance p{font-size:11px;line-height:1.6;color:var(--wt-desk-muted)}
+.wt-shift-rail-guidance button{display:flex;align-items:center;gap:5px;padding:6px 0;border:0;background:transparent;font-size:11px;font-weight:750;color:var(--wt-desk-accent)}
+.wt-shift-planner-grid{min-width:0;padding:23px!important;background:var(--wt-desk-paper);border:1px solid var(--wt-desk-line);border-radius:12px}
+.wt-shift-planner-grid-title{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px}
+.wt-shift-planner-grid-title h2{font-size:clamp(25px,3vw,38px);margin:7px 0 0;letter-spacing:-.05em}
+.wt-shift-planner-grid-title h2 small{font-size:15px;font-weight:600;color:var(--wt-desk-muted)}
+.wt-shift-planner-grid-title>div:last-child{display:flex;gap:7px}
+.wt-shift-planner-grid-title button{display:grid;place-items:center;width:39px;height:39px;border:1px solid var(--wt-desk-line);border-radius:9px;background:var(--wt-desk-paper)}
+.wt-shift-planner-grid .canva-calendar-week{gap:4px}
+.wt-shift-planner-grid .canva-calendar-grid{gap:5px}
+.wt-shift-planner-grid .calendar-day{border-radius:7px;min-height:76px}
+.wt-shift-planner-legend{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:19px;padding-top:17px;border-top:1px solid var(--wt-desk-line)}
+.wt-shift-planner-legend span{font-size:10px;color:var(--wt-desk-muted)}
+@media(max-width:1190px){
+ .wt-shift-planner-layout{grid-template-columns:180px minmax(0,1fr);gap:15px}
+ .wt-shift-rail-top,.wt-shift-rail-stat,.wt-shift-rail-facts,.wt-shift-rail-guidance{padding:17px}
+ .wt-shift-planner-grid{padding:16px!important}
+}
+@media(max-width:900px){
+ .wt-shift-planner-layout{grid-template-columns:1fr}
+ .wt-shift-planner-rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .wt-shift-rail-top,.wt-shift-rail-stat{border-bottom:1px solid var(--wt-desk-line)}
+ .wt-shift-rail-facts{border-right:1px solid var(--wt-desk-line)}
+}
+@media(max-width:600px){
+ .wt-shift-planner-heading{flex-direction:column;align-items:flex-start}
+ .wt-shift-planner-heading h1{font-size:44px}
+ .wt-shift-planner-heading h1 em{font-size:40px}
+ .wt-shift-planner-rail{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .wt-shift-rail-top,.wt-shift-rail-stat,.wt-shift-rail-facts,.wt-shift-rail-guidance{padding:15px}
+ .wt-shift-rail-top>strong{font-size:25px}
+ .wt-shift-rail-stat>strong{font-size:24px}
+ .wt-shift-rail-guidance{display:none}
+ .wt-shift-rail-facts{border-right:0;grid-column:1/-1}
+ .wt-shift-rail-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+ .wt-shift-rail-facts>.wt-shift-planner-overline{grid-column:1/-1;margin:0}
+ .wt-shift-rail-facts>div{display:flex;flex-direction:column;gap:5px}
+ .wt-shift-planner-grid .calendar-day{min-height:66px}
+ .wt-shift-planner-grid .canva-calendar-grid{gap:3px}
+ .wt-shift-planner-grid{padding:12px!important}
+}
