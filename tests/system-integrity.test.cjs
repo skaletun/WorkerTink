@@ -30,8 +30,8 @@ const notifications=fs.readFileSync(path.join(root,'src/NotificationsView.tsx'),
 const chats=fs.readFileSync(path.join(root,'src/ChatsHub.tsx'),'utf8');
 const chat=fs.readFileSync(path.join(root,'src/ChatView.tsx'),'utf8');
 const groupChat=fs.readFileSync(path.join(root,'src/GroupChatView.tsx'),'utf8');
-if(shell.includes('v7-shell')||!shell.includes('wt-os-shell')||!shell.includes('wt-os-mobile-dock')) throw new Error('new application dock shell was not implemented');
-if(!ui.includes('.wt-os-shell')||!ui.includes('.wt-os-dock')||!ui.includes('.wt-os-directory')||!ui.includes('.wt-control-hero')) throw new Error('new structural workspace styles missing');
+if(!shell.includes('atlas-app')||!shell.includes('atlas-launcher')||!shell.includes('atlas-tray')) throw new Error('fullscreen atlas navigation missing');
+if(!ui.includes('.atlas-app')||!ui.includes('.atlas-orbit-ring')||!ui.includes('.atlas-app-grid')) throw new Error('atlas spatial design system missing');
 if(!ui.includes('.social-hero')||!ui.includes('.work-kpis')||!ui.includes('.notification-timeline')) throw new Error('new page design system missing');
 for(const legacy of ['styles.css','design.css','v7.css','rebuild.css']) if(fs.existsSync(path.join(root,'src',legacy))) throw new Error(`legacy stylesheet remains: ${legacy}`);
 if(!appFeatures.includes('BannerEditorModal')) throw new Error('profile banner editor missing');
@@ -47,18 +47,18 @@ if(!networkParts.includes('post-attachment-v2')) throw new Error('flexible post 
 const work=fs.readFileSync(path.join(root,'src/WorkHubView.tsx'),'utf8');
 const rebuildCss=ui;
 
-for(const x of ['wt-control-room','wt-control-hero','wt-roster-lanes','wt-control-workbench','wt-control-notebook','scenarioSalary','plannedVacation','encryptBackup']) if(!home.includes(x)) throw new Error('new workday home surface missing '+x);
+for(const x of ['atlas-home','atlas-world','atlas-orbit-ring','atlas-app-grid','atlas-lab','scenarioSalary','plannedVacation','encryptBackup']) if(!home.includes(x)) throw new Error('new workday home surface missing '+x);
 for(const x of ['redesign-notifications','notification-timeline','timeline-item']) if(!notifications.includes(x)) throw new Error('rebuilt notification surface missing '+x);
 for(const x of ['redesign-chats','chats-mode-nav','Формат разговора']) if(!chats.includes(x)) throw new Error('rebuilt chats surface missing '+x);
 if(!chat.includes('chat-page-rebuilt')) throw new Error('rebuilt personal chat surface missing');
 if(!groupChat.includes('URL.revokeObjectURL')||!groupChat.includes('mediaUrlsRef')) throw new Error('group chat media object URL cleanup missing');
 if(!chat.includes('is-empty')) throw new Error('chat empty-state contract missing');
 if(!work.includes('redesign-work')||!work.includes('wt-operations-calendar-grid')||!work.includes('wt-operations-upcoming')) throw new Error('dispatch-room structure missing');
-if(!shell.includes('wt-os-dock')||!shell.includes('wt-os-directory')||!shell.includes('wt-os-stage')) throw new Error('workspace architecture missing');
+if(!shell.includes('atlas-launcher-groups')||!shell.includes('atlas-route-stage')) throw new Error('spatial launcher architecture missing');
 if(!network.includes('wt-network-index')||!network.includes('wt-network-content')) throw new Error('social studio structure missing');
 if(!workViews.includes('wt-pay-console-statement')||!workViews.includes('wt-pay-console-sidebar')) throw new Error('financial statement architecture missing');
 if(!/\.calendar-layout\s*\{[^}]*display\s*:\s*grid/.test(ui)) throw new Error('new calendar layout missing');
-if(!/\.wt-os-mobile-dock\s*\{[^}]*position\s*:\s*fixed/.test(ui)) throw new Error('new mobile navigation missing');
+if(!/\.atlas-tray\s*\{[^}]*position\s*:\s*fixed/.test(ui)) throw new Error('floating atlas tray missing');
 if(!/\.social-layout\s*\{[^}]*display\s*:\s*grid/.test(ui)) throw new Error('new social layout missing');
 if(!/\.work-grid\s*\{[^}]*display\s*:\s*grid/.test(ui)) throw new Error('new work layout missing');
 if(!networkParts.includes('PostAttachment')||!network.includes('shift-note-editor')||!networkParts.includes('post-attachments-v2')||!networkParts.includes('groupAttachments')) throw new Error('rich post surface missing');
