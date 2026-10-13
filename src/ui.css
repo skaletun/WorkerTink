@@ -1,7 +1,5 @@
 @import './styles/100-foundation.css';
 @import './styles/101-theme.css';
-@import './styles/103-navigation.css';
-@import './styles/104-layout.css';
 @import './styles/105-controls.css';
 @import './styles/106-surfaces.css';
 @import './styles/107-feature-layouts.css';
@@ -22,3 +20,4 @@
 @import './styles/124-dispatch-room.css';
 @import './styles/125-network-studio.css';
 @import './styles/126-payroll-statement.css';
+@import './styles/127-shift-planner.css';
