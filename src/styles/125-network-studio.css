@@ -1,0 +1,86 @@
+/* WTinker / Social studio 9 — navigation is a dedicated editorial index. */
+.wt-network-studio{min-width:0}
+.wt-network-layout{display:grid;grid-template-columns:177px minmax(0,1fr);align-items:start;gap:25px;min-width:0}
+.wt-network-index{position:sticky;top:87px;align-self:start;display:flex;flex-direction:column;gap:0;min-width:0;border-right:1px solid var(--wt-desk-line);padding:4px 15px 20px 0}
+.wt-network-index-head{display:flex;flex-direction:column;gap:13px;padding:0 0 21px}
+.wt-network-index-serial,.wt-network-story-kicker{font:780 9px var(--font-mono);letter-spacing:.12em;color:var(--wt-desk-accent)}
+.wt-network-index-head>strong{font-size:30px;font-weight:820;letter-spacing:-.065em;line-height:1.03;color:var(--wt-desk-ink)}
+.wt-network-index-head>strong em{font:italic 400 28px Georgia,serif;color:var(--wt-desk-accent);letter-spacing:-.06em}
+.wt-network-index-head>p{font-size:11px;line-height:1.55;color:var(--wt-desk-muted)}
+.wt-network-index-nav{display:flex;flex-direction:column;gap:3px;padding:13px 0;border-top:2px solid var(--wt-desk-ink)}
+.wt-network-index-nav>button{display:flex;align-items:center;gap:9px;width:100%;min-height:42px;padding:8px 10px;border:0;border-radius:8px;background:transparent;text-align:left;color:var(--wt-desk-muted)}
+.wt-network-index-nav>button>span{min-width:0;flex:1;font-size:11px;font-weight:730}
+.wt-network-index-nav>button>svg:last-child{flex:0 0 auto;opacity:.45}
+.wt-network-index-nav>button:hover{background:var(--wt-desk-panel);color:var(--wt-desk-ink)}
+.wt-network-index-nav>button.is-active{background:var(--wt-desk-ink);color:var(--wt-desk-paper)}
+.wt-network-index-foot{display:flex;flex-direction:column;gap:12px;padding:22px 6px;border-top:1px solid var(--wt-desk-line)}
+.wt-network-index-foot>span{font:750 10px var(--font-mono);letter-spacing:.06em;color:var(--wt-desk-accent)}
+.wt-network-index-foot>strong{font-size:23px;letter-spacing:-.06em}
+.wt-network-index-foot>strong small{font-size:10px;font-weight:600;letter-spacing:0;color:var(--wt-desk-muted)}
+.wt-network-index-foot button{display:inline-flex;align-items:center;gap:7px;width:max-content;padding:6px 0;border:0;background:transparent;font-size:11px;color:var(--wt-desk-accent);font-weight:730}
+.wt-network-content{min-width:0}
+.wt-network-story-head{padding:2px 0 21px;margin-bottom:20px;border-bottom:2px solid var(--wt-desk-ink)}
+.wt-network-story-head h2{font-size:clamp(32px,3.7vw,51px);margin:9px 0 10px;letter-spacing:-.06em;line-height:1.05}
+.wt-network-story-head p{font-size:12px;line-height:1.6;color:var(--wt-desk-muted)}
+.wt-network-studio .canva-network-grid{grid-template-columns:minmax(0,1fr) 190px;gap:20px}
+.wt-network-studio .canva-network-rail{gap:11px}
+.wt-network-studio .canva-rail-card{padding:15px;border:1px solid var(--wt-desk-line);border-radius:10px;background:var(--wt-desk-panel)}
+.wt-network-studio .canva-rail-card:first-child{border-top:2px solid var(--wt-desk-ink)}
+.wt-network-studio .canva-rail-head span{font-size:12px}
+.wt-network-studio .canva-rail-accent strong{font-size:28px}
+.wt-network-studio .canva-feed-column{min-width:0}
+.wt-network-studio .canva-composer{border:1px solid var(--wt-desk-line);border-radius:11px;padding:18px;background:var(--wt-desk-paper);box-shadow:none}
+.wt-network-studio .canva-composer[open]{border-color:var(--wt-desk-accent)}
+.wt-network-studio .canva-composer-head{gap:11px}
+.wt-network-studio .canva-composer-trigger{border-radius:7px;background:var(--wt-desk-ink);color:var(--wt-desk-paper);border-color:var(--wt-desk-ink)}
+.wt-network-studio .canva-composer-head:hover .canva-composer-trigger{background:var(--wt-desk-accent);color:var(--wt-desk-accent-ink)}
+.wt-network-studio .post-v2{padding:24px 1px;border-color:var(--wt-desk-line);background:transparent}
+.wt-network-studio .post-v2:first-child{border-top:0}
+.wt-network-studio .post-body-v2{font-size:14px;line-height:1.75}
+.wt-network-studio .canva-people-grid{grid-template-columns:1fr}
+.wt-network-studio .canva-people-page,.wt-network-studio .network-section-v2{min-width:0}
+.wt-network-studio .canva-directory-card,.wt-network-studio .canva-community-directory{padding:19px;border-radius:10px}
+.wt-network-studio .canva-split-head{flex-direction:column;align-items:stretch}
+.wt-network-studio .canva-search{width:100%}
+.wt-network-studio .canva-search input{flex:1;min-width:0}
+.wt-network-studio .canva-person{min-width:0}
+@media(max-width:1460px){
+ .wt-network-studio .canva-network-grid{grid-template-columns:1fr}
+ .wt-network-studio .canva-network-rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .wt-network-studio .canva-network-rail>.canva-rail-accent{grid-column:1/-1}
+}
+@media(max-width:1110px){
+ .wt-network-layout{grid-template-columns:150px minmax(0,1fr);gap:18px}
+ .wt-network-index{padding-right:11px}
+ .wt-network-index-head>strong{font-size:26px}
+ .wt-network-index-nav>button{padding-inline:7px}
+}
+@media(max-width:780px){
+ .wt-network-layout{grid-template-columns:1fr}
+ .wt-network-index{position:static;border:0;padding:0}
+ .wt-network-index-head{padding:0 0 11px}
+ .wt-network-index-head>strong{font-size:25px}
+ .wt-network-index-head>strong br{display:none}
+ .wt-network-index-head>strong em{font-size:25px}
+ .wt-network-index-head>p{display:none}
+ .wt-network-index-nav{flex-direction:row;gap:5px;padding:9px 0;border-top:1px solid var(--wt-desk-line);overflow-x:auto;scrollbar-width:thin;max-width:100%}
+ .wt-network-index-nav>button{width:auto;min-width:max-content;min-height:39px;padding:8px 10px;flex:0 0 auto}
+ .wt-network-index-nav>button>span{flex:none}
+ .wt-network-index-nav>button>svg:last-child{display:none}
+ .wt-network-index-foot{display:none}
+ .wt-network-story-head{margin-bottom:15px}
+ .wt-network-story-head h2{font-size:35px}
+ .wt-network-studio .canva-network-rail{grid-template-columns:1fr}
+ .wt-network-studio .canva-network-rail>.canva-rail-accent{grid-column:auto}
+}
+@media(max-width:480px){
+ .wt-network-index-head{gap:7px}
+ .wt-network-index-head>strong{font-size:21px}
+ .wt-network-index-head>strong em{font-size:21px}
+ .wt-network-story-head h2{font-size:32px}
+ .wt-network-studio .canva-composer{padding:13px}
+ .wt-network-studio .canva-composer-trigger{padding:7px}
+ .wt-network-studio .canva-composer-head>div>b{font-size:12px}
+ .wt-network-studio .canva-composer-head>div>span{font-size:10px}
+ .wt-network-studio .post-v2{padding:19px 1px}
+}
