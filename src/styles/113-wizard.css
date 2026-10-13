@@ -139,3 +139,35 @@
  .wt-wizard-step>span:last-child{font-size:10px}
 }
 @media(prefers-reduced-motion:reduce){.wt-wizard *{scroll-behavior:auto!important;transition:none!important}}
+
+/* Onboarding supports the selected system theme without losing contrast. */
+:root[data-theme=dark] .wt-setup-screen.wt-wizard{background:#111927;color:#edf3fc}
+:root[data-theme=dark] .wt-wizard-step{border-color:#344256;color:#94a3b8}
+:root[data-theme=dark] .wt-wizard-step.is-current{border-color:#94aeff;color:#edf3fc}
+:root[data-theme=dark] .wt-wizard-step.is-done{border-color:#6ba68b;color:#9cdec0}
+:root[data-theme=dark] .wt-wizard-heading>p{color:#a7b5c8}
+:root[data-theme=dark] .wt-wizard-field{color:#cbd8ea}
+:root[data-theme=dark] .wt-wizard-field>span:not(.wt-wizard-field-title),
+:root[data-theme=dark] .wt-wizard-field>small{color:#9faec4}
+:root[data-theme=dark] .wt-wizard-field :is(input,select){background:#1c293a;color:#f0f5ff;border-color:#47576b}
+:root[data-theme=dark] .wt-wizard-field :is(input,select):focus{border-color:#9bb2ff;box-shadow:0 0 0 3px #31416e}
+:root[data-theme=dark] .wt-wizard-salary{background:#1e2e4b;border-color:#405c91}
+:root[data-theme=dark] .wt-wizard-schedule{background:#192538;border-color:#3b4b61;color:#eef3fc}
+:root[data-theme=dark] .wt-wizard-schedule:hover{background:#243651}
+:root[data-theme=dark] .wt-wizard-schedule.is-active{background:#263c65;border-color:#94aeff;box-shadow:inset 0 0 0 1px #94aeff}
+:root[data-theme=dark] .wt-wizard-schedule small{color:#acbad0}
+:root[data-theme=dark] .wt-wizard-cycle,:root[data-theme=dark] .wt-wizard-review-list{background:#1b2636;border-color:#38475a}
+:root[data-theme=dark] .wt-wizard-cycle-day.is-work{background:#263d67;color:#bcd0ff}
+:root[data-theme=dark] .wt-wizard-cycle-day.is-off{background:#242f3d;color:#9cabbc}
+:root[data-theme=dark] .wt-wizard-cycle-day.is-night{background:#3d3656;color:#d8c7fa}
+:root[data-theme=dark] .wt-wizard-cycle>div:first-child>span,:root[data-theme=dark] .wt-wizard-cycle>small{color:#a8b5c7}
+:root[data-theme=dark] .wt-wizard-tip{background:#1c293c;border-color:#36465b}
+:root[data-theme=dark] .wt-wizard-tip p{color:#b2c0d4}
+:root[data-theme=dark] .wt-wizard-review-list>div{border-color:#334155}
+:root[data-theme=dark] .wt-wizard-review-list>div>span{color:#9eafc5}
+:root[data-theme=dark] .wt-wizard-review-hero{background:#233c6a}
+:root[data-theme=dark] .wt-wizard-footer{border-color:#344357}
+:root[data-theme=dark] .wt-wizard-footer-copy>strong{color:#cad5e5}
+:root[data-theme=dark] .wt-wizard-footer-copy>span{color:#8fa1b9}
+:root[data-theme=dark] .wt-wizard-button.secondary{background:#1e2b3e;color:#d9e5f6;border-color:#40516a}
+:root[data-theme=dark] .wt-wizard-button.secondary:hover{background:#2c3b50}
