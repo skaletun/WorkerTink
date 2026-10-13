@@ -26,7 +26,7 @@ export default function NetworkView({token,profile,onNotice,onChat,onProfile,ini
  return <section className="canva-page canva-network redesign-page redesign-network">
   <header className="canva-page-head canva-network-head">
     <div>
-      <span className="canva-kicker">Social Feed</span>
+      <span className="canva-kicker">WTINKER / ЛЕНТА</span>
       <h1>Лента</h1>
       <p>Рабочие новости, обсуждения, вложения и запросы на смены в одной ленте.</p>
     </div>
@@ -39,7 +39,7 @@ export default function NetworkView({token,profile,onNotice,onChat,onProfile,ini
     {([["feed","Лента"],["people","Люди"],["groups","Сообщества"],["events","События"],["swaps","Обмен сменами"],["saved","Сохранённое"]] as [Area,string][]).map(([id,label])=><button key={id} className={area===id?"active":""} onClick={()=>setArea(id)}>{label}</button>)}
   </nav>
   {area==='feed'&&<div className="canva-network-grid">
-    <main className="canva-feed-column">
+    <div className="canva-feed-column">
       <section className="canva-composer">
         <div className="canva-composer-head"><Avatar p={profile}/><div><b>{profile.name}</b><span>Что хотите рассказать коллегам?</span></div></div>
         <div className="canva-composer-tabs">
@@ -55,14 +55,14 @@ export default function NetworkView({token,profile,onNotice,onChat,onProfile,ini
     </main>
     <aside className="canva-network-rail">
       <section className="canva-rail-card">
-        <div className="canva-rail-head"><span>Trending now</span><button onClick={()=>setArea('events')}>Все</button></div>
+        <div className="canva-rail-head"><span>Сообщества сети</span><button onClick={()=>setArea('events')}>Все</button></div>
         <div className="canva-trending-list">
-          {groups.slice(0,3).map((g,i)=><button key={g.id} onClick={()=>void openGroup(g)}><strong>#{g.name.replace(/\s+/g,'')}</strong><span>{g.members} участников</span><small>{i===0?'12.3K':i===1?'8.7K':'6.2K'} публикаций</small></button>)}
+          {groups.slice(0,3).map(g=><button key={g.id} onClick={()=>void openGroup(g)}><strong>#{g.name.replace(/\s+/g,'')}</strong><span>{g.members} участников</span><small>Открыть сообщество</small></button>)}
           {!groups.length&&<p>Пока нет трендов.</p>}
         </div>
       </section>
       <section className="canva-rail-card">
-        <div className="canva-rail-head"><span>People to follow</span><button onClick={()=>setArea('people')}>Все</button></div>
+        <div className="canva-rail-head"><span>Знакомьтесь</span><button onClick={()=>setArea('people')}>Все</button></div>
         <div className="canva-people-mini">
           {people.slice(0,3).map(p=><button key={p.profile.profileId} onClick={()=>onProfile?.(p.profile)}><Avatar p={p.profile} size="sm"/><div><b>{p.profile.name}</b><small>@{p.profile.username||'username'}</small></div></button>)}
           {!people.length&&<button onClick={()=>setArea('people')}><span className="canva-mini-avatar">+</span><div><b>Найти коллег</b><small>По username или WTinkID</small></div></button>}
