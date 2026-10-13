@@ -4,7 +4,7 @@
  .wt-content-with-aside{grid-template-columns:minmax(0,1fr)}.wt-discovery{display:none}
  .wt-command-search{min-width:190px}
  .wt-work-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
- .wt-work-metrics button:nth-child(2){border-right:0}
+ .wt-work-metrics button:nth-child(2){border-right:1px solid var(--line)}
  .wt-work-metrics button:nth-child(-n+2){border-bottom:1px solid var(--line)}
 }
 @media(max-width:1020px){
@@ -81,12 +81,21 @@
  .wt-home-section h3{font-size:20px}
  .wt-home-advice li{font-size:13px}
  .wt-work-header h2{font-size:30px}.wt-work-header-actions{width:100%}
- .wt-work-metrics button{padding:17px 11px}.wt-work-metrics button:first-child{padding-left:11px}
+.wt-work-metrics{gap:8px}
+ .wt-work-metrics button{padding:16px 13px;min-height:119px}
+ .wt-work-metrics button:first-child{padding-left:13px}
  .wt-work-metrics button>strong{font-size:20px}
  .wt-work-primary,.wt-work-insights,.wt-work-notes,.wt-work-quick{padding:15px}
  .wt-work-notes li{grid-template-columns:1fr;gap:3px}
  .canva-page-head h1{font-size:24px}
- .canva-composer{padding:14px}.post-v2{padding:15px}
+ .canva-network-head .canva-head-actions{display:none}
+ .canva-composer{padding:15px}.post-v2{padding:16px}
+ .canva-composer-head{gap:10px}
+ .canva-composer-trigger{padding:8px 9px;font-size:11px}
+ .canva-feed-unavailable{padding:18px;gap:12px}
+ .canva-feed-unavailable-icon{width:37px;height:37px;flex-basis:37px}
+ .canva-feed-unavailable h3{font-size:16px}
+ .canva-feed-unavailable p{font-size:12px}
  .canva-composer-foot{gap:6px}.canva-character-count{width:100%;text-align:right}
  .canva-calendar-shell{padding:10px}
  .canva-calendar-week,.canva-calendar-grid{gap:3px}
