@@ -44,3 +44,40 @@
 .wt-work-quick>button>span:nth-child(2){flex:1;font-size:13px;font-weight:650}
 .wt-work-quick>button:last-child{border-bottom:0}
 .wt-work-teams{margin-top:24px}
+
+
+/* Work: compact metric typography and on-demand collaboration. */
+.wt-work-metrics button{border-radius:12px;gap:8px;min-height:146px;box-shadow:0 3px 15px rgba(30,49,79,.018)}
+.wt-work-metrics button:first-child{background:var(--accent-soft)}
+.wt-work-metrics button>span{font-size:11px;letter-spacing:.025em;font-weight:750;text-transform:uppercase}
+.wt-work-metrics button>strong{display:flex;align-items:baseline;flex-wrap:wrap;column-gap:5px;row-gap:0;font-variant-numeric:tabular-nums}
+.wt-work-metrics button>strong em{display:inline-block;margin-left:0;font-size:clamp(11px,1.2vw,14px);letter-spacing:0;white-space:nowrap}
+.wt-work-metrics button>small{font-size:12px;color:var(--muted);line-height:1.45}
+.wt-work-shift{gap:13px}
+.wt-work-shift:hover{background:var(--surface-2)}
+.wt-work-insights,.wt-work-primary,.wt-work-notes,.wt-work-quick{border-radius:14px}
+.wt-ring-wrap{padding:8px 0 8px}
+.wt-work-teams-entry{margin-top:20px;border:1px solid var(--line);border-radius:15px;background:var(--surface);overflow:hidden}
+.wt-work-teams-toggle{display:flex;align-items:center;gap:15px;width:100%;min-height:95px;padding:20px;border:0;background:transparent;text-align:left}
+.wt-work-teams-toggle:hover{background:var(--surface-2)}
+.wt-work-teams-icon{display:grid;place-items:center;flex:0 0 47px;width:47px;height:47px;border-radius:12px;background:var(--accent-soft);color:var(--accent)}
+.wt-work-teams-toggle-copy{display:flex;flex:1;flex-direction:column;gap:5px;min-width:0}
+.wt-work-teams-toggle-copy>strong{font-size:16px;font-weight:750}
+.wt-work-teams-toggle-copy>small{font-size:12px;line-height:1.4;color:var(--muted)}
+.wt-work-teams-cta{display:flex;align-items:center;gap:8px;flex:0 0 auto;color:var(--accent);font-size:13px;font-weight:740}
+.wt-work-teams{margin:0;padding:0 16px 16px}
+.wt-work-teams>.work-teams{border-radius:10px}
+@media(max-width:600px){
+ .wt-work-metrics{gap:9px}
+ .wt-work-metrics button{padding:15px 13px;min-height:123px}
+ .wt-work-metrics button>strong{font-size:21px;line-height:1.2;gap:3px}
+ .wt-work-metrics button>strong em{font-size:12px;white-space:normal;overflow-wrap:anywhere}
+ .wt-work-metrics button>small{font-size:11px}
+ .wt-work-teams-toggle{padding:15px;gap:11px}
+ .wt-work-teams-icon{flex-basis:39px;width:39px;height:39px}
+ .wt-work-teams-toggle-copy>strong{font-size:14px}
+ .wt-work-teams-toggle-copy>small{font-size:11px}
+ .wt-work-teams-cta{font-size:0;gap:0}
+ .wt-work-teams-cta svg{width:19px;height:19px}
+ .wt-work-teams{padding:0 10px 10px}
+}
