@@ -126,3 +126,30 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea,select{b
  .wt-shell-v8 .pwa-install-banner{left:10px;bottom:calc(81px + env(safe-area-inset-bottom))}
 }
 @media(prefers-reduced-motion:reduce){.wt-shell-v8 *{scroll-behavior:auto}}
+
+/* Account disclosure keeps all secondary routes reachable without a hidden horizontal rail. */
+@media(min-width:851px){.wt-shell-v8 .wt-nav-track{overflow:visible}}
+.wt-nav-account{position:relative;display:flex;align-items:stretch;flex:0 0 auto;align-self:stretch;margin-left:auto;border-left:1px solid var(--line)}
+.wt-nav-account>summary{display:flex;align-items:center;gap:8px;min-height:58px;padding:0 16px;list-style:none;cursor:pointer;font-size:12px;font-weight:750;color:var(--ink-2)}
+.wt-nav-account>summary::-webkit-details-marker{display:none}
+.wt-nav-account>summary:hover,.wt-nav-account[open]>summary,.wt-nav-account:has(.wt-nav-item.active)>summary{color:var(--accent);background:var(--accent-soft)}
+.wt-nav-account[open]>summary svg{transform:rotate(180deg)}
+.wt-nav-account-num{font:650 10px var(--font-mono);color:var(--accent)}
+.wt-nav-account-popover{position:absolute;right:0;top:calc(100% + 7px);z-index:90;width:225px;padding:7px;border:1px solid var(--line-strong);border-radius:5px;background:var(--surface);box-shadow:0 12px 30px rgba(0,0,0,.12)}
+.wt-shell-v8 .wt-nav-account-popover .wt-nav-item{display:flex;align-items:center;justify-content:flex-start;width:100%;min-height:44px;gap:11px;padding:10px 12px;border:0;border-radius:3px;text-align:left}
+.wt-shell-v8 .wt-nav-account-popover .wt-nav-item.active{background:var(--accent-soft)}
+.wt-shell-v8 .wt-nav-account-popover .wt-nav-copy{font-size:13px}
+.wt-footer-privacy{display:inline-flex;align-items:center;min-width:0}
+.wt-footer-privacy .wt-privacy{display:flex;align-items:center;gap:7px;min-width:0}
+.wt-footer-privacy .wt-privacy-icon{display:flex;align-items:center;justify-content:center;flex:0 0 18px;width:18px;height:18px;color:var(--success)}
+.wt-footer-privacy .wt-privacy-copy{display:flex;align-items:center;min-width:0}
+.wt-footer-privacy .wt-privacy-copy>div{display:flex;align-items:center;gap:5px}
+.wt-footer-privacy .wt-privacy-copy b,.wt-footer-privacy .wt-privacy-copy span{font-size:10px;font-weight:660;line-height:1.5}
+.wt-footer-privacy .wt-privacy-copy small,.wt-footer-privacy .wt-privacy-dot{display:none}
+@media(max-width:850px){.wt-nav-account-popover{position:fixed;top:137px;right:24px}}
+@media(max-width:600px){
+ .wt-shell-footer{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:9px;row-gap:8px}
+ .wt-shell-footer>span:first-child{grid-column:1/-1}
+ .wt-footer-privacy .wt-privacy-copy>div b{display:none}
+ .wt-footer-privacy .wt-privacy-copy>div span{font-size:9px}
+}
