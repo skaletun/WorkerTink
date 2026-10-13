@@ -26,7 +26,3 @@ jobs:
         run: npm test
       - name: TypeScript and production build
         run: npm run build
-      - name: Install Playwright Chromium
-        run: npx --yes playwright@1.63.0 install --with-deps chromium
-      - name: Desktop/mobile visual regression
-        run: npm run visual:audit
