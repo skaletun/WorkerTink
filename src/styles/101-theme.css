@@ -9,7 +9,7 @@
 .btn.danger,.danger-button{color:var(--danger)}
 .wt-link-button,.canva-text-button{display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;color:var(--accent);font-size:12px;font-weight:650;text-decoration:none;padding:7px 0}
 .wt-link-button:hover,.canva-text-button:hover{text-decoration:underline;text-underline-offset:4px}
-input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea,select{width:auto;max-width:100%;min-height:43px;padding:10px 12px;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-sm);color:var(--ink);outline-offset:2px}
+input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea,select{width:100%;max-width:100%;min-height:43px;padding:10px 12px;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-sm);color:var(--ink);outline-offset:2px}
 textarea{min-height:96px;resize:vertical}
 input::placeholder,textarea::placeholder{color:var(--muted)}
 input[type=range]{width:100%;accent-color:var(--accent)}
