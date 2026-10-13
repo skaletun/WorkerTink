@@ -81,7 +81,7 @@ export default function HomeView({state,patch,onNotice,go}:Props){
    <div className="wt-roster-legend"><span><i className="day"/>Рабочая</span><span><i className="night"/>Ночь</span><span><i className="off"/>Выходной</span></div>
   </section>
   <div className="wt-control-grid">
-   <main className="wt-control-workbench">
+   <div className="wt-control-workbench">
     <section className="wt-control-workbench-head"><span className="wt-index-label">02 / ПЛАНЫ</span><h2>Планируйте заранее.</h2><p>Настоящие расчёты — на основе вашего графика, оклада и сохранённых периодов.</p></section>
     <section className="wt-workbook wt-workbook-finance">
      <div className="wt-workbook-title"><span className="wt-workbook-index">A</span><div><span className="wt-index-label">ФИНАНСОВЫЙ ПРОГНОЗ</span><h3>Сколько получится</h3></div><button onClick={()=>go('pay')} aria-label="Детальный расчёт зарплаты"><Icon name="chevronRight" size={20}/></button></div>
@@ -97,7 +97,7 @@ export default function HomeView({state,patch,onNotice,go}:Props){
      <details className="wt-workbook-disclosure"><summary>Расчёт отпуска и больничного <Icon name="chevronDown" size={16}/></summary><div className="wt-workbook-inputs"><label>Первый день отпуска<input type="date" value={vacStart} onChange={e=>setVacStart(e.target.value)}/></label><label>Длительность, дней<input type="number" min="1" max="60" value={vacLength} onChange={e=>setVacLength(Math.max(1,Number(e.target.value)||1))}/></label><p>{plannedVacation?`${plannedVacation.days} дней · останется ${Math.round(plannedVacation.balance)}`:'Укажите дату, чтобы узнать остаток.'}</p><label>Больничный, дней<input type="number" min="1" max="365" value={sickDays} onChange={e=>setSickDays(Math.max(1,Number(e.target.value)||1))}/></label><div><span>Выплата · {Math.round(sickRate*100)}%</span><strong>{formatMoney(sickPay)}</strong></div></div></details>
     </section>
     <section className="wt-control-command-list" aria-label="Быстрые переходы"><span className="wt-index-label">03 / ЧТО ДАЛЬШЕ</span><button onClick={()=>go('chat')}><span>01</span><strong>Написать коллегам</strong><Icon name="chevronRight" size={19}/></button><button onClick={()=>go('people')}><span>02</span><strong>Найти людей</strong><Icon name="chevronRight" size={19}/></button><button onClick={()=>go('work')}><span>03</span><strong>Перейти к работе</strong><Icon name="chevronRight" size={19}/></button></section>
-   </main>
+   </div>
    <aside className="wt-control-notebook" aria-label="Записи и информация">
     <div className="wt-notebook-head"><span className="wt-index-label">ЛИЧНЫЙ БЛОКНОТ / WT</span><h2>На сегодня.</h2><span>{now.toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}</span></div>
     <section className="wt-notebook-status"><span className="wt-index-label">ВАШИ ЦИФРЫ</span><div><span>Годовой доход</span><strong>{formatMoney(year.net)}</strong></div><div><span>Рабочие смены</span><strong>{month.work}</strong></div><div><span>Остаток отпуска</span><strong>{Math.round(vacLeft)}</strong></div></section>
