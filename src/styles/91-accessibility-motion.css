@@ -1,8 +1,0 @@
-/* Purposeful, restrained transitions; reduced-motion users get no spatial animation. */
-.tab-stage { animation: wt-page-in 160ms ease-out both; }
-.shift-modal { animation: wt-modal-in 140ms ease-out both; }
-@keyframes wt-page-in { from { opacity: .94; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes wt-modal-in { from { opacity: 0; transform: translateY(4px) scale(.995); } to { opacity: 1; transform: translateY(0) scale(1); } }
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
-}
