@@ -1,11 +1,46 @@
-.btn,button.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:8px 13px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--surface);color:var(--ink);font-weight:600;text-decoration:none;transition:background .14s,border-color .14s,color .14s}
-.btn:hover{background:var(--surface-2)}
-.btn.primary,.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
-.btn.primary:hover,.btn-primary:hover{background:var(--accent-hover)}
-.btn.quiet{background:transparent;border-color:transparent;color:var(--ink-2)}
-.btn.danger,.danger{color:var(--danger)}
-input:not([type=checkbox]):not([type=radio]),textarea,select{max-width:100%;min-height:40px;padding:9px 11px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--surface);color:var(--ink)}
-textarea{min-height:92px;resize:vertical}
-input::placeholder,textarea::placeholder{color:var(--muted)}
-label{color:var(--ink-2)}
-:where(.panel,.card,.surface,.section-card,.work-card,.stat-card,.metric-card,.widget,.modal-card,.dialog,.composer,.post-card,.feed-post,.community-card,.person-card,.chat-panel,.settings-section,.pay-card,.absence-card,.calendar-panel){background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md)}
+/* Work OS, redesigned as functional dashboard / data-first. */
+.wt-work-dashboard{min-width:0}
+.wt-work-header{display:flex;align-items:flex-end;justify-content:space-between;gap:22px;padding:10px 0 28px;border-bottom:1px solid var(--line)}
+.wt-work-header h2{font-size:clamp(29px,3.8vw,43px);margin:8px 0 9px;letter-spacing:-.055em}
+.wt-work-header p{max-width:60ch}.wt-work-header-actions{display:flex;flex-wrap:wrap;gap:8px}
+.wt-work-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--surface);border-bottom:1px solid var(--line);margin-bottom:28px}
+.wt-work-metrics button{display:flex;flex-direction:column;align-items:flex-start;gap:7px;text-align:left;border:0;border-right:1px solid var(--line);background:transparent;padding:20px 15px;min-width:0}
+.wt-work-metrics button:first-child{padding-left:0}.wt-work-metrics button:last-child{border-right:0}
+.wt-work-metrics button:hover{color:var(--accent)}
+.wt-work-metrics button>span{color:var(--muted);font-size:11px}
+.wt-work-metrics button>strong{font-size:clamp(18px,2vw,25px);letter-spacing:-.055em;font-variant-numeric:tabular-nums;line-height:1.15}
+.wt-work-metrics button>strong em{font-style:normal;color:var(--muted);font-size:14px;font-weight:550}
+.wt-work-metrics button>small{line-height:1.4}
+.wt-work-layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(268px,.65fr);gap:24px;align-items:start}
+.wt-work-primary,.wt-work-insights,.wt-work-notes,.wt-work-quick{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md);padding:20px}
+.wt-work-shift-list{padding:0;list-style:none}
+.wt-work-shift-list li{border-bottom:1px solid var(--line)}.wt-work-shift-list li:last-child{border-bottom:0}
+.wt-work-shift{display:flex;align-items:center;gap:14px;width:100%;padding:12px 0;background:transparent;border:0;text-align:left}
+.wt-work-shift:hover .wt-work-shift-text>b{color:var(--accent)}
+.wt-date-plate{width:48px;min-width:48px;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:var(--surface-2);border-radius:6px}
+.wt-date-plate b{font-size:22px;line-height:1;font-variant-numeric:tabular-nums}.wt-date-plate small{font-size:10px}
+.wt-work-shift-text{display:flex;flex:1;flex-direction:column;gap:3px;min-width:0}
+.wt-work-shift-text>b{text-transform:capitalize;font-size:13px;transition:color .15s}.wt-work-shift-text>small{font-size:11px}
+.wt-shift-type{font-size:11px;color:var(--ink-2);border:1px solid var(--line);padding:3px 8px;border-radius:5px}
+.wt-work-insights{display:flex;flex-direction:column;align-items:stretch}
+.wt-ring-wrap{display:flex;justify-content:center;align-items:center;padding:8px 0 14px}
+.wt-ring-wrap .relative{position:relative}.wt-ring-wrap .grid{display:grid}.wt-ring-wrap .flex{display:flex}.wt-ring-wrap .items-center{align-items:center}.wt-ring-wrap .justify-center{justify-content:center}.wt-ring-wrap .flex-col{flex-direction:column}.wt-ring-wrap .text-center{text-align:center}.wt-ring-wrap .pointer-events-none{pointer-events:none}
+.wt-ring-wrap .font-bold{font-weight:750}.wt-ring-wrap .tabular-nums{font-variant-numeric:tabular-nums}
+.wt-ring-wrap .text-chart-label{color:var(--muted)}.wt-ring-wrap .leading-none{line-height:1}
+.wt-ring-wrap .text-\[clamp\(0\.75rem\,22cqw\,1\.875rem\)\]{font-size:clamp(.75rem,1.8rem,1.875rem)}
+.wt-ring-wrap .text-\[clamp\(0\.625rem\,9cqw\,0\.75rem\)\]{font-size:11px}
+.wt-ring-wrap [class*="size-full"]{width:100%;height:100%}
+.wt-ring-wrap [class*="truncate"]{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt-ring-wrap .text-foreground{color:var(--ink)}
+.wt-ring-legend{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:5px;padding:13px 0;border-top:1px solid var(--line);font-size:12px}
+.wt-ring-legend span{display:flex;gap:8px;align-items:center}.wt-ring-legend i{width:8px;height:8px;border-radius:50%;background:var(--chart-1)}
+.wt-ring-legend strong{font-variant-numeric:tabular-nums}.wt-insights-caption{font-size:11px;line-height:1.55;margin-top:10px}
+.wt-work-secondary{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px}
+.wt-work-notes ul{list-style:none;padding:0}
+.wt-work-notes li{display:grid;grid-template-columns:105px 1fr;gap:13px;padding:12px 0;border-bottom:1px solid var(--line)}
+.wt-work-notes li:last-child{border:0}.wt-work-notes time{font-size:11px;color:var(--muted)}.wt-work-notes p{font-size:12px}
+.wt-work-quick>button{display:flex;gap:12px;align-items:center;width:100%;padding:13px 0;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:left}
+.wt-work-quick>button:hover{color:var(--accent)}.wt-work-quick>button>span:first-child{font:11px var(--font-mono);color:var(--muted)}
+.wt-work-quick>button>span:nth-child(2){flex:1;font-weight:600}
+.wt-work-quick>button:last-child{border-bottom:0}
+.wt-work-teams{margin-top:24px}
