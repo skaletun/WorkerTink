@@ -162,6 +162,7 @@ test('atlas zero rebuild: all application routes, orbital selector, launcher, mo
   await page.screenshot({path:`visual-audit-artifacts/atlas-${theme}-${viewport.width}-home.png`,fullPage:true});
   await page.getByRole('button',{name:'Все разделы'}).click();
   await expect(page.locator('.atlas-launcher-items button')).toHaveCount(14);
+  expect(await page.locator('.atlas-launcher-header h2').evaluate(el=>getComputedStyle(el).color)).toBe('rgb(22, 27, 18)');
   await page.screenshot({path:`visual-audit-artifacts/atlas-${theme}-${viewport.width}-launcher.png`,fullPage:true});
   await page.locator('.atlas-launcher-items button').filter({hasText:'Календарь'}).first().click();
   await expect(page.locator('.wt-shift-planner')).toBeVisible();
@@ -171,6 +172,7 @@ test('atlas zero rebuild: all application routes, orbital selector, launcher, mo
    await expect(page.locator('.atlas-app')).toBeVisible();
    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-window.innerWidth);
    expect(overflow,theme+' '+viewport.width+' '+route).toBeLessThanOrEqual(2);
+   if(route==='absence')expect(await page.locator('.atlas-time-off-hero h1').evaluate(el=>getComputedStyle(el).color)).toBe('rgb(25, 32, 21)');
    if(['home','social','chat','work','calendar','pay','absence','profile','settings'].includes(route))await page.screenshot({path:`visual-audit-artifacts/atlas-${theme}-${viewport.width}-${route}.png`,fullPage:true});
   }
   expect(errors,theme+'/'+viewport.width).toEqual([]);
