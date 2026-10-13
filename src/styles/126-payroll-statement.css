@@ -1,0 +1,66 @@
+/* WTinker / Payroll desk — financial statement as a document, not metric cards. */
+.wt-pay-console{min-width:0}
+.wt-pay-console-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:25px;padding:4px 0 29px;margin-bottom:24px;border-bottom:2px solid var(--wt-desk-ink)}
+.wt-pay-console-overline{font:780 10px var(--font-mono);letter-spacing:.09em;color:var(--wt-desk-accent)}
+.wt-pay-console-heading h1{font-size:clamp(40px,5.2vw,68px);line-height:.98;letter-spacing:-.067em;margin:13px 0}
+.wt-pay-console-heading h1 em{display:block;font:italic 400 clamp(35px,4.5vw,60px)/1 Georgia,serif;letter-spacing:-.06em;color:var(--wt-desk-accent)}
+.wt-pay-console-heading p{font-size:12px;color:var(--wt-desk-muted);line-height:1.6;max-width:48ch}
+.wt-pay-console-period{display:flex;flex-direction:column;gap:11px;flex:none}
+.wt-pay-console-period>span{font-size:11px;color:var(--wt-desk-muted)}
+.wt-pay-console-period>div{display:flex;align-items:center;gap:11px}
+.wt-pay-console-period button{display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--wt-desk-line);border-radius:9px;background:var(--wt-desk-paper)}
+.wt-pay-console-period strong{min-width:128px;text-align:center;font-size:14px;letter-spacing:-.03em}
+.wt-pay-console-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(245px,.75fr);gap:21px;align-items:start;margin-bottom:30px}
+.wt-pay-console-statement{min-width:0;border:1px solid var(--wt-desk-line);background:var(--wt-desk-paper);border-radius:13px;overflow:hidden}
+.wt-pay-statement-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 23px;border-bottom:1px dashed var(--wt-desk-line);color:var(--wt-desk-muted);font:730 10px var(--font-mono);letter-spacing:.07em}
+.wt-pay-statement-net{display:flex;flex-direction:column;gap:9px;padding:31px 23px 28px;background:var(--wt-desk-ink);color:var(--wt-desk-paper)}
+.wt-pay-statement-net>span{font:750 10px var(--font-mono);letter-spacing:.09em;opacity:.72}
+.wt-pay-statement-net>strong{font-size:clamp(40px,5vw,69px);font-weight:800;letter-spacing:-.075em;line-height:1.05;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.wt-pay-statement-net>p{color:var(--wt-desk-paper);opacity:.7;font-size:12px}
+.wt-pay-statement-rows{padding:9px 23px 24px}
+.wt-pay-statement-rows>div{display:flex;justify-content:space-between;align-items:baseline;gap:15px;min-height:49px;padding:15px 0;border-bottom:1px solid var(--wt-desk-line);font-size:12px;color:var(--wt-desk-ink)}
+.wt-pay-statement-rows>div>span{min-width:0}
+.wt-pay-statement-rows>div>b{white-space:nowrap;text-align:right;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums}
+.wt-pay-statement-rows>.wt-pay-statement-headrow{min-height:41px;font:780 9px var(--font-mono);letter-spacing:.09em;color:var(--wt-desk-muted)}
+.wt-pay-statement-rows>.wt-pay-statement-tax b{color:var(--danger)}
+.wt-pay-statement-rows>.wt-pay-statement-total{margin-top:10px;border:0;background:var(--wt-desk-panel);padding:18px 11px;border-radius:7px;font-weight:820}
+.wt-pay-statement-rows>.wt-pay-statement-total b{font-size:18px}
+.wt-pay-console-sidebar{display:flex;flex-direction:column;gap:17px;min-width:0}
+.wt-pay-console-split{padding:21px 20px;border:1px solid var(--wt-desk-line);border-radius:12px;background:var(--wt-desk-panel)}
+.wt-pay-console-split>span{display:block;margin-bottom:15px;font:790 10px var(--font-mono);letter-spacing:.09em;color:var(--wt-desk-accent)}
+.wt-pay-console-split>div{display:flex;flex-direction:column;gap:7px;padding:18px 0;border-top:1px solid var(--wt-desk-line)}
+.wt-pay-console-split>div>span{font-size:11px;color:var(--wt-desk-muted)}
+.wt-pay-console-split>div>strong{font-size:clamp(24px,2.7vw,33px);letter-spacing:-.055em;line-height:1.05;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.wt-pay-console-split>div>small{font-size:11px;color:var(--wt-desk-muted)}
+.wt-pay-console-editor{display:flex;flex-direction:column;gap:15px;padding:21px 20px;border:1px solid var(--wt-desk-line);border-radius:12px;background:var(--wt-desk-paper)}
+.wt-pay-console-editor h2{font-size:24px;letter-spacing:-.05em;line-height:1.1}
+.wt-pay-console-editor p{font-size:11px;line-height:1.65;color:var(--wt-desk-muted)}
+.wt-pay-console-editor .field{gap:5px}
+.wt-pay-console-editor .field input{margin-top:4px}
+.wt-pay-console .annual-card{border-radius:12px}
+.wt-pay-console .annual-head{padding-bottom:20px}
+.wt-pay-console .annual-head h2{font-size:clamp(25px,3vw,39px)}
+.wt-pay-console .annual-kpis{border:1px solid var(--wt-desk-line);border-radius:10px;overflow:hidden;background:var(--wt-desk-panel)}
+.wt-pay-console .annual-kpis>div{border-right:1px solid var(--wt-desk-line)}
+.wt-pay-console .wt-pay-trend{border-radius:10px}
+@media(max-width:1140px){
+ .wt-pay-console-layout{grid-template-columns:1fr}
+ .wt-pay-console-sidebar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+}
+@media(max-width:750px){
+ .wt-pay-console-heading{align-items:flex-start;flex-direction:column}
+ .wt-pay-console-heading h1{font-size:46px}
+ .wt-pay-console-heading h1 em{font-size:41px}
+ .wt-pay-console-period{width:100%}
+ .wt-pay-console-period>div{justify-content:space-between}
+ .wt-pay-console-sidebar{grid-template-columns:1fr}
+ .wt-pay-statement-top,.wt-pay-statement-rows{padding-inline:15px}
+ .wt-pay-statement-net{padding:27px 15px}
+ .wt-pay-statement-net>strong{font-size:clamp(40px,9vw,55px)}
+}
+@media(max-width:390px){
+ .wt-pay-statement-rows>div{gap:7px;font-size:11px}
+ .wt-pay-statement-rows>div>b{font-size:11px}
+ .wt-pay-statement-rows>.wt-pay-statement-total b{font-size:15px}
+ .wt-pay-console-period strong{min-width:112px}
+}
