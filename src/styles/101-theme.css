@@ -1,17 +1,32 @@
-html{min-width:320px;min-height:100%;scroll-behavior:smooth}
-body{margin:0;min-width:320px;min-height:100vh;background:var(--canvas);color:var(--ink)}
-body,button,input,textarea,select{font-family:var(--font-sans)}
-button,input,textarea,select{font-size:inherit}
-button{color:inherit}
-button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-button{cursor:pointer}
-button:disabled{cursor:not-allowed;opacity:.48}
-a{color:var(--accent);text-underline-offset:3px}
-::selection{background:var(--accent);color:#fff}
-img,svg{max-width:100%}
-.wt-skip{position:fixed;z-index:999;top:8px;left:8px;padding:10px 14px;background:var(--ink);color:var(--surface);transform:translateY(-160%)}
-.wt-skip:focus{transform:translateY(0)}
-.wt-shell{min-height:100vh}
-.wt-sidebar{position:fixed;inset:0 auto 0 0;width:var(--sidebar-width);display:flex;flex-direction:column;gap:18px;padding:22px 16px 14px;background:var(--surface);border-right:1px solid var(--line);z-index:30;overflow-y:auto}
-.wt-brand-lockup{display:flex;align-items:center;gap:10px;width:100%;padding:2px 8px 18px;border:0;background:transparent;text-align:left}
-.wt-brand-mark{display:inline-grid;place-items:center;width:34px;height:34px;flex:0 0 34px;border-radius:10px;background:var(--accent);color:white;font-size:24px;font-weight:750;line-height:1;letter-spacing:-.08em}
+/* Typography, controls, data, states. */
+.wt-overline,.canva-kicker,.eyebrow,.redesign-overline{display:block;color:var(--muted);font:600 10px/1.4 var(--font-mono);letter-spacing:.1em;text-transform:uppercase}
+.wt-button,.btn,.canva-button,button.btn,.registration-submit{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:40px;padding:9px 14px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--surface);color:var(--ink);font-size:13px;font-weight:650;text-decoration:none;white-space:normal;transition:background-color .14s,border-color .14s,color .14s}
+.wt-button:hover,.btn:hover,.canva-button:hover{background:var(--surface-2);border-color:var(--muted)}
+.wt-button.primary,.btn.primary,.canva-button-primary,.registration-submit{background:var(--accent);border-color:var(--accent);color:#fff}
+.wt-button.primary:hover,.btn.primary:hover,.canva-button-primary:hover,.registration-submit:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.wt-button.secondary{background:var(--surface);color:var(--ink)}
+.btn.quiet{background:transparent;border-color:transparent}
+.btn.danger,.danger-button{color:var(--danger)}
+.wt-link-button,.canva-text-button{display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;color:var(--accent);font-size:12px;font-weight:650;text-decoration:none;padding:7px 0}
+.wt-link-button:hover,.canva-text-button:hover{text-decoration:underline;text-underline-offset:4px}
+input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea,select{width:auto;max-width:100%;min-height:40px;padding:9px 11px;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-sm);color:var(--ink);outline-offset:2px}
+textarea{min-height:96px;resize:vertical}
+input::placeholder,textarea::placeholder{color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+input[type=checkbox],input[type=radio]{accent-color:var(--accent)}
+label,.field-label{color:var(--ink-2);font-weight:550;font-size:12px}
+label>input,label>select,label>textarea{display:block;width:100%;margin-top:6px}
+small{font-size:11px;color:var(--muted)}
+button:active:not(:disabled){transform:translateY(1px)}
+.canva-page{width:100%;min-width:0}.canva-page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:4px 0 24px;border-bottom:1px solid var(--line);margin-bottom:22px}
+.canva-page-head h1{font-size:clamp(22px,2.6vw,32px);letter-spacing:-.045em;margin:4px 0 8px}
+.canva-page-head p{max-width:67ch}.canva-head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.canva-section-head,.wt-section-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;margin:0 0 18px}
+.canva-section-head h2,.wt-section-heading h3{font-size:19px;letter-spacing:-.04em;margin:5px 0 0}
+.canva-section-head h3{font-size:16px}
+.canva-state,.status,.badge,.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;font-size:11px;font-weight:650;background:var(--surface-2);border:1px solid var(--line);border-radius:5px;color:var(--ink-2)}
+.canva-empty,.redesign-empty,.empty-state,.work-empty,.friends-empty{padding:26px 18px;background:var(--surface-2);border:1px dashed var(--line-strong);border-radius:var(--radius-sm);color:var(--muted);text-align:center}
+.field,.form-field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field input,.field select,.field textarea{width:100%}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}th,td{border-bottom:1px solid var(--line);padding:10px 12px;text-align:left}th{font-size:11px;font-weight:650;color:var(--muted);background:var(--surface-2)}td{color:var(--ink-2)}tbody tr:hover td{background:var(--surface-2)}
+.canva-page :is(button,input,select,textarea){min-width:0}
