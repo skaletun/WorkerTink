@@ -93,3 +93,14 @@
 @media(prefers-reduced-motion:reduce){
  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+
+/* Structural contracts for semantic page elements without legacy layout imports. */
+.social-hero{border-bottom:1px solid var(--line);padding:18px 0}
+.work-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.profile-cover{background-size:cover;background-position:center}
+.calendar-layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:18px}
+.social-layout{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:24px}
+.work-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}
+.redesign-page-intro{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.home-snapshot{min-width:0}
+.chat-page-rebuilt{min-height:0}
