@@ -30,8 +30,8 @@ const notifications=fs.readFileSync(path.join(root,'src/NotificationsView.tsx'),
 const chats=fs.readFileSync(path.join(root,'src/ChatsHub.tsx'),'utf8');
 const chat=fs.readFileSync(path.join(root,'src/ChatView.tsx'),'utf8');
 const groupChat=fs.readFileSync(path.join(root,'src/GroupChatView.tsx'),'utf8');
-if(shell.includes('v7-shell')||!shell.includes('wt-shell')||!shell.includes('wt-mobile-nav')) throw new Error('legacy shell was not replaced');
-if(!ui.includes('.wt-shell')||!ui.includes('.wt-nav-item.active')||!ui.includes('.wt-command-search')) throw new Error('new workspace design system missing');
+if(shell.includes('v7-shell')||!shell.includes('wt-os-shell')||!shell.includes('wt-os-mobile-dock')) throw new Error('new application dock shell was not implemented');
+if(!ui.includes('.wt-os-shell')||!ui.includes('.wt-os-dock')||!ui.includes('.wt-os-directory')||!ui.includes('.wt-control-hero')) throw new Error('new structural workspace styles missing');
 if(!ui.includes('.social-hero')||!ui.includes('.work-kpis')||!ui.includes('.notification-timeline')) throw new Error('new page design system missing');
 for(const legacy of ['styles.css','design.css','v7.css','rebuild.css']) if(fs.existsSync(path.join(root,'src',legacy))) throw new Error(`legacy stylesheet remains: ${legacy}`);
 if(!appFeatures.includes('BannerEditorModal')) throw new Error('profile banner editor missing');
@@ -58,7 +58,7 @@ if(!shell.includes('wt-os-dock')||!shell.includes('wt-os-directory')||!shell.inc
 if(!network.includes('wt-network-index')||!network.includes('wt-network-content')) throw new Error('social studio structure missing');
 if(!workViews.includes('wt-pay-console-statement')||!workViews.includes('wt-pay-console-sidebar')) throw new Error('financial statement architecture missing');
 if(!/\.calendar-layout\s*\{[^}]*display\s*:\s*grid/.test(ui)) throw new Error('new calendar layout missing');
-if(!/\.wt-mobile-nav\s*\{[^}]*position\s*:\s*fixed/.test(ui)) throw new Error('new mobile navigation missing');
+if(!/\.wt-os-mobile-dock\s*\{[^}]*position\s*:\s*fixed/.test(ui)) throw new Error('new mobile navigation missing');
 if(!/\.social-layout\s*\{[^}]*display\s*:\s*grid/.test(ui)) throw new Error('new social layout missing');
 if(!/\.work-grid\s*\{[^}]*display\s*:\s*grid/.test(ui)) throw new Error('new work layout missing');
 if(!networkParts.includes('PostAttachment')||!network.includes('shift-note-editor')||!networkParts.includes('post-attachments-v2')||!networkParts.includes('groupAttachments')) throw new Error('rich post surface missing');
