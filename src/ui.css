@@ -1,4 +1,3 @@
-/* WTinker design system: focused modules, one authoritative cascade. */
 @import './styles/100-foundation.css';
 @import './styles/101-theme.css';
 @import './styles/102-shell.css';
