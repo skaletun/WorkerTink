@@ -21,3 +21,10 @@
 .avatar-editor-controls,.banner-editor-controls{display:flex;flex-wrap:wrap;gap:10px}
 .mute-options{display:flex;flex-wrap:wrap;gap:8px}.mute-options button{padding:8px 12px;background:var(--surface-2);border:1px solid var(--line);border-radius:6px}
 .pwa-install-banner .btn.primary{color:#fff}
+
+/* Entry transitions: restrained, semantic and reduced-motion friendly. */
+@keyframes wt-page-in{from{opacity:.65;transform:translateY(5px)}to{opacity:1;transform:none}}
+@keyframes wt-modal-in{from{opacity:.5;transform:translateY(6px)}to{opacity:1;transform:none}}
+.tab-stage{animation:wt-page-in .18s cubic-bezier(.16,1,.3,1) both}
+.shift-modal,.modal-card,.mobile-menu-sheet{animation:wt-modal-in .19s cubic-bezier(.16,1,.3,1) both}
+@media(prefers-reduced-motion:reduce){.tab-stage,.shift-modal,.modal-card,.mobile-menu-sheet{animation:none!important}}
