@@ -1,67 +1,51 @@
-import {useEffect,type ReactNode} from 'react';
+import {useEffect,useState,type ReactNode} from 'react';
 import {Icon} from './Icon';
 
 type NavItem={id:string;label:string;sub:string;icon:ReactNode};
-type Props={
- items:NavItem[];active:string;onNavigate:(id:string)=>void;
- profile:ReactNode;profileAction:()=>void;privacy:ReactNode;children:ReactNode;
- searchAction:()=>void;title:string;kicker:string;version:string;
- mobileItems:{id:string;label:string;icon:ReactNode}[];mobileMore:ReactNode;
-};
-const clusters=[
- {name:'Сообщество',ids:['home','social','people','communities','chat']},
- {name:'Рабочие инструменты',ids:['work','calendar','pay','absence']},
- {name:'Личное',ids:['notifications','friends','profile','settings','admin']}
-] as const;
-const dock=['home','social','chat','work','profile'];
-const contexts:Record<string,{eyebrow:string;title:string;description:string;shortcuts:string[]}>={
- home:{eyebrow:'ОБЗОР',title:'Мой день',description:'Смены, деньги и важные события на сегодня.',shortcuts:['calendar','pay','social']},
- social:{eyebrow:'СЕТЬ',title:'Общение',description:'Истории, идеи и новости вашей рабочей среды.',shortcuts:['people','communities','chat']},
- people:{eyebrow:'СЕТЬ',title:'Коллеги',description:'Найдите человека по имени, username или WTinkID.',shortcuts:['social','friends','chat']},
- communities:{eyebrow:'СЕТЬ',title:'Сообщества',description:'Объединяйтесь с людьми по общим интересам.',shortcuts:['social','people','chat']},
- chat:{eyebrow:'СВЯЗЬ',title:'Диалоги',description:'Личные беседы, группы и каналы.',shortcuts:['people','communities','social']},
- work:{eyebrow:'РАБОТА',title:'Диспетчерская',description:'Смены, выплаты, отдых и рабочие записи.',shortcuts:['calendar','pay','absence']},
- calendar:{eyebrow:'РАБОТА',title:'Мой график',description:'Вся последовательность смен и заметок.',shortcuts:['work','pay','absence']},
- pay:{eyebrow:'ФИНАНСЫ',title:'Мои деньги',description:'Расчёты, аванс, остаток и годовая история.',shortcuts:['work','calendar','absence']},
- absence:{eyebrow:'РАБОТА',title:'Отдых',description:'Отпускные дни, больничные и периоды.',shortcuts:['calendar','pay','work']}
-};
+type Props={items:NavItem[];active:string;onNavigate:(id:string)=>void;profile:ReactNode;profileAction:()=>void;privacy:ReactNode;children:ReactNode;searchAction:()=>void;title:string;kicker:string;version:string;mobileItems:{id:string;label:string;icon:ReactNode}[];mobileMore:ReactNode};
+const sets=[
+ {id:'live',title:'01 / МОЙ ДЕНЬ',message:'Личное пространство',list:['home','calendar','work','pay','absence']},
+ {id:'world',title:'02 / ЛЮДИ И СВЯЗЬ',message:'Коллеги и общение',list:['social','people','communities','chat','friends']},
+ {id:'identity',title:'03 / МОЙ ПРОФИЛЬ',message:'Профиль и управление',list:['notifications','profile','settings','admin']}
+];
+const spaces=['home','social','calendar','pay','chat'];
 export default function AppShell({items,active,onNavigate,profile,profileAction,privacy,children,searchAction,title,kicker,version,mobileItems,mobileMore}:Props){
- const byId=new Map(items.map(item=>[item.id,item]));
- const context=contexts[active]||{eyebrow:'ЛИЧНОЕ',title:'Аккаунт',description:'Ваши контакты, история и параметры.',shortcuts:['home','notifications','settings']};
- const go=(id:string)=>onNavigate(id);
+ const [launcher,setLauncher]=useState(false);
+ const map=new Map(items.map(i=>[i.id,i]));
+ const navigate=(id:string)=>{setLauncher(false);onNavigate(id)};
  useEffect(()=>{
-  const onKey=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();searchAction()}};
-  document.addEventListener('keydown',onKey);return()=>document.removeEventListener('keydown',onKey);
+  const listener=(e:KeyboardEvent)=>{
+   if(e.key==='Escape')setLauncher(false);
+   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();searchAction()}
+   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='b'){e.preventDefault();setLauncher(v=>!v)}
+  };
+  window.addEventListener('keydown',listener);return()=>window.removeEventListener('keydown',listener);
  },[searchAction]);
- const link=(item:NavItem,compact=false)=><button type="button" key={item.id} title={item.sub} className={`wt-os-link${active===item.id?' is-current':''}${compact?' is-shortcut':''}`} onClick={()=>go(item.id)} aria-current={active===item.id?'page':undefined}><span className="wt-os-link-symbol">{item.icon}</span><span>{item.label}</span>{!compact&&active===item.id&&<span className="wt-os-link-indicator" aria-hidden="true"/>}</button>;
- return <div className="wt-os-shell">
-  <a className="wt-skip" href="#wt-main">Перейти к содержимому</a>
-  <aside className="wt-os-dock" aria-label="Быстрый переход">
-   <button className="wt-os-monogram" onClick={()=>go('home')} aria-label="WTinker — главная">wt<span>.</span></button>
-   <div className="wt-os-dock-rule"/>
-   <nav className="wt-os-dock-links" aria-label="Избранные разделы">{dock.map(id=>{const item=byId.get(id);return item?<button key={id} title={item.label} aria-label={item.label} aria-current={active===id?'page':undefined} className={active===id?'is-current':''} onClick={()=>go(id)}>{item.icon}</button>:null})}</nav>
-   <div className="wt-os-dock-bottom">
-    <button title="Уведомления" aria-label="Уведомления" onClick={()=>go('notifications')}><Icon name="bell" size={21}/></button>
-    <button title="Настройки" aria-label="Настройки" onClick={()=>go('settings')}><Icon name="settings" size={21}/></button>
+ useEffect(()=>{setLauncher(false)},[active]);
+ return <div className="atlas-app">
+  <a href="#wt-main" className="atlas-skip">Перейти к содержимому</a>
+  <header className="atlas-bar">
+   <button className="atlas-wordmark" type="button" onClick={()=>navigate('home')} aria-label="WTinker — главная"><span className="atlas-asterisk">✳</span><strong>WTINKER</strong><span className="atlas-wordmark-n">/ SPACE</span></button>
+   <div className="atlas-bar-locations"><span>ВАШЕ ПРОСТРАНСТВО</span><span className="atlas-path-separator">→</span><strong>{title}</strong></div>
+   <div className="atlas-bar-actions"><button onClick={searchAction} aria-label="Найти людей" title="Поиск" type="button"><Icon name="search" size={18}/></button><button onClick={()=>navigate('notifications')} title="Уведомления" aria-label="Уведомления" type="button"><Icon name="bell" size={18}/></button><button onClick={profileAction} className="atlas-user" title="Профиль" type="button" aria-label="Открыть профиль">{profile}</button></div>
+  </header>
+  <main id="wt-main" className="atlas-main">
+   <div className="atlas-route-stage" key={active}>
+    {active!=='home'&&<div className="atlas-route-ticket"><span><i/>ПРОСТРАНСТВО / {kicker.toUpperCase()}</span><button onClick={()=>setLauncher(true)}><Icon name="grid" size={15}/> СМЕНИТЬ РАЗДЕЛ</button></div>}
+    <div className="atlas-route-content">{children}</div>
    </div>
-  </aside>
-  <aside className="wt-os-directory" aria-label="Навигация приложения">
-   <div className="wt-os-directory-header"><span className="wt-os-stamp">W/T — ПЛАТФОРМА ДЛЯ РАБОТЫ</span><h2>{context.title}<span>.</span></h2><p>{context.description}</p></div>
-   <button className="wt-os-search-button" type="button" onClick={searchAction}><Icon name="search" size={17}/><span>Найти в WTinker</span><kbd>⌘ K</kbd></button>
-   <nav className="wt-os-sections" aria-label="Все разделы">{clusters.map((c,i)=><div className="wt-os-section" key={c.name}><div className="wt-os-section-title"><span>{String(i+1).padStart(2,'0')}</span>{c.name}</div>{c.ids.map(id=>{const item=byId.get(id);return item?link(item):null})}</div>)}</nav>
-   <div className="wt-os-directory-account"><button type="button" onClick={profileAction}>{profile}</button><span className="wt-os-account-caption">Личное пространство</span></div>
-  </aside>
-  <main className="wt-os-main" id="wt-main">
-   <header className="wt-os-toolbar"><div className="wt-os-toolbar-breadcrumb"><span>WTINKER</span><span aria-hidden="true">/</span><span>{context.eyebrow}</span><span aria-hidden="true">/</span><strong>{title}</strong></div><div className="wt-os-toolbar-actions"><span className="wt-os-local-time">{new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'})}</span><button onClick={searchAction} type="button" aria-label="Поиск" className="wt-os-action"><Icon name="search" size={19}/></button><button onClick={()=>go('notifications')} type="button" aria-label="Уведомления" className="wt-os-action"><Icon name="bell" size={19}/></button><button onClick={profileAction} type="button" aria-label="Профиль" className="wt-os-toolbar-avatar">{profile}</button></div></header>
-   <div className="wt-os-stage">
-    <div className="wt-os-chapter"><div><span className="wt-os-chapter-kicker">{kicker}</span><h1>{title}</h1></div><nav className="wt-os-shortcuts" aria-label="Связанные разделы">{context.shortcuts.map(id=>{const item=byId.get(id);return item?link(item,true):null})}</nav></div>
-    <div className="wt-os-render">{children}</div>
-   </div>
-   <footer className="wt-os-foot"><span>WTINKER / {version}</span><span>{privacy}</span><span>ВАШЕ РАБОЧЕЕ ПРОСТРАНСТВО</span></footer>
   </main>
-  <nav className="wt-os-mobile-dock" aria-label="Быстрая мобильная навигация">
-   {mobileItems.map(item=><button key={item.id} type="button" className={active===item.id?'is-current':''} aria-current={active===item.id?'page':undefined} onClick={()=>go(item.id)}>{item.icon}<span>{item.label}</span></button>)}
-   {mobileMore}
+  <footer className="atlas-footer"><span>WTINKER / <strong>{version}</strong></span><span>{privacy}</span><button onClick={()=>setLauncher(true)}>Карта приложения <Icon name="arrowUpRight" size={15}/></button></footer>
+  <nav className="atlas-tray" aria-label="Быстрая навигация">
+   {spaces.map(id=>{const item=map.get(id);return item?<button key={id} type="button" onClick={()=>navigate(id)} aria-label={item.label} aria-current={active===id?'page':undefined} className={active===id?'is-on':''} title={item.label}><span>{item.icon}</span><small>{item.label}</small></button>:null})}
+   <button className="atlas-tray-launcher" type="button" onClick={()=>setLauncher(v=>!v)} aria-expanded={launcher} aria-label="Все разделы"><Icon name={launcher?'close':'grid'} size={24}/><small>Все</small></button>
   </nav>
+  {launcher&&<div className="atlas-launcher-overlay" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setLauncher(false)}}>
+   <section className="atlas-launcher" role="dialog" aria-modal="true" aria-label="Карта пространств">
+    <header className="atlas-launcher-header"><div><span>✳ / ВЫБЕРИТЕ ПРОСТРАНСТВО</span><h2>Куда отправимся?</h2></div><button onClick={()=>setLauncher(false)} type="button" aria-label="Закрыть меню"><Icon name="close" size={22}/></button></header>
+    <div className="atlas-launcher-groups">{sets.map((set,j)=><section key={set.id} className="atlas-launcher-group"><div className="atlas-launcher-group-head"><span>{set.title}</span><small>{set.message}</small></div><div className="atlas-launcher-items">{set.list.map((id,n)=>{const item=map.get(id);return item?<button onClick={()=>navigate(id)} key={id} className={active===id?'is-active':''}><span className="atlas-launcher-item-icon">{item.icon}</span><span className="atlas-launcher-item-copy"><strong>{item.label}</strong><small>{item.sub}</small></span><span className="atlas-launcher-item-number">{String(j*5+n+1).padStart(2,'0')}</span></button>:null})}</div></section>)}</div>
+    <div className="atlas-launcher-foot"><span>ВСЕ РАЗДЕЛЫ · БЕЗ ПОТЕРИ ДАННЫХ</span><span>ESC — закрыть</span></div>
+   </section>
+  </div>}
  </div>;
 }
