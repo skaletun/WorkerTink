@@ -144,63 +144,36 @@ test('WTinker bug-archive interaction states',async({browser})=>{
   await mobile.close();
 });
 
-test('v9 workspace architecture: real responsive navigation and working screens',async({browser})=>{
-  for(const theme of ['light','dark']){
-    for(const viewport of [{width:1440,height:900},{width:390,height:844}]){
-      const context=await browser.newContext({viewport,colorScheme:theme});
-      const page=await context.newPage();
-      const errors=[];
-      page.on('pageerror',error=>errors.push(String(error)));
-      await prepare(page,theme);
-      await page.goto('?tab=home',{waitUntil:'networkidle'});
-      await expect(page.locator('.wt-os-shell')).toBeVisible();
-      await expect(page.locator('.wt-control-hero')).toBeVisible();
-      await expect(page.locator('.wt-roster-slot')).toHaveCount(14);
-      await expect(page.locator('.wt-control-command-list>button')).toHaveCount(3);
-      const status=await page.evaluate(()=>({
-        paper:getComputedStyle(document.documentElement).getPropertyValue('--wt-desk-paper').trim(),
-        overflow:document.documentElement.scrollWidth-window.innerWidth
-      }));
-      expect(status.paper).toBe(theme==='dark'?'#151e1c':'#f7f8f5');
-      expect(status.overflow).toBeLessThanOrEqual(2);
-      if(viewport.width>650){
-        await expect(page.locator('.wt-os-dock')).toBeVisible();
-        await expect(page.locator('.wt-os-directory')).toBeVisible();
-        await expect(page.locator('.wt-os-mobile-dock')).toBeHidden();
-      }else{
-        await expect(page.locator('.wt-os-dock')).toBeHidden();
-        await expect(page.locator('.wt-os-directory')).toBeHidden();
-        await expect(page.locator('.wt-os-mobile-dock')).toBeVisible();
-      }
-      await page.screenshot({path:`visual-audit-artifacts/v9-${theme}-${viewport.width}-home.png`,fullPage:true});
-      await page.locator('.wt-roster-slot').first().click();
-      await expect(page.locator('.wt-os-chapter h1')).toContainText('Ваш график');
-      await expect(page.locator('.canva-calendar')).toBeVisible();
-      await expect.poll(()=>page.evaluate(()=>Math.round(window.scrollY))).toBe(0);
-      await expect(page.locator('.wt-os-shell .wt-skip')).not.toBeInViewport();
-      await page.screenshot({path:`visual-audit-artifacts/v9-${theme}-${viewport.width}-calendar.png`,fullPage:true});
-      if(viewport.width>650){
-        await page.locator('.wt-os-directory .wt-os-link').filter({hasText:'Работа'}).first().click();
-      }else{
-        await page.locator('.wt-os-mobile-dock button').filter({hasText:'Работа'}).first().click();
-      }
-      await expect(page.locator('.wt-operations-calendar-grid')).toBeVisible();
-      await page.screenshot({path:`visual-audit-artifacts/v9-${theme}-${viewport.width}-work.png`,fullPage:true});
-      if(viewport.width>650){
-        await page.locator('.wt-os-directory .wt-os-link').filter({hasText:'Зарплата'}).first().click();
-      }else{
-        await page.locator('.wt-operations-number-main button').click();
-      }
-      await expect(page.locator('.wt-pay-console-statement')).toBeVisible();
-      await page.screenshot({path:`visual-audit-artifacts/v9-${theme}-${viewport.width}-pay.png`,fullPage:true});
-      await page.goto('?tab=social',{waitUntil:'networkidle'});
-      await expect(page.locator('.wt-network-layout')).toBeVisible();
-      await expect(page.locator('.wt-network-index-nav>button')).toHaveCount(6);
-      await page.screenshot({path:`visual-audit-artifacts/v9-${theme}-${viewport.width}-network.png`,fullPage:true});
-      await page.locator('.wt-network-index-nav>button').filter({hasText:'Люди'}).click();
-      await expect(page.locator('.wt-network-story-head h2')).toHaveText('Люди');
-      expect(errors,theme+'/'+viewport.width).toEqual([]);
-      await context.close();
-    }
+test('atlas zero rebuild: all application routes, orbital selector, launcher, mobile and themes',async({browser})=>{
+ const routes=['home','social','people','communities','chat','work','calendar','pay','absence','friends','notifications','profile','settings','admin'];
+ for(const theme of ['light','dark'])for(const viewport of [{width:1440,height:900},{width:390,height:844}]){
+  const context=await browser.newContext({viewport,colorScheme:theme});
+  const page=await context.newPage();const errors=[];
+  page.on('pageerror',error=>errors.push(String(error)));
+  await prepare(page,theme);
+  await page.goto('?tab=home',{waitUntil:'networkidle'});
+  await expect(page.locator('.atlas-app')).toBeVisible();
+  await expect(page.locator('.atlas-orbit-point')).toHaveCount(28);
+  await expect(page.locator('.atlas-app-tile')).toHaveCount(7);
+  await expect(page.locator('.atlas-tray')).toBeVisible();
+  const initial=await page.locator('.atlas-orbit-ring-core strong').innerText();
+  await page.locator('.atlas-orbit-point').nth(3).click();
+  expect(await page.locator('.atlas-orbit-ring-core strong').innerText()).not.toBe(initial);
+  await page.screenshot({path:`visual-audit-artifacts/atlas-${theme}-${viewport.width}-home.png`,fullPage:true});
+  await page.getByRole('button',{name:'Все разделы'}).click();
+  await expect(page.locator('.atlas-launcher-items button')).toHaveCount(14);
+  await page.screenshot({path:`visual-audit-artifacts/atlas-${theme}-${viewport.width}-launcher.png`,fullPage:true});
+  await page.locator('.atlas-launcher-items button').filter({hasText:'Календарь'}).first().click();
+  await expect(page.locator('.wt-shift-planner')).toBeVisible();
+  await expect(page.locator('.atlas-launcher')).toBeHidden();
+  for(const route of routes){
+   await page.goto('?tab='+route,{waitUntil:'networkidle'});
+   await expect(page.locator('.atlas-app')).toBeVisible();
+   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-window.innerWidth);
+   expect(overflow,theme+' '+viewport.width+' '+route).toBeLessThanOrEqual(2);
+   if(['home','social','chat','work','calendar','pay','absence','profile','settings'].includes(route))await page.screenshot({path:`visual-audit-artifacts/atlas-${theme}-${viewport.width}-${route}.png`,fullPage:true});
   }
+  expect(errors,theme+'/'+viewport.width).toEqual([]);
+  await context.close();
+ }
 });
