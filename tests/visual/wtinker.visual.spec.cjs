@@ -35,6 +35,7 @@ async function audit(page,label){
     const root=getComputedStyle(document.documentElement);
     return {text:document.body.innerText.trim().length,overflow:document.documentElement.scrollWidth-window.innerWidth,overflows,gradients,unlabeledIconButtons,bg:root.getPropertyValue('--bg').trim(),surface:root.getPropertyValue('--surface').trim()};
   });
+  if(result.overflow>2||result.overflows.length) console.log('Viewport layout diagnostic',label,JSON.stringify(result));
   expect(result.text).toBeGreaterThan(20);
   expect(result.overflow).toBeLessThanOrEqual(2);
   expect(result.overflows).toEqual([]);
