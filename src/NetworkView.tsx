@@ -32,14 +32,6 @@ export default function NetworkView({token,profile,onNotice,onChat,onProfile,ini
    </aside>
    <div className="wt-network-content">
     <header className="wt-network-story-head"><span className="wt-network-story-kicker">ЖУРНАЛ / {area.toUpperCase()}</span><h2>{area==='people'?'Люди':area==='groups'?'Сообщества':area==='events'?'События':area==='swaps'?'Обмен сменами':area==='saved'?'Избранное':'Что нового?'}</h2><p>{area==='people'?'Найдите коллег и расширьте круг профессиональных связей.':area==='groups'?'Места, где коллеги работают и общаются вместе.':area==='events'?'События сообщества и совместные встречи.':area==='swaps'?'Обмен рабочими сменами с коллегами.':area==='saved'?'Публикации, которые вы сохранили.':'Рабочие новости, полезный опыт и живые разговоры.'}</p></header>
-  {area==='feed'&&<div className="canva-head-actions">
-      <button className="canva-button" onClick={()=>setArea('people')}><Icon name="people" size={16}/> Найти коллег</button>
-      <button className="canva-button canva-button-primary" onClick={()=>setArea('groups')}><Icon name="communities" size={16}/> Сообщества</button>
-    </div>}
-  </header>
-  <nav className="canva-filter-row" aria-label="Разделы сети">
-    {([["feed","Лента"],["people","Люди"],["groups","Сообщества"],["events","События"],["swaps","Обмен сменами"],["saved","Сохранённое"]] as [Area,string][]).map(([id,label])=><button key={id} className={area===id?"active":""} aria-current={area===id?"page":undefined} onClick={()=>setArea(id)}>{label}</button>)}
-  </nav>
   {area==='feed'&&<div className="canva-network-grid">
     <div className="canva-feed-column">
       <details className="canva-composer">
