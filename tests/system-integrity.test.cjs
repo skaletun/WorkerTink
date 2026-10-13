@@ -47,13 +47,16 @@ if(!networkParts.includes('post-attachment-v2')) throw new Error('flexible post 
 const work=fs.readFileSync(path.join(root,'src/WorkHubView.tsx'),'utf8');
 const rebuildCss=ui;
 
-for(const x of ['wt-home-v8','wt-home-hero','wt-week-preview','wt-home-ledger','scenarioSalary','plannedVacation','encryptBackup']) if(!home.includes(x)) throw new Error('new workday home surface missing '+x);
+for(const x of ['wt-control-room','wt-control-hero','wt-roster-lanes','wt-control-workbench','wt-control-notebook','scenarioSalary','plannedVacation','encryptBackup']) if(!home.includes(x)) throw new Error('new workday home surface missing '+x);
 for(const x of ['redesign-notifications','notification-timeline','timeline-item']) if(!notifications.includes(x)) throw new Error('rebuilt notification surface missing '+x);
 for(const x of ['redesign-chats','chats-mode-nav','Формат разговора']) if(!chats.includes(x)) throw new Error('rebuilt chats surface missing '+x);
 if(!chat.includes('chat-page-rebuilt')) throw new Error('rebuilt personal chat surface missing');
 if(!groupChat.includes('URL.revokeObjectURL')||!groupChat.includes('mediaUrlsRef')) throw new Error('group chat media object URL cleanup missing');
 if(!chat.includes('is-empty')) throw new Error('chat empty-state contract missing');
-if(!work.includes('redesign-work')) throw new Error('rebuilt work surface missing');
+if(!work.includes('redesign-work')||!work.includes('wt-operations-calendar-grid')||!work.includes('wt-operations-upcoming')) throw new Error('dispatch-room structure missing');
+if(!shell.includes('wt-os-dock')||!shell.includes('wt-os-directory')||!shell.includes('wt-os-stage')) throw new Error('workspace architecture missing');
+if(!network.includes('wt-network-index')||!network.includes('wt-network-content')) throw new Error('social studio structure missing');
+if(!workViews.includes('wt-pay-console-statement')||!workViews.includes('wt-pay-console-sidebar')) throw new Error('financial statement architecture missing');
 if(!/\.calendar-layout\s*\{[^}]*display\s*:\s*grid/.test(ui)) throw new Error('new calendar layout missing');
 if(!/\.wt-mobile-nav\s*\{[^}]*position\s*:\s*fixed/.test(ui)) throw new Error('new mobile navigation missing');
 if(!/\.social-layout\s*\{[^}]*display\s*:\s*grid/.test(ui)) throw new Error('new social layout missing');
