@@ -53,6 +53,17 @@
 .registration-avatar .avatar-actions{display:flex;flex-wrap:wrap;gap:7px}
 .avatar-upload{display:inline-flex;align-items:center;justify-content:center;padding:9px 13px;min-height:39px;border:1px solid var(--line-strong);border-radius:7px;background:var(--surface-2);cursor:pointer;font-size:12px}
 .registration-card{min-width:0}
+/* Registration: pair related fields on wide screens to keep submit actions visible. */
+@media(min-width:761px){
+ .registration-card:not(.auth-card) .registration-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+ .registration-card:not(.auth-card) .registration-fields>:nth-child(3){grid-column:1/-1}
+ .registration-card:not(.auth-card) .registration-fields :is(input,select,textarea){min-width:0}
+ .registration-card:not(.auth-card) .registration-fields small{font-size:11px;line-height:1.45}
+ .registration-card:not(.auth-card) .registration-avatar{margin-bottom:12px}
+ .registration-card:not(.auth-card) .registration-hero{margin-bottom:13px}
+ .registration-card:not(.auth-card) .registration-submit{margin-top:10px}
+}
+
 
 
 /* Settings: functional section navigation, responsive form grid and readable records. */
