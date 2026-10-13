@@ -104,3 +104,18 @@
 .redesign-page-intro{display:flex;align-items:center;justify-content:space-between;gap:14px}
 .home-snapshot{min-width:0}
 .chat-page-rebuilt{min-height:0}
+
+@media(max-width:760px){
+ .wt-auth-screen,.wt-setup-screen{display:flex;flex-direction:column;min-height:100dvh;width:100%;max-width:100%;overflow-x:clip}
+ .wt-auth-screen>.wt-auth-aside{display:none}
+ .wt-auth-screen>.wt-auth-card{align-self:center;justify-self:auto;margin:16px auto;width:min(calc(100% - 24px),485px);min-width:0;padding:20px}
+ .wt-setup-panel{display:flex;flex-direction:column;align-items:center;width:100%;min-width:0}
+ .wt-setup-aside{width:100%;padding:22px 18px}
+ .wt-setup-aside .wt-auth-points{display:none}
+ .wt-setup-main{width:min(calc(100% - 24px),485px);padding:18px 0;min-width:0}
+}
+@media(max-width:390px){
+ .registration-card.wt-auth-card{padding:15px}
+ .registration-hero h1{font-size:23px}
+ .registration-avatar{flex-wrap:wrap}
+}
