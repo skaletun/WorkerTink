@@ -1,0 +1,136 @@
+/* ATLAS: Re-compose every remaining application surface as part of the new canvas.
+ * Layout rules are deliberately structural: scale, tracks, grids, direction and spatial hierarchy. */
+.atlas-app :is(.canva-page,.redesign-page){margin:0 auto;min-width:0}
+.atlas-app .canva-page-head{display:flex;flex-direction:column;align-items:flex-start;gap:17px;max-width:100%;padding:17px 0 28px;margin:0 0 29px;border:0;border-bottom:3px solid var(--atlas-ink)}
+.atlas-app .canva-page-head h1{font-size:clamp(48px,6.5vw,98px);font-weight:890;letter-spacing:-.095em;line-height:.94}
+.atlas-app .canva-page-head p{max-width:58ch;font-size:13px;line-height:1.65}
+.atlas-app .canva-kicker,.atlas-app .redesign-overline{font:850 10px var(--font-mono);letter-spacing:.11em;color:var(--atlas-electric)}
+.atlas-app .canva-button,.atlas-app .btn,.atlas-app .wt-button{border-radius:25px}
+.atlas-app :is(input,textarea,select){border-radius:8px}
+.atlas-app :is(input[type=checkbox],input[type=radio]){accent-color:var(--atlas-electric)}
+/* Network: journal masthead + horizontal issue index, then content and annotations. */
+.atlas-app .wt-network-layout{display:block;width:100%}
+.atlas-app .wt-network-index{position:static;display:block;top:auto;padding:0;border:0}
+.atlas-app .wt-network-index-head{display:flex;flex-direction:row;justify-content:space-between;align-items:center;gap:20px;padding:10px 0 22px;border-bottom:2px solid var(--atlas-ink)}
+.atlas-app .wt-network-index-head>strong{font-size:clamp(30px,4.5vw,64px);letter-spacing:-.08em;line-height:1}
+.atlas-app .wt-network-index-head>strong em{font-size:inherit;color:var(--atlas-electric)}
+.atlas-app .wt-network-index-head>p{font-size:12px;max-width:240px}
+.atlas-app .wt-network-index-nav{display:flex;flex-direction:row;flex-wrap:wrap;gap:5px;padding:14px 0;margin-bottom:13px;border:0;border-bottom:1px solid var(--atlas-stroke)}
+.atlas-app .wt-network-index-nav>button{width:auto;min-width:0;min-height:40px;padding:9px 13px;flex:none;border-radius:25px;border:1px solid var(--atlas-stroke);color:var(--atlas-ink);background:var(--atlas-paper)}
+.atlas-app .wt-network-index-nav>button svg:last-child{display:none}
+.atlas-app .wt-network-index-nav>button.is-active{background:var(--atlas-ink);color:var(--atlas-surface)}
+.atlas-app .wt-network-index-foot{display:none}
+.atlas-app .wt-network-story-head{display:flex;justify-content:space-between;align-items:baseline;gap:20px;border:0;padding:18px 0 24px}
+.atlas-app .wt-network-story-head h2{font-size:clamp(36px,5vw,68px);letter-spacing:-.085em}
+.atlas-app .wt-network-story-head p{max-width:260px}
+.atlas-app .wt-network-studio .canva-network-grid{grid-template-columns:minmax(0,1.6fr) minmax(225px,.7fr);gap:clamp(17px,3vw,42px)}
+.atlas-app .wt-network-studio .canva-composer{background:var(--atlas-lime);color:#152219;border:0;border-radius:16px;padding:20px}
+.atlas-app .wt-network-studio .canva-composer-trigger{background:#18231a;color:#fff}
+.atlas-app .wt-network-studio .post-v2{padding:30px 4px;border-bottom:1px solid var(--atlas-stroke)}
+.atlas-app .wt-network-studio .post-v2:first-child{border-top:2px solid var(--atlas-ink)}
+.atlas-app .wt-network-studio .canva-rail-card{background:var(--atlas-cream);border:0;border-radius:12px}
+/* Work becomes an open planning surface with giant line display, no equal-sized cards. */
+.atlas-app .wt-operations-intro{border:0;padding:14px 0 30px}
+.atlas-app .wt-operations-intro h2{font-size:clamp(50px,6.4vw,90px);line-height:.91}
+.atlas-app .wt-operations-intro h2 em{font-size:clamp(46px,5.5vw,76px);color:var(--atlas-electric)}
+.atlas-app .wt-operations-numbers{border:0;border-radius:15px;grid-template-columns:minmax(250px,2.15fr) repeat(3,minmax(110px,.75fr));background:var(--atlas-cream)}
+.atlas-app .wt-operations-numbers>.wt-operations-number-main{background:var(--atlas-deep);color:#fff}
+.atlas-app .wt-operations-numbers>div{min-height:166px}
+.atlas-app .wt-operations-layout{grid-template-columns:minmax(0,1.6fr) minmax(230px,.67fr)}
+.atlas-app .wt-operations-calendar{padding:clamp(17px,3vw,40px);background:var(--atlas-paper);border:0;border-radius:15px}
+.atlas-app .wt-operations-upcoming{padding:clamp(17px,2vw,26px);background:var(--atlas-lime);color:#202717;border:0;border-radius:15px}
+.atlas-app .wt-operations-upcoming .wt-operations-section-head :is(h3,span){color:#202717}
+.atlas-app .wt-operations-upcoming .wt-ops-when :is(b,small){color:#202717}
+.atlas-app .wt-ops-cell{background:var(--atlas-cream);border:0;border-radius:7px}
+.atlas-app .wt-ops-cell.is-off{background:var(--atlas-paper);outline:1px solid var(--atlas-stroke)}
+.atlas-app .wt-operations-lower{grid-template-columns:repeat(2,minmax(0,1fr))}
+.atlas-app .wt-operations-ledger{border:0;border-radius:13px;background:var(--atlas-paper)}
+.atlas-app .wt-operations-notes{border:0;border-radius:13px;background:var(--atlas-cream)}
+/* The planner is now an open worksheet on the canvas, with one dark control island. */
+.atlas-app .wt-shift-planner-heading{border:0;padding-bottom:25px}
+.atlas-app .wt-shift-planner-heading h1{font-size:clamp(53px,6.7vw,90px)}
+.atlas-app .wt-shift-planner-heading h1 em{font-size:clamp(48px,5.7vw,77px);color:var(--atlas-electric)}
+.atlas-app .wt-shift-planner-layout{grid-template-columns:minmax(220px,.43fr) minmax(0,1.5fr)}
+.atlas-app .wt-shift-planner-rail{border:0;border-radius:15px;background:var(--atlas-deep);color:#f5f5eb}
+.atlas-app .wt-shift-planner-rail :is(.wt-shift-rail-top,.wt-shift-rail-stat,.wt-shift-rail-facts){border-color:#4b5449}
+.atlas-app .wt-shift-planner-rail :is(.wt-shift-rail-top small,.wt-shift-rail-stat>span,.wt-shift-rail-facts>div>span){color:#b8c4b2}
+.atlas-app .wt-shift-planner-rail .wt-shift-planner-overline{color:var(--atlas-lime)}
+.atlas-app .wt-shift-planner-rail button{color:var(--atlas-deep)}
+.atlas-app .wt-shift-rail-guidance{background:#394138;color:#fff}
+.atlas-app .wt-shift-rail-guidance p{color:#d1d8cd}
+.atlas-app .wt-shift-rail-guidance button,.atlas-app .wt-shift-rail-stat button{color:var(--atlas-lime)}
+.atlas-app .wt-shift-planner-grid{background:var(--atlas-paper);border:0;border-radius:15px}
+.atlas-app .wt-shift-planner-grid .calendar-day{border-radius:7px}
+/* Payroll: full-page statement with strict ledger hierarchy and contrasting side rail. */
+.atlas-app .wt-pay-console-heading{border:0}
+.atlas-app .wt-pay-console-heading h1{font-size:clamp(57px,6.8vw,93px)}
+.atlas-app .wt-pay-console-heading h1 em{font-size:clamp(49px,5.9vw,80px);color:var(--atlas-electric)}
+.atlas-app .wt-pay-console-layout{grid-template-columns:minmax(0,1.7fr) minmax(245px,.65fr);gap:22px}
+.atlas-app .wt-pay-console-statement{border:0;border-radius:15px;background:var(--atlas-paper)}
+.atlas-app .wt-pay-statement-net{background:var(--atlas-deep);color:#f9f5e9}
+.atlas-app .wt-pay-console-split{border:0;border-radius:15px;background:var(--atlas-lime);color:#1b2417}
+.atlas-app .wt-pay-console-split :is(span,small){color:#3d4830}
+.atlas-app .wt-pay-console-editor{border:0;border-radius:15px;background:var(--atlas-cream)}
+/* Entire absences page is reflowed from stacked KPI cards into editorial balance & horizontal tracks. */
+.atlas-time-off-hero{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(250px,.6fr);min-height:420px;border-radius:17px;background:var(--atlas-lime);color:#192015;overflow:hidden}
+.atlas-time-off-hero>div:first-child{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:clamp(27px,5vw,75px)}
+.atlas-time-off-hero>div:first-child>span,.atlas-time-off-balance>span{font:840 11px var(--font-mono);letter-spacing:.1em}
+.atlas-time-off-hero h1{font-size:clamp(60px,7vw,112px);font-weight:870;line-height:.9;letter-spacing:-.085em;margin:23px 0}
+.atlas-time-off-hero h1 em{font:italic 400 clamp(57px,6.5vw,102px)/.95 Georgia,serif;letter-spacing:-.07em;color:#315a3b}
+.atlas-time-off-hero p{max-width:39ch;font-size:14px;line-height:1.6}
+.atlas-time-off-balance{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:13px;padding:38px;background:var(--atlas-deep);color:#f2f4e3}
+.atlas-time-off-balance>strong{font-size:clamp(110px,12vw,190px);line-height:.78;letter-spacing:-.11em;font-weight:900}
+.atlas-time-off-balance>b{font:830 12px var(--font-mono);letter-spacing:.08em}
+.atlas-time-off-balance>small{font-size:11px;color:#cdd7c9}
+.atlas-time-off-meter{width:100%;height:9px;background:#606c57;border-radius:9px;margin-top:18px}
+.atlas-time-off-meter i{display:block;height:100%;border-radius:9px;background:var(--atlas-lime)}
+.atlas-time-off-tracks{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:24px 0 13px;border-top:2px solid var(--atlas-ink);border-bottom:1px solid var(--atlas-stroke)}
+.atlas-time-off-tracks>div{display:flex;flex-direction:column;gap:9px;min-width:0;padding:24px 17px;border-right:1px solid var(--atlas-stroke)}
+.atlas-time-off-tracks>div:last-child{border:0}
+.atlas-time-off-tracks>div>span{font:810 10px var(--font-mono);letter-spacing:.09em;color:var(--atlas-electric)}
+.atlas-time-off-tracks h2{font-size:clamp(28px,3vw,44px);letter-spacing:-.065em}
+.atlas-time-off-tracks p{font-size:11px;color:var(--atlas-muted)}
+.atlas-time-off-editors{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.atlas-time-off-editors .period-editor{border:0;background:var(--atlas-paper);border-radius:15px;padding:clamp(17px,3vw,30px)}
+.atlas-time-off-editors .wt-period-heading h2{font-size:28px;letter-spacing:-.06em}
+.atlas-time-off-editors .period-item{border-bottom:1px solid var(--atlas-stroke);border-radius:0}
+.atlas-time-off-editors .wt-period-create{border:1px solid var(--atlas-stroke);background:var(--atlas-cream);border-radius:10px}
+/* Conversations and people — deep split workspace, not nested cards. */
+.atlas-app .chats-hub{display:flex;flex-direction:column;gap:14px}
+.atlas-app .canva-chats .canva-page-head{border:0}
+.atlas-app .chats-mode-nav{align-self:start;display:flex;gap:4px;background:var(--atlas-cream);border:0;border-radius:40px;padding:6px}
+.atlas-app .chats-mode-nav>button{border-radius:30px}
+.atlas-app .chat-page-rebuilt,.atlas-app .chat-shell-v2,.atlas-app .group-chat-page{border:0;border-radius:15px;overflow:hidden;background:var(--atlas-paper)}
+.atlas-app .chat-contacts-v2,.atlas-app .group-chat-list{background:var(--atlas-cream)}
+.atlas-app .chat-messages-v2{background:var(--atlas-paper)}
+.atlas-app .canva-friends .canva-page-head{border:0}
+.atlas-app .canva-friends-layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(270px,.65fr);gap:22px}
+.atlas-app .canva-friends-main{border:0;background:var(--atlas-paper);border-radius:13px}
+.atlas-app .canva-friends-rail{border:0;background:var(--atlas-lime);border-radius:13px}
+.atlas-app .canva-notifications .canva-page-head{border:0}
+.atlas-app .canva-notification-layout{grid-template-columns:minmax(240px,.42fr) minmax(0,1.58fr);gap:22px}
+.atlas-app .canva-notification-sidebar{background:var(--atlas-deep);color:#f2f4eb;border-radius:14px;border:0}
+.atlas-app .canva-notification-sidebar :is(h3,p,span){color:inherit}
+.atlas-app .canva-notification-feed{border:0;background:var(--atlas-paper);border-radius:14px}
+.atlas-app .canva-profile-cover{height:clamp(220px,25vw,365px);border-radius:15px 15px 0 0}
+.atlas-app .canva-profile-hero{border:0;border-radius:15px;background:var(--atlas-paper)}
+.atlas-app .canva-profile-identity{padding:clamp(18px,4vw,40px)}
+.atlas-app .canva-profile-grid{grid-template-columns:minmax(0,1.6fr) minmax(265px,.65fr);gap:22px}
+.atlas-app .canva-profile-card{background:var(--atlas-paper);border:0;border-radius:13px}
+.atlas-app .canva-profile-rail .canva-profile-card{background:var(--atlas-cream)}
+.atlas-app .canva-settings-shell{display:grid;grid-template-columns:minmax(190px,.37fr) minmax(0,1.63fr);gap:24px}
+.atlas-app .canva-settings-rail{position:sticky;top:90px;border:0;border-radius:12px;background:var(--atlas-deep);color:#f5f5e9}
+.atlas-app .canva-settings-rail>button{color:#f1f1e7}
+.atlas-app .canva-settings-rail>button.active{background:var(--atlas-lime);color:#1d221a}
+.atlas-app .settings-card,.atlas-app .settings-section{border:0;border-radius:13px;background:var(--atlas-paper)}
+.atlas-app .canva-admin-shell{grid-template-columns:minmax(190px,.35fr) minmax(0,1.65fr);gap:24px}
+.atlas-app .canva-admin-rail{background:var(--atlas-deep);border:0;border-radius:13px;color:#fff}
+.atlas-app .canva-admin-rail>button{color:#fff}
+.atlas-app .canva-admin-rail>button.active{background:var(--atlas-lime);color:#182018}
+.atlas-app .canva-admin-main{min-width:0}
+/* Registration is full-screen onboarding, separately from the signed-in shell. */
+.wt-auth-screen .wt-auth-aside,.wt-setup-screen .wt-setup-aside{background:var(--atlas-deep);color:#fff}
+.wt-auth-screen .wt-auth-aside h2,.wt-setup-screen .wt-setup-aside h2{font-size:clamp(42px,4vw,75px);letter-spacing:-.07em}
+.wt-auth-screen .wt-auth-card,.wt-setup-screen .wt-setup-main{border-radius:14px}
+@media(max-width:1100px){.atlas-app .wt-network-studio .canva-network-grid{grid-template-columns:1fr}.atlas-app .wt-network-studio .canva-network-rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.atlas-app .wt-operations-layout,.atlas-app .wt-pay-console-layout,.atlas-app .wt-shift-planner-layout{grid-template-columns:1fr}.atlas-app .wt-shift-planner-rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.atlas-app .wt-operations-numbers{grid-template-columns:repeat(3,minmax(0,1fr))}.atlas-app .wt-operations-numbers>.wt-operations-number-main{grid-column:1/-1}.atlas-app .canva-notification-layout,.atlas-app .canva-friends-layout{grid-template-columns:1fr}}
+@media(max-width:740px){.atlas-app .wt-network-index-head{align-items:flex-start;flex-direction:column}.atlas-app .wt-network-index-head>strong{font-size:35px}.atlas-app .wt-network-index-nav{flex-wrap:nowrap;overflow-x:auto}.atlas-app .wt-network-story-head{flex-direction:column;align-items:start}.atlas-app .wt-network-story-head h2{font-size:43px}.atlas-app .wt-network-studio .canva-network-rail{grid-template-columns:1fr}.atlas-app .wt-operations-intro h2,.atlas-app .wt-shift-planner-heading h1,.atlas-app .wt-pay-console-heading h1{font-size:51px}.atlas-app .wt-operations-intro h2 em,.atlas-app .wt-shift-planner-heading h1 em,.atlas-app .wt-pay-console-heading h1 em{font-size:45px}.atlas-app .wt-operations-numbers>div{min-height:110px}.atlas-app .wt-operations-lower,.atlas-time-off-editors,.atlas-time-off-tracks{grid-template-columns:1fr}.atlas-time-off-hero{grid-template-columns:1fr;min-height:0}.atlas-time-off-hero>div:first-child{padding:28px}.atlas-time-off-hero h1{font-size:62px}.atlas-time-off-hero h1 em{font-size:60px}.atlas-time-off-balance{padding:28px}.atlas-time-off-balance>strong{font-size:100px}.atlas-time-off-tracks{margin-top:17px}.atlas-time-off-tracks>div{border-right:0;border-bottom:1px solid var(--atlas-stroke)}.atlas-app .wt-pay-console-heading{align-items:start}.atlas-app .wt-shift-planner-rail{grid-template-columns:1fr}.atlas-app .canva-settings-shell,.atlas-app .canva-admin-shell{grid-template-columns:1fr}.atlas-app .canva-settings-rail{position:static}.atlas-app .canva-profile-grid{grid-template-columns:1fr}}
