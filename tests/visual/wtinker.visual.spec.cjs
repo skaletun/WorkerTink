@@ -176,6 +176,8 @@ test('v9 workspace architecture: real responsive navigation and working screens'
       await page.locator('.wt-roster-slot').first().click();
       await expect(page.locator('.wt-os-chapter h1')).toContainText('Ваш график');
       await expect(page.locator('.canva-calendar')).toBeVisible();
+      await expect.poll(()=>page.evaluate(()=>Math.round(window.scrollY))).toBe(0);
+      await expect(page.locator('.wt-os-shell .wt-skip')).not.toBeInViewport();
       await page.screenshot({path:`visual-audit-artifacts/v9-${theme}-${viewport.width}-calendar.png`,fullPage:true});
       if(viewport.width>650){
         await page.locator('.wt-os-directory .wt-os-link').filter({hasText:'Работа'}).first().click();
