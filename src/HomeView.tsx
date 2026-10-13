@@ -52,81 +52,58 @@ export default function HomeView({state,patch,onNotice,go}:Props){
  },[month,year,state]);
  const saveTip=()=>{if(!tip.trim())return;patch({shiftNotes:{...state.shiftNotes,[iso(now)]:`${state.shiftNotes[iso(now)]||''}${state.shiftNotes[iso(now)]?'\n':''}${tip.trim()}`}});setTip('');onNotice('Заметка сохранена для сегодняшнего дня')};
  const backup=async()=>{if(!backupPassword){onNotice('Введите пароль резервной копии');return}try{download(`workertink-backup-${iso(now)}.wtbackup`,await encryptBackup(state,backupPassword));setBackupPassword('');onNotice('Зашифрованная резервная копия создана')}catch{onNotice('Не удалось создать резервную копию')}};
- const week=Array.from({length:7},(_,offset)=>{
+ const days=Array.from({length:14},(_,offset)=>{
   const date=addDays(now,offset),kind=getScheduledShift(state,date);
   return {date,kind,label:kind==='off'?'Выходной':kind==='night'?'Ночь':kind==='full'?'Сутки':'День'};
  });
- return <section className="wt-home wt-home-v8" aria-label="Личная главная">
-  <header className="wt-home-hero">
-   <div className="wt-home-hero-marker"><span className="wt-overline">РАБОЧИЙ ДНЕВНИК / {now.toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'})}</span><span className="wt-home-index">01 — ОБЗОР</span></div>
-   <div className="wt-home-hero-grid">
-    <div className="wt-home-hero-intro">
-     <h2>Привет,<br/><em>{state.profile.name.split(' ')[0]||'коллега'}.</em></h2>
-     <p>Ваш день в одном месте: ближайшие смены, выплаты и люди, с которыми вы работаете.</p>
-     <div className="wt-home-hero-links">
-      <button className="wt-button primary" onClick={()=>go('social')}><Icon name="social" size={18}/> Открыть ленту <Icon name="chevronRight" size={17}/></button>
-      <button className="wt-home-quiet-link" onClick={()=>go('people')}>Найти коллег <Icon name="chevronRight" size={16}/></button>
-      <button className="wt-home-quiet-link" onClick={()=>go('chat')}>Мои чаты <Icon name="chevronRight" size={16}/></button>
-     </div>
-    </div>
-    <div className="wt-home-income">
-     <div className="wt-home-income-head"><span>НА РУКИ В {MONTHS[month.month].toUpperCase()}</span><Icon name="pay" size={25}/></div>
-     <strong>{formatMoney(month.net)}</strong>
-     <div className="wt-home-income-foot"><span>{month.work} рабочих смен · после НДФЛ</span><button onClick={()=>go('pay')}>Выплаты <Icon name="chevronRight" size={18}/></button></div>
-    </div>
+ const dateLong=now.toLocaleDateString('ru-RU',{weekday:'long'});
+ return <section className="wt-control-room" aria-label="Личная главная">
+  <header className="wt-control-hero">
+   <div className="wt-control-date"><span className="wt-control-hero-eyebrow">СЕГОДНЯ · {now.toLocaleDateString('ru-RU',{month:'long',year:'numeric'}).toUpperCase()}</span><strong>{String(now.getDate()).padStart(2,'0')}</strong><span>{dateLong}</span><span className="wt-control-date-foot">ВАШ РАБОЧИЙ РИТМ / WT</span></div>
+   <div className="wt-control-intro">
+    <span className="wt-control-hero-eyebrow">ЛИЧНЫЙ РАБОЧИЙ ПУЛЬТ</span>
+    <h2>День начинается <em>здесь.</em></h2>
+    <p>Привет, {state.profile.name.split(' ')[0]||'коллега'}. Перед вами не отчёт, а ваш рабочий день: что впереди, что оплачено и что можно запланировать.</p>
+    <div className="wt-control-status"><span className={`wt-control-status-indicator ${shift==='off'?'off':''}`}/><strong>{shiftLabel}</strong><span>Ваш график на сегодня</span></div>
+    <div className="wt-control-hero-actions"><button onClick={()=>go('calendar')}><Icon name="calendar" size={18}/> Открыть график <Icon name="chevronRight" size={17}/></button><button onClick={()=>go('social')}>Новости коллег <Icon name="chevronRight" size={16}/></button></div>
    </div>
-   <div className="wt-week-preview">
-    <div className="wt-week-preview-title"><div><span className="wt-overline">ПЛАН НА 7 ДНЕЙ</span><strong>Неделя в сменах</strong></div><button onClick={()=>go('calendar')}>Весь календарь <Icon name="chevronRight" size={16}/></button></div>
-    <div className="wt-week-days">
-     {week.map(({date,kind,label},index)=><button key={iso(date)} type="button" className={`wt-week-day ${kind==='off'?'is-off':kind==='night'?'is-night':'is-work'}${index===0?' is-today':''}`} onClick={()=>go('calendar')} aria-label={`${date.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'})}: ${label}. Открыть календарь`}>
-       <span>{date.toLocaleDateString('ru-RU',{weekday:'short'})}</span><strong>{date.getDate()}</strong><small>{label}</small>
-      </button>)}
-    </div>
+   <div className="wt-control-balance">
+    <span className="wt-control-hero-eyebrow">РАСЧЁТ ЗА {MONTHS[month.month].toUpperCase()}</span>
+    <span className="wt-control-balance-caption">К выплате</span>
+    <strong>{formatMoney(month.net)}</strong>
+    <div className="wt-control-balance-rule"><span style={{width:`${Math.min(100,Math.round(month.work/Math.max(1,new Date(yearNumber,now.getMonth()+1,0).getDate())*100))}%`}}/></div>
+    <div className="wt-control-balance-bottom"><span>{month.work} смен в месяце<br/>Сумма после НДФЛ</span><button onClick={()=>go('pay')} aria-label="Открыть подробный расчёт зарплаты"><Icon name="chevronRight" size={21}/></button></div>
    </div>
   </header>
-  <section className="wt-home-ledger" aria-label="Важные показатели">
-   <div className="wt-home-ledger-heading"><span className="wt-overline">МОЙ СТАТУС</span><h3>Главное сейчас</h3></div>
-   <div className="wt-home-ledger-list">
-    <button onClick={()=>go('calendar')}><span className="wt-ledger-number">01</span><span className="wt-ledger-label">Сегодня</span><strong>{shiftLabel}</strong><Icon name="chevronRight" size={18}/></button>
-    <button onClick={()=>go('absence')}><span className="wt-ledger-number">02</span><span className="wt-ledger-label">Отпуск доступен</span><strong>{Math.round(vacLeft)} дней</strong><Icon name="chevronRight" size={18}/></button>
-    <button onClick={()=>go('pay')}><span className="wt-ledger-number">03</span><span className="wt-ledger-label">Доход за {yearNumber}</span><strong>{formatMoney(year.net)}</strong><Icon name="chevronRight" size={18}/></button>
-   </div>
+  <section className="wt-roster" aria-label="График на четырнадцать дней">
+   <div className="wt-roster-caption"><div><span className="wt-index-label">01 / ГРАФИК</span><h3>Ближайшие две недели</h3></div><button onClick={()=>go('calendar')}>Полный календарь <Icon name="externalLink" size={15}/></button></div>
+   <div className="wt-roster-lanes">{days.map(({date,kind,label},i)=><button key={iso(date)} className={`wt-roster-slot is-${kind}${i===0?' is-today':''}`} onClick={()=>go('calendar')} aria-label={`${date.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'})}: ${label}`}><span>{date.toLocaleDateString('ru-RU',{weekday:'short'})}</span><strong>{date.getDate()}</strong><i/><small>{label}</small></button>)}</div>
+   <div className="wt-roster-legend"><span><i className="day"/>Рабочая</span><span><i className="night"/>Ночь</span><span><i className="off"/>Выходной</span></div>
   </section>
-  <div className="wt-home-columns">
-   <div className="wt-home-main">
-    <section className="wt-home-section wt-home-projection">
-     <div className="wt-section-heading"><div><span className="wt-overline">ПЛАНИРОВАНИЕ / 01</span><h3>Деньги на горизонте</h3></div><button className="wt-link-button" onClick={()=>go('pay')}>Расчёт зарплаты <Icon name="chevronRight" size={16}/></button></div>
-     <div className="wt-home-forecast"><div><span>Прогноз на {forecastMonths} мес.</span><strong>{formatMoney(forecast.net)}</strong><small>В среднем {formatMoney(forecast.avg)} в месяц, по текущим настройкам</small></div><label htmlFor="wt-forecast-range">Период: {forecastMonths} мес.</label><input id="wt-forecast-range" type="range" min="1" max="12" value={forecastMonths} onChange={e=>setForecastMonths(Number(e.target.value))}/></div>
-     <details className="wt-home-disclosure"><summary>Смоделировать другой оклад <Icon name="chevronDown" size={17}/></summary>
-      <div className="wt-home-planner"><div className="wt-tool-heading"><span className="wt-overline">ЕСЛИ ИЗМЕНИТЬ УСЛОВИЯ</span><h4>Ожидаемая выплата</h4><strong>{formatMoney(scenario.net)}</strong></div><div className="wt-form-pair"><label>Оклад, ₽<input type="number" min="0" value={scenarioSalary} onChange={e=>setScenarioSalary(Number(e.target.value)||0)}/></label><label>Ночная доплата · {scenarioNight}%<input type="range" min="0" max="100" value={scenarioNight} onChange={e=>setScenarioNight(Number(e.target.value))}/></label></div></div>
-     </details>
+  <div className="wt-control-grid">
+   <main className="wt-control-workbench">
+    <section className="wt-control-workbench-head"><span className="wt-index-label">02 / ПЛАНЫ</span><h2>Планируйте заранее.</h2><p>Настоящие расчёты — на основе вашего графика, оклада и сохранённых периодов.</p></section>
+    <section className="wt-workbook wt-workbook-finance">
+     <div className="wt-workbook-title"><span className="wt-workbook-index">A</span><div><span className="wt-index-label">ФИНАНСОВЫЙ ПРОГНОЗ</span><h3>Сколько получится</h3></div><button onClick={()=>go('pay')} aria-label="Детальный расчёт зарплаты"><Icon name="chevronRight" size={20}/></button></div>
+     <div className="wt-workbook-figure"><strong>{formatMoney(forecast.net)}</strong><span>За {forecastMonths} мес. · среднемесячно {formatMoney(forecast.avg)}</span></div>
+     <label htmlFor="wt-forecast-range" className="wt-workbook-range-label">Период прогноза <b>{forecastMonths} месяцев</b></label>
+     <input id="wt-forecast-range" type="range" min="1" max="12" value={forecastMonths} onChange={e=>setForecastMonths(Number(e.target.value))}/>
+     <div className="wt-workbook-axis"><span>1 мес.</span><span>6 мес.</span><span>12 мес.</span></div>
+     <details className="wt-workbook-disclosure"><summary>Что, если изменить условия? <Icon name="chevronDown" size={16}/></summary><div className="wt-workbook-inputs"><label>Оклад, ₽<input type="number" min="0" value={scenarioSalary} onChange={e=>setScenarioSalary(Number(e.target.value)||0)}/></label><label>Ночная доплата · {scenarioNight}%<input type="range" min="0" max="100" value={scenarioNight} onChange={e=>setScenarioNight(Number(e.target.value))}/></label><div><span>Сценарий выплаты</span><strong>{formatMoney(scenario.net)}</strong></div></div></details>
     </section>
-    <section className="wt-home-section wt-home-absence">
-     <div className="wt-section-heading"><div><span className="wt-overline">ПЛАНИРОВАНИЕ / 02</span><h3>Время для себя</h3></div><button className="wt-link-button" onClick={()=>go('absence')}>Все отсутствия <Icon name="chevronRight" size={16}/></button></div>
-     <div className="wt-home-absence-intro"><strong>{Math.round(vacLeft)}<span> / {state.vacTotal}</span></strong><p>Осталось дней отпуска</p></div>
-     <details className="wt-home-disclosure"><summary>Рассчитать отпуск и больничный <Icon name="chevronDown" size={17}/></summary>
-      <div className="wt-home-planner"><div className="wt-form-pair"><label>Первый день отпуска<input type="date" value={vacStart} onChange={e=>setVacStart(e.target.value)}/></label><label>Календарных дней<input type="number" min="1" max="60" value={vacLength} onChange={e=>setVacLength(Math.max(1,Number(e.target.value)||1))}/></label></div>
-       <p>{plannedVacation?`${plannedVacation.days} дней по расчёту · останется ${Math.round(plannedVacation.balance)} дней`:'Выберите первый день отпуска, чтобы проверить остаток.'}</p>
-       <div className="wt-sick-inline"><label>Больничный · дней<input type="number" min="1" max="365" value={sickDays} onChange={e=>setSickDays(Math.max(1,Number(e.target.value)||1))}/></label><div><span>Расчёт выплаты · {Math.round(sickRate*100)}%</span><strong>{formatMoney(sickPay)}</strong></div></div>
-      </div>
-     </details>
+    <section className="wt-workbook wt-workbook-absence">
+     <div className="wt-workbook-title"><span className="wt-workbook-index">B</span><div><span className="wt-index-label">ОТДЫХ И ЗДОРОВЬЕ</span><h3>Дни в вашем распоряжении</h3></div><button onClick={()=>go('absence')} aria-label="Планировать отсутствия"><Icon name="chevronRight" size={20}/></button></div>
+     <div className="wt-workbook-vac"><strong>{Math.round(vacLeft)}<small>дней</small></strong><div><span>Осталось из {state.vacTotal}</span><div className="wt-workbook-vac-track"><i style={{width:`${state.vacTotal>0?Math.max(0,Math.min(100,vacLeft/state.vacTotal*100)):0}%`}}/></div></div></div>
+     <details className="wt-workbook-disclosure"><summary>Расчёт отпуска и больничного <Icon name="chevronDown" size={16}/></summary><div className="wt-workbook-inputs"><label>Первый день отпуска<input type="date" value={vacStart} onChange={e=>setVacStart(e.target.value)}/></label><label>Длительность, дней<input type="number" min="1" max="60" value={vacLength} onChange={e=>setVacLength(Math.max(1,Number(e.target.value)||1))}/></label><p>{plannedVacation?`${plannedVacation.days} дней · останется ${Math.round(plannedVacation.balance)}`:'Укажите дату, чтобы узнать остаток.'}</p><label>Больничный, дней<input type="number" min="1" max="365" value={sickDays} onChange={e=>setSickDays(Math.max(1,Number(e.target.value)||1))}/></label><div><span>Выплата · {Math.round(sickRate*100)}%</span><strong>{formatMoney(sickPay)}</strong></div></div></details>
     </section>
-   </div>
-   <aside className="wt-home-aside">
-    <section className="wt-home-section wt-home-advice">
-     <div className="wt-section-heading"><div><span className="wt-overline">ВАЖНО ЗНАТЬ</span><h3>На заметку</h3></div></div>
-     <ul>{tips.length?tips.map((text,i)=><li key={i}>{text}</li>):<li>В расчётах нет предупреждений. Загляните в ленту — там новости коллег.</li>}</ul>
-    </section>
-    <section className="wt-home-section wt-home-quicknote">
-     <div className="wt-section-heading"><div><span className="wt-overline">МОИ ЗАПИСИ</span><h3>Заметка к смене</h3></div></div>
-     <label className="wt-sr-only" htmlFor="wt-quick-note">Текст заметки</label>
-     <textarea id="wt-quick-note" value={tip} onChange={e=>setTip(e.target.value)} placeholder="Что важно не забыть?"/>
-     <button className="wt-button primary" disabled={!tip.trim()} onClick={saveTip}>Сохранить заметку <Icon name="chevronRight" size={17}/></button>
-    </section>
-    <details className="wt-home-utility"><summary><span><Icon name="shield" size={18}/> Резервная копия и безопасность</span><Icon name="chevronDown" size={16}/></summary>
-     <section className="wt-home-section"><div className="wt-section-heading"><div><span className="wt-overline">ЭКСПОРТ</span><h3>Ваши данные</h3></div></div><p>Резервная копия шифруется на устройстве.</p><label htmlFor="wt-backup-password">Пароль шифрования</label><input id="wt-backup-password" type="password" value={backupPassword} onChange={e=>setBackupPassword(e.target.value)} autoComplete="new-password"/><button className="wt-button secondary" onClick={()=>void backup()}>Создать копию <Icon name="download" size={16}/></button></section>
-     <section className="wt-home-section wt-home-security"><span className="wt-overline">ЗАЩИТА</span><h3>Аккаунт</h3><p>OnePass: {state.onePassEnabled?'включён':'выключен'}. Личные чаты используют E2E-шифрование.</p><button className="wt-button secondary" onClick={()=>go('settings')}>Настройки безопасности</button></section>
-    </details>
+    <section className="wt-control-command-list" aria-label="Быстрые переходы"><span className="wt-index-label">03 / ЧТО ДАЛЬШЕ</span><button onClick={()=>go('chat')}><span>01</span><strong>Написать коллегам</strong><Icon name="chevronRight" size={19}/></button><button onClick={()=>go('people')}><span>02</span><strong>Найти людей</strong><Icon name="chevronRight" size={19}/></button><button onClick={()=>go('work')}><span>03</span><strong>Перейти к работе</strong><Icon name="chevronRight" size={19}/></button></section>
+   </main>
+   <aside className="wt-control-notebook" aria-label="Записи и информация">
+    <div className="wt-notebook-head"><span className="wt-index-label">ЛИЧНЫЙ БЛОКНОТ / WT</span><h2>На сегодня.</h2><span>{now.toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}</span></div>
+    <section className="wt-notebook-status"><span className="wt-index-label">ВАШИ ЦИФРЫ</span><div><span>Годовой доход</span><strong>{formatMoney(year.net)}</strong></div><div><span>Рабочие смены</span><strong>{month.work}</strong></div><div><span>Остаток отпуска</span><strong>{Math.round(vacLeft)}</strong></div></section>
+    <section className="wt-notebook-notes"><h3>Заметка к смене</h3><label className="wt-sr-only" htmlFor="wt-quick-note">Текст заметки</label><textarea id="wt-quick-note" value={tip} onChange={e=>setTip(e.target.value)} placeholder="Что нужно не забыть сегодня?"/><button disabled={!tip.trim()} onClick={saveTip}><Icon name="check" size={17}/> Сохранить</button></section>
+    <section className="wt-notebook-prompts"><h3>Обратить внимание</h3>{tips.length?tips.map((t,i)=><p key={i}>{t}</p>):<p>График и выплаты рассчитаны. Можно заняться планами или узнать новости коллег.</p>}</section>
+    <details className="wt-notebook-backup"><summary><Icon name="shield" size={17}/> Резервная копия и защита <Icon name="chevronDown" size={16}/></summary><div><p>Ваши данные шифруются перед экспортом на этом устройстве.</p><label htmlFor="wt-backup-password">Пароль шифрования</label><input id="wt-backup-password" type="password" value={backupPassword} onChange={e=>setBackupPassword(e.target.value)} autoComplete="new-password"/><button onClick={()=>void backup()}><Icon name="download" size={16}/> Создать резервную копию</button><p>OnePass: {state.onePassEnabled?'включён':'выключен'}. Чаты защищены E2E-шифрованием.</p><button onClick={()=>go('settings')}>Настройки безопасности <Icon name="chevronRight" size={16}/></button></div></details>
    </aside>
   </div>
  </section>;
