@@ -52,7 +52,7 @@ export default function NetworkView({token,profile,onNotice,onChat,onProfile,ini
       </section>
       {feedLoading&&!posts.length?<div className="canva-feed-list"><article className="canva-post canva-skeleton-card"><div/><div/><div/></article><article className="canva-post canva-skeleton-card"><div/><div/><div/></article></div>:feedError&&!posts.length?<div className="canva-error">Ленту не удалось загрузить. <button onClick={()=>void refresh()}>Повторить</button></div>:<div className="canva-feed-list">{visible.map(p=><PostCard key={p.id} post={p} saved={saved.some(x=>x.id===p.id)} comments={comments[p.id]||[]} commentsOpen={Boolean(openComments[p.id])} comment={comment[p.id]||''} onLike={async()=>{const rr=await toggleSocialLike(p.id,token);setPosts(rows=>rows.map(x=>x.id===p.id?{...x,liked:rr.liked,likes:rr.likes}:x));setSaved(rows=>rows.map(x=>x.id===p.id?{...x,liked:rr.liked,likes:rr.likes}:x))}} onSave={()=>void toggleSave(p)} onComments={()=>openComments[p.id]?setOpenComments(x=>({...x,[p.id]:false})):void loadComments(p.id)} onCommentChange={v=>setComment(x=>({...x,[p.id]:v}))} onComment={()=>void addComment(p.id)} onChat={onChat} onProfile={onProfile} canDelete={p.author.profileId===profile.profileId} onDelete={()=>void deletePost(p.id)}/>)}</div>}
       {!visible.length&&!feedLoading&&!feedError&&<div className="canva-empty"><b>Лента пока пуста</b><span>Первое рабочее обновление создаст общий контекст для команды.</span></div>}
-    </main>
+    </div>
     <aside className="canva-network-rail">
       <section className="canva-rail-card">
         <div className="canva-rail-head"><span>Сообщества сети</span><button onClick={()=>setArea('events')}>Все</button></div>
