@@ -1,0 +1,152 @@
+/* WTinker v8 / page-specific compositions: feed, work, payroll, conversations, directories. */
+/* Social is a readable publication stream, not an array of floating cards. */
+.canva-network-grid{grid-template-columns:minmax(0,1fr) 290px;gap:34px}
+.canva-filter-row{gap:2px;padding:0;margin:0 0 22px;border-bottom:2px solid var(--ink)}
+.canva-filter-row button{min-height:47px;padding:10px 17px;border-radius:0;border-bottom:3px solid transparent;font-size:13px}
+.canva-filter-row button.active{border-bottom-color:var(--accent);background:var(--accent-soft)}
+.canva-composer{padding:25px 28px;border-radius:6px;border:1px solid var(--line);border-top:3px solid var(--accent);margin:0 0 20px}
+.canva-composer-head{min-height:55px}
+.canva-composer-trigger{border:1px solid var(--line);border-radius:4px;background:var(--surface);font-size:12px}
+.canva-composer textarea{font-size:16px;line-height:1.65}
+.canva-feed-list,.feed-stack-v2{gap:0}
+.post-v2{border-left:0;border-right:0;border-top:0;border-bottom:1px solid var(--line);border-radius:0!important;padding:28px 6px;background:transparent}
+.post-v2:first-child{border-top:2px solid var(--ink)}
+.post-v2:only-child,.post-v2:last-child{border-bottom:1px solid var(--line)}
+.post-v2-head{margin-bottom:17px}
+.post-author-v2 b{font-size:14px}
+.post-body-v2{font-size:15px;line-height:1.8}
+.post-type-v2{border-radius:2px}
+.post-actions-v2{justify-content:flex-start;gap:23px;padding-top:13px;margin-top:18px}
+.post-actions-v2 button{min-height:37px;font-size:12px}
+.canva-network-rail{gap:15px}
+.canva-rail-card{padding:21px;border-radius:5px;background:var(--surface);border:1px solid var(--line)}
+.canva-rail-card:first-child{border-top:3px solid var(--ink)}
+.canva-rail-head span{font-size:15px}
+.canva-rail-accent{background:var(--surface-2)}
+.canva-person,.canva-community-list button{min-height:67px}
+.canva-directory-card,.canva-community-directory,.canva-friends-main,.canva-friends-rail{border-radius:5px}
+.canva-people-grid{grid-template-columns:minmax(0,1.65fr) minmax(260px,.7fr);gap:23px}
+.canva-directory-card,.canva-community-directory{padding:25px 28px}
+.canva-split-head h2,.page-intro h2,.section-intro-v2 h2{font-size:clamp(28px,3vw,39px);letter-spacing:-.055em}
+/* Work overview becomes a split dispatch board with one metric ruler. */
+.wt-work-dashboard{min-width:0}
+.wt-work-header{align-items:flex-end;gap:25px;padding:10px 0 26px;border-bottom:2px solid var(--ink)}
+.wt-work-header h2{font-size:clamp(39px,4.5vw,65px);line-height:1.04;margin:8px 0 12px}
+.wt-work-header p{font-size:14px}
+.wt-work-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin:0 0 27px;border:1px solid var(--line);border-top:0;background:var(--surface)}
+.wt-work-metrics button,.wt-work-metrics button:first-child,.wt-work-metrics button:last-child{min-height:159px;gap:10px;padding:24px 21px;border:0;border-right:1px solid var(--line);border-radius:0;box-shadow:none;background:transparent}
+.wt-work-metrics button:last-child{border-right:0}
+.wt-work-metrics button:first-child{background:var(--ink);color:var(--surface)}
+.wt-work-metrics button:first-child>span,.wt-work-metrics button:first-child>small,.wt-work-metrics button:first-child em{color:var(--surface);opacity:.8}
+.wt-work-metrics button>strong{font-size:clamp(23px,2.7vw,34px);line-height:1.08;overflow-wrap:anywhere}
+.wt-work-metrics button>span{font-size:10px;letter-spacing:.1em}
+.wt-work-metrics button:hover:not(:first-child){background:var(--surface-2)}
+.wt-work-layout{grid-template-columns:minmax(0,1.6fr) minmax(275px,.8fr);gap:22px}
+.wt-work-primary,.wt-work-insights,.wt-work-notes,.wt-work-quick{border:1px solid var(--line);border-radius:5px;padding:26px 28px;background:var(--surface)}
+.wt-work-primary{border-top:3px solid var(--accent)}
+.wt-work-insights{background:var(--surface-2)}
+.wt-work-shift{min-height:77px;padding:14px 5px}
+.wt-work-shift:hover{background:var(--surface-2)}
+.wt-date-plate{border-radius:4px;border:1px solid var(--line)}
+.wt-work-secondary{gap:22px;margin-top:22px}
+.wt-work-quick>button{min-height:56px}
+.wt-work-teams-entry,.wt-work-teams>.work-teams{border-radius:5px}
+/* Personal finances read like a statement: bold balance + exact rows. */
+.canva-pay .canva-pay-hero{border-radius:5px;padding:26px}
+.canva-pay .canva-pay-metric{border-radius:5px}
+.canva-pay .canva-pay-breakdown,.canva-pay .canva-pay-form{border-radius:5px;padding:26px}
+.canva-pay .canva-pay-overview{gap:0;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.canva-pay .canva-pay-overview>*{border-radius:0!important}
+.canva-pay .canva-pay-grid{gap:21px}
+.canva-pay .canva-money-list>div{min-height:44px}
+.annual-card{border-radius:5px}
+.annual-kpis{gap:0}
+.annual-kpis>div{border-right:1px solid var(--line)}
+.wt-pay-trend{border-radius:5px}
+.canva-calendar .canva-calendar-grid button{border-radius:3px}
+.canva-calendar .canva-calendar-grid{gap:5px}
+.canva-calendar .canva-calendar-summary>div{border-right:1px solid var(--line)}
+.canva-calendar .canva-calendar-actions{gap:10px}
+.canva-absence-grid{gap:22px}
+/* Conversation workspace: clear rails, compact bubbles, uninterrupted reading. */
+.chat-page,.group-chat-page,.chat-shell-v2{border-radius:5px}
+.chat-shell-v2,.group-chat-page{grid-template-columns:minmax(235px,310px) minmax(0,1fr);min-height:610px;max-height:min(800px,calc(100vh - 220px))}
+.chat-contacts-v2,.group-chat-list{background:var(--surface-2);border-right:1px solid var(--line)}
+.chat-contact-v2{border-radius:0}
+.chat-contact-v2:hover{background:var(--surface)}
+.chat-contact-v2.active{background:var(--accent-soft)}
+.chat-messages-v2,.group-chat-messages{background:var(--surface)}
+.chat-bubble{border-radius:7px}
+.chat-row.own .chat-bubble{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 25%,var(--line))}
+.canva-chat-switch button{border-radius:4px}
+.canva-chat-switch button.active{border-color:var(--accent)}
+/* Profile: editorial identity band, two deliberate columns. */
+.canva-profile-hero{border-radius:5px}
+.canva-profile-cover{height:205px;background-color:var(--ink)}
+.canva-profile-identity{padding:25px 29px}
+.canva-profile-main h2{font-size:clamp(24px,2.6vw,34px)}
+.canva-profile-grid{grid-template-columns:minmax(0,1.65fr) minmax(270px,.72fr);gap:24px}
+.canva-profile-main-column,.canva-profile-rail{gap:20px}
+.canva-profile-card,.settings-section{border-radius:5px;padding:24px}
+.canva-profile-card h3{font-size:21px}
+.canva-settings-shell,.canva-admin-shell{gap:24px}
+.canva-settings-rail,.canva-admin-rail{border-radius:5px}
+.canva-settings-rail>button,.canva-admin-rail>button{border-radius:4px}
+.canva-notification-sidebar,.canva-notification-feed{border-radius:5px;padding:19px}
+.canva-notification-layout{gap:24px}
+.timeline-item,.canva-event{min-height:72px}
+/* Onboarding has its own voice: dark editorial margin rather than a card on a backdrop. */
+.wt-auth-screen,.wt-setup-screen{background:var(--canvas)}
+.wt-auth-aside,.wt-setup-aside{background:var(--ink)}
+.wt-auth-screen .wt-auth-card,.wt-setup-main{max-width:520px}
+.wt-auth-card{border-radius:6px;padding:28px}
+.wt-auth-card h1,.wt-setup-main h1{font-size:clamp(28px,3vw,40px)}
+.wt-auth-mark,.setup-brand-mark{border-radius:4px;background:var(--accent)}
+.registration-submit{border-radius:4px}
+.setup-progress span{height:3px}
+/* Avoid inherited decorative elevation; maintain explicit hover and focus. */
+.canva-page :is(.canva-page-head,.canva-section-head){min-width:0}
+.canva-page :is(.canva-page-head,.canva-section-head) h2{letter-spacing:-.05em}
+:where(.canva-directory-card,.canva-community-directory,.canva-rail-card,.canva-profile-card,.settings-section,.wt-work-primary,.wt-work-insights,.wt-work-notes,.wt-work-quick){box-shadow:none}
+@media(max-width:1100px){
+ .wt-work-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .wt-work-metrics button:nth-child(2){border-right:0}
+ .wt-work-metrics button:nth-child(-n+2){border-bottom:1px solid var(--line)}
+ .canva-people-grid{grid-template-columns:1fr}
+ .canva-network-grid{grid-template-columns:minmax(0,1fr) 250px;gap:20px}
+}
+@media(max-width:900px){
+ .canva-network-grid{grid-template-columns:1fr}
+ .canva-network-rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .wt-work-layout,.wt-work-secondary{grid-template-columns:1fr}
+ .wt-work-insights{display:grid;grid-template-columns:1fr minmax(180px,.8fr);gap:12px}
+ .wt-work-insights .wt-section-heading{grid-column:1/-1}
+ .wt-work-insights .wt-ring-legend{align-self:center}
+ .canva-profile-grid{grid-template-columns:1fr}
+ .chat-shell-v2,.group-chat-page{max-height:none}
+}
+@media(max-width:700px){
+ .canva-composer{padding:19px}
+ .canva-network-rail{grid-template-columns:1fr}
+ .canva-directory-card,.canva-community-directory{padding:18px}
+ .wt-work-header{flex-direction:column;align-items:flex-start}
+ .wt-work-header h2{font-size:39px}
+ .wt-work-metrics button,.wt-work-metrics button:first-child,.wt-work-metrics button:last-child{padding:19px 14px;min-height:127px}
+ .wt-work-metrics button>strong{font-size:clamp(21px,5vw,27px)}
+ .wt-work-primary,.wt-work-insights,.wt-work-notes,.wt-work-quick{padding:20px}
+ .wt-work-insights{display:flex}
+ .canva-pay .canva-pay-breakdown,.canva-pay .canva-pay-form{padding:18px}
+ .canva-profile-identity{padding:17px}
+ .canva-profile-cover{height:155px}
+ .canva-profile-card,.settings-section{padding:18px}
+ .post-v2{padding:22px 3px}
+ .post-body-v2{font-size:14px}
+ .chat-shell-v2,.group-chat-page{grid-template-columns:1fr;min-height:440px;max-height:none}
+ .chat-contacts-v2,.group-chat-list{max-height:230px;border-right:0;border-bottom:1px solid var(--line)}
+ .chat-main-v2,.group-chat-main{min-height:420px}
+}
+@media(max-width:390px){
+ .wt-work-metrics button>strong{font-size:19px}
+ .wt-work-metrics button>strong em{font-size:11px}
+ .canva-calendar .canva-calendar-grid{gap:3px}
+}
