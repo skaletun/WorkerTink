@@ -1,6 +1,5 @@
 @import './styles/100-foundation.css';
 @import './styles/101-theme.css';
-@import './styles/105-controls.css';
 @import './styles/106-surfaces.css';
 @import './styles/107-feature-layouts.css';
 @import './styles/108-tables.css';
@@ -22,3 +21,4 @@
 @import './styles/128-atlas-shell.css';
 @import './styles/129-atlas-home.css';
 @import './styles/130-atlas-all-apps.css';
+@import './styles/131-atlas-stories.css';
