@@ -23,7 +23,7 @@ for(const x of ['getSocialFeed','createSocialPost','toggleSocialLike','addSocial
 for(const x of ['Лента','Уведомления','Люди']) if(!social.includes(x)) throw new Error(`missing social section ${x}`);
 if(social.includes("section==='messages'")) throw new Error('community chat section must be removed');
 for(const x of ['E2E','Фото','Видео','Голос','Остановить и отправить']) if(!chat.includes(x)) throw new Error(`missing protected chat feature ${x}`);
-for(const x of ['forecastMonths','scenarioSalary','plannedVacation','sickPay','encryptBackup','backupPassword','wt-week-preview','wt-home-ledger']) if(!home.includes(x)) throw new Error(`missing home capability ${x}`);
+for(const x of ['forecastMonths','scenarioSalary','plannedVacation','sickPay','encryptBackup','backupPassword','wt-roster-lanes','wt-control-notebook']) if(!home.includes(x)) throw new Error(`missing home capability ${x}`);
 console.log('WorkerTink social/protected-chat regression tests: OK');
 
 if(/\/auth\/qr\//.test(api)) throw new Error('QR auth routes must be removed');
