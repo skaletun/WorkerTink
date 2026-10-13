@@ -3,22 +3,23 @@ import {DOW,MONTHS,State,calcMonth,calcYear,formatMoney,getShift,getScheduledShi
 import {Icon} from '../../Icon.tsx';
 import {Button,Field,SectionTitle,type PeriodDraft} from '../../app/AppShared.tsx';
 export function CalendarView({state,view,days,calc,shiftMonth,onPay,onAbsence,onEdit}:{state:State;view:Date;days:(Date|null)[];calc:ReturnType<typeof calcMonth>;shiftMonth:(n:number)=>void;onPay:()=>void;onAbsence:()=>void;onEdit:(date:string)=>void}){
- return <section className="canva-page canva-calendar">
-  <header className="canva-page-head"><div><span className="canva-kicker">КАЛЕНДАРЬ СМЕН</span><h1>Ваш график</h1><p>Смены, изменения и рабочие заметки собраны в календарной области.</p></div><div className="canva-head-actions"><button className="canva-button" onClick={onAbsence}>Отсутствия</button><button className="canva-button canva-button-primary" onClick={onPay}>Зарплата</button></div></header>
-  <section className="canva-calendar-shell">
-   <div className="canva-calendar-head"><div><span className="canva-kicker">{state.scheduleType} · {state.scheduleType==='2/2'?(state.schedulePairType==='day-night'?'день / ночь':state.schedulePairType==='day-day'?'день / день':'ночь / ночь'):state.scheduleShift==='day'?'дневные':state.scheduleShift==='night'?'ночные':'сутки'}</span><h2>{MONTHS[view.getMonth()]} <em>{view.getFullYear()}</em></h2></div><div className="canva-calendar-controls"><button onClick={()=>shiftMonth(-1)} aria-label="Предыдущий месяц"><Icon name="chevronLeft" size={16}/></button><button onClick={()=>shiftMonth(1)} aria-label="Следующий месяц"><Icon name="chevronRight" size={16}/></button></div></div>
-   <div className="canva-calendar-week">{DOW.map(d=><span key={d}>{d}</span>)}</div>
-   <div className="canva-calendar-grid">{days.map((d,i)=>d?<CalendarDay key={i} state={state} date={d} onEdit={onEdit}/>:<div className="canva-calendar-empty" key={i}/>)}</div>
-   <div className="canva-calendar-note"><span>Нажмите на день, чтобы изменить смену и открыть заметку.</span><span>П · праздник</span></div>
-  </section>
-  <section className="canva-calendar-summary">
-   <div><span className="canva-kicker">ЗА ВЫБРАННЫЙ МЕСЯЦ</span><strong>{formatMoney(calc.net)}</strong><small>На руки · {MONTHS[view.getMonth()].toLowerCase()}</small></div>
-   <div><span className="canva-kicker">РАБОЧАЯ НАГРУЗКА</span><strong>{calc.work}</strong><small>смен</small></div>
-   <div><span className="canva-kicker">ОТПУСК</span><strong>{calc.vacDays}</strong><small>дней отпуска</small></div>
-   <div><span className="canva-kicker">БОЛЬНИЧНЫЙ</span><strong>{calc.sickDays}</strong><small>дней больничного</small></div>
-  </section>
-  <section className="canva-calendar-actions"><button onClick={onPay}><b>Зарплата и выплаты</b><small>Аванс · остаток · даты</small><Icon name="chevronRight" size={15}/></button><button onClick={onAbsence}><b>Отпуск и больничные</b><small>Добавить или изменить период</small><Icon name="chevronRight" size={15}/></button></section>
- </section>
+ return <section className="canva-page canva-calendar wt-shift-planner">
+  <header className="wt-shift-planner-heading"><div><span className="wt-shift-planner-overline">РАБОЧИЙ ПЛАНЕР / {view.getFullYear()}</span><h1>Календарь<br/><em>моих смен.</em></h1><p>Выберите день, чтобы изменить смену, оставить заметку или посмотреть выплаты.</p></div><div className="wt-shift-planner-heading-actions"><button onClick={onPay}>Зарплата <Icon name="chevronRight" size={16}/></button><button onClick={onAbsence}>Отсутствия <Icon name="chevronRight" size={16}/></button></div></header>
+  <div className="wt-shift-planner-layout">
+   <aside className="wt-shift-planner-rail">
+    <div className="wt-shift-rail-top"><span className="wt-shift-planner-overline">01 / ПЕРИОД</span><strong>{MONTHS[view.getMonth()]}</strong><small>{view.getFullYear()} год</small><div className="wt-shift-rail-controls"><button onClick={()=>shiftMonth(-1)} aria-label="Предыдущий месяц"><Icon name="chevronLeft" size={19}/></button><button onClick={()=>shiftMonth(1)} aria-label="Следующий месяц"><Icon name="chevronRight" size={19}/></button></div></div>
+    <div className="wt-shift-rail-stat"><span>РАСЧЁТ К ВЫПЛАТЕ</span><strong>{formatMoney(calc.net)}</strong><button onClick={onPay}>Открыть ведомость <Icon name="chevronRight" size={15}/></button></div>
+    <div className="wt-shift-rail-facts"><span className="wt-shift-planner-overline">02 / НАГРУЗКА</span><div><b>{calc.work}</b><span>Рабочих смен</span></div><div><b>{calc.vacDays}</b><span>Дней отпуска</span></div><div><b>{calc.sickDays}</b><span>Дней больничного</span></div></div>
+    <div className="wt-shift-rail-guidance"><span className="wt-shift-planner-overline">НАВИГАЦИЯ</span><p>Нажмите на день: откроется редактор смены и заметки.</p><button onClick={onAbsence}>Периоды отсутствия <Icon name="chevronRight" size={16}/></button></div>
+   </aside>
+   <section className="canva-calendar-shell wt-shift-planner-grid">
+    <div className="wt-shift-planner-grid-title"><div><span className="wt-shift-planner-overline">{state.scheduleType} · {state.scheduleType==='2/2'?(state.schedulePairType==='day-night'?'день / ночь':state.schedulePairType==='day-day'?'день / день':'ночь / ночь'):state.scheduleShift==='day'?'дневные':state.scheduleShift==='night'?'ночные':'сутки'}</span><h2>{MONTHS[view.getMonth()]} <small>{view.getFullYear()}</small></h2></div><div><button onClick={()=>shiftMonth(-1)} aria-label="Предыдущий месяц"><Icon name="chevronLeft" size={17}/></button><button onClick={()=>shiftMonth(1)} aria-label="Следующий месяц"><Icon name="chevronRight" size={17}/></button></div></div>
+    <div className="canva-calendar-week">{DOW.map(d=><span key={d}>{d}</span>)}</div>
+    <div className="canva-calendar-grid">{days.map((d,i)=>d?<CalendarDay key={i} state={state} date={d} onEdit={onEdit}/>:<div className="canva-calendar-empty" key={i}/>)}</div>
+    <div className="wt-shift-planner-legend"><span>Нажмите день для редактирования</span><span>П · праздник</span><span>З · заметка</span></div>
+   </section>
+  </div>
+ </section>;
 }
 function CalendarDay({state,date,onEdit}:{state:State;date:Date;onEdit:(date:string)=>void}){const dateKey=ymd(date),beforeStart=state.startDate?dateKey<state.startDate:false,today=ymd(new Date())===dateKey,holiday=isHoliday(date),note=Boolean(state.shiftNotes[dateKey]?.trim());if(beforeStart)return <button className={`calendar-day pre-start ${today?'today':''}`} disabled title="До даты выхода на работу"><div className="day-top"><b>{date.getDate()}</b><span>—</span></div><span>До начала</span></button>;const shift=getShift(state,date),scheduled=getScheduledShift(state,date),vacation=state.vacations.some(p=>p.start<=dateKey&&dateKey<=p.end),sick=state.sickLeaves.some(p=>p.start<=dateKey&&dateKey<=p.end);const label=vacation?'Отпуск':sick?'Больничный':shiftLabel(shift);return <button className={`calendar-day ${shift} ${holiday?'holiday':''} ${today?'today':''} ${note?'has-note':''}`} data-shift={shift} onClick={()=>onEdit(dateKey)} title={holiday?holidayName(date):label}><div className="day-top"><b>{date.getDate()}</b><span>{holiday?'П':note?'З':''}</span></div><span>{label}</span>{scheduled!==shift&&<small>изменено</small>}</button>}
 
