@@ -8,7 +8,7 @@ const storage=fs.readFileSync(path.join(root,'src/storage.ts'),'utf8');
 const markdown=fs.readFileSync(path.join(root,'src/markdown.ts'),'utf8');
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 assert.match(app,/setupComplete/);
-assert.match(allAppViews,/Аванс по умолчанию — 50% оклада/);
+assert.match(allAppViews,/По умолчанию аванс составляет 50% оклада/);
 assert.match(allAppViews,/shiftNotes/);
 assert.match(allAppViews,/shiftOverrides/);
 assert.match(allAppViews,/Экспорт заметок \.md/);
