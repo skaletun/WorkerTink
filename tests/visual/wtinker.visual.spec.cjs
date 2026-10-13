@@ -174,7 +174,7 @@ test('v8 structural navigation, responsive workday and theme smoke',async({brows
       }
       await page.screenshot({path:`visual-audit-artifacts/v8-${theme}-${viewport.width}-home.png`,fullPage:true});
       await page.locator('.wt-week-day').first().click();
-      await expect(page.locator('.wt-viewhead h1')).toContainText('Календарь');
+      await expect(page.locator('.wt-viewhead h1')).toContainText('Ваш график');
       await expect(page.locator('.canva-calendar')).toBeVisible();
       expect(errors).toEqual([]);
       await context.close();
