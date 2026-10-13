@@ -73,10 +73,10 @@
 .canva-settings-shell{display:grid;grid-template-columns:215px minmax(0,1fr);gap:22px;align-items:start}
 .canva-settings-rail{position:sticky;top:calc(var(--topbar-height) + 20px);display:flex;flex-direction:column;gap:4px;min-width:0;padding:17px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md)}
 .canva-settings-rail .canva-kicker{padding:4px 9px 12px}
-.canva-settings-rail a{display:flex;flex-direction:column;gap:2px;padding:12px 11px;text-decoration:none;color:var(--ink-2);border-radius:8px;border:1px solid transparent}
-.canva-settings-rail a:hover,.canva-settings-rail a:focus-visible{background:var(--accent-soft);color:var(--accent);border-color:var(--line)}
-.canva-settings-rail a>span{font-size:14px;font-weight:730}
-.canva-settings-rail a>small{font-size:11px;color:var(--muted)}
+.canva-settings-rail button{display:flex;flex-direction:column;gap:2px;padding:12px 11px;text-decoration:none;color:var(--ink-2);border-radius:8px;border:1px solid transparent}
+.canva-settings-rail button:hover,.canva-settings-rail button:focus-visible{background:var(--accent-soft);color:var(--accent);border-color:var(--line)}
+.canva-settings-rail button>span{font-size:14px;font-weight:730}
+.canva-settings-rail button>small{font-size:11px;color:var(--muted)}
 .canva-settings-body{min-width:0}
 .settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
 .settings-grid .settings-card{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md);padding:22px;scroll-margin-top:calc(var(--topbar-height) + 20px)}
@@ -124,8 +124,8 @@
  .canva-settings-shell{grid-template-columns:1fr}
  .canva-settings-rail{position:relative;top:auto;flex-direction:row;align-items:center;gap:6px;overflow-x:auto;scrollbar-width:thin;padding:10px}
  .canva-settings-rail .canva-kicker{display:none}
- .canva-settings-rail a{flex:0 0 auto;padding:10px 12px;border-color:var(--line)}
- .canva-settings-rail a>small{display:none}
+ .canva-settings-rail button{flex:0 0 auto;padding:10px 12px;border-color:var(--line)}
+ .canva-settings-rail button>small{display:none}
 }
 @media(max-width:760px){
  .settings-grid{grid-template-columns:1fr;gap:12px}
@@ -140,8 +140,21 @@
 @media(max-width:480px){
  .redesign-settings .redesign-page-intro h1{font-size:30px}
  .compact-fields{grid-template-columns:1fr}
- .canva-settings-rail a{padding:9px 11px;font-size:12px}
+ .canva-settings-rail button{padding:9px 11px;font-size:12px}
  .settings-grid .settings-card{padding:16px}
  .settings-card h2,.settings-card h3{font-size:19px}
  .income-grid label{padding:9px}
 }
+
+
+/* Settings navigation is a real section switcher. Inactive cards are not displayed. */
+.canva-settings-shell[data-active-section="account"] .settings-card:not([data-settings-section="account"]),
+.canva-settings-shell[data-active-section="work"] .settings-card:not([data-settings-section="work"]),
+.canva-settings-shell[data-active-section="notifications"] .settings-card:not([data-settings-section="notifications"]),
+.canva-settings-shell[data-active-section="data"] .settings-card:not([data-settings-section="data"]),
+.canva-settings-shell[data-active-section="profile"] .settings-card:not([data-settings-section="profile"]){display:none}
+.canva-settings-rail button{width:100%;border:1px solid transparent;background:transparent;cursor:pointer}
+.canva-settings-rail button.active,.canva-settings-rail button[aria-current=page]{color:var(--accent);background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 20%,var(--line))}
+.canva-settings-body{min-height:390px}
+@media(max-width:1160px){.canva-settings-rail button{width:auto}}
+@media(max-width:760px){.canva-settings-body{min-height:220px}}
