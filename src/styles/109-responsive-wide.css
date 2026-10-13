@@ -170,3 +170,12 @@
 .canva-profile-card.canva-danger{background:var(--danger-soft);border-color:color-mix(in srgb,var(--danger) 28%,var(--line))}
 .canva-profile-card.canva-danger .canva-button{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 42%,var(--line))}
 .canva-profile-card.canva-danger .canva-button:hover{background:var(--danger);color:#fff}
+
+/* All five settings destinations remain visible without a hidden horizontal strip. */
+@media(max-width:600px){
+ .canva-settings-rail{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:9px;overflow:visible;scrollbar-width:auto}
+ .canva-settings-rail button{display:flex;align-items:center;justify-content:center;min-width:0;width:100%;min-height:43px;margin:0;padding:9px 5px;text-align:center;border:1px solid var(--line);border-radius:8px}
+ .canva-settings-rail button>span{font-size:12px;line-height:1.2;font-weight:730;overflow-wrap:anywhere}
+ .canva-settings-rail button>small{display:none}
+ .canva-settings-rail button:nth-of-type(4),.canva-settings-rail button:nth-of-type(5){grid-column:auto}
+}
