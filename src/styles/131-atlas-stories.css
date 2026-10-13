@@ -31,3 +31,11 @@
 .atlas-story-discussion{margin-top:22px;padding:15px 0;border-top:1px solid var(--atlas-stroke)}
 .atlas-story-discussion .comment-v2{padding:11px 0}
 @media(max-width:680px){.atlas-app .atlas-story{grid-template-columns:45px minmax(0,1fr);gap:11px;padding:20px 0!important}.atlas-story-margin strong{font-size:41px}.atlas-story-margin>span{font-size:7px}.atlas-story-margin small{font-size:8px}.atlas-story-attachments{grid-template-columns:1fr}.atlas-story-actions{gap:5px}.atlas-story-actions button{padding:7px 8px;font-size:10px}.atlas-app .atlas-story-body{font-size:15px}}
+
+/* Accessible content contrast across themed illustrations and primary lime surfaces. */
+.atlas-app .atlas-launcher-header h2{color:#161b12!important}
+.atlas-app .atlas-launcher-header>div>span{color:#161b12}
+.atlas-app .atlas-time-off-hero>div:first-child :is(h1,p,span){color:#192015!important}
+.atlas-app .atlas-time-off-hero h1 em{color:#315a3b!important}
+.atlas-app .wt-network-studio .canva-composer .canva-composer-head>div :is(b,span){color:#192015!important}
+.atlas-app .wt-network-studio .canva-composer .canva-composer-trigger{color:#fff!important}
