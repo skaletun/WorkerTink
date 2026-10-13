@@ -31,14 +31,14 @@ export default function AppShell({items,active,onNavigate,profile,profileAction,
   </header>
   <main id="wt-main" className="atlas-main">
    <div className="atlas-route-stage" key={active}>
-    {active!=='home'&&<div className="atlas-route-ticket"><span><i/>ПРОСТРАНСТВО / {kicker.toUpperCase()}</span><button onClick={()=>setLauncher(true)}><Icon name="grid" size={15}/> СМЕНИТЬ РАЗДЕЛ</button></div>}
+    {active!=='home'&&<div className="atlas-route-ticket"><span><i/>ПРОСТРАНСТВО / {kicker.toUpperCase()}</span><button onClick={()=>setLauncher(true)}><Icon name="more" size={15}/> СМЕНИТЬ РАЗДЕЛ</button></div>}
     <div className="atlas-route-content">{children}</div>
    </div>
   </main>
-  <footer className="atlas-footer"><span>WTINKER / <strong>{version}</strong></span><span>{privacy}</span><button onClick={()=>setLauncher(true)}>Карта приложения <Icon name="arrowUpRight" size={15}/></button></footer>
+  <footer className="atlas-footer"><span>WTINKER / <strong>{version}</strong></span><span>{privacy}</span><button onClick={()=>setLauncher(true)}>Карта приложения <Icon name="externalLink" size={15}/></button></footer>
   <nav className="atlas-tray" aria-label="Быстрая навигация">
    {spaces.map(id=>{const item=map.get(id);return item?<button key={id} type="button" onClick={()=>navigate(id)} aria-label={item.label} aria-current={active===id?'page':undefined} className={active===id?'is-on':''} title={item.label}><span>{item.icon}</span><small>{item.label}</small></button>:null})}
-   <button className="atlas-tray-launcher" type="button" onClick={()=>setLauncher(v=>!v)} aria-expanded={launcher} aria-label="Все разделы"><Icon name={launcher?'close':'grid'} size={24}/><small>Все</small></button>
+   <button className="atlas-tray-launcher" type="button" onClick={()=>setLauncher(v=>!v)} aria-expanded={launcher} aria-label="Все разделы"><Icon name={launcher?'close':'more'} size={24}/><small>Все</small></button>
   </nav>
   {launcher&&<div className="atlas-launcher-overlay" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setLauncher(false)}}>
    <section className="atlas-launcher" role="dialog" aria-modal="true" aria-label="Карта пространств">
