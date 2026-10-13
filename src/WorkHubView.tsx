@@ -13,7 +13,7 @@ const shiftName=(value:string)=>value==='night'?'Ночная смена':value=
 export default function WorkHubView({state,calc,view,onNavigate,onNetwork,token,onNotice}:Props){
  const upcoming=useMemo(()=>{
   const out:{date:Date;shift:string}[]=[];
-  for(let i=0;i<21&&out.length<7;i++){
+  for(let i=0;i<21&&out.length<5;i++){
    const date=new Date();date.setHours(0,0,0,0);date.setDate(date.getDate()+i);
    const shift=getScheduledShift(state,date);
    if(shift!=='off')out.push({date,shift});
@@ -33,7 +33,7 @@ export default function WorkHubView({state,calc,view,onNavigate,onNetwork,token,
  const notes=Object.entries(state.shiftNotes).filter(([,value])=>Boolean(value.trim())).sort(([left],[right])=>right.localeCompare(left)).slice(0,4);
  return <section className="wt-work-dashboard redesign-work" aria-label="Рабочая область">
   <header className="wt-work-header">
-   <div><span className="wt-overline">РАБОЧАЯ ОБЛАСТЬ / {view.getFullYear()}</span><h2>Всё о твоей работе.</h2><p>График, заработок и доступные дни отдыха — без переходов между разными сервисами.</p></div>
+   <div><span className="wt-overline">РАБОЧАЯ ОБЛАСТЬ / {view.getFullYear()}</span><h2>Рабочая сводка<span className="wt-greeting-dot">.</span></h2><p>Главное о сменах, начислениях и днях отдыха. Всё остальное — одним нажатием.</p></div>
    <div className="wt-work-header-actions"><button className="wt-button secondary" onClick={()=>onNavigate('calendar')}><Icon name="calendar" size={17}/>Календарь</button><button className="wt-button primary" onClick={()=>onNavigate('pay')}>Мои выплаты <Icon name="chevronRight" size={16}/></button></div>
   </header>
   <div className="wt-work-metrics" role="group" aria-label="Ключевые показатели работы">
@@ -57,10 +57,10 @@ export default function WorkHubView({state,calc,view,onNavigate,onNetwork,token,
     <p className="wt-insights-caption">Доля рабочих дней в выбранном месяце на основе вашего графика. Показатель не зависит от начисленной зарплаты.</p>
    </aside>
   </div>
-  <div className="wt-work-secondary">
-   <section className="wt-work-notes"><div className="wt-section-heading"><div><span className="wt-overline">ЗАМЕТКИ</span><h3>Записано на сменах</h3></div><button className="wt-link-button" onClick={()=>onNavigate('calendar')}>К заметкам <Icon name="chevronRight" size={16}/></button></div>
+  <div className={"wt-work-secondary"+(!notes.length?" no-notes":"")}>
+   {notes.length>0&&<section className="wt-work-notes"><div className="wt-section-heading"><div><span className="wt-overline">ЗАМЕТКИ</span><h3>Записано на сменах</h3></div><button className="wt-link-button" onClick={()=>onNavigate('calendar')}>К заметкам <Icon name="chevronRight" size={16}/></button></div>
     <ul>{notes.map(([date,text])=><li key={date}><time dateTime={date}>{new Date(date+'T12:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}</time><p>{text.slice(0,180)}</p></li>)}{!notes.length&&<li className="wt-empty-row">Пока нет записей. Заметку можно добавить в календаре смен.</li>}</ul>
-   </section>
+   </section>}
    <section className="wt-work-quick"><div className="wt-section-heading"><div><span className="wt-overline">БЫСТРЫЕ ДЕЙСТВИЯ</span><h3>Что нужно сделать?</h3></div></div>
     <button onClick={()=>onNavigate('absence')}><span>01</span><span>Отпуск или больничный</span><Icon name="chevronRight" size={16}/></button>
     <button onClick={()=>onNavigate('pay')}><span>02</span><span>Проверить начисления</span><Icon name="chevronRight" size={16}/></button>
