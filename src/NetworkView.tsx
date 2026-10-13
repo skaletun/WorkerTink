@@ -23,14 +23,16 @@ export default function NetworkView({token,profile,onNotice,onChat,onProfile,ini
  const makeEvent=async()=>{if(!eventForm.title||!eventForm.startsAt)return;try{const r=await createNetworkEvent({title:eventForm.title,description:eventForm.description,kind:eventForm.kind,startsAt:new Date(eventForm.startsAt).getTime(),location:eventForm.location,groupId:eventForm.groupId||null},token);setEvents(e=>[r.event,...e].sort((a,b)=>a.startsAt-b.startsAt));setEventForm({title:'',description:'',kind:'Обучение',startsAt:'',location:'',groupId:''});onNotice('Событие создано')}catch(e){onNotice(String(e).replace('Error:',''))}};
  const makeSwap=async()=>{if(!swapForm.date)return;try{const r=await createShiftSwap(swapForm,token);setSwaps(s=>[r.swap,...s]);setSwapForm({date:'',shift:'День',requestedShift:'День',note:''});onNotice('Запрос на обмен сменой опубликован')}catch(e){onNotice(String(e).replace('Error:',''))}};
  const searchPeople=async()=>{try{const r=await searchNetworkPeople(search,token);setPeople(r.people);setArea('people')}catch{onNotice('Не удалось найти сотрудников')}};
- return <section className="canva-page canva-network redesign-page redesign-network">
-  <header className="canva-page-head canva-network-head">
-    <div>
-      <span className="canva-kicker">WTINKER / СООБЩЕСТВО</span>
-      <h1>{area==='people'?'Люди':area==='groups'?'Сообщества':area==='events'?'События':area==='swaps'?'Обмен сменами':area==='saved'?'Сохранённое':'Лента'}</h1>
-      <p>{area==='people'?'Находи коллег по имени, username и WTinkID и развивай профессиональные связи.':area==='groups'?'Профессиональные сообщества и команды для совместной работы.':area==='events'?'Ближайшие события и встречи сообщества.':area==='swaps'?'Заявки на обмен сменами и помощь коллегам.':area==='saved'?'Публикации, к которым хочется вернуться.':'Новости, рабочие обсуждения и опыт коллег — в одном месте.'}</p>
-    </div>
-    {area==='feed'&&<div className="canva-head-actions">
+ return <section className="canva-page canva-network redesign-page redesign-network wt-network-studio">
+  <div className="wt-network-layout">
+   <aside className="wt-network-index" aria-label="Навигация сообщества">
+    <div className="wt-network-index-head"><span className="wt-network-index-serial">WT / КОЛЛЕКТИВ</span><strong>Вместе<br/><em>на работе.</em></strong><p>Разговоры, связи и идеи внутри одной рабочей сети.</p></div>
+    <nav className="wt-network-index-nav" aria-label="Разделы сети">{([["feed","Лента","social"],["people","Люди","people"],["groups","Сообщества","communities"],["events","События","calendar"],["swaps","Обмен сменами","work"],["saved","Сохранённое","star"]] as const).map(([id,label,icon])=><button key={id} className={area===id?'is-active':''} aria-current={area===id?'page':undefined} onClick={()=>{setArea(id);if(id!=='groups')setSelectedGroup(null)}}><Icon name={icon} size={17}/><span>{label}</span><Icon name="chevronRight" size={14}/></button>)}</nav>
+    <div className="wt-network-index-foot"><span>ВАША СЕТЬ</span><strong>{people.length} <small>человек</small></strong><strong>{groups.length} <small>сообществ</small></strong><button onClick={()=>void refresh()}><Icon name="refresh" size={15}/> Обновить</button></div>
+   </aside>
+   <div className="wt-network-content">
+    <header className="wt-network-story-head"><span className="wt-network-story-kicker">ЖУРНАЛ / {area.toUpperCase()}</span><h2>{area==='people'?'Люди':area==='groups'?'Сообщества':area==='events'?'События':area==='swaps'?'Обмен сменами':area==='saved'?'Избранное':'Что нового?'}</h2><p>{area==='people'?'Найдите коллег и расширьте круг профессиональных связей.':area==='groups'?'Места, где коллеги работают и общаются вместе.':area==='events'?'События сообщества и совместные встречи.':area==='swaps'?'Обмен рабочими сменами с коллегами.':area==='saved'?'Публикации, которые вы сохранили.':'Рабочие новости, полезный опыт и живые разговоры.'}</p></header>
+  {area==='feed'&&<div className="canva-head-actions">
       <button className="canva-button" onClick={()=>setArea('people')}><Icon name="people" size={16}/> Найти коллег</button>
       <button className="canva-button canva-button-primary" onClick={()=>setArea('groups')}><Icon name="communities" size={16}/> Сообщества</button>
     </div>}
@@ -90,6 +92,7 @@ export default function NetworkView({token,profile,onNotice,onChat,onProfile,ini
   {area==='events'&&<Events events={events} groups={groups} form={eventForm} setForm={setEventForm} onCreate={()=>void makeEvent()} onJoin={async e=>{try{await joinNetworkEvent(e.id,'going',token);setEvents(es=>es.map(x=>x.id===e.id?{...x,joined:true,going:x.joined?x.going:x.going+1}:x))}catch{onNotice('Не удалось записаться на событие')}}}/>}
   {area==='swaps'&&<Swaps swaps={swaps} form={swapForm} setForm={setSwapForm} onCreate={()=>void makeSwap()} onClaim={async id=>{try{await claimShiftSwap(id,token);setSwaps(s=>s.map(x=>x.id===id?{...x,status:'claimed'}:x));onNotice('Запрос принят')}catch{onNotice('Эта смена уже занята')}}}/>}
   {area==='saved'&&<section className="network-section-v2"><div className="section-intro-v2"><div><span className="redesign-overline">Личное</span><h2>Сохранённые публикации</h2><p>Полезные обсуждения остаются доступными после того, как лента ушла дальше.</p></div></div><div className="feed-stack-v2">{visible.map(p=><PostCard key={p.id} post={p} saved comments={comments[p.id]||[]} commentsOpen={Boolean(openComments[p.id])} comment={comment[p.id]||''} onLike={async()=>{const rr=await toggleSocialLike(p.id,token);setSaved(rows=>rows.map(x=>x.id===p.id?{...x,liked:rr.liked,likes:rr.likes}:x))}} onSave={()=>void toggleSave(p)} onComments={()=>openComments[p.id]?setOpenComments(x=>({...x,[p.id]:false})):void loadComments(p.id)} onCommentChange={v=>setComment(x=>({...x,[p.id]:v}))} onComment={()=>void addComment(p.id)} onChat={onChat} onProfile={onProfile} canDelete={p.author.profileId===profile.profileId} onDelete={()=>void deletePost(p.id)}/>)}</div>{!visible.length&&<div className="redesign-empty">Сохранённых публикаций пока нет.</div>}</section>}
+   </div>
+  </div>
  </section>;
 }
-
