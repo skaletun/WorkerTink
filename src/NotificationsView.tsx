@@ -26,7 +26,7 @@ export default function NotificationsView({token,onNotice,onOpen}:Props){
     </aside>
     <section className="canva-notification-feed">
       {loading&&!items.length?<div className="canva-feed-list"><article className="canva-post canva-skeleton-card"><div/><div/><div/></article><article className="canva-post canva-skeleton-card"><div/><div/><div/></article></div>:loadError&&!items.length?<div className="canva-error">Уведомления временно недоступны. <button onClick={()=>void load()}>Повторить</button></div>:<div className="canva-event-list notification-timeline">{visible.map(n=><button type="button" className={`timeline-item ${n.readAt?"canva-event":"canva-event unread"}`} key={n.id} onClick={()=>void (async()=>{if(!n.readAt)await read(n.id);onOpen(n)})()}><span className="canva-event-marker"><Icon name={iconName(n.kind)} size={15}/></span><div><small>{n.actor?.name||'WTinker'} · {n.kind.replaceAll('_',' ')}</small><b>{n.title}</b><p>{n.body}</p></div><time>{ago(n.createdAt)}</time></button>)}{!visible.length&&<div className="canva-empty">Новых событий нет.</div>}</div>}
-    </main>
+    </section>
   </div>
  </section>
 }
