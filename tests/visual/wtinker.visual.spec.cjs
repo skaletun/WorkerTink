@@ -176,6 +176,20 @@ test('v8 structural navigation, responsive workday and theme smoke',async({brows
       await page.locator('.wt-week-day').first().click();
       await expect(page.locator('.wt-viewhead h1')).toContainText('Ваш график');
       await expect(page.locator('.canva-calendar')).toBeVisible();
+      const footerIsOrdered=await page.evaluate(()=>{
+        const security=document.querySelector('.wt-footer-privacy')?.getBoundingClientRect();
+        const version=document.querySelector('.wt-shell-footer>span:last-child')?.getBoundingClientRect();
+        return Boolean(security&&version&&(security.right<=version.left+2||security.bottom<=version.top+2));
+      });
+      expect(footerIsOrdered,'Footer labels must not visually overlap').toBe(true);
+      if(viewport.width>600){
+        await page.locator('.wt-nav-account>summary').click();
+        const settings=page.locator('.wt-nav-account-popover .wt-nav-item').filter({hasText:'Настройки'});
+        await expect(settings).toBeVisible();
+        await settings.click();
+        await expect(page.locator('.wt-viewhead h1')).toHaveText('Настройки');
+        await expect(page.locator('.wt-nav-account')).not.toHaveAttribute('open');
+      }
       expect(errors).toEqual([]);
       await context.close();
     }
