@@ -1,7 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<rect width="512" height="512" rx="128" fill="#10151f"/>
-<path d="M128 176h256M176 176v160M336 176v160" fill="none" stroke="#f7f9fc" stroke-width="28" stroke-linecap="round"/>
-<path d="M118 336h92l46-160 46 160h92" fill="none" stroke="#6d8cff" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M256 118v24" stroke="#9bb0ff" stroke-width="20" stroke-linecap="round"/>
-<circle cx="256" cy="118" r="10" fill="#6d8cff"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="wt-logo-title">
+<title id="wt-logo-title">WTinker — W</title>
+<rect width="512" height="512" rx="90" fill="#1b2622"/>
+<path d="M94 150 166 357 256 181 346 357 418 150" fill="none" stroke="#fffdfa" stroke-width="36" stroke-linecap="square" stroke-linejoin="miter"/>
+<rect x="384" y="382" width="48" height="48" rx="5" fill="#ab391e"/>
 </svg>
