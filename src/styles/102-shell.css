@@ -1,13 +1,19 @@
-.wt-brand-word{font-size:21px;font-weight:750;letter-spacing:-1.1px}
-.wt-brand-period{color:var(--accent)}
-.wt-search-mini,.wt-command-search{display:flex;align-items:center;gap:10px;height:42px;min-width:0;padding:0 11px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);color:var(--ink-2);text-align:left}
-.wt-search-mini{width:100%}
-.wt-search-mini span,.wt-command-search span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wt-search-mini kbd,.wt-command-search kbd{font:11px var(--font-mono);color:var(--muted);padding:2px 5px;border:1px solid var(--line-strong);border-radius:4px;white-space:nowrap}
-.wt-nav{display:flex;flex-direction:column;gap:23px}
-.wt-nav-group{display:flex;flex-direction:column;gap:3px}
-.wt-nav-label{padding:0 10px 6px;color:var(--muted);font:600 10px var(--font-mono);letter-spacing:.1em}
-.wt-nav-item{display:flex;align-items:center;gap:12px;width:100%;min-height:40px;padding:8px 10px;border:1px solid transparent;border-radius:var(--radius-sm);background:transparent;color:var(--ink-2);text-align:left;transition:background .15s,color .15s,border-color .15s}
-.wt-nav-item:hover{background:var(--surface-2);color:var(--ink)}
-.wt-nav-item.active{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 17%,transparent);color:var(--accent);font-weight:650}
-.wt-nav-icon{display:grid;place-items:center;width:20px;height:20px;flex:0 0 20px}
+/* Original UI shell has been replaced with a single-column product stage. */
+.wt-shell{min-height:100vh}
+.wt-sidebar{position:fixed;top:0;bottom:0;left:0;z-index:40;width:var(--sidebar-width);display:flex;flex-direction:column;gap:12px;padding:24px 14px 16px;background:var(--surface);border-right:1px solid var(--line);overflow-y:auto;overscroll-behavior:contain}
+.wt-brand-lockup{display:flex;align-items:center;gap:11px;padding:3px 11px 24px;border:0;background:transparent;text-align:left}
+.wt-brand-mark{width:36px;height:36px;display:grid;place-items:center;flex:0 0 auto;background:var(--accent);color:#fff;border-radius:10px;font-size:24px;line-height:1;font-weight:800;letter-spacing:-.09em}
+.wt-brand-word{font-size:22px;line-height:1;font-weight:790;letter-spacing:-.06em}.wt-brand-period,.wt-greeting-dot{color:var(--accent)}
+.wt-main{margin-left:var(--sidebar-width);min-height:100vh;min-width:0}
+.wt-content{max-width:1530px;width:100%;min-width:0;margin:0 auto;padding:30px clamp(24px,3.5vw,52px) 90px}
+.wt-content-inner,.wt-page-frame,.wt-page-content,.tab-stage{min-width:0;width:100%}
+.wt-page-content{max-width:none}
+.wt-content-with-aside{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:36px;align-items:start}
+.wt-discovery{position:sticky;top:calc(var(--topbar-height) + 30px);display:flex;flex-direction:column;gap:22px;min-width:0}
+.wt-discovery-block{padding:0 0 20px;border-bottom:1px solid var(--line)}
+.wt-discovery-overline{display:block;font:650 10px var(--font-mono);letter-spacing:.1em;color:var(--muted);margin-bottom:12px}
+.wt-discovery-block h2{font-size:18px;margin-bottom:6px}.wt-discovery-block h3{font-size:15px;margin-bottom:6px}
+.wt-discovery-block p{font-size:12px;line-height:1.55;margin-bottom:14px}
+.wt-discovery-block button{display:flex;align-items:center;gap:11px;text-align:left;width:100%;min-height:40px;padding:9px 4px;background:transparent;border:0;border-bottom:1px solid var(--line);font-size:12px;font-weight:600}
+.wt-discovery-block button:hover{color:var(--accent)}.wt-discovery-block button span{flex:1}.wt-discovery-footnote{font-size:10px;color:var(--muted)}
+.wt-mobile-brand,.wt-mobile-nav{display:none}
