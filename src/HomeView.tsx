@@ -1,5 +1,5 @@
 import {useMemo,useState} from 'react';
-import {Icon} from './Icon';
+import {Icon,type IconName} from './Icon';
 import {calcMonth,calcYear,formatMoney,getScheduledShift,parseYmd,addDays,ymd,vacationCalendarDays,vacationUsedDays,vacationProjectedUsedDays,sickPayForDays,MONTHS,type State} from './core';
 type Tab='home'|'social'|'people'|'communities'|'chat'|'work'|'calendar'|'pay'|'absence'|'friends'|'notifications'|'profile'|'settings'|'admin';
 type Props={state:State;patch:(p:Partial<State>)=>void;onNotice:(s:string)=>void;go:(tab:Tab)=>void};
@@ -29,7 +29,7 @@ export default function HomeView({state,patch,onNotice,go}:Props){
  const sickPay=sickPayForDays(state,yearNumber,now.getMonth(),sickDays);
  const saveNote=()=>{if(!tip.trim())return;patch({shiftNotes:{...state.shiftNotes,[focus]:[state.shiftNotes[focus],tip.trim()].filter(Boolean).join('\n')}});setTip('');onNotice('Заметка сохранена')};
  const backup=async()=>{if(!backupPassword){onNotice('Нужен пароль для резервной копии');return}try{const blob=await encryptBackup(state,backupPassword),url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`workertink-backup-${iso(now)}.wtbackup`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);setBackupPassword('');onNotice('Зашифрованная копия сохранена')}catch{onNotice('Не удалось создать резервную копию')}};
- const tile=(tab:Tab,no:string,headline:string,sub:string,icon:string,klass:string)=><button onClick={()=>go(tab)} className={`atlas-app-tile ${klass}`}><span className="atlas-app-tile-top"><span>{no} / ПРОСТРАНСТВО</span><Icon name={icon} size={25}/></span><span className="atlas-app-tile-body"><strong>{headline}</strong><small>{sub}</small></span><span className="atlas-app-tile-arrow">↗</span></button>;
+ const tile=(tab:Tab,no:string,headline:string,sub:string,icon:IconName,klass:string)=><button onClick={()=>go(tab)} className={`atlas-app-tile ${klass}`}><span className="atlas-app-tile-top"><span>{no} / ПРОСТРАНСТВО</span><Icon name={icon} size={25}/></span><span className="atlas-app-tile-body"><strong>{headline}</strong><small>{sub}</small></span><span className="atlas-app-tile-arrow">↗</span></button>;
  return <section className="atlas-home" aria-label="Главная — карта рабочего дня">
   <div className="atlas-home-overline"><span>✳ &nbsp; РАБОТА И ЖИЗНЬ, В ОДНОЙ СИСТЕМЕ</span><span>{now.toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'})}</span></div>
   <section className="atlas-world" aria-label="Интерактивная орбита смен">
