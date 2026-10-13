@@ -5,7 +5,18 @@
 .canva-network-grid{display:grid;grid-template-columns:minmax(0,1fr) 278px;gap:19px;align-items:start;min-width:0}
 .canva-feed-column{min-width:0}
 .canva-composer{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md);padding:24px;margin:0 0 16px}
-.canva-composer-head{display:flex;align-items:center;gap:12px;margin-bottom:15px}
+.canva-composer-head{display:flex;align-items:center;gap:12px;min-height:45px;margin-bottom:0;list-style:none;cursor:pointer}
+.canva-composer-head::-webkit-details-marker{display:none}
+.canva-composer-head>div{flex:1;min-width:0}
+.canva-composer[open]>.canva-composer-head{margin-bottom:16px;padding-bottom:15px;border-bottom:1px solid var(--line)}
+.canva-composer-trigger{display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border-radius:9px;background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:750;white-space:nowrap}
+.canva-composer-head:hover .canva-composer-trigger{background:var(--accent);color:#fff}
+.canva-feed-unavailable{display:flex;align-items:flex-start;gap:16px;padding:26px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md)}
+.canva-feed-unavailable-icon{display:grid;place-items:center;width:44px;height:44px;flex:0 0 44px;background:var(--surface-2);color:var(--accent);border-radius:12px}
+.canva-feed-unavailable h3{font-size:18px;margin:1px 0 8px}
+.canva-feed-unavailable p{font-size:13px;line-height:1.6;margin-bottom:17px}
+.canva-feed-unavailable button{width:max-content}
+
 .canva-composer-head>div{display:flex;flex-direction:column;gap:2px}.canva-composer-head b{font-size:15px}.canva-composer-head span{color:var(--muted);font-size:13px}
 .canva-composer-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
 .canva-composer-tabs button{padding:8px 13px;background:var(--surface-2);border:1px solid var(--line);border-radius:5px;font-size:11px}
