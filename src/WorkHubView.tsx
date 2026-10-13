@@ -1,4 +1,4 @@
-import {useMemo} from 'react';
+import {useMemo,useState} from 'react';
 import {Icon} from './Icon';
 import type {State} from './core';
 import {MONTHS,calcYear,formatMoney,getScheduledShift,vacationUsedDays,ymd} from './core';
@@ -20,6 +20,7 @@ export default function WorkHubView({state,calc,view,onNavigate,onNetwork,token,
   }
   return out;
  },[state]);
+ const [teamsOpen,setTeamsOpen]=useState(false);
  const annual=useMemo(()=>calcYear(state,view.getFullYear()),[state,view]);
  const vacationLeft=Math.max(0,state.vacTotal-vacationUsedDays(state));
  const daysInMonth=new Date(view.getFullYear(),view.getMonth()+1,0).getDate();
@@ -66,6 +67,13 @@ export default function WorkHubView({state,calc,view,onNavigate,onNetwork,token,
     <button onClick={onNetwork}><span>03</span><span>Обсудить смену с коллегами</span><Icon name="chevronRight" size={16}/></button>
    </section>
   </div>
-  {token&&onNotice&&<div className="wt-work-teams"><WorkTeamsView token={token} onNotice={onNotice}/></div>}
+  {token&&onNotice&&<section className="wt-work-teams-entry" aria-label="Команды и рабочие документы">
+   <button type="button" className="wt-work-teams-toggle" aria-expanded={teamsOpen} onClick={()=>setTeamsOpen(open=>!open)}>
+    <span className="wt-work-teams-icon"><Icon name="people" size={22}/></span>
+    <span className="wt-work-teams-toggle-copy"><strong>Команды и рабочие документы</strong><small>Совместные задачи, файлы и рабочие материалы — когда они нужны.</small></span>
+    <span className="wt-work-teams-cta">{teamsOpen?'Свернуть':'Открыть'} <Icon name={teamsOpen?'chevronDown':'chevronRight'} size={17}/></span>
+   </button>
+   {teamsOpen&&<div className="wt-work-teams"><WorkTeamsView token={token} onNotice={onNotice}/></div>}
+  </section>}
  </section>;
 }
