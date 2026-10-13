@@ -47,7 +47,7 @@ if(!networkParts.includes('post-attachment-v2')) throw new Error('flexible post 
 const work=fs.readFileSync(path.join(root,'src/WorkHubView.tsx'),'utf8');
 const rebuildCss=ui;
 
-for(const x of ['redesign-home','Ваш график','Сценарий выплаты','Резервная копия']) if(!home.includes(x)) throw new Error('rebuilt home surface missing '+x);
+for(const x of ['wt-home-v8','wt-home-hero','wt-week-preview','wt-home-ledger','scenarioSalary','plannedVacation','encryptBackup']) if(!home.includes(x)) throw new Error('new workday home surface missing '+x);
 for(const x of ['redesign-notifications','notification-timeline','timeline-item']) if(!notifications.includes(x)) throw new Error('rebuilt notification surface missing '+x);
 for(const x of ['redesign-chats','chats-mode-nav','Формат разговора']) if(!chats.includes(x)) throw new Error('rebuilt chats surface missing '+x);
 if(!chat.includes('chat-page-rebuilt')) throw new Error('rebuilt personal chat surface missing');
