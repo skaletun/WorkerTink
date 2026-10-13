@@ -2,78 +2,51 @@ import {useMemo,useState} from 'react';
 import {Icon} from './Icon';
 import type {State} from './core';
 import {MONTHS,calcYear,formatMoney,getScheduledShift,vacationUsedDays,ymd} from './core';
-import {RingChart} from './components/charts/ring-chart';
-import {Ring} from './components/charts/ring';
-import {RingCenter} from './components/charts/ring-center';
 import WorkTeamsView from './WorkTeamsView';
 
 type Props={state:State;calc:any;view:Date;onNavigate:(tab:'calendar'|'pay'|'absence')=>void;onNetwork:()=>void;token?:string;onNotice?:(s:string)=>void};
 const shiftName=(value:string)=>value==='night'?'Ночная смена':value==='full'?'Суточная смена':value==='day'?'Дневная смена':'Выходной';
+const dayNames=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
 
 export default function WorkHubView({state,calc,view,onNavigate,onNetwork,token,onNotice}:Props){
+ const [teamsOpen,setTeamsOpen]=useState(false);
+ const annual=useMemo(()=>calcYear(state,view.getFullYear()),[state,view]);
+ const vacationLeft=Math.max(0,state.vacTotal-vacationUsedDays(state));
+ const daysInMonth=new Date(view.getFullYear(),view.getMonth()+1,0).getDate();
+ const firstWeekday=(new Date(view.getFullYear(),view.getMonth(),1).getDay()+6)%7;
+ const monthDays=useMemo(()=>Array.from({length:daysInMonth},(_,i)=>{
+  const date=new Date(view.getFullYear(),view.getMonth(),i+1);
+  return {date,shift:getScheduledShift(state,date),key:ymd(date)};
+ }),[state,view,daysInMonth]);
+ const plannedShifts=monthDays.filter(d=>d.shift!=='off').length;
+ const nightShifts=monthDays.filter(d=>d.shift==='night').length;
+ const plannedPercent=Math.round(plannedShifts/daysInMonth*100);
  const upcoming=useMemo(()=>{
+  const today=new Date();today.setHours(12,0,0,0);
   const out:{date:Date;shift:string}[]=[];
-  for(let i=0;i<21&&out.length<5;i++){
-   const date=new Date();date.setHours(0,0,0,0);date.setDate(date.getDate()+i);
+  for(let i=0;i<35&&out.length<6;i++){
+   const date=new Date(today);date.setDate(today.getDate()+i);
    const shift=getScheduledShift(state,date);
    if(shift!=='off')out.push({date,shift});
   }
   return out;
  },[state]);
- const [teamsOpen,setTeamsOpen]=useState(false);
- const annual=useMemo(()=>calcYear(state,view.getFullYear()),[state,view]);
- const vacationLeft=Math.max(0,state.vacTotal-vacationUsedDays(state));
- const daysInMonth=new Date(view.getFullYear(),view.getMonth()+1,0).getDate();
- const plannedShifts=useMemo(()=>{
-  let total=0;
-  for(let day=1;day<=daysInMonth;day++)if(getScheduledShift(state,new Date(view.getFullYear(),view.getMonth(),day))!=='off')total++;
-  return total;
- },[state,view,daysInMonth]);
- const ringData=useMemo(()=>[{label:'Плановые смены',value:plannedShifts,maxValue:daysInMonth,color:'var(--chart-1)'}],[plannedShifts,daysInMonth]);
- const notes=Object.entries(state.shiftNotes).filter(([,value])=>Boolean(value.trim())).sort(([left],[right])=>right.localeCompare(left)).slice(0,4);
- return <section className="wt-work-dashboard redesign-work" aria-label="Рабочая область">
-  <header className="wt-work-header">
-   <div><span className="wt-overline">РАБОЧАЯ ОБЛАСТЬ / {view.getFullYear()}</span><h2>Рабочая сводка<span className="wt-greeting-dot">.</span></h2><p>Главное о сменах, начислениях и днях отдыха. Всё остальное — одним нажатием.</p></div>
-   <div className="wt-work-header-actions"><button className="wt-button secondary" onClick={()=>onNavigate('calendar')}><Icon name="calendar" size={17}/>Календарь</button><button className="wt-button primary" onClick={()=>onNavigate('pay')}>Мои выплаты <Icon name="chevronRight" size={16}/></button></div>
-  </header>
-  <div className="wt-work-metrics" role="group" aria-label="Ключевые показатели работы">
-   <button onClick={()=>onNavigate('pay')}><span>К выплате · {MONTHS[view.getMonth()]}</span><strong>{formatMoney(calc.net)}</strong><small>С учётом начислений и удержаний</small></button>
-   <button onClick={()=>onNavigate('calendar')}><span>Смены в месяце</span><strong>{plannedShifts}<em> / {daysInMonth}</em></strong><small>По настроенному графику</small></button>
-   <button onClick={()=>onNavigate('absence')}><span>Доступный отпуск</span><strong>{Math.round(vacationLeft)}<em> дней</em></strong><small>Остаток по вашему профилю</small></button>
-   <button onClick={()=>onNavigate('pay')}><span>За {view.getFullYear()} год</span><strong>{formatMoney(annual.net)}</strong><small>Расчёт чистого дохода</small></button>
-  </div>
-  <div className="wt-work-layout">
-   <section className="wt-work-primary" aria-label="Ближайшие смены">
-    <div className="wt-section-heading"><div><span className="wt-overline">КАЛЕНДАРЬ</span><h3>Следующие смены</h3></div><button className="wt-link-button" onClick={()=>onNavigate('calendar')}>Весь график <Icon name="chevronRight" size={16}/></button></div>
-    <ol className="wt-work-shift-list">
-     {upcoming.map(({date,shift},index)=><li key={ymd(date)}><button className="wt-work-shift" onClick={()=>onNavigate('calendar')}><span className="wt-date-plate"><b>{date.getDate()}</b><small>{date.toLocaleDateString('ru-RU',{month:'short'})}</small></span><span className="wt-work-shift-text"><b>{date.toLocaleDateString('ru-RU',{weekday:'long'})}</b><small>{shiftName(shift)}{index===0?' · ближайшая':''}</small></span><span className="wt-shift-type">{shift==='night'?'Ночь':shift==='full'?'Сутки':'День'}</span><Icon name="chevronRight" size={16}/></button></li>)}
-     {!upcoming.length&&<li className="wt-empty-row">Рабочих смен в ближайшие три недели нет.</li>}
-    </ol>
+ const notes=Object.entries(state.shiftNotes).filter(([,value])=>Boolean(value.trim())).sort(([left],[right])=>right.localeCompare(left)).slice(0,3);
+ return <section className="wt-operations redesign-work" aria-label="Рабочая диспетчерская">
+  <header className="wt-operations-intro"><div><span className="wt-index-label">РАБОЧАЯ ДИСПЕТЧЕРСКА / {view.getFullYear()}</span><h2>Ваш график.<br/><em>Ваша система.</em></h2><p>Месяц, ближайшие смены, начисления и отпуск — в одной операционной области.</p></div><div className="wt-operations-head-buttons"><button onClick={()=>onNavigate('calendar')}><Icon name="calendar" size={16}/> Изменить смены</button><button onClick={()=>onNavigate('pay')}>Расчёт зарплаты <Icon name="chevronRight" size={17}/></button></div></header>
+  <section className="wt-operations-numbers" aria-label="Показатели"><div className="wt-operations-number-main"><span>К выплате / {MONTHS[view.getMonth()]}</span><strong>{formatMoney(calc.net)}</strong><button onClick={()=>onNavigate('pay')}>Расчёт <Icon name="chevronRight" size={17}/></button></div><div><span>Смены</span><strong>{plannedShifts}<small> / {daysInMonth}</small></strong><p>Запланировано</p></div><div><span>Ночные</span><strong>{nightShifts}</strong><p>За месяц</p></div><div><span>Отпуск</span><strong>{Math.round(vacationLeft)}<small> дн.</small></strong><p>Доступно</p></div></section>
+  <div className="wt-operations-layout">
+   <section className="wt-operations-calendar"><div className="wt-operations-section-head"><div><span className="wt-index-label">01 / РИТМ МЕСЯЦА</span><h3>{MONTHS[view.getMonth()]} <small>{view.getFullYear()}</small></h3></div><button onClick={()=>onNavigate('calendar')}>Редактор графика <Icon name="chevronRight" size={16}/></button></div>
+    <div className="wt-operations-calendar-grid" role="group" aria-label="Календарь смен">{dayNames.map(d=><span key={d} className="wt-ops-dayname">{d}</span>)}{Array.from({length:firstWeekday},(_,i)=><span className="wt-ops-empty" key={`lead-${i}`}/>)}
+     {monthDays.map(({date,shift,key})=><button key={key} onClick={()=>onNavigate('calendar')} className={`wt-ops-cell is-${shift}${key===ymd(new Date())?' is-today':''}`} aria-label={`${date.toLocaleDateString('ru-RU',{day:'numeric',month:'long'})} — ${shiftName(shift)}`}><strong>{date.getDate()}</strong><i/><span>{shift==='off'?'—':shift==='night'?'Ночь':shift==='full'?'Сутки':'День'}</span></button>)}</div>
+    <div className="wt-operations-calendar-footer"><div><span className="wt-ops-legend-dot is-day"/>Дневная</div><div><span className="wt-ops-legend-dot is-night"/>Ночная</div><div><span className="wt-ops-legend-dot is-off"/>Выходной</div><strong>{plannedPercent}% дней занято сменами</strong></div>
    </section>
-   <aside className="wt-work-insights" aria-label="Данные рабочего периода">
-    <div className="wt-section-heading"><div><span className="wt-overline">АНАЛИТИКА ГРАФИКА</span><h3>Рабочий ритм</h3></div></div>
-    <div className="wt-ring-wrap"><RingChart data={ringData} size={240} strokeWidth={19} baseInnerRadius={68} geometryScrubbing><Ring index={0} animate={false} showGlow={false}/><RingCenter defaultLabel="смен в месяце"/></RingChart></div>
-    <div className="wt-ring-legend"><span><i/> Плановые смены</span><strong>{plannedShifts} из {daysInMonth}</strong></div>
-    <p className="wt-insights-caption">Доля рабочих дней в выбранном месяце на основе вашего графика. Показатель не зависит от начисленной зарплаты.</p>
-   </aside>
+   <aside className="wt-operations-upcoming"><div className="wt-operations-section-head"><div><span className="wt-index-label">02 / БЛИЖАЙШЕЕ</span><h3>На очереди</h3></div></div><ol>{upcoming.map(({date,shift},i)=><li key={ymd(date)}><button onClick={()=>onNavigate('calendar')}><span className="wt-ops-seq">{String(i+1).padStart(2,'0')}</span><span className="wt-ops-when"><b>{date.toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}</b><small>{date.toLocaleDateString('ru-RU',{weekday:'long'})}</small></span><span className={`wt-ops-shift-chip is-${shift}`}>{shift==='night'?'Ночь':shift==='full'?'Сутки':'День'}</span></button></li>)}{!upcoming.length&&<li className="wt-ops-empty-note">В ближайшие 35 дней рабочих смен не запланировано.</li>}</ol></aside>
   </div>
-  <div className={"wt-work-secondary"+(!notes.length?" no-notes":"")}>
-   {notes.length>0&&<section className="wt-work-notes"><div className="wt-section-heading"><div><span className="wt-overline">ЗАМЕТКИ</span><h3>Записано на сменах</h3></div><button className="wt-link-button" onClick={()=>onNavigate('calendar')}>К заметкам <Icon name="chevronRight" size={16}/></button></div>
-    <ul>{notes.map(([date,text])=><li key={date}><time dateTime={date}>{new Date(date+'T12:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}</time><p>{text.slice(0,180)}</p></li>)}{!notes.length&&<li className="wt-empty-row">Пока нет записей. Заметку можно добавить в календаре смен.</li>}</ul>
-   </section>}
-   <section className="wt-work-quick"><div className="wt-section-heading"><div><span className="wt-overline">БЫСТРЫЕ ДЕЙСТВИЯ</span><h3>Что нужно сделать?</h3></div></div>
-    <button onClick={()=>onNavigate('absence')}><span>01</span><span>Отпуск или больничный</span><Icon name="chevronRight" size={16}/></button>
-    <button onClick={()=>onNavigate('pay')}><span>02</span><span>Проверить начисления</span><Icon name="chevronRight" size={16}/></button>
-    <button onClick={onNetwork}><span>03</span><span>Обсудить смену с коллегами</span><Icon name="chevronRight" size={16}/></button>
-   </section>
+  <div className="wt-operations-lower">
+   <section className="wt-operations-ledger"><div className="wt-operations-section-head"><div><span className="wt-index-label">03 / МОЯ ЭКОНОМИКА</span><h3>Выплаты и отдых</h3></div></div><div className="wt-ops-ledger-row"><span>На руки за {view.getFullYear} год</span><strong>{formatMoney(annual.net)}</strong></div><div className="wt-ops-ledger-row"><span>Среднее за месяц</span><strong>{formatMoney(annual.averageMonthlyNet)}</strong></div><div className="wt-ops-ledger-row"><span>Оставшийся отпуск</span><strong>{Math.round(vacationLeft)} дн.</strong></div><div className="wt-ops-ledger-actions"><button onClick={()=>onNavigate('pay')}>Финансы <Icon name="chevronRight" size={16}/></button><button onClick={()=>onNavigate('absence')}>Отпуск / больничный <Icon name="chevronRight" size={16}/></button></div></section>
+   <section className="wt-operations-notes"><div className="wt-operations-section-head"><div><span className="wt-index-label">04 / РАБОЧИЕ ЗАПИСИ</span><h3>Из блокнота</h3></div><button onClick={()=>onNavigate('calendar')}>Все <Icon name="chevronRight" size={16}/></button></div>{notes.map(([date,note])=><div className="wt-ops-note" key={date}><time dateTime={date}>{new Date(date+'T12:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}</time><p>{note.slice(0,220)}</p></div>)}{!notes.length&&<p className="wt-ops-empty-note">Заметки появятся здесь после первой записи в календаре.</p>}<button className="wt-ops-social-link" onClick={onNetwork}>Обсудить с коллегами <Icon name="externalLink" size={16}/></button></section>
   </div>
-  {token&&onNotice&&<section className="wt-work-teams-entry" aria-label="Команды и рабочие документы">
-   <button type="button" className="wt-work-teams-toggle" aria-expanded={teamsOpen} onClick={()=>setTeamsOpen(open=>!open)}>
-    <span className="wt-work-teams-icon"><Icon name="people" size={22}/></span>
-    <span className="wt-work-teams-toggle-copy"><strong>Команды и рабочие документы</strong><small>Совместные задачи, файлы и рабочие материалы — когда они нужны.</small></span>
-    <span className="wt-work-teams-cta">{teamsOpen?'Свернуть':'Открыть'} <Icon name={teamsOpen?'chevronDown':'chevronRight'} size={17}/></span>
-   </button>
-   {teamsOpen&&<div className="wt-work-teams"><WorkTeamsView token={token} onNotice={onNotice}/></div>}
-  </section>}
+  {token&&onNotice&&<section className="wt-operations-team-space"><button type="button" onClick={()=>setTeamsOpen(v=>!v)} aria-expanded={teamsOpen}><Icon name="people" size={21}/><span><b>Команды и документы</b><small>Совместные рабочие пространства и материалы</small></span><span>{teamsOpen?'Свернуть':'Открыть'} <Icon name="chevronDown" size={16}/></span></button>{teamsOpen&&<WorkTeamsView token={token} onNotice={onNotice}/>}</section>}
  </section>;
 }
