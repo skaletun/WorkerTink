@@ -71,14 +71,14 @@ export default function HomeView({state,patch,onNotice,go}:Props){
   <div className="wt-home-columns">
    <div className="wt-home-main">
     <section className="wt-home-section">
-     <div className="wt-section-heading"><div><span className="wt-overline">ВАШ ГРАФИК</span><h3>Рабочий день</h3></div><button className="wt-link-button" onClick={()=>go('calendar')}>Календарь <Icon name="chevronRight" size={16}/></button></div>
+     <div className="wt-section-heading"><div><span className="wt-overline">Ваш график</span><h3>Рабочий день</h3></div><button className="wt-link-button" onClick={()=>go('calendar')}>Календарь <Icon name="chevronRight" size={16}/></button></div>
      <div className="wt-today-feature"><div><span className="wt-today-day">{now.toLocaleDateString('ru-RU',{weekday:'long'})}</span><strong>{now.toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}</strong><span className={`wt-today-state${shift==='off'?' is-off':''}`}>{shiftLabel}</span></div><button className="wt-button secondary" onClick={()=>go('calendar')}>Изменить смену</button></div>
     </section>
     <section className="wt-home-section">
      <div className="wt-section-heading"><div><span className="wt-overline">РАСЧЁТЫ</span><h3>Доход и планы</h3></div><button className="wt-link-button" onClick={()=>go('pay')}>Зарплата <Icon name="chevronRight" size={16}/></button></div>
      <div className="wt-home-forecast"><div><span>Прогноз выплат</span><strong>{formatMoney(forecast.net)}</strong><small>За {forecastMonths} мес. · {formatMoney(forecast.avg)} в среднем за месяц</small></div><label htmlFor="wt-forecast-range">Горизонт: {forecastMonths} мес.</label><input id="wt-forecast-range" type="range" min="1" max="12" value={forecastMonths} onChange={e=>setForecastMonths(Number(e.target.value))}/></div>
      <div className="wt-home-planner">
-      <div className="wt-tool-heading"><span className="wt-overline">СЦЕНАРИЙ ВЫПЛАТЫ</span><h4>Если изменить условия</h4><strong>{formatMoney(scenario.net)}</strong></div>
+      <div className="wt-tool-heading"><span className="wt-overline">Сценарий выплаты</span><h4>Если изменить условия</h4><strong>{formatMoney(scenario.net)}</strong></div>
       <div className="wt-form-pair"><label>Оклад<input type="number" min="0" value={scenarioSalary} onChange={e=>setScenarioSalary(Number(e.target.value)||0)}/></label><label>Ночная доплата · {scenarioNight}%<input type="range" min="0" max="100" value={scenarioNight} onChange={e=>setScenarioNight(Number(e.target.value))}/></label></div>
      </div>
     </section>
@@ -94,7 +94,7 @@ export default function HomeView({state,patch,onNotice,go}:Props){
    <aside className="wt-home-aside">
     <section className="wt-home-section wt-home-advice"><div className="wt-section-heading"><div><span className="wt-overline">КОНТЕКСТ</span><h3>Стоит проверить</h3></div></div><ul>{tips.length?tips.map((text,i)=><li key={i}>{text}</li>):<li>График и расчёты готовы. Посмотрите, что нового у коллег.</li>}</ul></section>
     <section className="wt-home-section"><div className="wt-section-heading"><div><span className="wt-overline">ЗАМЕТКА К СМЕНЕ</span><h3>Сохранить мысль</h3></div></div><label className="wt-sr-only" htmlFor="wt-quick-note">Текст заметки</label><textarea id="wt-quick-note" value={tip} onChange={e=>setTip(e.target.value)} placeholder="Что важно не забыть после смены?"/><button className="wt-button primary" disabled={!tip.trim()} onClick={saveTip}>Сохранить заметку</button></section>
-    <section className="wt-home-section"><div className="wt-section-heading"><div><span className="wt-overline">РЕЗЕРВНАЯ КОПИЯ</span><h3>Ваши данные</h3></div></div><p>Данные шифруются на устройстве перед экспортом.</p><label htmlFor="wt-backup-password">Пароль шифрования</label><input id="wt-backup-password" type="password" value={backupPassword} onChange={e=>setBackupPassword(e.target.value)} autoComplete="new-password"/><button className="wt-button secondary" onClick={()=>void backup()}>Создать копию <Icon name="download" size={16}/></button></section>
+    <section className="wt-home-section"><div className="wt-section-heading"><div><span className="wt-overline">Резервная копия</span><h3>Ваши данные</h3></div></div><p>Данные шифруются на устройстве перед экспортом.</p><label htmlFor="wt-backup-password">Пароль шифрования</label><input id="wt-backup-password" type="password" value={backupPassword} onChange={e=>setBackupPassword(e.target.value)} autoComplete="new-password"/><button className="wt-button secondary" onClick={()=>void backup()}>Создать копию <Icon name="download" size={16}/></button></section>
     <section className="wt-home-section"><span className="wt-overline">ЗА ГОД</span><h3>{formatMoney(year.net)}</h3><p>Чистый доход за {yearNumber} год по вашим настройкам.</p></section>
    </aside>
   </div>
