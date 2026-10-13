@@ -1,16 +1,58 @@
-.tab-stage .section-heading,.tab-stage .view-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:0 0 18px}
-.tab-stage .section-heading h2,.tab-stage .view-heading h2{margin:0}
-.tab-stage .empty-state{padding:36px 20px;text-align:center;border:1px dashed var(--line-strong);border-radius:var(--radius-md);background:var(--surface)}
-.tab-stage .empty-state p{max-width:48ch;margin-inline:auto}
-.tab-stage .field,.tab-stage .form-field{display:flex;flex-direction:column;gap:6px}
-.tab-stage .field label,.tab-stage .form-field label{font-size:12px;font-weight:600}
-.tab-stage .status,.tab-stage .badge,.tab-stage .pill{display:inline-flex;align-items:center;gap:5px;width:max-content;max-width:100%;padding:3px 8px;border:1px solid var(--line);border-radius:5px;background:var(--surface-2);font-size:11px;font-weight:600;color:var(--ink-2)}
-.tab-stage .success{color:var(--success)}
-.tab-stage .error{color:var(--danger)}
-.tab-stage .primary{color:white}
-.tab-stage .muted{color:var(--muted)}
-.tab-stage .divider{height:1px;background:var(--line);border:0;margin:16px 0}
-.tab-stage .list-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
-.tab-stage .list-row:last-child{border-bottom:0}
-.tab-stage .list-row> :last-child{margin-left:auto}
-.wt-mobile-nav{display:none}
+/* Calendar, payroll, leave: precise work instruments. */
+.canva-calendar-shell,.canva-pay-breakdown,.canva-pay-form,.period-editor,.annual-card{border:1px solid var(--line);border-radius:var(--radius-md);background:var(--surface);padding:20px;min-width:0}
+.canva-calendar-shell{padding:20px}
+.canva-calendar-head{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:0 0 17px}
+.canva-calendar-head h2{font-size:25px;margin-top:5px}.canva-calendar-head h2 em{color:var(--muted);font-size:17px;font-style:normal}
+.canva-calendar-controls{display:flex;gap:7px}.canva-calendar-controls button,.canva-month-picker button,.annual-year-controls button{width:36px;height:36px;display:grid;place-items:center;background:var(--surface-2);border:1px solid var(--line);border-radius:7px}
+.canva-calendar-controls button:hover,.canva-month-picker button:hover,.annual-year-controls button:hover{color:var(--accent);border-color:var(--accent)}
+.canva-calendar-week,.canva-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.canva-calendar-week{margin-bottom:6px}
+.canva-calendar-week span{text-align:center;padding:9px 0;font:600 10px var(--font-mono);color:var(--muted)}
+.canva-calendar-empty{min-height:84px;background:var(--canvas);border-radius:6px}
+.calendar-day{min-height:91px;padding:9px;text-align:left;display:flex;flex-direction:column;align-items:flex-start;gap:10px;background:var(--surface-2);border:1px solid transparent;border-radius:6px;min-width:0}
+.calendar-day:hover:not(:disabled){border-color:var(--accent);background:var(--accent-soft)}
+.calendar-day.today{outline:2px solid var(--accent);outline-offset:-2px}.calendar-day[data-shift=off]{background:var(--canvas)}
+.calendar-day.day,.calendar-day.full{background:var(--accent-soft)}.calendar-day.night{background:color-mix(in srgb,var(--chart-4) 16%,var(--surface))}
+.calendar-day.vacation{background:var(--success-soft)}.calendar-day.sick{background:var(--danger-soft)}
+.calendar-day.pre-start{opacity:.4}.calendar-day .day-top{display:flex;width:100%;align-items:center;justify-content:space-between;gap:4px}.calendar-day .day-top b{font-size:14px}
+.calendar-day>span{font-size:10px;color:var(--ink-2)}.calendar-day>small{font-size:9px;letter-spacing:0}
+.canva-calendar-note{display:flex;justify-content:space-between;gap:10px;margin-top:12px;font-size:11px;color:var(--muted)}
+.canva-calendar-summary,.canva-absence-overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;padding:18px 0;margin:23px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.canva-calendar-summary>div,.canva-absence-overview>div{display:flex;align-items:flex-start;flex-direction:column;gap:5px;padding:0 18px;border-right:1px solid var(--line);min-width:0}
+.canva-calendar-summary>div:first-child,.canva-absence-overview>div:first-child{padding-left:0}
+.canva-calendar-summary>div:last-child,.canva-absence-overview>div:last-child{border-right:0}
+.canva-calendar-summary strong,.canva-absence-overview strong{font-size:22px;line-height:1.2;letter-spacing:-.05em;font-variant-numeric:tabular-nums}.canva-calendar-summary small{font-size:11px}
+.canva-calendar-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.canva-calendar-actions button{display:flex;align-items:center;gap:13px;padding:15px;border:1px solid var(--line);border-radius:8px;background:var(--surface);text-align:left}
+.canva-calendar-actions button:hover{border-color:var(--accent)}.canva-calendar-actions button b{font-size:12px}.canva-calendar-actions button small{flex:1}
+.canva-pay-overview{display:grid;grid-template-columns:minmax(0,2fr) minmax(145px,1fr) minmax(145px,1fr);border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-md);margin-bottom:20px;overflow:hidden}
+.canva-pay-hero,.canva-pay-metric{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:9px;padding:23px;border-right:1px solid var(--line)}
+.canva-pay-metric:last-child{border:0}.canva-pay-hero strong{font-size:clamp(29px,3.8vw,44px);line-height:1.07;letter-spacing:-.065em;font-variant-numeric:tabular-nums}
+.canva-pay-metric span{font-size:11px;color:var(--muted)}.canva-pay-metric b{font-size:21px;letter-spacing:-.045em;font-variant-numeric:tabular-nums}
+.canva-pay-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(260px,.7fr);gap:18px;align-items:start}
+.canva-month-picker,.annual-year-controls{display:flex;align-items:center;gap:10px;white-space:nowrap}
+.canva-month-picker b{font-size:12px}.canva-money-list{display:flex;flex-direction:column}
+.canva-money-list>div{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:12px;color:var(--ink-2)}
+.canva-money-list b{color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums}
+.canva-money-list .tax b{color:var(--danger)}.canva-money-list .total{margin-top:8px;padding:15px;background:var(--accent-soft);border:0;border-radius:6px;font-weight:700}
+.canva-money-list .total b{font-size:18px}
+.canva-pay-form{display:flex;flex-direction:column;gap:15px}.canva-pay-form .canva-section-head{margin-bottom:0}
+.canva-pay-form>p{font-size:12px}.canva-pay-form input{width:100%}
+.annual-card{margin-top:22px}.annual-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding-bottom:18px}
+.annual-head h2{font-size:23px;margin:5px 0 7px}.annual-head p{font-size:12px;max-width:65ch}
+.annual-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;padding:18px 0;border-block:1px solid var(--line)}
+.annual-kpis>div{display:flex;flex-direction:column;gap:6px;border-right:1px solid var(--line);padding:0 14px}.annual-kpis>div:first-child{padding-left:0}.annual-kpis>div:last-child{border-right:0}
+.annual-kpis span{font-size:11px;color:var(--muted)}.annual-kpis b{font-size:19px;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.annual-components{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 22px;padding:17px 0}
+.annual-components>div{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding:9px 0;font-size:11px}
+.annual-components b{font-variant-numeric:tabular-nums}.annual-table-wrap{max-width:100%;overflow:auto}
+.annual-table{min-width:690px}.annual-table td:not(:first-child),.annual-table th:not(:first-child){text-align:right;white-space:nowrap}
+.annual-footnote{font-size:11px;line-height:1.6;margin-top:14px}
+.canva-absence-overview{grid-template-columns:repeat(3,minmax(0,1fr))}
+.canva-absence-overview span{font-size:12px;color:var(--muted)}.canva-absence-overview .active strong{color:var(--accent)}
+.canva-absence-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.period-editor{display:flex;flex-direction:column;gap:15px}
+.period-editor h2{font-size:20px}.period-editor .hint{font-size:12px}
+.period-items{display:flex;flex-direction:column;gap:6px}.period-item{display:flex;align-items:center;justify-content:space-between;gap:11px;padding:11px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2)}
+.period-item>div{display:flex;flex-direction:column;gap:4px}.period-item b{font-size:12px}.period-item button{background:transparent;border:0;color:var(--danger);font-size:18px}
+.period-add{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding-top:16px;border-top:1px solid var(--line)}
+.period-add input{flex:1 1 110px;min-width:0}.period-add button{min-height:39px}
