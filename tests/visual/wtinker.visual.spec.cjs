@@ -143,3 +143,41 @@ test('WTinker bug-archive interaction states',async({browser})=>{
 
   await mobile.close();
 });
+
+test('v8 structural navigation, responsive workday and theme smoke',async({browser})=>{
+  for(const theme of ['light','dark']){
+    for(const viewport of [{width:1440,height:900},{width:390,height:844}]){
+      const context=await browser.newContext({viewport,colorScheme:theme});
+      const page=await context.newPage();
+      const errors=[];
+      page.on('pageerror',error=>errors.push(String(error)));
+      await prepare(page,theme);
+      await page.goto('?tab=home',{waitUntil:'networkidle'});
+      await expect(page.locator('.wt-shell-v8')).toBeVisible();
+      await expect(page.locator('.wt-home-hero')).toBeVisible();
+      await expect(page.locator('.wt-home-income strong')).toBeVisible();
+      await expect(page.locator('.wt-week-day')).toHaveCount(7);
+      await expect(page.locator('.wt-home-ledger-list button')).toHaveCount(3);
+      const expectedCanvas=theme==='dark'?'#161b18':'#f2f0eb';
+      const values=await page.evaluate(()=>({
+        canvas:getComputedStyle(document.documentElement).getPropertyValue('--canvas').trim(),
+        overflow:document.documentElement.scrollWidth-window.innerWidth
+      }));
+      expect(values.canvas).toBe(expectedCanvas);
+      expect(values.overflow).toBeLessThanOrEqual(2);
+      if(viewport.width>600){
+        await expect(page.locator('.wt-nav-horizontal')).toBeVisible();
+        await expect(page.locator('.wt-mobile-nav')).toBeHidden();
+      }else{
+        await expect(page.locator('.wt-nav-horizontal')).toBeHidden();
+        await expect(page.locator('.wt-mobile-nav')).toBeVisible();
+      }
+      await page.screenshot({path:`visual-audit-artifacts/v8-${theme}-${viewport.width}-home.png`,fullPage:true});
+      await page.locator('.wt-week-day').first().click();
+      await expect(page.locator('.wt-viewhead h1')).toContainText('Календарь');
+      await expect(page.locator('.canva-calendar')).toBeVisible();
+      expect(errors).toEqual([]);
+      await context.close();
+    }
+  }
+});
