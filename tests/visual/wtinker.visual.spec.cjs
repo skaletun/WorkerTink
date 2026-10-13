@@ -191,6 +191,12 @@ test('v9 workspace architecture: real responsive navigation and working screens'
       }
       await expect(page.locator('.wt-pay-console-statement')).toBeVisible();
       await page.screenshot({path:`visual-audit-artifacts/v9-${theme}-${viewport.width}-pay.png`,fullPage:true});
+      await page.goto('?tab=social',{waitUntil:'networkidle'});
+      await expect(page.locator('.wt-network-layout')).toBeVisible();
+      await expect(page.locator('.wt-network-index-nav>button')).toHaveCount(6);
+      await page.screenshot({path:`visual-audit-artifacts/v9-${theme}-${viewport.width}-network.png`,fullPage:true});
+      await page.locator('.wt-network-index-nav>button').filter({hasText:'Люди'}).click();
+      await expect(page.locator('.wt-network-story-head h2')).toHaveText('Люди');
       expect(errors,theme+'/'+viewport.width).toEqual([]);
       await context.close();
     }
