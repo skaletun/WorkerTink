@@ -1,0 +1,33 @@
+/* Entire feed article renderer uses a date gutter and open journal, not old social cards. */
+.atlas-app .atlas-story{display:grid;grid-template-columns:83px minmax(0,1fr);gap:20px;padding:30px 0!important;border:0!important;border-bottom:1px solid var(--atlas-stroke)!important;border-radius:0!important;background:transparent!important}
+.atlas-story-margin{display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding-top:8px}
+.atlas-story-margin>span{font:770 9px var(--font-mono);letter-spacing:.08em;color:var(--atlas-electric)}
+.atlas-story-margin strong{font-size:clamp(40px,4.5vw,67px);font-weight:800;line-height:.9;letter-spacing:-.09em}
+.atlas-story-margin small{font:700 10px var(--font-mono);color:var(--atlas-muted)}
+.atlas-story-margin i{height:30px;width:1px;background:var(--atlas-stroke);margin:11px 0 0 8px}
+.atlas-story-main{min-width:0}
+.atlas-story-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0 14px;border-bottom:1px solid var(--atlas-stroke);font-size:10px;color:var(--atlas-muted)}
+.atlas-story-label{font:840 10px var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--atlas-electric)}
+.atlas-story-author{display:flex;align-items:center;gap:11px;padding:19px 0}
+.atlas-story-author>button{display:grid;place-items:center;flex:0 0 auto;padding:0;border:0;background:transparent}
+.atlas-story-author>div{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+.atlas-story-author>div>button{width:max-content;max-width:100%;padding:0;background:transparent;border:0;color:var(--atlas-ink);font-size:14px;font-weight:790;text-align:left}
+.atlas-story-author>div>small{font-size:11px;color:var(--atlas-muted)}
+.atlas-story-delete{color:var(--atlas-muted)}
+.atlas-app .atlas-story-body{font-size:clamp(16px,1.6vw,20px);line-height:1.64;letter-spacing:-.015em;white-space:pre-wrap;overflow-wrap:anywhere}
+.atlas-story-shift{display:flex;flex-direction:column;gap:12px;margin-top:17px;padding:21px;border-left:5px solid var(--atlas-electric);background:var(--atlas-cream)}
+.atlas-story-shift>div{display:flex;align-items:center;justify-content:space-between;gap:9px}
+.atlas-story-shift>div>span{font:850 10px var(--font-mono);letter-spacing:.06em;color:var(--atlas-electric)}
+.atlas-story-shift>div>b{font-size:11px}
+.atlas-story-shift>strong{font-size:27px;letter-spacing:-.05em}
+.atlas-story-shift>p{font-size:14px;line-height:1.65}
+.atlas-story-attachments{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:15px}
+.atlas-story-attachments figure{min-width:0}
+.atlas-story-attachments :is(img,video){width:100%;height:auto;max-height:460px;object-fit:contain}
+.atlas-story-actions{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:24px;padding:12px 0 0;border-top:1px solid var(--atlas-stroke)}
+.atlas-story-actions button{display:flex;align-items:center;gap:7px;min-height:35px;padding:7px 11px;border:1px solid var(--atlas-stroke);border-radius:25px;background:var(--atlas-paper);color:var(--atlas-ink);font-size:11px;font-weight:730}
+.atlas-story-actions button:hover,.atlas-story-actions .is-liked{background:var(--atlas-electric);border-color:var(--atlas-electric);color:#fff}
+.atlas-story-actions .is-saved{background:var(--atlas-lime);border-color:var(--atlas-lime);color:#192318}
+.atlas-story-discussion{margin-top:22px;padding:15px 0;border-top:1px solid var(--atlas-stroke)}
+.atlas-story-discussion .comment-v2{padding:11px 0}
+@media(max-width:680px){.atlas-app .atlas-story{grid-template-columns:45px minmax(0,1fr);gap:11px;padding:20px 0!important}.atlas-story-margin strong{font-size:41px}.atlas-story-margin>span{font-size:7px}.atlas-story-margin small{font-size:8px}.atlas-story-attachments{grid-template-columns:1fr}.atlas-story-actions{gap:5px}.atlas-story-actions button{padding:7px 8px;font-size:10px}.atlas-app .atlas-story-body{font-size:15px}}
