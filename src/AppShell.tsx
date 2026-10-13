@@ -27,7 +27,8 @@ export default function AppShell({items,active,onNavigate,profile,profileAction,
   document.addEventListener('keydown',listener);
   return()=>document.removeEventListener('keydown',listener);
  },[searchAction]);
- const itemButton=(item:NavItem)=><button key={item.id} type="button" className={`wt-nav-item${active===item.id?' active':''}`} aria-current={active===item.id?'page':undefined} title={item.sub} onClick={()=>onNavigate(item.id)}>
+ const navigate=(id:string)=>{document.querySelector<HTMLDetailsElement>('.wt-nav-account')?.removeAttribute('open');onNavigate(id)};
+ const itemButton=(item:NavItem)=><button key={item.id} type="button" className={`wt-nav-item${active===item.id?' active':''}`} aria-current={active===item.id?'page':undefined} title={item.sub} onClick={()=>navigate(item.id)}>
   <span className="wt-nav-icon" aria-hidden="true">{item.icon}</span><span className="wt-nav-copy">{item.label}</span>
  </button>;
  return <div className="wt-shell wt-shell-v8">
@@ -39,7 +40,7 @@ export default function AppShell({items,active,onNavigate,profile,profileAction,
      <span className="wt-brand-identity"><span className="wt-brand-word">WTinker<span className="wt-brand-period">.</span></span><small>ЛЮДИ × РАБОТА</small></span>
     </button>
     <div className="wt-masthead-trail">
-     <span className="wt-live-label"><span className="wt-live-indicator"/> На связи с работой</span>
+     <span className="wt-live-label">Люди · Смены · Дела</span>
      <button type="button" className="wt-command-search" onClick={searchAction} aria-label="Поиск по WTinker"><Icon name="search" size={19}/><span>Найти человека или сообщество</span><kbd>Ctrl K</kbd></button>
      <button type="button" className="wt-top-icon" onClick={()=>onNavigate('notifications')} aria-label="Открыть уведомления"><Icon name="bell" size={19}/></button>
      <button type="button" className="wt-top-avatar" onClick={profileAction} aria-label="Открыть профиль">{profile}</button>
@@ -47,14 +48,14 @@ export default function AppShell({items,active,onNavigate,profile,profileAction,
    </div>
    <nav className="wt-nav wt-nav-horizontal" aria-label="Основные разделы">
     <div className="wt-nav-track">
-     {navSections.map(section=><div key={section.label} className="wt-nav-group"><span className="wt-nav-label"><em>{section.number}</em> {section.label}</span><div className="wt-nav-items">{section.ids.map(id=>{const item=byId.get(id);return item?itemButton(item):null})}</div></div>)}
+     {navSections.map(section=>section.number==='03'?<details key={section.label} className="wt-nav-account"><summary aria-label="Открыть разделы аккаунта"><span className="wt-nav-account-num">03</span><span>Аккаунт</span><Icon name="chevronDown" size={15}/></summary><div className="wt-nav-account-popover" role="group" aria-label="Личные разделы">{section.ids.map(id=>{const item=byId.get(id);return item?itemButton(item):null})}</div></details>:<div key={section.label} className="wt-nav-group"><span className="wt-nav-label"><em>{section.number}</em> {section.label}</span><div className="wt-nav-items">{section.ids.map(id=>{const item=byId.get(id);return item?itemButton(item):null})}</div></div>)}
     </div>
    </nav>
   </header>
   <main className="wt-main" id="wt-main">
    <div className="wt-viewhead"><div className="wt-viewhead-copy"><span className="wt-viewhead-kicker"><span>{activeGroup?.label||'WTinker'}</span><span aria-hidden="true">/</span>{kicker}</span><h1>{title}</h1></div><div className="wt-viewhead-side"><span className="wt-viewhead-edition">WT / ПРОСТРАНСТВО</span><button type="button" onClick={()=>onNavigate('social')} className="wt-viewhead-compose"><Icon name="plus" size={17}/> Новая публикация</button></div></div>
    <div className="wt-content"><div className="wt-content-inner"><div className="wt-page-frame">{children}</div></div></div>
-   <footer className="wt-shell-footer"><span>WTinker / работа и связи</span><span>{privacy}</span><span>Версия {version}</span></footer>
+   <footer className="wt-shell-footer"><span>WTinker / работа и связи</span><span className="wt-footer-privacy">{privacy}</span><span>Версия {version}</span></footer>
   </main>
   <nav className="wt-mobile-nav" aria-label="Быстрая мобильная навигация">
    {mobileItems.map(item=><button key={item.id} type="button" className={active===item.id?'active':''} aria-current={active===item.id?'page':undefined} onClick={()=>onNavigate(item.id)}>{item.icon}<span>{item.label}</span></button>)}
