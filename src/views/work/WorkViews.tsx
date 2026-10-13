@@ -50,16 +50,20 @@ function AnnualSummary({annual,goYear}:{annual:ReturnType<typeof calcYear>;goYea
  </div><details className="wt-annual-details"><summary><span><Icon name="calendar" size={17}/> Подробная годовая ведомость</span><Icon name="chevronDown" size={18}/></summary><div className="wt-annual-details-body"><div className="annual-components"><div><span>Базовая часть</span><b>{formatMoney(annual.base)}</b></div><div><span>Доп. смены</span><b>{formatMoney(annual.extraPay)}</b></div><div><span>Праздничные доплаты</span><b>{formatMoney(annual.holidayExtra)}</b></div><div><span>Ночные доплаты</span><b>{formatMoney(annual.nightExtra)}</b></div><div><span>Отпускные</span><b>{formatMoney(annual.vacPay)}</b></div><div><span>Больничные</span><b>{formatMoney(annual.sickPay)}</b></div><div><span>Смены</span><b>{annual.work}</b></div><div><span>Праздничные смены</span><b>{annual.holidayWork}</b></div><div><span>Дни отпуска</span><b>{annual.vacDays}</b></div><div><span>Дни больничного</span><b>{annual.sickDays}</b></div></div><div className="annual-table-wrap"><table className="annual-table"><thead><tr><th>Месяц</th><th>Начислено</th><th>НДФЛ</th><th>На руки</th><th>Аванс</th><th>Остаток</th></tr></thead><tbody>{annual.months.map((m)=><tr key={m.month}><td>{MONTHS[m.month]}</td><td>{formatMoney(m.gross)}</td><td>{formatMoney(m.tax)}</td><td><b>{formatMoney(m.net)}</b></td><td>{formatMoney(m.advance)}</td><td>{formatMoney(m.remainder)}</td></tr>)}</tbody><tfoot><tr><th>Итого</th><th>{formatMoney(annual.gross)}</th><th>{formatMoney(annual.tax)}</th><th>{formatMoney(annual.net)}</th><th>{formatMoney(annual.advance)}</th><th>{formatMoney(annual.remainder)}</th></tr></tfoot></table></div><p className="annual-footnote">Годовой итог считается по месяцам начисления. До даты выхода зарплата не начисляется. Аванс по умолчанию составляет 50% указанного оклада; его можно изменить отдельно для каждого месяца.</p></div></details></section>}
 
 export function AbsenceView({state,vac,sick,setVac,setSick,addPeriod,removePeriod}:{state:State;vac:PeriodDraft;sick:PeriodDraft;setVac:(v:PeriodDraft)=>void;setSick:(v:PeriodDraft)=>void;addPeriod:(k:'vacations'|'sickLeaves',d:PeriodDraft)=>void;removePeriod:(k:'vacations'|'sickLeaves',i:number)=>void}){
- const used=vacationUsedDays(state);
- return <section className="canva-page canva-absence">
-  <header className="canva-page-head"><div><span className="canva-kicker">ОТСУТСТВИЯ</span><h1>Отпуск и больничные</h1><p>Планируйте отсутствие без выхода из рабочего контура.</p></div></header>
-  <section className="canva-absence-overview"><div><span>Лимит отпуска</span><strong>{state.vacTotal}</strong><small>дней</small></div><div><span>Использовано</span><strong>{used}</strong><small>дней</small></div><div className="active"><span>Осталось</span><strong>{Math.max(0,state.vacTotal-used)}</strong><small>дней</small></div></section>
-  <div className="canva-absence-grid">
+ const used=vacationUsedDays(state),remaining=Math.max(0,state.vacTotal-used);
+ return <section className="atlas-time-off canva-page canva-absence">
+  <div className="atlas-time-off-hero">
+   <div><span>БАЛАНС СВОБОДНОГО ВРЕМЕНИ / WT</span><h1>Время<br/><em>на себя.</em></h1><p>Ваши периоды отдыха и здоровья, без путаницы с рабочими днями.</p></div>
+   <div className="atlas-time-off-balance"><span>ДОСТУПНО СЕЙЧАС</span><strong>{remaining}</strong><b>ДНЕЙ ОТПУСКА</b><div className="atlas-time-off-meter"><i style={{width:`${state.vacTotal?Math.min(100,remaining/state.vacTotal*100):0}%`}}/></div><small>{used} использовано / {state.vacTotal} всего</small></div>
+  </div>
+  <div className="atlas-time-off-tracks"><div><span>01 / ОТДЫХ</span><h2>Отпуск</h2><p>{state.vacations.length} запланированных периодов</p></div><div><span>02 / ЗДОРОВЬЕ</span><h2>Больничные</h2><p>{state.sickLeaves.length} записей</p></div></div>
+  <div className="atlas-time-off-editors">
    <PeriodEditor state={state} title="Отпуск" description="Праздничные дни внутри периода не уменьшают количество оплачиваемых дней отпуска." draft={vac} setDraft={setVac} kind="vacations" periods={state.vacations} addPeriod={addPeriod} removePeriod={removePeriod}/>
    <PeriodEditor state={state} title="Больничный" description="Фактический период больничного исключается из отработанных смен." draft={sick} setDraft={setSick} kind="sickLeaves" periods={state.sickLeaves} addPeriod={addPeriod} removePeriod={removePeriod}/>
   </div>
- </section>
+ </section>;
 }
+
 function PeriodEditor({state,title,description,draft,setDraft,kind,periods,addPeriod,removePeriod}:{state:State;title:string;description:string;draft:PeriodDraft;setDraft:(v:PeriodDraft)=>void;kind:'vacations'|'sickLeaves';periods:{start:string;end:string}[];addPeriod:(k:'vacations'|'sickLeaves',d:PeriodDraft)=>void;removePeriod:(k:'vacations'|'sickLeaves',i:number)=>void}){
  const valid=isValidYmd(draft.start)&&isValidYmd(draft.end)&&draft.end>=draft.start;
  const reversed=isValidYmd(draft.start)&&isValidYmd(draft.end)&&draft.end<draft.start;
