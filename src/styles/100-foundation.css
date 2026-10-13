@@ -1,0 +1,44 @@
+/* WTinker 8.0 / foundation. Previous layouts and theme modules are not imported. */
+:root{
+ color-scheme:light;
+ --canvas:#f7f8fb;--surface:#fff;--surface-2:#f3f5f8;--surface-3:#e9edf3;
+ --ink:#171b27;--ink-2:#475061;--muted:#687488;
+ --line:#e3e7ed;--line-strong:#ccd3de;--accent:#3155dd;--accent-hover:#2246cb;
+ --accent-soft:#ecf0ff;--success:#167d5d;--success-soft:#e6f4ee;--danger:#c73f4b;--danger-soft:#fef0f1;--warning:#956514;
+ --chart-1:#3155dd;--chart-2:#24a17b;--chart-3:#df9b49;--chart-4:#9b8ff2;--chart-5:#e77c94;
+ --chart-line-primary:var(--chart-1);--chart-line-secondary:var(--chart-2);--chart-background:var(--surface);--chart-label:var(--muted);
+ --border:var(--line);--background:var(--surface);--foreground:var(--ink);--muted-foreground:var(--muted);
+ --paper:var(--surface);--paper-2:var(--surface-2);--paper-3:var(--surface-3);--brand:var(--accent);--brand-soft:var(--accent-soft);
+ --radius-xs:3px;--radius-sm:7px;--radius-md:10px;--radius-lg:14px;
+ --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-6:24px;--space-8:32px;
+ --font-sans:Inter,'Segoe UI',ui-sans-serif,system-ui,-apple-system,sans-serif;--font-mono:'SFMono-Regular',Consolas,ui-monospace,monospace;
+ --sidebar-width:244px;--topbar-height:72px;
+}
+:root[data-theme=dark],[data-theme=dark],.theme-dark{
+ color-scheme:dark;
+ --canvas:#0d1017;--surface:#151923;--surface-2:#1c222e;--surface-3:#262d3a;
+ --ink:#f2f4f9;--ink-2:#bac3d2;--muted:#96a2b4;
+ --line:#2c3443;--line-strong:#424d60;--accent:#98acff;--accent-hover:#b1bfff;
+ --accent-soft:#252e4b;--success:#77d5ad;--success-soft:#1b342c;--danger:#ff909d;--danger-soft:#3b222d;--warning:#f1c575;
+ --chart-1:#8fa7ff;--chart-2:#78d9b4;--chart-3:#f1bb7a;--chart-4:#beaaff;--chart-5:#f1a1bb;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{min-width:320px;min-height:100%;background:var(--canvas);scroll-behavior:smooth}
+body,#root{min-width:320px;min-height:100vh;margin:0}
+body{font-family:var(--font-sans);font-size:14px;line-height:1.5;color:var(--ink);background:var(--canvas);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:clip}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}
+a{color:var(--accent);text-underline-offset:3px}
+img,svg,video,canvas{max-width:100%}
+h1,h2,h3,h4,p{overflow-wrap:anywhere}
+h1,h2,h3,h4{margin:0;color:var(--ink);font-weight:720;line-height:1.18;letter-spacing:-.035em}
+p{margin:0;color:var(--ink-2)}
+ul,ol{margin:0}
+::selection{background:var(--accent-soft)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.wt-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.wt-skip{position:fixed;top:12px;left:12px;z-index:9999;transform:translateY(-180%);padding:10px 14px;background:var(--ink);color:var(--surface);border-radius:var(--radius-sm)}
+.wt-skip:focus{transform:translateY(0)}
+
+/* Preserve HTML hidden attribute for upload inputs inside styled labels. */
+[hidden]{display:none!important}

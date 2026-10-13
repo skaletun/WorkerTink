@@ -26,7 +26,15 @@
     "vite-plugin-pwa": "^1.0.0",
     "@vitejs/plugin-react": "^5.0.4",
     "@simplewebauthn/browser": "^14.0.0",
-    "qr": "^0.7.2"
+    "qr": "^0.7.2",
+    "@number-flow/react": "^0.5.4",
+    "@visx/group": "4.0.0",
+    "@visx/responsive": "4.0.0",
+    "@visx/shape": "4.0.0",
+    "clsx": "^2.1.1",
+    "gsap": "^3.13.0",
+    "motion": "^12.27.0",
+    "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
     "@types/react": "^19.1.10",

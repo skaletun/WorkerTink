@@ -1,0 +1,55 @@
+/* Profile, directory, settings, onboarding: structured identity. */
+.canva-profile-hero,.canva-profile-card,.settings-section,.canva-directory-card,.canva-community-directory{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-md);min-width:0}
+.canva-profile-hero{overflow:hidden;margin-bottom:18px}
+.canva-profile-cover{height:180px;background:var(--surface-3);background-size:cover;background-position:center}
+.canva-profile-identity{display:flex;align-items:center;flex-wrap:wrap;gap:14px;padding:20px}
+.canva-profile-main{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+.canva-profile-main h2{font-size:22px}.canva-profile-main small{color:var(--muted)}
+.canva-profile-buttons{display:flex;gap:7px;flex-wrap:wrap}
+.canva-profile-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,.7fr);gap:18px}
+.canva-profile-main-column,.canva-profile-rail{display:flex;flex-direction:column;gap:18px}
+.canva-profile-card{padding:19px}.canva-profile-card>p{font-size:12px}
+.canva-field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.canva-profile-metrics{display:flex;flex-wrap:wrap;gap:15px}
+.canva-public-link{display:flex;align-items:center;gap:10px;min-width:0;overflow-wrap:anywhere}
+.canva-badge-list{display:flex;gap:7px;flex-wrap:wrap}
+.canva-profile-privacy{border-color:var(--line)}
+.wt-auth-screen,.wt-setup-screen{min-height:100vh;display:grid;grid-template-columns:minmax(280px,1fr) minmax(390px,1fr);background:var(--canvas)}
+.wt-auth-aside,.wt-setup-aside{display:flex;justify-content:center;flex-direction:column;gap:18px;padding:clamp(28px,6vw,80px);background:var(--ink);color:var(--surface)}
+.wt-auth-aside :is(h1,h2,h3,p,strong,b),.wt-setup-aside :is(h1,h2,h3,p,strong,b){color:inherit}
+.wt-auth-aside p,.wt-setup-aside p{color:color-mix(in srgb,var(--surface) 75%,transparent)}
+.wt-auth-screen .wt-auth-card,.wt-setup-main{align-self:center;justify-self:center;width:min(100% - 32px,485px);padding:24px}
+.wt-auth-card{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.wt-auth-card h1,.wt-setup-main h1{font-size:27px}
+.wt-auth-mark,.setup-brand-mark{display:grid;place-items:center;width:48px;height:48px;border-radius:12px;background:var(--accent);color:#fff;font-size:28px;font-weight:780}
+.registration-hero,.setup-brand,.setup-copy{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.registration-fields,.auth-fields,.setup-grid{display:flex;flex-direction:column;gap:13px}
+.registration-fields label,.auth-fields label,.setup-grid label{display:flex;flex-direction:column;gap:6px}
+.registration-fields input,.auth-fields input,.setup-grid input{width:100%}
+.registration-submit{width:100%;margin-top:14px}.registration-submit.secondary-auth-action{background:var(--surface);color:var(--ink);border-color:var(--line-strong)}
+.auth-divider{display:flex;align-items:center;gap:8px;color:var(--muted);margin:14px 0}
+.setup-progress{display:flex;gap:6px;margin:16px 0}.setup-progress span{flex:1;height:4px;background:var(--line);border-radius:6px}
+.setup-progress .active{background:var(--accent)}
+.setup-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.wt-boot-screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--canvas)}
+.boot-orbit{display:grid;place-items:center;width:86px;height:86px;border:2px solid var(--line);border-radius:22px}
+.boot-logo{width:52px;height:52px}.boot-copy{display:flex;flex-direction:column;gap:3px;text-align:center}
+.boot-progress{height:3px;width:160px;background:var(--line);border-radius:3px;overflow:hidden}
+.wt-auth-points{list-style:none;padding:0}.wt-auth-points li{padding:10px 0;border-bottom:1px solid #ffffff22}
+.settings-section{padding:20px;margin-bottom:17px}
+.settings-section h2{font-size:18px;margin-bottom:8px}
+.settings-section form{display:flex;flex-direction:column;gap:12px}
+.space-customization{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.space-color-control{display:flex;align-items:center;gap:9px}.space-color-control code{font:11px var(--font-mono)}
+.profile-modal-card{position:relative;max-width:690px;width:100%;max-height:94vh;overflow:auto;background:var(--surface);border-radius:10px;border:1px solid var(--line)}
+.profile-modal-cover{height:160px;background:var(--surface-3);background-size:cover;background-position:center}
+.profile-modal-main{padding:18px}.profile-modal-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.profile-modal-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Registration: one vertical hierarchy rather than heading and copy in a row. */
+.registration-hero{flex-direction:column;align-items:flex-start;gap:8px}
+.registration-hero>p{width:100%;max-width:60ch;font-size:12px}
+.registration-avatar{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.registration-avatar .avatar-actions{display:flex;flex-wrap:wrap;gap:7px}
+.avatar-upload{display:inline-flex;align-items:center;justify-content:center;padding:9px 13px;min-height:39px;border:1px solid var(--line-strong);border-radius:7px;background:var(--surface-2);cursor:pointer;font-size:12px}
+.registration-card{min-width:0}

@@ -1,5 +1,0 @@
-input, select, textarea { max-width: 100%; }
-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea { min-height: 38px; padding: 8px 10px; background: var(--paper); border: 1px solid var(--line-strong); border-radius: 6px; }
-textarea { min-height: 92px; resize: vertical; }
-input:focus, select:focus, textarea:focus { border-color: var(--brand); outline: 2px solid color-mix(in srgb,var(--brand) 15%,transparent); outline-offset: 0; }
-label { color: var(--ink-2); }

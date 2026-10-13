@@ -1,0 +1,81 @@
+/* Social network: one native feed column, no decorative card stacks. */
+.canva-filter-row{display:flex;align-items:center;gap:6px;overflow-x:auto;scrollbar-width:thin;border-bottom:1px solid var(--line);margin:-7px 0 22px;padding:0 0 10px}
+.canva-filter-row button{flex:0 0 auto;padding:9px 13px;color:var(--ink-2);border:0;border-radius:7px;background:transparent;font-size:12px;font-weight:630}
+.canva-filter-row button.active{color:var(--accent);background:var(--accent-soft)}.canva-filter-row button:hover{color:var(--accent)}
+.canva-network-grid{display:grid;grid-template-columns:minmax(0,1fr) 275px;gap:24px;align-items:start;min-width:0}
+.canva-feed-column{min-width:0}
+.canva-composer{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md);padding:20px;margin:0 0 14px}
+.canva-composer-head{display:flex;align-items:center;gap:12px;margin-bottom:15px}
+.canva-composer-head>div{display:flex;flex-direction:column;gap:2px}.canva-composer-head b{font-size:13px}.canva-composer-head span{color:var(--muted);font-size:12px}
+.canva-composer-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.canva-composer-tabs button{padding:7px 10px;background:var(--surface-2);border:1px solid var(--line);border-radius:5px;font-size:11px}
+.canva-composer-tabs button.active{color:var(--accent);background:var(--accent-soft);border-color:var(--accent)}
+.canva-composer textarea{width:100%;min-height:94px;display:block;resize:vertical;margin-bottom:10px;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:12px 1px}
+.canva-composer textarea:focus{outline:0;border-color:var(--accent)}
+.canva-composer-foot{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.canva-composer-foot select{width:auto;max-width:200px;font-size:11px}.canva-character-count{font-size:10px;color:var(--muted);margin-left:auto}
+.canva-upload{position:relative;cursor:pointer}
+.canva-shift-inline{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.canva-shift-inline input,.canva-shift-inline select{flex:1 1 150px}
+.canva-attachments,.post-attachments-v2{display:flex;flex-wrap:wrap;gap:8px;margin:11px 0}
+.canva-attachments>span{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:6px;padding:7px 9px;max-width:100%;overflow-wrap:anywhere}
+.canva-attachments>span button{border:0;background:transparent}
+.canva-feed-list,.feed-stack-v2{display:flex;flex-direction:column;gap:0}
+.post-v2{padding:19px 20px;background:var(--surface);border:1px solid var(--line);border-bottom:0}
+.post-v2:first-child{border-radius:var(--radius-md) var(--radius-md) 0 0}
+.post-v2:last-child{border-bottom:1px solid var(--line);border-radius:0 0 var(--radius-md) var(--radius-md)}
+.post-v2:only-child{border-radius:var(--radius-md);border-bottom:1px solid var(--line)}
+.post-v2-head{display:flex;align-items:flex-start;gap:11px;margin-bottom:12px}
+.post-v2-head .post-avatar-button{padding:0;background:transparent;border:0}
+.post-author-v2{display:flex;flex:1;flex-direction:column;gap:3px;min-width:0}
+.post-author-v2>button{align-self:flex-start;text-align:left;border:0;background:transparent;padding:0}.post-author-v2 b{font-size:13px}.post-author-v2>span{font-size:11px;color:var(--muted)}
+.post-type-v2{font-size:10px;color:var(--accent);background:var(--accent-soft);padding:4px 7px;border-radius:5px}
+.post-delete-v2{display:grid;place-items:center;width:27px;height:27px;background:transparent;border:0;border-radius:5px;color:var(--muted)}
+.post-delete-v2:hover{color:var(--danger);background:var(--danger-soft)}
+.post-body-v2{font-size:13px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink);margin:0 0 15px}
+.shift-note-v2{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:12px;margin:13px 0}
+.shift-note-v2 header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.shift-note-v2 header>div{display:flex;flex-direction:column}.shift-note-v2 b{font-size:12px}.shift-note-v2 p{font-size:12px;white-space:pre-wrap}
+.post-attachments-v2{margin:14px 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:8px}
+.post-attachment-v2{margin:0;min-width:0;overflow:hidden;border-radius:8px;border:1px solid var(--line);text-decoration:none;color:var(--ink)}
+.post-attachment-v2 img,.post-attachment-v2 video{display:block;width:100%;height:auto;max-height:350px;object-fit:contain;background:var(--canvas)}
+.post-attachment-v2 figcaption{padding:5px 8px;color:var(--muted);font-size:10px}
+.post-attachment-file{display:flex;align-items:center;gap:9px;padding:10px}
+.post-attachment-file>div{min-width:0}.post-attachment-file b{font-size:11px;overflow-wrap:anywhere}.post-attachment-file audio{display:block;max-width:100%}
+.post-actions-v2{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:10px 0 0;border-top:1px solid var(--line)}
+.post-actions-v2 button{display:flex;align-items:center;gap:5px;border:0;background:transparent;color:var(--muted);padding:6px 4px;font-size:11px}
+.post-actions-v2 button:hover,.post-actions-v2 button.liked,.post-actions-v2 button.saved{color:var(--accent)}
+.post-comments-v2{margin-top:12px;padding:13px;border-top:1px solid var(--line);background:var(--surface-2);border-radius:6px}
+.comment-v2{display:flex;gap:9px;margin:0 0 13px}.comment-v2>div{flex:1}.comment-v2 b{font-size:11px}.comment-v2 p{font-size:12px;white-space:pre-wrap}.comment-v2 small{font-size:10px}
+.comment-compose-v2{display:flex;align-items:center;gap:8px}.comment-compose-v2 input{flex:1;min-width:0}.comment-compose-v2 button{border:0;background:var(--accent);color:#fff;padding:9px 11px;border-radius:6px;font-size:11px}
+.canva-network-rail{display:flex;flex-direction:column;gap:15px;min-width:0}
+.canva-rail-card{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:16px}
+.canva-rail-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.canva-rail-head span{font-size:12px;font-weight:720}
+.canva-rail-head button{background:transparent;border:0;color:var(--accent);font-size:11px}
+.canva-trending-list,.canva-people-mini{display:flex;flex-direction:column}
+.canva-trending-list button,.canva-people-mini button{display:flex;align-items:center;gap:10px;padding:11px 0;text-align:left;border:0;border-bottom:1px solid var(--line);background:transparent}
+.canva-trending-list button{align-items:flex-start;flex-direction:column;gap:3px}.canva-trending-list button strong{font-size:12px}
+.canva-trending-list button span,.canva-trending-list button small{font-size:10px;color:var(--muted)}
+.canva-people-mini button>div{display:flex;flex-direction:column;gap:2px}.canva-people-mini b{font-size:11px}
+.canva-rail-accent{display:flex;flex-direction:column;align-items:flex-start;gap:8px;background:var(--accent-soft)}
+.canva-rail-accent strong{font-size:28px}.canva-rail-accent>span{font-weight:650;font-size:12px}
+.canva-people-page,.network-single,.network-section-v2{min-width:0}.canva-split-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:22px}
+.canva-split-head h2,.page-intro h2,.section-intro-v2 h2{font-size:23px;margin:4px 0 7px}.canva-search{display:flex;gap:7px;flex-wrap:wrap}
+.canva-people-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(250px,.8fr);gap:20px}
+.canva-directory-card,.canva-community-directory{background:var(--surface);border:1px solid var(--line);padding:18px;border-radius:9px}
+.canva-person{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}.canva-person>div:nth-child(2){flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.canva-person b{font-size:12px}.canva-person small,.canva-person span{font-size:11px;color:var(--muted)}
+.canva-person-actions{display:flex;gap:5px;flex-wrap:wrap}.canva-community-list{display:flex;flex-direction:column}
+.canva-community-list button{display:flex;align-items:center;gap:9px;padding:11px 0;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:left}
+.canva-community-list button>div{flex:1}.canva-community-mark,.canva-mini-avatar{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;background:var(--accent-soft);color:var(--accent);border-radius:8px;font-weight:700}
+.canva-community-list b{font-size:12px}.canva-community-list small{display:block}.canva-community-list p{font-size:11px}
+.group-grid,.event-list,.swap-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:14px}
+.create-panel,.group-card,.event-card,.swap-card,.community-members-card,.community-admin-panel{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:18px;min-width:0}
+.page-intro{margin:0 0 20px}.create-panel{display:flex;flex-direction:column;gap:12px;margin:0 0 18px}.group-card{display:flex;flex-direction:column;gap:8px}
+.group-card h3{font-size:17px}.group-card p{font-size:12px;line-height:1.5;flex:1}
+.group-cover{display:grid;place-items:center;min-height:100px;background:var(--surface-2);border-radius:6px;background-size:cover;background-position:center}.group-cover span{font-size:27px}
+.group-card-actions,.community-actions{display:flex;gap:8px;flex-wrap:wrap}.group-card-actions button,.community-actions button{padding:7px 12px;border:1px solid var(--line);background:var(--surface);border-radius:6px}
+.group-card-actions button.primary,.community-actions button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.community-detail-grid{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:18px}.community-detail-head{display:flex;align-items:center;gap:11px;margin-bottom:20px}
+.community-composer{display:flex;flex-direction:column;gap:9px;background:var(--surface);border:1px solid var(--line);padding:17px;border-radius:9px;margin:15px 0}
+.community-composer textarea{width:100%}.event-date{font-size:12px;color:var(--accent)}

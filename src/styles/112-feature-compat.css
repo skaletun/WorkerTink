@@ -1,0 +1,121 @@
+/* Intentional breakpoints, keyboard focus, and motion comfort. */
+@media(min-width:1480px){:root{--sidebar-width:260px}.wt-content{padding-inline:48px}}
+@media(max-width:1230px){
+ .wt-content-with-aside{grid-template-columns:minmax(0,1fr)}.wt-discovery{display:none}
+ .wt-command-search{min-width:190px}
+ .wt-work-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .wt-work-metrics button:nth-child(2){border-right:0}
+ .wt-work-metrics button:nth-child(-n+2){border-bottom:1px solid var(--line)}
+}
+@media(max-width:1020px){
+ :root{--sidebar-width:74px}
+ .wt-sidebar{align-items:center;padding:18px 8px 13px}
+ .wt-brand-lockup{justify-content:center;padding:0 0 18px}
+ .wt-brand-word,.wt-nav-label,.wt-nav-copy,.wt-compose-button>span:not(.wt-compose-plus),.wt-private-meta,.wt-profile>span:not(:first-child){display:none}
+ .wt-nav{width:100%;gap:18px}.wt-nav-group{align-items:center;width:100%}
+ .wt-nav-item{width:48px;justify-content:center;padding:10px}.wt-nav-icon{width:23px}
+ .wt-compose-button{width:48px;height:46px;padding:5px}
+ .wt-sidebar-footer{width:100%;align-items:center}.wt-profile{justify-content:center;padding:4px}
+ .wt-content{padding:25px 22px 80px}.wt-topbar{padding-inline:22px}
+ .wt-home-columns{grid-template-columns:minmax(0,1.5fr) minmax(250px,1fr)}
+ .canva-network-grid{grid-template-columns:minmax(0,1fr) 225px;gap:17px}
+ .canva-pay-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:760px){
+ .wt-command-search{min-width:40px;width:40px;justify-content:center;padding:0}
+ .wt-command-search span,.wt-command-search kbd{display:none}
+ .wt-content{padding:22px 16px 80px}
+ .wt-home-columns,.wt-work-layout,.wt-work-secondary,.canva-people-grid,.canva-absence-grid,.canva-profile-grid,.community-detail-grid,.canva-notification-layout,.teams-layout{grid-template-columns:minmax(0,1fr)}
+ .wt-home-snapshot{grid-template-columns:1fr}
+ .wt-home-snapshot button{border-right:0;border-bottom:1px solid var(--line);padding:16px;min-height:0}
+ .wt-home-snapshot button:last-child{border-bottom:0}
+ .wt-home-forecast{grid-template-columns:1fr;grid-template-areas:"value" "title" "slider"}
+ .wt-work-header{align-items:flex-start;flex-direction:column}
+ .wt-work-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .canva-network-grid{grid-template-columns:minmax(0,1fr)}.canva-network-rail{display:none}
+ .canva-pay-overview{grid-template-columns:1fr 1fr}
+ .canva-pay-hero{grid-column:1/-1;border-right:0;border-bottom:1px solid var(--line)}
+ .annual-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+ .annual-kpis>div{border:0;padding-left:0}
+ .annual-components{grid-template-columns:1fr}
+ .canva-split-head,.canva-page-head{align-items:flex-start;flex-direction:column}
+ .chat-shell-v2,.group-chat-page{grid-template-columns:minmax(185px,230px) minmax(0,1fr)}
+}
+@media(max-width:600px){
+ :root{--sidebar-width:0px;--topbar-height:65px}
+ .wt-sidebar{display:none}
+ .wt-main{margin-left:0;padding-bottom:calc(62px + env(safe-area-inset-bottom))}
+ .wt-mobile-brand{display:flex;align-items:center;gap:8px}.wt-mobile-brand .wt-brand-mark{width:28px;height:28px;font-size:20px;border-radius:8px}
+ .wt-mobile-brand .wt-brand-word{display:inline;font-size:17px}
+ .wt-topbar{gap:9px;min-height:var(--topbar-height);padding:9px 12px}
+ .wt-heading-motion,.wt-context{display:none}
+ .wt-topbar-actions{margin-left:auto;gap:6px}.wt-top-icon,.wt-top-avatar{width:37px;height:37px}
+ .wt-content{padding:17px 12px 26px}
+ .wt-mobile-nav{position:fixed;z-index:50;bottom:0;left:0;right:0;display:flex;align-items:stretch;justify-content:space-between;gap:1px;min-height:calc(60px + env(safe-area-inset-bottom));padding:5px 4px calc(5px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--line)}
+ .wt-mobile-nav>button{display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;min-height:49px;border:0;border-radius:7px;padding:4px 1px;background:transparent;color:var(--muted)}
+ .wt-mobile-nav>button.active{background:var(--accent-soft);color:var(--accent)}
+ .wt-mobile-nav>button svg{width:19px;height:19px}.wt-mobile-nav>button span{font-size:10px;line-height:1.2;font-weight:640;white-space:nowrap}
+ .wt-home-opening h2{font-size:34px}.wt-home-launch{gap:7px}
+ .wt-home-columns{gap:14px}.wt-home-main,.wt-home-aside{gap:14px}.wt-home-section{padding:16px}
+ .wt-work-header h2{font-size:30px}.wt-work-header-actions{width:100%}
+ .wt-work-metrics button{padding:17px 11px}.wt-work-metrics button:first-child{padding-left:11px}
+ .wt-work-metrics button>strong{font-size:20px}
+ .wt-work-primary,.wt-work-insights,.wt-work-notes,.wt-work-quick{padding:15px}
+ .wt-work-notes li{grid-template-columns:1fr;gap:3px}
+ .canva-page-head h1{font-size:24px}
+ .canva-composer{padding:14px}.post-v2{padding:15px}
+ .canva-composer-foot{gap:6px}.canva-character-count{width:100%;text-align:right}
+ .canva-calendar-shell{padding:10px}
+ .canva-calendar-week,.canva-calendar-grid{gap:3px}
+ .canva-calendar-empty{min-height:59px}
+ .calendar-day{padding:4px;min-height:63px;gap:5px}
+ .calendar-day .day-top b{font-size:11px}.calendar-day>span{font-size:8px;line-height:1.2;overflow-wrap:anywhere}.calendar-day>small{display:none}
+ .canva-calendar-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+ .canva-calendar-summary>div{border:0;padding:0}
+ .canva-calendar-actions{grid-template-columns:1fr}
+ .annual-card,.canva-pay-breakdown,.canva-pay-form,.period-editor{padding:14px}
+ .canva-pay-overview{grid-template-columns:1fr}
+ .canva-pay-hero,.canva-pay-metric{border:0;border-bottom:1px solid var(--line);padding:15px}
+ .canva-pay-metric:last-child{border:0}
+ .canva-absence-overview strong{font-size:19px}
+ .canva-absence-overview>div{padding:0 8px}
+ .canva-absence-grid{gap:13px}
+ .chat-shell-v2,.group-chat-page{grid-template-columns:1fr;max-height:none;min-height:440px}
+ .chat-contacts-v2,.group-chat-list{max-height:210px;border-right:0;border-bottom:1px solid var(--line)}
+ .chat-main-v2,.group-chat-main{min-height:380px}
+ .chat-messages-v2,.group-chat-messages{min-height:240px}
+ .channels-layout{grid-template-columns:1fr}
+ .modal-backdrop,.mobile-menu-backdrop{padding:9px}.modal-card{padding:17px}
+ .toast{left:10px;right:10px;bottom:calc(74px + env(safe-area-inset-bottom));max-width:none}
+ .pwa-install-banner{left:10px;right:10px;bottom:calc(75px + env(safe-area-inset-bottom));flex-wrap:wrap}
+}
+@media(max-width:390px){.wt-home-launch .wt-button{flex:1 1 100%}.wt-form-pair,.canva-field-grid{grid-template-columns:1fr}.canva-person{flex-wrap:wrap}.canva-person-actions{width:100%}}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+
+/* Structural contracts for semantic page elements without legacy layout imports. */
+.social-hero{border-bottom:1px solid var(--line);padding:18px 0}
+.work-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.profile-cover{background-size:cover;background-position:center}
+.calendar-layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:18px}
+.social-layout{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:24px}
+.work-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}
+.redesign-page-intro{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.home-snapshot{min-width:0}
+.chat-page-rebuilt{min-height:0}
+
+@media(max-width:760px){
+ .wt-auth-screen,.wt-setup-screen{display:flex;flex-direction:column;min-height:100dvh;width:100%;max-width:100%;overflow-x:clip}
+ .wt-auth-screen>.wt-auth-aside{display:none}
+ .wt-auth-screen>.wt-auth-card{align-self:center;justify-self:auto;margin:16px auto;width:min(calc(100% - 24px),485px);min-width:0;padding:20px}
+ .wt-setup-panel{display:flex;flex-direction:column;align-items:center;width:100%;min-width:0}
+ .wt-setup-aside{width:100%;padding:22px 18px}
+ .wt-setup-aside .wt-auth-points{display:none}
+ .wt-setup-main{width:min(calc(100% - 24px),485px);padding:18px 0;min-width:0}
+}
+@media(max-width:390px){
+ .registration-card.wt-auth-card{padding:15px}
+ .registration-hero h1{font-size:23px}
+ .registration-avatar{flex-wrap:wrap}
+}

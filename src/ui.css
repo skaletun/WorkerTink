@@ -1,14 +1,14 @@
-/* Modular entrypoint: single replacement design system, split by responsibility. */
-@import './styles/80-foundation.css';
-@import './styles/81-app-shell.css';
-@import './styles/82-page-headings.css';
-@import './styles/83-shared-components.css';
-@import './styles/84-dashboard-work.css';
-@import './styles/85-calendar-payroll.css';
-@import './styles/86-social-messaging.css';
-@import './styles/87-forms-data.css';
-@import './styles/92-table-dialog.css';
-@import './styles/88-responsive-tablet.css';
-@import './styles/89-responsive-small.css';
-@import './styles/90-responsive-mobile.css';
-@import './styles/91-accessibility-motion.css';
+/* WTinker design system: focused modules, one authoritative cascade. */
+@import './styles/100-foundation.css';
+@import './styles/101-theme.css';
+@import './styles/102-shell.css';
+@import './styles/103-navigation.css';
+@import './styles/104-layout.css';
+@import './styles/105-controls.css';
+@import './styles/106-surfaces.css';
+@import './styles/107-feature-layouts.css';
+@import './styles/108-tables.css';
+@import './styles/109-responsive-wide.css';
+@import './styles/110-responsive-mobile.css';
+@import './styles/111-accessibility.css';
+@import './styles/112-feature-compat.css';

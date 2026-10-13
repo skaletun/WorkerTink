@@ -1,10 +1,12 @@
 import {defineConfig} from 'vite';
 import react from '@vitejs/plugin-react';
 import {VitePWA} from 'vite-plugin-pwa';
+import {fileURLToPath,URL} from 'node:url';
 
 export default defineConfig({
   define:{'import.meta.env.VITE_BUILD_ID':JSON.stringify(process.env.VITE_BUILD_ID||'dev')},
   base:'./',
+  resolve:{alias:{'@':fileURLToPath(new URL('./src',import.meta.url))}},
   plugins:[
     react(),
     VitePWA({
