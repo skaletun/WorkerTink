@@ -1,5 +1,5 @@
 import {useMemo} from 'react';
-import {DOW,MONTHS,State,calcMonth,calcYear,formatMoney,getShift,getScheduledShift,isHoliday,holidayName,ymd,shiftLabel,vacationUsedDays} from '../../core.ts';
+import {DOW,MONTHS,State,calcMonth,calcYear,formatMoney,getShift,getScheduledShift,isHoliday,holidayName,ymd,shiftLabel,vacationUsedDays,vacationCalendarDays,isValidYmd} from '../../core.ts';
 import {Icon} from '../../Icon.tsx';
 import {Button,Field,SectionTitle,type PeriodDraft} from '../../app/AppShared.tsx';
 export function CalendarView({state,view,days,calc,shiftMonth,onPay,onAbsence,onEdit}:{state:State;view:Date;days:(Date|null)[];calc:ReturnType<typeof calcMonth>;shiftMonth:(n:number)=>void;onPay:()=>void;onAbsence:()=>void;onEdit:(date:string)=>void}){
@@ -50,9 +50,32 @@ export function AbsenceView({state,vac,sick,setVac,setSick,addPeriod,removePerio
   <header className="canva-page-head"><div><span className="canva-kicker">ОТСУТСТВИЯ</span><h1>Отпуск и больничные</h1><p>Планируйте отсутствие без выхода из рабочего контура.</p></div></header>
   <section className="canva-absence-overview"><div><span>Лимит отпуска</span><strong>{state.vacTotal}</strong><small>дней</small></div><div><span>Использовано</span><strong>{used}</strong><small>дней</small></div><div className="active"><span>Осталось</span><strong>{Math.max(0,state.vacTotal-used)}</strong><small>дней</small></div></section>
   <div className="canva-absence-grid">
-   <PeriodEditor title="Отпуск" description="Праздничные дни внутри периода не уменьшают количество оплачиваемых дней отпуска." draft={vac} setDraft={setVac} kind="vacations" periods={state.vacations} addPeriod={addPeriod} removePeriod={removePeriod}/>
-   <PeriodEditor title="Больничный" description="Фактический период больничного исключается из отработанных смен." draft={sick} setDraft={setSick} kind="sickLeaves" periods={state.sickLeaves} addPeriod={addPeriod} removePeriod={removePeriod}/>
+   <PeriodEditor state={state} title="Отпуск" description="Праздничные дни внутри периода не уменьшают количество оплачиваемых дней отпуска." draft={vac} setDraft={setVac} kind="vacations" periods={state.vacations} addPeriod={addPeriod} removePeriod={removePeriod}/>
+   <PeriodEditor state={state} title="Больничный" description="Фактический период больничного исключается из отработанных смен." draft={sick} setDraft={setSick} kind="sickLeaves" periods={state.sickLeaves} addPeriod={addPeriod} removePeriod={removePeriod}/>
   </div>
  </section>
 }
-function PeriodEditor({title,description,draft,setDraft,kind,periods,addPeriod,removePeriod}:{title:string;description:string;draft:PeriodDraft;setDraft:(v:PeriodDraft)=>void;kind:'vacations'|'sickLeaves';periods:{start:string;end:string}[];addPeriod:(k:'vacations'|'sickLeaves',d:PeriodDraft)=>void;removePeriod:(k:'vacations'|'sickLeaves',i:number)=>void}){return <div className="period-editor"><SectionTitle eyebrow="Период" title={title}/><p className="hint">{description}</p><div className="period-items">{periods.length?periods.map((p,i)=><div className="period-item" key={`${p.start}-${p.end}-${i}`}><div><b>{p.start} → {p.end}</b><small>Период сохранён в профиле</small></div><button onClick={()=>removePeriod(kind,i)} aria-label="Удалить">×</button></div>):<div className="empty-state">Пока нет периодов</div>}</div><div className="period-add"><input type="date" value={draft.start} onChange={e=>setDraft({...draft,start:e.target.value})}/><span>→</span><input type="date" value={draft.end} onChange={e=>setDraft({...draft,end:e.target.value})}/><Button primary onClick={()=>addPeriod(kind,draft)}>Добавить</Button></div></div>}
+function PeriodEditor({state,title,description,draft,setDraft,kind,periods,addPeriod,removePeriod}:{state:State;title:string;description:string;draft:PeriodDraft;setDraft:(v:PeriodDraft)=>void;kind:'vacations'|'sickLeaves';periods:{start:string;end:string}[];addPeriod:(k:'vacations'|'sickLeaves',d:PeriodDraft)=>void;removePeriod:(k:'vacations'|'sickLeaves',i:number)=>void}){
+ const valid=isValidYmd(draft.start)&&isValidYmd(draft.end)&&draft.end>=draft.start;
+ const reversed=isValidYmd(draft.start)&&isValidYmd(draft.end)&&draft.end<draft.start;
+ const days=valid?(kind==='vacations'
+  ?vacationCalendarDays(state,{start:draft.start,end:draft.end})
+  :Math.round((new Date(draft.end+'T12:00:00').getTime()-new Date(draft.start+'T12:00:00').getTime())/86400000)+1):0;
+ const readable=(value:string)=>new Date(value+'T12:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric'});
+ return <section className="period-editor" aria-label={title}>
+  <div className="wt-period-heading"><span className="wt-period-symbol"><Icon name={kind==='vacations'?'calendar':'absence'} size={21}/></span><div><span className="wt-overline">{kind==='vacations'?'ПЛАНИРОВАНИЕ ОТДЫХА':'УЧЁТ БОЛЬНИЧНЫХ'}</span><h2>{title}</h2></div></div>
+  <p className="hint">{description}</p>
+  <div className="period-items" aria-label={title+' — сохранённые периоды'}>
+   {periods.length?periods.map((period,index)=><div className="period-item" key={period.start+'-'+period.end+'-'+index}>
+    <span className="wt-period-calendar"><Icon name="calendar" size={17}/></span>
+    <div><b>{readable(period.start)} — {readable(period.end)}</b><small>{kind==='vacations'?vacationCalendarDays(state,period):Math.round((new Date(period.end+'T12:00:00').getTime()-new Date(period.start+'T12:00:00').getTime())/86400000)+1} дн. · сохранено</small></div>
+    <button type="button" onClick={()=>removePeriod(kind,index)} aria-label={'Удалить период '+period.start+' — '+period.end}><Icon name="close" size={16}/></button>
+   </div>):<div className="wt-period-empty"><Icon name="calendar" size={21}/><strong>Нет сохранённых периодов</strong><span>Выбери даты ниже, чтобы добавить первый период.</span></div>}
+  </div>
+  <div className="wt-period-create">
+   <strong>Новый период</strong>
+   <div className="wt-period-dates"><label>Первый день<input type="date" aria-label={title+': первый день'} value={draft.start} onChange={e=>setDraft({...draft,start:e.target.value})}/></label><label>Последний день<input type="date" aria-label={title+': последний день'} min={draft.start||undefined} value={draft.end} onChange={e=>setDraft({...draft,end:e.target.value})}/></label></div>
+   <div className="wt-period-create-footer"><span className={reversed?'wt-period-validation is-invalid':'wt-period-validation'} aria-live="polite">{reversed?'Дата окончания раньше даты начала':valid?(days+' '+(kind==='vacations'?'дн. отпуска':'календарных дней')):'Укажи дату начала и окончания'}</span><Button primary disabled={!valid} onClick={()=>addPeriod(kind,draft)}><Icon name="plus" size={16}/> Добавить</Button></div>
+  </div>
+ </section>;
+}
