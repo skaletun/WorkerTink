@@ -45,3 +45,11 @@
 .profile-modal-cover{height:160px;background:var(--surface-3);background-size:cover;background-position:center}
 .profile-modal-main{padding:18px}.profile-modal-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .profile-modal-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Registration: one vertical hierarchy rather than heading and copy in a row. */
+.registration-hero{flex-direction:column;align-items:flex-start;gap:8px}
+.registration-hero>p{width:100%;max-width:60ch;font-size:12px}
+.registration-avatar{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.registration-avatar .avatar-actions{display:flex;flex-wrap:wrap;gap:7px}
+.avatar-upload{display:inline-flex;align-items:center;justify-content:center;padding:9px 13px;min-height:39px;border:1px solid var(--line-strong);border-radius:7px;background:var(--surface-2);cursor:pointer;font-size:12px}
+.registration-card{min-width:0}
