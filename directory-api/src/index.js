@@ -1770,6 +1770,10 @@ async function handle(request, env) {
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const rows=await env.DB.prepare(`SELECT p.id,p.body,p.kind,p.group_id,p.visibility,p.attachments,p.shift_note,p.created_at,p.updated_at,a.wtink_id AS a_id,a.name AS a_name,a.position AS a_position,a.avatar AS a_avatar,a.banner AS a_banner,a.username AS a_username,a.is_dev AS a_is_dev,a.is_admin AS a_is_admin,a.is_official AS a_is_official,a.is_verified AS a_is_verified,(SELECT COUNT(*) FROM social_post_likes l WHERE l.post_id=p.id) AS likes,(SELECT COUNT(*) FROM social_post_comments c WHERE c.post_id=p.id) AS comments,1 AS liked FROM social_posts p JOIN social_saved_posts s ON s.post_id=p.id AND s.profile_id=?1 JOIN profiles a ON a.wtink_id=p.author_id WHERE p.author_id=?1 OR p.visibility='network' OR (p.visibility='friends' AND EXISTS(SELECT 1 FROM friend_requests fr WHERE fr.status='accepted' AND ((fr.sender_id=?1 AND fr.receiver_id=p.author_id) OR (fr.sender_id=p.author_id AND fr.receiver_id=?1)))) OR (p.group_id IS NOT NULL AND EXISTS(SELECT 1 FROM social_group_members gm WHERE gm.group_id=p.group_id AND gm.profile_id=?1)) ORDER BY s.created_at DESC LIMIT 100`).bind(owner.wtink_id).all(); return json({posts:(rows.results||[]).map(r=>({id:r.id,body:r.body,kind:r.kind||'post',groupId:r.group_id||null,visibility:r.visibility||'network',attachments:parseJson(r.attachments,[]),shiftNote:parseJson(r.shift_note,null),createdAt:Number(r.created_at),updatedAt:Number(r.updated_at),author:socialProfile({wtink_id:r.a_id,name:r.a_name,position:r.a_position,avatar:r.a_avatar,banner:r.a_banner,username:r.a_username,is_dev:r.a_is_dev,is_admin:r.a_is_admin,is_official:r.a_is_official,is_verified:r.a_is_verified}),likes:Number(r.likes||0),comments:Number(r.comments||0),liked:true}))},200,origin);
   }
 
+  const recordAudit=async(adminId,action,kind,targetId,note='')=>{
+    try{await env.DB.prepare('INSERT INTO admin_audit_events(id,admin_id,action,target_kind,target_id,note,created_at) VALUES(?1,?2,?3,?4,?5,?6,?7)').bind(crypto.randomUUID(),adminId,action,kind,String(targetId),String(note).slice(0,500),Date.now()).run()}catch{/* A moderation result must not be rolled back by audit logging. */}
+  };
+
   const adminProfile = async () => {
     const owner = await authProfile(request, env);
     if (!owner || !roleFlags(owner).isAdmin) return null;
@@ -1810,6 +1814,7 @@ async function handle(request, env) {
     const changed=await env.DB.prepare("UPDATE verification_requests SET status=?1,note=?2,reviewed_at=?3,reviewed_by=?4 WHERE id=?5 AND status='pending'").bind(status,note,now,admin.wtink_id,id).run();
     if(!changed.meta?.changes)return json({error:'REQUEST_ALREADY_REVIEWED'},409,origin);
     await env.DB.prepare("UPDATE profiles SET is_official=?1,updated_at=?2 WHERE wtink_id=?3").bind(action==='approve'?1:0,now,row.profile_id);
+    await recordAudit(admin.wtink_id,'verification_'+action,'profile',row.profile_id,note);
     const target=await env.DB.prepare("SELECT wtink_id,name,position,avatar,banner,username,is_dev,is_admin,is_official,is_verified FROM profiles WHERE wtink_id=?1").bind(row.profile_id).first();
     return json({ok:true,request:{id,profile:publicProfile(target),status,note,createdAt:0,reviewedAt:now}},200,origin);
   }
@@ -1834,9 +1839,6 @@ async function handle(request, env) {
     return json({communities:groups.results||[],channels:channels.results||[]},200,origin);
   }
 
-  const recordAudit=async(adminId,action,kind,targetId,note='')=>{
-    try{await env.DB.prepare('INSERT INTO admin_audit_events(id,admin_id,action,target_kind,target_id,note,created_at) VALUES(?1,?2,?3,?4,?5,?6,?7)').bind(crypto.randomUUID(),adminId,action,kind,String(targetId),String(note).slice(0,500),Date.now()).run()}catch{/* A moderation result must not be rolled back by audit logging. */}
-  };
   if(path==='/admin/content'&&request.method==='GET'){
     if(!(await adminProfile()))return json({error:'FORBIDDEN'},403,origin);
     const search=String(url.searchParams.get('query')||'').trim().slice(0,100);
