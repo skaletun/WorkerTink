@@ -20,10 +20,10 @@ export default defineConfig({
         short_name:'WTinker',
         start_url:'./',
         display:'standalone',
-        theme_color:'#1b2622',
-        background_color:'#f2f0eb',
+        theme_color:'#18271f',
+        background_color:'#18271f',
         lang:'ru',
-        icons:[{src:'icon.svg',sizes:'any',type:'image/svg+xml'}]
+        icons:[{src:'icon.svg',sizes:'any',type:'image/svg+xml',purpose:'any maskable'}]
       },
       injectManifest:{globPatterns:['**/*.{js,css,html,svg,png,ico}']}
     })
