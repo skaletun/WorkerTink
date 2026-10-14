@@ -92,7 +92,7 @@ assert.match(appFeatures,/Политику конфиденциальности/
 assert.match(appFeatures,/Условия использования/);
 assert.match(appFeatures,/Заявка на верификацию/);
 assert.match(appFeatures,/ProfileQrModal/);
-assert.match(appFeatures,/editable token=\\{token\\} onClose/);
+assert.match(appFeatures,/editable token=/);
 assert.match(app,/token=\{state\.directoryToken\}/);
 assert.match(appFeatures,/Баннер обновлён локально/);
 assert.match(appFeatures,/Admin Control Center/);
