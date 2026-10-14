@@ -11,3 +11,4 @@ export * from './directory/groups.ts';
 export * from './directory/channels.ts';
 export * from './directory/network.ts';
 export * from './directory/work.ts';
+export * from './directory/qr.ts';
