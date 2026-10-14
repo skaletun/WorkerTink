@@ -1,3 +1,4 @@
+import {createPortal} from 'react-dom';
 import {useEffect,useRef,useState,type Dispatch,type SetStateAction} from 'react';
 import {State,getShift,getScheduledShift,isHoliday,holidayName,shiftLabel,type ShiftValue} from '../../core.ts';
 import {markdownToHtml,htmlToMarkdown,ensureEditorTables,addTableRow,addTableColumn,removeTable} from '../../markdown.ts';
@@ -50,7 +51,7 @@ export function ShiftEditor({state,date,setState,close,onNotice}:{state:State;da
   {label:'Link',title:'Ссылка · Ctrl/Cmd+K',action:insertLink,content:<Icon name="externalLink" size={14}/>},
   {label:'Table',title:'Вставить Markdown-таблицу',action:insertTable,content:<span>▦</span>},
  ];
- return <div className="modal-backdrop" onMouseDown={e=>e.target===e.currentTarget&&close()}><section className="shift-modal" role="dialog" aria-modal="true" aria-labelledby="shift-editor-title">
+ return createPortal(<div className="modal-backdrop" onMouseDown={e=>e.target===e.currentTarget&&close()}><section className="shift-modal" role="dialog" aria-modal="true" aria-labelledby="shift-editor-title">
   <header className="modal-head"><div><span className="eyebrow">Редактор смены</span><h2 id="shift-editor-title">{date}</h2><p>{isHoliday(new Date(`${date}T12:00:00`))?`Праздник · ${holidayName(new Date(`${date}T12:00:00`))}`:'Обычный день'}</p></div><button className="modal-close" onClick={close}>×</button></header>
   <div className="shift-editor-meta"><label className="field"><span className="field-label">Смена</span><select value={shift} onChange={e=>setShift(e.target.value as ShiftValue)}><option value="day">День</option><option value="night">Ночь</option>{state.scheduleType==='7/0'&&<option value="full">Сутки</option>}<option value="off">Выходной</option></select></label><div className="editor-source">По графику: <b>{shiftLabel(scheduled)}</b>{shift!==scheduled&&<span> · изменено вручную</span>}</div></div>
   <div className="markdown-workspace">
@@ -63,7 +64,7 @@ export function ShiftEditor({state,date,setState,close,onNotice}:{state:State;da
   </div>
   {tableMenu&&<div className={`table-context ${tableMenu.mobile?'mobile':''}`} style={tableMenu.mobile?undefined:{left:Math.min(tableMenu.x,window.innerWidth-250),top:Math.min(tableMenu.y,window.innerHeight-170)}} role="dialog" aria-label="Действия с таблицей" onMouseDown={e=>e.stopPropagation()}><div className="table-context-head"><b>Таблица</b><button type="button" onClick={()=>setTableMenu(null)}>×</button></div><p>Изменить размер или удалить таблицу</p><div className="table-context-actions"><button type="button" onClick={()=>tableAction('row')}>＋ Строка</button><button type="button" onClick={()=>tableAction('column')}>＋ Столбец</button><button type="button" className="danger" onClick={()=>tableAction('delete')}>Удалить таблицу</button></div></div>}
   <footer className="modal-actions"><Button quiet onClick={exportOne} disabled={!note.trim()}>Экспорт MD</Button><Button quiet onClick={close}>Отмена</Button><Button primary onClick={save}>Сохранить</Button></footer>
- </section></div>
+ </section></div>,document.body);
 }
 
 export default ShiftEditor;
