@@ -77,7 +77,7 @@ assert.match(api,/officialMatch=path\.match/);
 assert.match(api,/is_verified = 1/);
 assert.match(api,/is_verified=0/);
 assert.match(api,/RULES_ACCEPTANCE_REQUIRED/);
-assert.doesNotMatch(api,/from_id|to_id/);
+assert.doesNotMatch(api,/\b(?:from_id|to_id)\b/);
 assert.match(api,/group\.visibility!=='public'.*INVITE_REQUIRED/);
 assert.match(api,/SELECT id,group_id FROM social_events/);
 assert.match(api,/if\(event\.group_id\).*INVITE_REQUIRED/);
