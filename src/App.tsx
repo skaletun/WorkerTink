@@ -5,9 +5,9 @@ import {getSocialNotifications} from './directory.ts';
 import {PublicProfileView,LegalSurface} from './ProfileFeatures.tsx';
 import {State,normalizeWTinkId,calcMonth,monthKey,periodsOverlap,isValidYmd,type UserProfile} from './core.ts';
 import {loadState,saveState,normalizeState,exportableState,saveAuthToken,clearAuthToken} from './storage.ts';
-import {readPendingWorkSetup,clearPendingWorkSetup} from './workSettings.ts';
+import {readPendingWorkSetup,syncPendingWorkSetup} from './workSettings.ts';
 import {parseNotesMarkdown,notesExport} from './markdown.ts';
-import {directoryConfigured,updateProfile,syncPushReminders,getAuthStatus,getDirectoryFriends,heartbeatPresence,saveAccountSetup,putChatKey,getOwnChatKey,checkUsername,updateUsername} from './directory.ts';
+import {directoryConfigured,updateProfile,syncPushReminders,getAuthStatus,getDirectoryFriends,heartbeatPresence,putChatKey,getOwnChatKey,checkUsername,updateUsername} from './directory.ts';
 import NetworkView from './NetworkView.tsx';
 import WorkHubView from './WorkHubView.tsx';
 import NotificationsView from './NotificationsView.tsx';
@@ -82,11 +82,10 @@ useEffect(()=>{
   if(!pending)return;
   busy=true;
   try{
-   await saveAccountSetup(pending.setup,token);
-   if(!cancelled&&clearPendingWorkSetup(profileId,pending.updatedAt))
+   const synced=await syncPendingWorkSetup(profileId,token);
+   if(!cancelled&&synced)
     window.dispatchEvent(new Event('workertink:work-synced'));
-  }catch{/* The local copy is durable; retry when online or visible. */}
-  finally{busy=false}
+  }finally{busy=false}
  };
  void syncPending();
  const timer=window.setInterval(()=>void syncPending(),30000);
