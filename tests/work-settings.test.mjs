@@ -21,7 +21,7 @@ assert.match(validateWorkSetup({...original,salary:Infinity}),/Оклад/);
 assert.match(validateWorkSetup({...original,stage:-1}),/Стаж/);
 assert.match(validateWorkSetup({...original,scheduleVakhtaMonths:0}),/Вахта/);
 assert.match(validateWorkSetup({...original,scheduleType:'5/2',scheduleShift:'full'}),/смены/);
-assert.match(validateWorkSetup({...original,nightExtraPercent:201}),/доплата/);
+assert.match(validateWorkSetup({...original,nightExtraPercent:201}),/Доплата/);
 
 const edited={...original,salary:145000,taxRate:15,stage:8,vacTotal:40,startDate:'2026-01-01',scheduleType:'2/2',scheduleShift:'day',schedulePairType:'day-night',scheduleVakhtaMonths:2,holidayCoeff:2.5,nightExtraPercent:45};
 assert.equal(validateWorkSetup(edited),'');
