@@ -102,3 +102,12 @@ console.log('WTinker system integrity regression tests: OK');
 for(const name of ['public/icon-256.png','public/apple-touch-icon.png','build/icons/icon.png','build/icons/icon.ico','public/icon.svg','icon.svg'])if(!fs.existsSync(path.join(root,name)))throw new Error('Missing branded icon asset: '+name);
 if(!fs.readFileSync(path.join(root,'index.html'),'utf8').includes('icon-256.png'))throw new Error('Website favicon is not the generated icon');
 if(!fs.readFileSync(path.join(root,'src/AppShell.tsx'),'utf8').includes('src="./icon-256.png"'))throw new Error('Application header is missing generated logo');
+
+
+// Community detail must remain a single-column mobile page and its owner editor
+// must mount outside the animated route container.
+const groupParts=fs.readFileSync(path.join(root,'src/views/network/NetworkParts.tsx'),'utf8');
+const mobileGroups=fs.readFileSync(path.join(root,'src/styles/136-community-mobile.css'),'utf8');
+if(!groupParts.includes('community-admin-backdrop')||!groupParts.includes('createPortal(')||!groupParts.includes('document.body)'))throw new Error('Community owner settings must use a separate modal portal');
+if(!mobileGroups.includes('.community-detail-grid{grid-template-columns:minmax(0,1fr)!important')||!mobileGroups.includes('.community-composer'))throw new Error('Community mobile layout must prevent horizontal overflow');
+if(!fs.readFileSync(path.join(root,'src/styles/131-atlas-stories.css'),'utf8').includes("136-community-mobile.css"))throw new Error('Community mobile fix must be included in production styles');
