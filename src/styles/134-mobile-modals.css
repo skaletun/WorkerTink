@@ -116,3 +116,10 @@
  .qr-modal-backdrop>.qr-modal-branded{display:flex!important}
  .modal-backdrop>.shift-modal{display:flex!important}
 }
+
+/* Remove transformed containing blocks for other dialogs still rendered by feature modules. */
+@media(max-width:760px){
+ body:has(.modal-backdrop) :is(.atlas-route-stage,.tab-stage,.atlas-route-content,.wt-page-content){
+  animation:none!important;transform:none!important;filter:none!important;perspective:none!important;
+ }
+}
