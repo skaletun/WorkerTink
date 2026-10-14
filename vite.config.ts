@@ -14,7 +14,7 @@ export default defineConfig({
       strategies:'injectManifest',
       srcDir:'src',
       filename:'sw.js',
-      includeAssets:['icon.svg'],
+      includeAssets:['icon.svg','icon-256.png','apple-touch-icon.png'],
       manifest:{
         name:'WTinker — социальная сеть для работы',
         short_name:'WTinker',
