@@ -32,11 +32,16 @@ for(const [user,id] of Object.entries(ids)){
 }
 db.prepare("INSERT INTO friend_requests(id,sender_id,receiver_id,status) VALUES(?,?,?,'accepted')").run('pair',ids.worker,ids.friend);
 db.prepare("INSERT INTO social_posts(id,body,kind,visibility,created_at,author_id) VALUES(?,?,?,'network',?,?)").run('post-one','Test content','post',now,ids.worker);
-const env={DB:{prepare(sql){const statement=db.prepare(sql);return {bind(...args){return {
+const env={DB:{prepare(sql){const statement=db.prepare(sql);return {
+ first:async()=>statement.get()??null,
+ all:async()=>({results:statement.all()}),
+ run:async()=>({meta:{changes:Number(statement.run().changes)}}),
+ bind(...args){return {
  first:async()=>statement.get(...args)??null,
  all:async()=>({results:statement.all(...args)}),
  run:async()=>({meta:{changes:Number(statement.run(...args).changes)}})
-}}}}}};
+}}
+}}}};
 async function call(method,path,actor,body,contentType){
  const response=await worker.fetch(new Request('https://directory.example'+path,{
   method,headers:{...(actor?{Authorization:'Bearer '+actor+'-token'}:{}),...(body?{'Content-Type':contentType||'application/json'}:{})},
