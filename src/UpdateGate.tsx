@@ -8,6 +8,7 @@ type UpdateGateProps={children:ReactNode};
 const BUILD_ID=import.meta.env.VITE_BUILD_ID||'dev';
 const BUILD_STORAGE_KEY='workertink:last-seen-build';
 const RELOAD_KEY='workertink:update-reload';
+const DISMISS_KEY='workertink:update-dismissed-build';
 const UPDATE_CHECK_INTERVAL=2*60*1000;
 
 export default function UpdateGate({children}:UpdateGateProps){
@@ -22,6 +23,7 @@ export default function UpdateGate({children}:UpdateGateProps){
    try{
      localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID);
      sessionStorage.setItem(RELOAD_KEY,BUILD_ID);
+     sessionStorage.removeItem(DISMISS_KEY);
    }catch{}
  };
 
@@ -29,7 +31,7 @@ export default function UpdateGate({children}:UpdateGateProps){
    updatingRef.current=false;
    setPhase('ready');
    try{
-     localStorage.removeItem(BUILD_STORAGE_KEY);
+     localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID);
      sessionStorage.removeItem(RELOAD_KEY);
    }catch{}
  };
@@ -62,7 +64,7 @@ export default function UpdateGate({children}:UpdateGateProps){
    disposedRef.current=false;
    try{
      const reloadedFor= sessionStorage.getItem(RELOAD_KEY);
-     if(reloadedFor===BUILD_ID){
+     if(reloadedFor){
        sessionStorage.removeItem(RELOAD_KEY);
        localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID);
      }
@@ -73,13 +75,15 @@ export default function UpdateGate({children}:UpdateGateProps){
      if(previous===null){
        localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID);
      }else if(previous!==BUILD_ID){
-       setNeedRefresh(true);
+       // A page that successfully loaded this bundle must never be blocked by stale build IDs.
+       localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID);
      }
    }catch{}
 
    if(!('serviceWorker' in navigator))return;
 
    let intervalId:number|undefined;
+   let runCheckOnFocus=()=>{};
    const check=async(swUrl:string,registration:ServiceWorkerRegistration|undefined)=>{
      if(disposedRef.current||!registration||registration.installing||!navigator.onLine)return;
      try{
@@ -92,6 +96,7 @@ export default function UpdateGate({children}:UpdateGateProps){
      immediate:true,
      onNeedRefresh(){
        if(disposedRef.current)return;
+       if(sessionStorage.getItem(DISMISS_KEY)===BUILD_ID)return;
        setNeedRefresh(true);
        setPhase('ready');
        updatingRef.current=false;
@@ -101,6 +106,7 @@ export default function UpdateGate({children}:UpdateGateProps){
        if(disposedRef.current||!registration)return;
        registrationRef.current=registration;
        const runCheck=()=>void check(swUrl,registration);
+       runCheckOnFocus=runCheck;
        intervalId=window.setInterval(runCheck,UPDATE_CHECK_INTERVAL);
        window.addEventListener('focus',runCheck);
        window.addEventListener('online',runCheck);
@@ -112,6 +118,8 @@ export default function UpdateGate({children}:UpdateGateProps){
    return()=>{
      disposedRef.current=true;
      if(intervalId)window.clearInterval(intervalId);
+     window.removeEventListener('focus',runCheckOnFocus);
+     window.removeEventListener('online',runCheckOnFocus);
    };
  },[]);
 
@@ -120,6 +128,7 @@ export default function UpdateGate({children}:UpdateGateProps){
   {needRefresh&&<div className="update-gate" role="dialog" aria-modal="true" aria-labelledby="update-gate-title">
    <div className="update-gate-backdrop"/>
    <section className="update-gate-card">
+    <button className="update-gate-dismiss" type="button" onClick={dismissUpdate} aria-label="Закрыть уведомление об обновлении"><Icon name="close" size={18}/></button>
     <div className="update-gate-icon" aria-hidden="true"><span className="update-gate-icon-ring"/><span className="update-gate-icon-arrow"><Icon name="refresh" size={18}/></span></div>
     <div className="update-gate-copy">
      <span className="update-gate-eyebrow">WTINKER</span>
@@ -128,6 +137,7 @@ export default function UpdateGate({children}:UpdateGateProps){
     </div>
     <div className="update-gate-progress" aria-hidden="true"><span className={phase==='updating'?'is-active':''}/><span className={phase==='updating'?'is-active':''}/><span className={phase==='updating'?'is-active':''}/></div>
     <button className="btn primary update-gate-action" type="button" disabled={phase==='updating'} onClick={requestReload}>{phase==='updating'?'Обновление…':'Обновить сейчас'}</button>
+    <button className="btn quiet update-gate-later" type="button" onClick={dismissUpdate}>Позже</button>
     <small className="update-gate-note">Ваши настройки, профиль и рабочие данные сохраняются.</small>
    </section>
   </div>}
