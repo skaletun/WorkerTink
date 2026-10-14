@@ -7,6 +7,8 @@ const RECOVERY_KEY='workertink:recovery:last-invalid';
 const isDate=(s:unknown):s is string=>typeof s==='string'&&isValidYmd(s);
 const isRecord=(value:unknown):value is Record<string,unknown>=>Boolean(value)&&typeof value==='object'&&!Array.isArray(value);
 const cloneDefault=()=>structuredClone(DEFAULT);
+const finiteNumber=(value:unknown,fallback=0)=>{const number=Number(value);return Number.isFinite(number)?number:fallback};
+const monthPattern=/^\d{4}-(0[1-9]|1[0-2])$/;
 
 function migrate(raw:Record<string,unknown>):Record<string,unknown>{
  const sourceVersion=Number(raw.schemaVersion)||1;
@@ -26,8 +28,8 @@ export function normalizeState(input:Partial<State>|Record<string,unknown>):Stat
  const shifts=['day','night','full'] as const;
  const pairs=['day-day','day-night','night-night'] as const;
  const period=(p:unknown):p is Period=>isRecord(p)&&isDate(p.start)&&isDate(p.end)&&p.start<=p.end;
- const numberRecord=(value:unknown):Record<string,number>=>isRecord(value)?Object.fromEntries(Object.entries(value).filter(([k,v])=>/^\d{4}-\d{2}$/.test(k)&&Number.isFinite(Number(v))&&Number(v)>=0).map(([k,v])=>[k,Number(v)])) as Record<string,number>:{};
- const paymentRecord=(value:unknown):Record<string,PaymentDates>=>{if(!isRecord(value))return {};const out:Record<string,PaymentDates>={};for(const [k,v] of Object.entries(value)){if(!/^\d{4}-\d{2}$/.test(k)||!isRecord(v))continue;out[k]={advanceDate:isDate(v.advanceDate)?v.advanceDate:'',remainderDate:isDate(v.remainderDate)?v.remainderDate:''}}return out};
+ const numberRecord=(value:unknown):Record<string,number>=>isRecord(value)?Object.fromEntries(Object.entries(value).filter(([k,v])=>monthPattern.test(k)&&(typeof v==='number'||(typeof v==='string'&&v.trim().length>0))&&Number.isFinite(Number(v))&&Number(v)>=0).map(([k,v])=>[k,Number(v)])) as Record<string,number>:{};
+ const paymentRecord=(value:unknown):Record<string,PaymentDates>=>{if(!isRecord(value))return {};const out:Record<string,PaymentDates>={};for(const [k,v] of Object.entries(value)){if(!monthPattern.test(k)||!isRecord(v))continue;out[k]={advanceDate:isDate(v.advanceDate)?v.advanceDate:'',remainderDate:isDate(v.remainderDate)?v.remainderDate:''}}return out};
  const shiftRecord=(value:unknown):Record<string,ShiftValue>=>isRecord(value)?Object.fromEntries(Object.entries(value).filter(([k,v])=>isDate(k)&&(['day','night','full','off'] as string[]).includes(String(v))).map(([k,v])=>[k,v as ShiftValue])):{};
  const profileValue=(value:unknown):State['profile']=>{if(!isRecord(value))return cloneDefault().profile;const rawId=typeof value.profileId==='string'?value.profileId:'';return {profileId:normalizeWTinkId(rawId)||createWTinkId(),name:typeof value.name==='string'?value.name.trim().slice(0,80):'',position:typeof value.position==='string'?value.position.trim().slice(0,120):'',avatar:typeof value.avatar==='string'&&value.avatar.startsWith('data:image/')?value.avatar:'',banner:typeof value.banner==='string'&&value.banner.startsWith('data:image/')?value.banner:'',username:typeof value.username==='string'&&/^[A-Za-z0-9_]{3,32}$/.test(value.username.trim())?value.username.trim().toLowerCase():null,isDev:normalizeWTinkId(rawId).toUpperCase()==='WTINKID-214994',isAdmin:normalizeWTinkId(rawId).toUpperCase()==='WTINKID-214994',isOfficial:Boolean(value.isOfficial),isVerified:Boolean(value.isVerified)}};
  const friendsRecord=(value:unknown):State['friends']=>{if(!isRecord(value))return {};const out:State['friends']={};for(const [id,v] of Object.entries(value)){if(!isRecord(v)||!isRecord(v.profile))continue;const profile=v.profile;const profileId=typeof profile.profileId==='string'?profile.profileId:id;const name=typeof profile.name==='string'?profile.name.trim().slice(0,80):'';if(!profileId||!name)continue;out[id]={profile:{profileId,name,position:typeof profile.position==='string'?profile.position.slice(0,120):'',avatar:typeof profile.avatar==='string'&&profile.avatar.startsWith('data:image/')?profile.avatar:'',banner:typeof profile.banner==='string'&&profile.banner.startsWith('data:image/')?profile.banner:'',username:typeof profile.username==='string'&&/^[A-Za-z0-9_]{3,32}$/.test(profile.username.trim())?profile.username.trim().toLowerCase():null,isDev:normalizeWTinkId(profileId).toUpperCase()==='WTINKID-214994',isAdmin:normalizeWTinkId(profileId).toUpperCase()==='WTINKID-214994',isOfficial:Boolean(profile.isOfficial),isVerified:Boolean(profile.isVerified)},addedAt:Number(v.addedAt)||Date.now(),lastSeen:Number(v.lastSeen)||0,online:Boolean(v.online)}}return out};
@@ -44,17 +46,17 @@ export function normalizeState(input:Partial<State>|Record<string,unknown>):Stat
   ...s,
   schemaVersion:8,
   setupComplete:Boolean(s.setupComplete),
-  salary:Math.max(0,Number(s.salary)||0),
-  taxRate:Math.min(100,Math.max(0,Number(s.taxRate)||0)),
-  stage:Math.min(60,Math.max(0,Number(s.stage)||0)),
-  vacTotal:Math.max(0,Number(s.vacTotal)||0),
+  salary:Math.max(0,finiteNumber(s.salary)),
+  taxRate:Math.min(100,Math.max(0,finiteNumber(s.taxRate))),
+  stage:Math.min(60,Math.max(0,finiteNumber(s.stage))),
+  vacTotal:Math.max(0,finiteNumber(s.vacTotal)),
   startDate:isDate(s.startDate)?s.startDate:DEFAULT.startDate,
   scheduleType,
   scheduleShift:safeShift,
   schedulePairType:(pairs as readonly string[]).includes(String(s.schedulePairType))?s.schedulePairType as State['schedulePairType']:DEFAULT.schedulePairType,
-  scheduleVakhtaMonths:Math.min(6,Math.max(1,Number(s.scheduleVakhtaMonths)||1)),
-  holidayCoeff:Math.min(10,Math.max(1,Number(s.holidayCoeff)||1)),
-  nightExtraPercent:Math.min(200,Math.max(0,Number(s.nightExtraPercent??DEFAULT.nightExtraPercent)||0)),
+  scheduleVakhtaMonths:Math.min(6,Math.max(1,Math.floor(finiteNumber(s.scheduleVakhtaMonths,1)))),
+  holidayCoeff:Math.min(10,Math.max(1,finiteNumber(s.holidayCoeff,1))),
+  nightExtraPercent:Math.min(200,Math.max(0,finiteNumber(s.nightExtraPercent??DEFAULT.nightExtraPercent,DEFAULT.nightExtraPercent))),
   vacations:Array.isArray(s.vacations)?s.vacations.filter(period):[],
   sickLeaves:Array.isArray(s.sickLeaves)?s.sickLeaves.filter(period):[],
   advances:numberRecord(s.advances),
@@ -76,20 +78,25 @@ export function normalizeState(input:Partial<State>|Record<string,unknown>):Stat
 
 export function loadState():State{
  try{
-  const raw=localStorage.getItem(STORAGE_KEY)??LEGACY_KEYS.map(key=>localStorage.getItem(key)).find(Boolean);
-  if(!raw)return cloneDefault();
-  const normalized=normalizeState(JSON.parse(raw));
-  const persistedAuth=getAuthToken();
-  if(persistedAuth)normalized.directoryToken=persistedAuth;
-  if(!localStorage.getItem(STORAGE_KEY)){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(normalized))}catch{/* keep normalized in memory */}}
-  return normalized;
- }catch(error){
-  try{
-   const raw=localStorage.getItem(STORAGE_KEY)??LEGACY_KEYS.map(key=>localStorage.getItem(key)).find(Boolean);
-   if(raw)localStorage.setItem(RECOVERY_KEY,raw);
-  }catch{ /* storage may itself be unavailable/full */ }
-  return cloneDefault();
- }
+  for(const key of [STORAGE_KEY,...LEGACY_KEYS]){
+   const raw=localStorage.getItem(key);
+   if(!raw)continue;
+   try{
+    const normalized=normalizeState(JSON.parse(raw));
+    const persistedAuth=getAuthToken();
+    if(persistedAuth)normalized.directoryToken=persistedAuth;
+    if(key!==STORAGE_KEY){
+     try{localStorage.setItem(STORAGE_KEY,JSON.stringify(normalized))}catch{/* keep restored state in memory */}
+    }
+    return normalized;
+   }catch{
+    if(key===STORAGE_KEY){
+     try{localStorage.setItem(RECOVERY_KEY,raw)}catch{/* storage may be full */}
+    }
+   }
+  }
+ }catch{/* storage may be unavailable */}
+ return cloneDefault();
 }
 
 export function saveState(state:State){
@@ -109,5 +116,5 @@ export function clearAuthToken(){saveAuthToken('');}
 export function getAuthToken(){
  try{return localStorage.getItem(AUTH_TOKEN_KEY)||''}catch{return ''}
 }
-export function exportableState(state:State){return normalizeState(state)}
+export function exportableState(state:State){return {...normalizeState(state),directoryToken:''}}
 export function getRecoverySnapshot(){return localStorage.getItem(RECOVERY_KEY)}

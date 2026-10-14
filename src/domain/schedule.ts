@@ -19,7 +19,15 @@ export function getScheduledShift(state:State,date:Date):ShiftValue{
  const start=parseYmd(state.startDate); if(!Number.isFinite(start.getTime())||date<start)return 'off';
  return getCycleShift(state,date);
 }
-export function getShift(state:State,date:Date):ShiftValue{return state.shiftOverrides[ymd(date)] ?? getScheduledShift(state,date)}
+export function getShift(state:State,date:Date):ShiftValue{
+ if(!isValidYmd(state.startDate)||ymd(date)<state.startDate)return 'off';
+ return state.shiftOverrides[ymd(date)] ?? getScheduledShift(state,date);
+}
+export function getWorkingShift(state:State,date:Date):ShiftValue{
+ const key=ymd(date);
+ if(state.vacations.some(p=>periodContains(p,key))||state.sickLeaves.some(p=>periodContains(p,key)))return 'off';
+ return getShift(state,date);
+}
 export function periodContains(p:Period,date:string){return p.start<=date&&date<=p.end}
 export function periodDays(p:Period){return Math.max(0,daysBetween(parseYmd(p.start),parseYmd(p.end))+1)}
 export function periodsOverlap(a:Period,b:Period){return a.start<=b.end&&b.start<=a.end}
