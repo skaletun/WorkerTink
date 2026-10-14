@@ -213,8 +213,8 @@ test('8.1.0 regression: QR controls, avatars, notes and stale update recovery',a
   await page.getByRole('button',{name:'QR-код'}).first().click();
   await expect(page.getByLabel('Форма QR')).toHaveValue('Dots');
   await page.getByRole('button',{name:'Закрыть QR'}).click();
-  const pixel=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==','base64');
-  await page.locator('.canva-profile-buttons input[type="file"]').nth(1).setInputFiles({name:'avatar.png',mimeType:'image/png',buffer:pixel});
+  const pixel=Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect width="32" height="32" fill="#d8f06c"/></svg>','utf8');
+  await page.locator('.canva-profile-buttons input[type="file"]').nth(1).setInputFiles({name:'avatar.svg',mimeType:'image/svg+xml',buffer:pixel});
   await expect(page.locator('.avatar-editor-modal')).toBeVisible();
   const preview=page.locator('.avatar-crop-window img');
   const before=await preview.evaluate(el=>getComputedStyle(el).transform);
