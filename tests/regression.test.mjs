@@ -142,3 +142,12 @@ const endedVakhtaCalc=calcMonth(endedVakhta,2026,1);
 assert.equal(endedVakhtaCalc.scheduled,1);
 assert.equal(endedVakhtaCalc.scheduledHours,1);
 assert.equal(endedVakhtaCalc.extraPay,Math.round(100000/(28*8)*8));
+
+// Ручные правки, отпуск и больничный влияют на фактические рабочие смены.
+import {getShift,getWorkingShift} from '../src/core.ts';
+const changedShift={...base,shiftOverrides:{'2026-09-01':'off','2026-09-06':'night'}};
+assert.equal(getWorkingShift(changedShift,new Date(2026,8,1)),'off');
+assert.equal(getWorkingShift(changedShift,new Date(2026,8,6)),'night');
+assert.equal(getWorkingShift({...changedShift,vacations:[{start:'2026-09-06',end:'2026-09-06'}]},new Date(2026,8,6)),'off');
+assert.equal(getWorkingShift({...changedShift,sickLeaves:[{start:'2026-09-06',end:'2026-09-06'}]},new Date(2026,8,6)),'off');
+assert.equal(getShift({...changedShift,startDate:'2026-09-07'},new Date(2026,8,6)),'off');
