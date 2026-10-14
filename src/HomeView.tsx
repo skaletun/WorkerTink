@@ -1,6 +1,7 @@
 import {useMemo,useState} from 'react';
+import {exportableState} from './storage.ts';
 import {Icon,type IconName} from './Icon';
-import {calcMonth,calcYear,formatMoney,getScheduledShift,parseYmd,addDays,ymd,vacationCalendarDays,vacationUsedDays,vacationProjectedUsedDays,sickPayForDays,MONTHS,type State} from './core';
+import {calcMonth,calcYear,formatMoney,getWorkingShift,parseYmd,addDays,ymd,vacationCalendarDays,vacationUsedDays,vacationProjectedUsedDays,sickPayForDays,MONTHS,type State} from './core';
 type Tab='home'|'social'|'people'|'communities'|'chat'|'work'|'calendar'|'pay'|'absence'|'friends'|'notifications'|'profile'|'settings'|'admin';
 type Props={state:State;patch:(p:Partial<State>)=>void;onNotice:(s:string)=>void;go:(tab:Tab)=>void};
 const iso=(d:Date)=>ymd(d);
@@ -15,12 +16,12 @@ async function encryptBackup(state:State,password:string){
 export default function HomeView({state,patch,onNotice,go}:Props){
  const now=new Date(),yearNumber=now.getFullYear(),current=calcMonth(state,yearNumber,now.getMonth());
  const yearly=useMemo(()=>calcYear(state,yearNumber),[state,yearNumber]);
- const [focus,setFocus]=useState(iso(now));const focusDate=parseYmd(focus),focusShift=getScheduledShift(state,focusDate);
+ const [focus,setFocus]=useState(iso(now));const focusDate=parseYmd(focus),focusShift=getWorkingShift(state,focusDate);
  const [forecastMonths,setForecastMonths]=useState(3),[scenarioSalary,setScenarioSalary]=useState(state.salary),[scenarioNight,setScenarioNight]=useState(state.nightExtraPercent);
  const [vacStart,setVacStart]=useState(''),[vacLength,setVacLength]=useState(14),[sickDays,setSickDays]=useState(5);
  const [tip,setTip]=useState(''),[backupPassword,setBackupPassword]=useState('');
- const orbit=useMemo(()=>Array.from({length:28},(_,i)=>{const date=addDays(now,i);return {date,kind:getScheduledShift(state,date),theta:i/28*Math.PI*2-Math.PI/2}}),[state,yearNumber,now.getMonth(),now.getDate()]);
- const monthGrid=useMemo(()=>Array.from({length:new Date(yearNumber,now.getMonth()+1,0).getDate()},(_,i)=>{const date=new Date(yearNumber,now.getMonth(),i+1);return {date,kind:getScheduledShift(state,date)}}),[state,yearNumber,now.getMonth()]);
+ const orbit=useMemo(()=>Array.from({length:28},(_,i)=>{const date=addDays(now,i);return {date,kind:getWorkingShift(state,date),theta:i/28*Math.PI*2-Math.PI/2}}),[state,yearNumber,now.getMonth(),now.getDate()]);
+ const monthGrid=useMemo(()=>Array.from({length:new Date(yearNumber,now.getMonth()+1,0).getDate()},(_,i)=>{const date=new Date(yearNumber,now.getMonth(),i+1);return {date,kind:getWorkingShift(state,date)}}),[state,yearNumber,now.getMonth()]);
  const forecast=useMemo(()=>{let total=0;for(let i=0;i<forecastMonths;i++){const d=new Date(yearNumber,now.getMonth()+i,1);total+=calcMonth(state,d.getFullYear(),d.getMonth()).net}return total},[state,yearNumber,now.getMonth(),forecastMonths]);
  const scenario=useMemo(()=>calcMonth({...state,salary:Math.max(0,scenarioSalary),nightExtraPercent:Math.max(0,scenarioNight)},yearNumber,now.getMonth()),[state,scenarioSalary,scenarioNight,yearNumber,now.getMonth()]);
  const vacLeft=Math.max(0,state.vacTotal-vacationUsedDays(state));
@@ -28,12 +29,12 @@ export default function HomeView({state,patch,onNotice,go}:Props){
  const sickRate=state.stage<5?.6:state.stage<8?.8:1;
  const sickPay=sickPayForDays(state,yearNumber,now.getMonth(),sickDays);
  const saveNote=()=>{if(!tip.trim())return;patch({shiftNotes:{...state.shiftNotes,[focus]:[state.shiftNotes[focus],tip.trim()].filter(Boolean).join('\n')}});setTip('');onNotice('Заметка сохранена')};
- const backup=async()=>{if(!backupPassword){onNotice('Нужен пароль для резервной копии');return}try{const blob=await encryptBackup(state,backupPassword),url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`workertink-backup-${iso(now)}.wtbackup`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);setBackupPassword('');onNotice('Зашифрованная копия сохранена')}catch{onNotice('Не удалось создать резервную копию')}};
+ const backup=async()=>{if(!backupPassword){onNotice('Нужен пароль для резервной копии');return}try{const blob=await encryptBackup(exportableState(state),backupPassword),url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`workertink-backup-${iso(now)}.wtbackup`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);setBackupPassword('');onNotice('Зашифрованная копия сохранена')}catch{onNotice('Не удалось создать резервную копию')}};
  const tile=(tab:Tab,no:string,headline:string,sub:string,icon:IconName,klass:string)=><button onClick={()=>go(tab)} className={`atlas-app-tile ${klass}`}><span className="atlas-app-tile-top"><span>{no} / ПРОСТРАНСТВО</span><Icon name={icon} size={25}/></span><span className="atlas-app-tile-body"><strong>{headline}</strong><small>{sub}</small></span><span className="atlas-app-tile-arrow">↗</span></button>;
  return <section className="atlas-home" aria-label="Главная — карта рабочего дня">
   <div className="atlas-home-overline"><span>✳ &nbsp; РАБОТА И ЖИЗНЬ, В ОДНОЙ СИСТЕМЕ</span><span>{now.toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'})}</span></div>
   <section className="atlas-world" aria-label="Интерактивная орбита смен">
-   <div className="atlas-world-intro"><span className="atlas-world-tag">WT / ВАШЕ ВРЕМЯ</span><h1>Ваш день.<br/><em>Ваш ход.</em></h1><p>{state.profile.name.split(' ')[0]||'Привет'}, перед вами всё, что помогает жить и работать без лишней суеты. Выберите день на орбите или откройте нужное пространство.</p><div className="atlas-world-pulse"><i/><span>{label(getScheduledShift(state,now))} сегодня</span></div><button className="atlas-world-forward" onClick={()=>go('calendar')}>Открыть календарь <span>↗</span></button></div>
+   <div className="atlas-world-intro"><span className="atlas-world-tag">WT / ВАШЕ ВРЕМЯ</span><h1>Ваш день.<br/><em>Ваш ход.</em></h1><p>{state.profile.name.split(' ')[0]||'Привет'}, перед вами всё, что помогает жить и работать без лишней суеты. Выберите день на орбите или откройте нужное пространство.</p><div className="atlas-world-pulse"><i/><span>{label(getWorkingShift(state,now))} сегодня</span></div><button className="atlas-world-forward" onClick={()=>go('calendar')}>Открыть календарь <span>↗</span></button></div>
    <div className="atlas-orbit-area">
     <div className="atlas-orbit-ring"><div className="atlas-orbit-ring-mid"/><div className="atlas-orbit-ring-core"><span>ВЫБРАННЫЙ ДЕНЬ</span><strong>{String(focusDate.getDate()).padStart(2,'0')}<small>/{String(focusDate.getMonth()+1).padStart(2,'0')}</small></strong><b>{label(focusShift)}</b><small>Нажмите на точку вокруг</small></div>
     {orbit.map(({date,kind,theta})=><button key={iso(date)} className={`atlas-orbit-point atlas-orbit-${kind}${iso(date)===focus?' is-focus':''}`} onClick={()=>setFocus(iso(date))} style={{left:`${50+45*Math.cos(theta)}%`,top:`${50+45*Math.sin(theta)}%`}} title={`${date.toLocaleDateString('ru-RU',{day:'numeric',month:'long'})} · ${label(kind)}`} aria-label={`${date.toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}: ${label(kind)}`}><span>{date.getDate()}</span></button>)}

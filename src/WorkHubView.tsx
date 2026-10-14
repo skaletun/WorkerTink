@@ -1,7 +1,7 @@
 import {useMemo,useState} from 'react';
 import {Icon} from './Icon';
 import type {State} from './core';
-import {MONTHS,calcYear,formatMoney,getScheduledShift,vacationUsedDays,ymd} from './core';
+import {MONTHS,calcYear,formatMoney,getWorkingShift,vacationUsedDays,ymd} from './core';
 import WorkTeamsView from './WorkTeamsView';
 
 type Props={state:State;calc:any;view:Date;onNavigate:(tab:'calendar'|'pay'|'absence')=>void;onNetwork:()=>void;token?:string;onNotice?:(s:string)=>void};
@@ -16,7 +16,7 @@ export default function WorkHubView({state,calc,view,onNavigate,onNetwork,token,
  const firstWeekday=(new Date(view.getFullYear(),view.getMonth(),1).getDay()+6)%7;
  const monthDays=useMemo(()=>Array.from({length:daysInMonth},(_,i)=>{
   const date=new Date(view.getFullYear(),view.getMonth(),i+1);
-  return {date,shift:getScheduledShift(state,date),key:ymd(date)};
+  return {date,shift:getWorkingShift(state,date),key:ymd(date)};
  }),[state,view,daysInMonth]);
  const plannedShifts=monthDays.filter(d=>d.shift!=='off').length;
  const nightShifts=monthDays.filter(d=>d.shift==='night').length;
@@ -26,7 +26,7 @@ export default function WorkHubView({state,calc,view,onNavigate,onNetwork,token,
   const out:{date:Date;shift:string}[]=[];
   for(let i=0;i<35&&out.length<6;i++){
    const date=new Date(today);date.setDate(today.getDate()+i);
-   const shift=getScheduledShift(state,date);
+   const shift=getWorkingShift(state,date);
    if(shift!=='off')out.push({date,shift});
   }
   return out;
@@ -34,7 +34,7 @@ export default function WorkHubView({state,calc,view,onNavigate,onNetwork,token,
  const notes=Object.entries(state.shiftNotes).filter(([,value])=>Boolean(value.trim())).sort(([left],[right])=>right.localeCompare(left)).slice(0,3);
  return <section className="wt-operations redesign-work" aria-label="Рабочая диспетчерская">
   <header className="wt-operations-intro"><div><span className="wt-index-label">РАБОЧАЯ ДИСПЕТЧЕРСКА / {view.getFullYear()}</span><h2>Ваш график.<br/><em>Ваша система.</em></h2><p>Месяц, ближайшие смены, начисления и отпуск — в одной операционной области.</p></div><div className="wt-operations-head-buttons"><button onClick={()=>onNavigate('calendar')}><Icon name="calendar" size={16}/> Изменить смены</button><button onClick={()=>onNavigate('pay')}>Расчёт зарплаты <Icon name="chevronRight" size={17}/></button></div></header>
-  <section className="wt-operations-numbers" aria-label="Показатели"><div className="wt-operations-number-main"><span>К выплате / {MONTHS[view.getMonth()]}</span><strong>{formatMoney(calc.net)}</strong><button onClick={()=>onNavigate('pay')}>Расчёт <Icon name="chevronRight" size={17}/></button></div><div><span>Смены</span><strong>{plannedShifts}<small> / {daysInMonth}</small></strong><p>Запланировано</p></div><div><span>Ночные</span><strong>{nightShifts}</strong><p>За месяц</p></div><div><span>Отпуск</span><strong>{Math.round(vacationLeft)}<small> дн.</small></strong><p>Доступно</p></div></section>
+  <section className="wt-operations-numbers" aria-label="Показатели"><div className="wt-operations-number-main"><span>К выплате / {MONTHS[view.getMonth()]}</span><strong>{formatMoney(calc.net)}</strong><button onClick={()=>onNavigate('pay')}>Расчёт <Icon name="chevronRight" size={17}/></button></div><div><span>Смены</span><strong>{plannedShifts}<small> / {daysInMonth}</small></strong><p>С учётом правок</p></div><div><span>Ночные</span><strong>{nightShifts}</strong><p>За месяц</p></div><div><span>Отпуск</span><strong>{Math.round(vacationLeft)}<small> дн.</small></strong><p>Доступно</p></div></section>
   <div className="wt-operations-layout">
    <section className="wt-operations-calendar"><div className="wt-operations-section-head"><div><span className="wt-index-label">01 / РИТМ МЕСЯЦА</span><h3>{MONTHS[view.getMonth()]} <small>{view.getFullYear()}</small></h3></div><button onClick={()=>onNavigate('calendar')}>Редактор графика <Icon name="chevronRight" size={16}/></button></div>
     <div className="wt-operations-calendar-grid" role="group" aria-label="Календарь смен">{dayNames.map(d=><span key={d} className="wt-ops-dayname">{d}</span>)}{Array.from({length:firstWeekday},(_,i)=><span className="wt-ops-empty" key={`lead-${i}`}/>)}
