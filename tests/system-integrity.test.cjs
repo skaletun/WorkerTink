@@ -1,6 +1,7 @@
 const fs=require('node:fs');
 const path=require('node:path');
 const root=path.resolve(__dirname,'..');
+const read=file=>fs.readFileSync(path.join(root,file),'utf8');
 const app=fs.readFileSync(path.join(root,'src/App.tsx'),'utf8');
 const network=fs.readFileSync(path.join(root,'src/NetworkView.tsx'),'utf8');
 const networkParts=fs.readFileSync(path.join(root,'src/views/network/NetworkParts.tsx'),'utf8');
