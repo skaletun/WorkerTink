@@ -44,7 +44,7 @@ export default function UpdateGate({children}:UpdateGateProps){
    setPhase('updating');
    markCurrentBuild();
    const fallbackReload=window.setTimeout(()=>window.location.reload(),5000);
-   void updateSWRef.current(true).then(()=>{window.clearTimeout(fallbackReload);setNeedRefresh(false);setPhase('ready');updatingRef.current=false}).catch(async()=>{
+   void updateSWRef.current(true).then(()=>{window.clearTimeout(fallbackReload);setNeedRefresh(false);setPhase('ready');updatingRef.current=false;window.location.reload()}).catch(async()=>{
      const registration=registrationRef.current;
      try{
        if(registration?.waiting){
