@@ -7,7 +7,7 @@ const enc=new TextEncoder();
 const dec=new TextDecoder();
 
 type StoredIdentity={privateKey:JsonWebKey;publicKey:JsonWebKey};
-export type ChatEnvelope={v:1;kind:'text'|'voice'|'image'|'video'|'file'|'note';iv:string;data:string;name?:string;mime?:string;mediaId?:string;size?:number;caption?:string};
+export type ChatEnvelope={v:1;kind:'text'|'voice'|'image'|'video'|'file'|'note';iv:string;data:string;name?:string;mime?:string;mediaId?:string;size?:number;caption?:string;senderPublicKey?:JsonWebKey;recipientPublicKey?:JsonWebKey};
 export type EncryptedChatMedia={iv:string;ciphertext:ArrayBuffer};
 
 const b64=(bytes:ArrayBuffer|Uint8Array)=>{const a=new Uint8Array(bytes);let s='';for(const b of a)s+=String.fromCharCode(b);return btoa(s)};
