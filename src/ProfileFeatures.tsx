@@ -18,12 +18,13 @@ type QrShape='Square'|'Rounded'|'Dots';
 type QrCard='Minimal'|'Soft'|'Poster';
 const qrSafeColor=(color:string,fallback:string)=>/^#[0-9a-f]{6}$/i.test(color)?color:fallback;
 function brandedQrSvg(url:string,shape:QrShape,foreground:string,background:string,variant:QrCard){
- const matrix=encodeQR(url,'raw',{ecc:'high',border:0}) as boolean[][];
+ const border=2;
+ const matrix=encodeQR(url,'raw',{ecc:'high',border}) as boolean[][];
  const n=matrix.length,pad=5,cell=8,side=(n+pad*2)*cell;
  const fg=qrSafeColor(foreground,'#142a23'),bg=qrSafeColor(background,'#ffffff');
  const rect=(x:number,y:number,w:number,h:number,fill:string,r=0)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${fill}"/>`;
  let content=rect(0,0,side,side,bg);
- const insideFinder=(x:number,y:number)=>[[0,0],[n-7,0],[0,n-7]].some(([fx,fy])=>x>=fx&&x<fx+7&&y>=fy&&y<fy+7);
+ const insideFinder=(x:number,y:number)=>[[border,border],[n-border-7,border],[border,n-border-7]].some(([fx,fy])=>x>=fx&&x<fx+7&&y>=fy&&y<fy+7);
  const logoStart=Math.floor(n/2)-3;
  for(let y=0;y<n;y++)for(let x=0;x<n;x++){
   if(!matrix[y][x]||insideFinder(x,y))continue;
@@ -33,7 +34,7 @@ function brandedQrSvg(url:string,shape:QrShape,foreground:string,background:stri
   if(shape==='Dots')content+=`<circle cx="${px+4}" cy="${py+4}" r="3.6" fill="${fg}"/>`;
   else content+=rect(px,py,cell,cell,fg,shape==='Rounded'?2.9:0);
  }
- for(const [fx,fy] of [[0,0],[n-7,0],[0,n-7]]){
+ for(const [fx,fy] of [[border,border],[n-border-7,border],[border,n-border-7]]){
   const x=(fx+pad)*cell,y=(fy+pad)*cell,r=shape==='Square'?0:10;
   content+=rect(x,y,56,56,fg,r)+rect(x+8,y+8,40,40,bg,shape==='Square'?0:7)+rect(x+16,y+16,24,24,fg,shape==='Square'?0:5);
  }
