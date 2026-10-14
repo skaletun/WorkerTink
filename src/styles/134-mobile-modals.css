@@ -96,3 +96,23 @@
  .qr-modal-branded .qr-card{padding:9px!important}
  .shift-modal .markdown-wysiwyg{max-height:24dvh!important;min-height:110px!important}
 }
+
+/* Hard viewport bounds override flex intrinsic min-content sizing in mobile Safari/Chromium. */
+@media(max-width:760px){
+ .qr-modal-backdrop,.modal-backdrop:has(>.shift-modal){
+  height:100dvh!important;max-height:100dvh!important;top:0!important;bottom:0!important;
+  justify-content:center!important;align-items:center!important;overflow:hidden!important;
+ }
+ .qr-modal-backdrop>.qr-modal-branded,.modal-backdrop>.qr-modal-branded,
+ .modal-backdrop>.shift-modal{
+  display:block!important;flex:none!important;
+  height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom))!important;
+  max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom))!important;
+  min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;
+  position:relative!important;top:0!important;bottom:auto!important;
+  margin:0!important;translate:none!important;transform:none!important;
+  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+ }
+ .qr-modal-backdrop>.qr-modal-branded{display:flex!important}
+ .modal-backdrop>.shift-modal{display:flex!important}
+}
