@@ -592,7 +592,7 @@ async function handle(request, env) {
     const privacyPolicyVersion = cleanText(input?.privacyPolicyVersion, 20);
     const termsVersion = cleanText(input?.termsVersion, 20);
     if (!validId(wtinkId) || !name || !position || !validPin(pin) || (raw.username && !requestedUsername)) return json({error: !validPin(pin) ? 'INVALID_PIN' : 'INVALID_USERNAME'}, 400, origin);
-    if (privacyPolicyVersion !== '1.0' || termsVersion !== '1.0') return json({error:'RULES_ACCEPTANCE_REQUIRED'},400,origin);
+    if (privacyPolicyVersion !== '1.1' || termsVersion !== '1.1') return json({error:'RULES_ACCEPTANCE_REQUIRED'},400,origin);
 
     const existing = await env.DB.prepare('SELECT wtink_id FROM profiles WHERE wtink_id = ?1').bind(wtinkId).first();
     if (existing) return json({error: 'WTINK_ID_TAKEN'}, 409, origin);
