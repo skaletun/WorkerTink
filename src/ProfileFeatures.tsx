@@ -3,7 +3,7 @@ import {useEffect,useMemo,useState} from 'react';
 import type {UserProfile} from './core';
 // @ts-ignore — qr ships runtime + declarations, but its package export differs across TS bundler versions.
 import encodeQR from 'qr';
-import {getUserByUsername,searchUser,sendFriendRequest} from './directory';
+import {getUserByUsername,searchUser,sendFriendRequest,getProfileQrStyle,saveProfileQrStyle,type ProfileQrStyle} from './directory';
 import {Icon} from './Icon';
 
 const basePath=()=>window.location.hostname.endsWith('github.io')?'/WorkerTink':'';
@@ -49,25 +49,30 @@ function brandedQrSvg(url:string,shape:QrShape,foreground:string,background:stri
  const shift=variant==='Minimal'?0:44,full=side+shift;
  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${side} ${full}" width="${side}" height="${full}" role="img" aria-label="QR-код профиля WTinker"><rect width="${side}" height="${full}" rx="15" fill="${bg}"/>${header}<g transform="translate(0 ${shift})">${content}</g></svg>`;
 }
-export function ProfileQrModal({profile,onClose,editable=false}:{profile:UserProfile;onClose:()=>void;editable?:boolean}){
+export function ProfileQrModal({profile,onClose,editable=false,token=''}:{profile:UserProfile;onClose:()=>void;editable?:boolean;token?:string}){
  const url=profile.username?publicProfileUrl(profile.username):'';
  const storageKey=`workertink:qr-style:${profile.profileId}`;
  const readStyle=()=>{const fallback={shape:'Rounded' as QrShape,fg:'#142a23',bg:'#ffffff',card:'Soft' as QrCard};try{const v=JSON.parse(localStorage.getItem(storageKey)||'{}');return {...fallback,...v}}catch{return fallback}};
  const initial=useMemo(readStyle,[storageKey]);
  const [shape,setShape]=useState<QrShape>(initial.shape),[fg,setFg]=useState(initial.fg),[bg,setBg]=useState(initial.bg),[card,setCard]=useState<QrCard>(initial.card);
  const [notice,setNotice]=useState('');
+ const [busy,setBusy]=useState(false);
+ const [dirty,setDirty]=useState(false);
+ const [loadingStyle,setLoadingStyle]=useState(true);
+ useEffect(()=>{let disposed=false;setLoadingStyle(true);getProfileQrStyle(profile.profileId).then(result=>{if(disposed)return;const st=result.style;if(!dirty){setShape(st.shape);setFg(st.foreground);setBg(st.background);setCard(st.card)}}).catch(()=>{if(!disposed)setNotice('Не удалось загрузить оформление QR из профиля')}).finally(()=>{if(!disposed)setLoadingStyle(false)});return()=>{disposed=true}},[profile.profileId]);
+ const saveStyle=async()=>{if(!token){setNotice('Войдите в аккаунт, чтобы сохранить оформление');return}setBusy(true);try{const style:ProfileQrStyle={shape,foreground:fg,background:bg,card};const result=await saveProfileQrStyle(style,token);setShape(result.style.shape);setFg(result.style.foreground);setBg(result.style.background);setCard(result.style.card);setDirty(false);setNotice('Оформление сохранено — теперь его видят другие пользователи')}catch{setNotice('Не удалось сохранить QR в аккаунте. Проверьте подключение.')}finally{setBusy(false)}};
  const svg=useMemo(()=>url?brandedQrSvg(url,shape,fg,bg,card):'',[url,shape,fg,bg,card]);
  useEffect(()=>{if(!editable)return;try{localStorage.setItem(storageKey,JSON.stringify({shape,fg,bg,card}))}catch{}},[editable,storageKey,shape,fg,bg,card]);
  const download=()=>{if(!svg)return;const obj=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}));const a=document.createElement('a');a.href=obj;a.download=`wtinker-${profile.username||'profile'}-branded-qr.svg`;a.click();setTimeout(()=>URL.revokeObjectURL(obj),1500)};
  const copy=async()=>{try{if(!navigator.clipboard?.writeText)throw Error('clipboard');await navigator.clipboard.writeText(url);setNotice('Ссылка скопирована')}catch{setNotice('Скопируйте адрес из поля ниже')}};
- const reset=()=>{setShape('Rounded');setFg('#142a23');setBg('#ffffff');setCard('Soft')};
+ const reset=()=>{setDirty(true);setShape('Rounded');setFg('#142a23');setBg('#ffffff');setCard('Soft')};
  if(!url)return null;
  return createPortal(<div className="modal-backdrop qr-modal-backdrop" onMouseDown={e=>e.target===e.currentTarget&&onClose()}>
   <section className="qr-modal qr-modal-branded" role="dialog" aria-modal="true" aria-labelledby="qr-modal-title">
    <button type="button" className="qr-close" onClick={onClose} aria-label="Закрыть QR"><Icon name="close" size={20}/></button>
    <div className={`qr-card ${card.toLowerCase()}`}><span className="qr-card-label">WTINKER · SCAN TO CONNECT</span><div className="qr-render" data-shape={shape} data-theme={card} dangerouslySetInnerHTML={{__html:svg}}/><strong>@{profile.username}</strong><small>Откройте профиль камерой телефона</small></div>
-   <div className="qr-modal-copy"><span className="eyebrow">ПЕРСОНАЛЬНЫЙ QR</span><h2 id="qr-modal-title">Мой код.<br/>Мой стиль.</h2><p>QR открывает публичный профиль @{profile.username}. Дизайн обновляется сразу в предпросмотре.</p>
-   {editable?<div className="qr-controls"><label>Форма модулей<select aria-label="Форма QR" value={shape} onChange={e=>setShape(e.target.value as QrShape)}><option value="Square">Квадраты</option><option value="Rounded">Скругления</option><option value="Dots">Точки</option></select></label><label>Цвет кода<input aria-label="Цвет QR" type="color" value={fg} onChange={e=>setFg(e.target.value)}/></label><label>Цвет фона<input aria-label="Фон QR" type="color" value={bg} onChange={e=>setBg(e.target.value)}/></label><label>Оформление<select aria-label="Оформление QR" value={card} onChange={e=>setCard(e.target.value as QrCard)}><option value="Minimal">Чистый</option><option value="Soft">Фирменный</option><option value="Poster">Постер</option></select></label><button type="button" className="btn quiet" onClick={reset}>Сбросить оформление</button></div>:<p className="qr-readonly-note">Редактировать QR может владелец профиля.</p>}
+   <div className="qr-modal-copy"><span className="eyebrow">ПЕРСОНАЛЬНЫЙ QR</span><h2 id="qr-modal-title">Мой код.<br/>Мой стиль.</h2><p>QR открывает публичный профиль @{profile.username}. Дизайн обновляется в предпросмотре. Нажмите «Сохранить для всех», чтобы оформление увидели другие пользователи.</p>
+   {editable?<div className="qr-controls"><label>Форма модулей<select aria-label="Форма QR" value={shape} onChange={e=>{setDirty(true);setShape(e.target.value as QrShape)}}><option value="Square">Квадраты</option><option value="Rounded">Скругления</option><option value="Dots">Точки</option></select></label><label>Цвет кода<input aria-label="Цвет QR" type="color" value={fg} onChange={e=>{setDirty(true);setFg(e.target.value)}}/></label><label>Цвет фона<input aria-label="Фон QR" type="color" value={bg} onChange={e=>{setDirty(true);setBg(e.target.value)}}/></label><label>Оформление<select aria-label="Оформление QR" value={card} onChange={e=>{setDirty(true);setCard(e.target.value as QrCard)}}><option value="Minimal">Чистый</option><option value="Soft">Фирменный</option><option value="Poster">Постер</option></select></label><button type="button" className="btn quiet" onClick={reset}>Сбросить оформление</button><button type="button" className="btn primary" onClick={()=>void saveStyle()} disabled={busy||loadingStyle||!dirty}>{busy?'Сохраняем…':loadingStyle?'Загружаем…':dirty?'Сохранить для всех':'Сохранено в профиле'}</button></div>:<p className="qr-readonly-note">Редактировать QR может владелец профиля.</p>}
    <label className="qr-share-url">Адрес профиля<input readOnly value={url} onFocus={e=>e.target.select()}/></label>{notice&&<span role="status" className="qr-status">{notice}</span>}
    <div className="modal-actions"><button type="button" className="btn quiet" onClick={()=>void copy()}>Копировать ссылку</button><button type="button" className="btn primary" onClick={download}>Скачать SVG</button></div></div>
   </section>
