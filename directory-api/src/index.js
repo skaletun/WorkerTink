@@ -1834,9 +1834,37 @@ async function handle(request, env) {
     return json({communities:groups.results||[],channels:channels.results||[]},200,origin);
   }
 
+  const recordAudit=async(adminId,action,kind,targetId,note='')=>{
+    try{await env.DB.prepare('INSERT INTO admin_audit_events(id,admin_id,action,target_kind,target_id,note,created_at) VALUES(?1,?2,?3,?4,?5,?6,?7)').bind(crypto.randomUUID(),adminId,action,kind,String(targetId),String(note).slice(0,500),Date.now()).run()}catch{/* A moderation result must not be rolled back by audit logging. */}
+  };
+  if(path==='/admin/content'&&request.method==='GET'){
+    if(!(await adminProfile()))return json({error:'FORBIDDEN'},403,origin);
+    const search=String(url.searchParams.get('query')||'').trim().slice(0,100);
+    const limit=Math.min(50,Math.max(1,Number(url.searchParams.get('limit')||20)));
+    const offset=Math.max(0,Math.min(100000,Number(url.searchParams.get('offset')||0)));
+    const rows=await env.DB.prepare(`SELECT p.id,p.body,p.kind,p.visibility,p.created_at,p.author_id,a.name AS author_name,a.username AS author_username FROM social_posts p JOIN profiles a ON a.wtink_id=p.author_id WHERE ?1='' OR p.body LIKE ?2 OR a.name LIKE ?2 OR a.username LIKE ?2 ORDER BY p.created_at DESC LIMIT ?3 OFFSET ?4`).bind(search,'%'+search+'%',limit,offset).all();
+    return json({posts:(rows.results||[]).map(r=>({id:r.id,body:r.body,kind:r.kind,visibility:r.visibility,createdAt:Number(r.created_at),authorId:displayId(r.author_id),authorName:r.author_name,authorUsername:r.author_username})),nextOffset:(rows.results||[]).length===limit?offset+limit:null},200,origin);
+  }
+  if(path==='/admin/audit'&&request.method==='GET'){
+    if(!(await adminProfile()))return json({error:'FORBIDDEN'},403,origin);
+    const rows=await env.DB.prepare('SELECT e.id,e.admin_id,e.action,e.target_kind,e.target_id,e.note,e.created_at,p.name AS admin_name FROM admin_audit_events e LEFT JOIN profiles p ON p.wtink_id=e.admin_id ORDER BY e.created_at DESC LIMIT 100').all();
+    return json({events:(rows.results||[]).map(r=>({id:r.id,adminId:displayId(r.admin_id),adminName:r.admin_name||'Администратор',action:r.action,targetKind:r.target_kind,targetId:r.target_id,note:r.note,createdAt:Number(r.created_at)}))},200,origin);
+  }
+  const moderationPost=path.match(/^\/admin\/content\/posts\/([^/]+)$/);
+  if(moderationPost&&request.method==='DELETE'){
+    const admin=await adminProfile();
+    if(!admin)return json({error:'FORBIDDEN'},403,origin);
+    const id=decodeURIComponent(moderationPost[1]);
+    const post=await env.DB.prepare('SELECT id,author_id FROM social_posts WHERE id=?1').bind(id).first();
+    if(!post)return json({error:'POST_NOT_FOUND'},404,origin);
+    await env.DB.prepare('DELETE FROM social_posts WHERE id=?1').bind(id).run();
+    await recordAudit(admin.wtink_id,'delete_post','post',id);
+    return json({ok:true},200,origin);
+  }
+
   if (path === '/admin/overview' && request.method === 'GET') {
     if (!(await adminProfile())) return json({error:'FORBIDDEN'}, 403, origin);
-    const [profiles, friends, pending, pendingVerification, official, verified, posts, communities, channels, messages, media] = await Promise.all([
+    const [profiles, friends, pending, pendingVerification, official, verified, posts, communities, channels, messages, media, online, activeSessions] = await Promise.all([
       env.DB.prepare('SELECT COUNT(*) AS count FROM profiles').first(),
       env.DB.prepare("SELECT COUNT(*) AS count FROM friend_requests WHERE status = 'accepted'").first(),
       env.DB.prepare("SELECT COUNT(*) AS count FROM friend_requests WHERE status = 'pending'").first(),
@@ -1847,9 +1875,11 @@ async function handle(request, env) {
       env.DB.prepare('SELECT COUNT(*) AS count FROM social_groups').first(),
       env.DB.prepare('SELECT COUNT(*) AS count FROM company_channels').first(),
       env.DB.prepare('SELECT COUNT(*) AS count FROM social_messages').first(),
-      env.DB.prepare('SELECT COUNT(*) AS count FROM chat_media').first()
+      env.DB.prepare('SELECT COUNT(*) AS count FROM chat_media').first(),
+      env.DB.prepare('SELECT COUNT(*) AS count FROM profiles WHERE last_seen >= ?1').bind(Date.now()-ONLINE_WINDOW_MS).first(),
+      env.DB.prepare('SELECT COUNT(*) AS count FROM auth_sessions WHERE expires_at>?1').bind(Date.now()).first()
     ]);
-    return json({stats:{profiles:Number(profiles?.count||0),friendships:Number(friends?.count||0),pendingRequests:Number(pending?.count||0),pendingVerification:Number(pendingVerification?.count||0),official:Number(official?.count||0),verified:Number(verified?.count||0),posts:Number(posts?.count||0),communities:Number(communities?.count||0),channels:Number(channels?.count||0),messages:Number(messages?.count||0),media:Number(media?.count||0)}},200,origin);
+    return json({stats:{profiles:Number(profiles?.count||0),friendships:Number(friends?.count||0),pendingRequests:Number(pending?.count||0),pendingVerification:Number(pendingVerification?.count||0),official:Number(official?.count||0),verified:Number(verified?.count||0),posts:Number(posts?.count||0),communities:Number(communities?.count||0),channels:Number(channels?.count||0),messages:Number(messages?.count||0),media:Number(media?.count||0),online:Number(online?.count||0),activeSessions:Number(activeSessions?.count||0)}},200,origin);
   }
 
   const adminDetailMatch = path.match(/^\/admin\/profiles\/([^/]+)$/);
@@ -1874,9 +1904,10 @@ async function handle(request, env) {
     const url = new URL(request.url);
     const query = String(url.searchParams.get('query') || '').trim().slice(0,120);
     const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit') || 50)));
+    const offset=Math.max(0,Math.min(100000,Number(url.searchParams.get('offset')||0)));
     const pattern = `%${query}%`;
-    const rows = await env.DB.prepare(`SELECT wtink_id,name,position,avatar,banner,username,is_dev,is_admin,is_official,is_verified,created_at,updated_at,last_seen FROM profiles WHERE ?1 = '' OR wtink_id LIKE ?2 OR UPPER(name) LIKE UPPER(?2) OR LOWER(COALESCE(username,'')) LIKE LOWER(?2) ORDER BY updated_at DESC LIMIT ?3`).bind(query, pattern, limit).all();
-    return json({profiles:(rows.results||[]).map(row=>({...publicProfile(row),createdAt:Number(row.created_at||0),updatedAt:Number(row.updated_at||0),lastSeen:Number(row.last_seen||0),online:Number(row.last_seen||0)>=Date.now()-ONLINE_WINDOW_MS}))},200,origin);
+    const rows = await env.DB.prepare(`SELECT wtink_id,name,position,avatar,banner,username,is_dev,is_admin,is_official,is_verified,created_at,updated_at,last_seen FROM profiles WHERE ?1 = '' OR wtink_id LIKE ?2 OR UPPER(name) LIKE UPPER(?2) OR LOWER(COALESCE(username,'')) LIKE LOWER(?2) ORDER BY updated_at DESC LIMIT ?3 OFFSET ?4`).bind(query, pattern, limit,offset).all();
+    return json({profiles:(rows.results||[]).map(row=>({...publicProfile(row),createdAt:Number(row.created_at||0),updatedAt:Number(row.updated_at||0),lastSeen:Number(row.last_seen||0),online:Number(row.last_seen||0)>=Date.now()-ONLINE_WINDOW_MS})),nextOffset:(rows.results||[]).length===limit?offset+limit:null},200,origin);
   }
 
   const adminProfilePath = path.match(/^\/admin\/profiles\/([^/]+)(?:\/(revoke))?$/);
