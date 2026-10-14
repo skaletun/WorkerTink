@@ -31,7 +31,7 @@ jobs:
       - name: Install Chromium for responsive UI checks
         run: npx playwright install --with-deps chromium
       - name: Exercise redesigned desktop and mobile workday
-        run: npx playwright test tests/visual/wtinker.visual.spec.cjs --grep 'atlas zero rebuild'
+        run: npx playwright test tests/visual/wtinker.visual.spec.cjs --grep 'atlas zero rebuild|8.1.0 regression'
       - name: Preserve screenshot evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -40,7 +40,7 @@ jobs:
           path: visual-audit-artifacts
           if-no-files-found: ignore
       - name: Verify release version
-        run: node -e "const p=require('./package.json'); if(p.version!=='7.6.2') throw new Error('Expected WTinker 7.6.2 got '+p.version)"
+        run: node -e "const p=require('./package.json'); if(p.version!=='8.1.0') throw new Error('Expected WTinker 8.1.0 got '+p.version)"
       - name: Verify Directory API health
         run: |
           for i in $(seq 1 10); do
