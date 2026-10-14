@@ -592,7 +592,7 @@ async function handle(request, env) {
     const privacyPolicyVersion = cleanText(input?.privacyPolicyVersion, 20);
     const termsVersion = cleanText(input?.termsVersion, 20);
     if (!validId(wtinkId) || !name || !position || !validPin(pin) || (raw.username && !requestedUsername)) return json({error: !validPin(pin) ? 'INVALID_PIN' : 'INVALID_USERNAME'}, 400, origin);
-    if (privacyPolicyVersion !== '1.0' || termsVersion !== '1.0') return json({error:'RULES_ACCEPTANCE_REQUIRED'},400,origin);
+    if (privacyPolicyVersion !== '1.1' || termsVersion !== '1.1') return json({error:'RULES_ACCEPTANCE_REQUIRED'},400,origin);
 
     const existing = await env.DB.prepare('SELECT wtink_id FROM profiles WHERE wtink_id = ?1').bind(wtinkId).first();
     if (existing) return json({error: 'WTINK_ID_TAKEN'}, 409, origin);
@@ -925,6 +925,31 @@ async function handle(request, env) {
       env.DB.prepare('DELETE FROM profiles WHERE wtink_id = ?1').bind(owner.wtink_id)
     ]);
     return json({ok: true, deletedAt: now}, 200, origin);
+  }
+
+  const qrStylePath=path.match(/^\/profiles\/([^/]+)\/qr-style$/);
+  const qrStyleDefault={shape:'Rounded',foreground:'#142a23',background:'#ffffff',card:'Soft'};
+  if(qrStylePath && request.method==='GET'){
+    const id=normalizeId(decodeURIComponent(qrStylePath[1]));
+    if(!validId(id))return json({error:'USER_NOT_FOUND'},404,origin);
+    const person=await env.DB.prepare('SELECT 1 FROM profiles WHERE wtink_id=?1').bind(id).first();
+    if(!person)return json({error:'USER_NOT_FOUND'},404,origin);
+    const row=await env.DB.prepare('SELECT shape,foreground,background,card,updated_at FROM profile_qr_styles WHERE profile_id=?1').bind(id).first();
+    return json({style:row?{shape:row.shape,foreground:row.foreground,background:row.background,card:row.card}:qrStyleDefault,updatedAt:Number(row?.updated_at||0)},200,origin);
+  }
+  if(path==='/profiles/me/qr-style'&&request.method==='PUT'){
+    const owner=await authProfile(request,env);
+    if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const input=(await body(request))?.style;
+    const shape=input?.shape,card=input?.card,foreground=input?.foreground,background=input?.background;
+    if(!['Square','Rounded','Dots'].includes(shape)||!['Minimal','Soft','Poster'].includes(card)
+      ||typeof foreground!=='string'||!/^#[0-9a-f]{6}$/i.test(foreground)
+      ||typeof background!=='string'||!/^#[0-9a-f]{6}$/i.test(background))
+      return json({error:'INVALID_QR_STYLE'},400,origin);
+    const now=Date.now();
+    await env.DB.prepare('INSERT INTO profile_qr_styles(profile_id,shape,foreground,background,card,updated_at) VALUES(?1,?2,?3,?4,?5,?6) ON CONFLICT(profile_id) DO UPDATE SET shape=excluded.shape,foreground=excluded.foreground,background=excluded.background,card=excluded.card,updated_at=excluded.updated_at')
+      .bind(owner.wtink_id,shape,foreground.toLowerCase(),background.toLowerCase(),card,now).run();
+    return json({ok:true,style:{shape,foreground:foreground.toLowerCase(),background:background.toLowerCase(),card},updatedAt:now},200,origin);
   }
 
   const profileMatch = path.match(/^\/profiles\/([^/]+)$/);
@@ -1745,6 +1770,10 @@ async function handle(request, env) {
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const rows=await env.DB.prepare(`SELECT p.id,p.body,p.kind,p.group_id,p.visibility,p.attachments,p.shift_note,p.created_at,p.updated_at,a.wtink_id AS a_id,a.name AS a_name,a.position AS a_position,a.avatar AS a_avatar,a.banner AS a_banner,a.username AS a_username,a.is_dev AS a_is_dev,a.is_admin AS a_is_admin,a.is_official AS a_is_official,a.is_verified AS a_is_verified,(SELECT COUNT(*) FROM social_post_likes l WHERE l.post_id=p.id) AS likes,(SELECT COUNT(*) FROM social_post_comments c WHERE c.post_id=p.id) AS comments,1 AS liked FROM social_posts p JOIN social_saved_posts s ON s.post_id=p.id AND s.profile_id=?1 JOIN profiles a ON a.wtink_id=p.author_id WHERE p.author_id=?1 OR p.visibility='network' OR (p.visibility='friends' AND EXISTS(SELECT 1 FROM friend_requests fr WHERE fr.status='accepted' AND ((fr.sender_id=?1 AND fr.receiver_id=p.author_id) OR (fr.sender_id=p.author_id AND fr.receiver_id=?1)))) OR (p.group_id IS NOT NULL AND EXISTS(SELECT 1 FROM social_group_members gm WHERE gm.group_id=p.group_id AND gm.profile_id=?1)) ORDER BY s.created_at DESC LIMIT 100`).bind(owner.wtink_id).all(); return json({posts:(rows.results||[]).map(r=>({id:r.id,body:r.body,kind:r.kind||'post',groupId:r.group_id||null,visibility:r.visibility||'network',attachments:parseJson(r.attachments,[]),shiftNote:parseJson(r.shift_note,null),createdAt:Number(r.created_at),updatedAt:Number(r.updated_at),author:socialProfile({wtink_id:r.a_id,name:r.a_name,position:r.a_position,avatar:r.a_avatar,banner:r.a_banner,username:r.a_username,is_dev:r.a_is_dev,is_admin:r.a_is_admin,is_official:r.a_is_official,is_verified:r.a_is_verified}),likes:Number(r.likes||0),comments:Number(r.comments||0),liked:true}))},200,origin);
   }
 
+  const recordAudit=async(adminId,action,kind,targetId,note='')=>{
+    try{await env.DB.prepare('INSERT INTO admin_audit_events(id,admin_id,action,target_kind,target_id,note,created_at) VALUES(?1,?2,?3,?4,?5,?6,?7)').bind(crypto.randomUUID(),adminId,action,kind,String(targetId),String(note).slice(0,500),Date.now()).run()}catch{/* A moderation result must not be rolled back by audit logging. */}
+  };
+
   const adminProfile = async () => {
     const owner = await authProfile(request, env);
     if (!owner || !roleFlags(owner).isAdmin) return null;
@@ -1784,7 +1813,8 @@ async function handle(request, env) {
     const input=await body(request); const note=cleanText(input?.note,1000); const now=Date.now(); const status=action==='approve'?'approved':'rejected';
     const changed=await env.DB.prepare("UPDATE verification_requests SET status=?1,note=?2,reviewed_at=?3,reviewed_by=?4 WHERE id=?5 AND status='pending'").bind(status,note,now,admin.wtink_id,id).run();
     if(!changed.meta?.changes)return json({error:'REQUEST_ALREADY_REVIEWED'},409,origin);
-    await env.DB.prepare("UPDATE profiles SET is_official=?1,updated_at=?2 WHERE wtink_id=?3").bind(action==='approve'?1:0,now,row.profile_id);
+    await env.DB.prepare("UPDATE profiles SET is_official=?1,updated_at=?2 WHERE wtink_id=?3").bind(action==='approve'?1:0,now,row.profile_id).run();
+    await recordAudit(admin.wtink_id,'verification_'+action,'profile',row.profile_id,note);
     const target=await env.DB.prepare("SELECT wtink_id,name,position,avatar,banner,username,is_dev,is_admin,is_official,is_verified FROM profiles WHERE wtink_id=?1").bind(row.profile_id).first();
     return json({ok:true,request:{id,profile:publicProfile(target),status,note,createdAt:0,reviewedAt:now}},200,origin);
   }
@@ -1797,6 +1827,7 @@ async function handle(request, env) {
     await env.DB.prepare("UPDATE profiles SET is_official=?1,updated_at=?2 WHERE wtink_id=?3").bind(official?1:0,Date.now(),target).run();
     const row=await env.DB.prepare("SELECT wtink_id,name,position,avatar,banner,username,is_dev,is_admin,is_official,is_verified FROM profiles WHERE wtink_id=?1").bind(target).first();
     if(!row)return json({error:'USER_NOT_FOUND'},404,origin);
+    await recordAudit(admin.wtink_id,official?'grant_official':'revoke_official','profile',target);
     return json({ok:true,profile:publicProfile(row)},200,origin);
   }
 
@@ -1809,9 +1840,34 @@ async function handle(request, env) {
     return json({communities:groups.results||[],channels:channels.results||[]},200,origin);
   }
 
+  if(path==='/admin/content'&&request.method==='GET'){
+    if(!(await adminProfile()))return json({error:'FORBIDDEN'},403,origin);
+    const search=String(url.searchParams.get('query')||'').trim().slice(0,100);
+    const limit=Math.min(50,Math.max(1,Number(url.searchParams.get('limit')||20)));
+    const offset=Math.max(0,Math.min(100000,Number(url.searchParams.get('offset')||0)));
+    const rows=await env.DB.prepare(`SELECT p.id,p.body,p.kind,p.visibility,p.created_at,p.author_id,a.name AS author_name,a.username AS author_username FROM social_posts p JOIN profiles a ON a.wtink_id=p.author_id WHERE ?1='' OR p.body LIKE ?2 OR a.name LIKE ?2 OR a.username LIKE ?2 ORDER BY p.created_at DESC LIMIT ?3 OFFSET ?4`).bind(search,'%'+search+'%',limit,offset).all();
+    return json({posts:(rows.results||[]).map(r=>({id:r.id,body:r.body,kind:r.kind,visibility:r.visibility,createdAt:Number(r.created_at),authorId:displayId(r.author_id),authorName:r.author_name,authorUsername:r.author_username})),nextOffset:(rows.results||[]).length===limit?offset+limit:null},200,origin);
+  }
+  if(path==='/admin/audit'&&request.method==='GET'){
+    if(!(await adminProfile()))return json({error:'FORBIDDEN'},403,origin);
+    const rows=await env.DB.prepare('SELECT e.id,e.admin_id,e.action,e.target_kind,e.target_id,e.note,e.created_at,p.name AS admin_name FROM admin_audit_events e LEFT JOIN profiles p ON p.wtink_id=e.admin_id ORDER BY e.created_at DESC LIMIT 100').all();
+    return json({events:(rows.results||[]).map(r=>({id:r.id,adminId:displayId(r.admin_id),adminName:r.admin_name||'Администратор',action:r.action,targetKind:r.target_kind,targetId:r.target_id,note:r.note,createdAt:Number(r.created_at)}))},200,origin);
+  }
+  const moderationPost=path.match(/^\/admin\/content\/posts\/([^/]+)$/);
+  if(moderationPost&&request.method==='DELETE'){
+    const admin=await adminProfile();
+    if(!admin)return json({error:'FORBIDDEN'},403,origin);
+    const id=decodeURIComponent(moderationPost[1]);
+    const post=await env.DB.prepare('SELECT id,author_id FROM social_posts WHERE id=?1').bind(id).first();
+    if(!post)return json({error:'POST_NOT_FOUND'},404,origin);
+    await env.DB.prepare('DELETE FROM social_posts WHERE id=?1').bind(id).run();
+    await recordAudit(admin.wtink_id,'delete_post','post',id);
+    return json({ok:true},200,origin);
+  }
+
   if (path === '/admin/overview' && request.method === 'GET') {
     if (!(await adminProfile())) return json({error:'FORBIDDEN'}, 403, origin);
-    const [profiles, friends, pending, pendingVerification, official, verified, posts, communities, channels, messages, media] = await Promise.all([
+    const [profiles, friends, pending, pendingVerification, official, verified, posts, communities, channels, messages, media, online, activeSessions] = await Promise.all([
       env.DB.prepare('SELECT COUNT(*) AS count FROM profiles').first(),
       env.DB.prepare("SELECT COUNT(*) AS count FROM friend_requests WHERE status = 'accepted'").first(),
       env.DB.prepare("SELECT COUNT(*) AS count FROM friend_requests WHERE status = 'pending'").first(),
@@ -1822,9 +1878,11 @@ async function handle(request, env) {
       env.DB.prepare('SELECT COUNT(*) AS count FROM social_groups').first(),
       env.DB.prepare('SELECT COUNT(*) AS count FROM company_channels').first(),
       env.DB.prepare('SELECT COUNT(*) AS count FROM social_messages').first(),
-      env.DB.prepare('SELECT COUNT(*) AS count FROM chat_media').first()
+      env.DB.prepare('SELECT COUNT(*) AS count FROM chat_media').first(),
+      env.DB.prepare('SELECT COUNT(*) AS count FROM profiles WHERE last_seen >= ?1').bind(Date.now()-ONLINE_WINDOW_MS).first(),
+      env.DB.prepare('SELECT COUNT(*) AS count FROM auth_sessions WHERE expires_at>?1').bind(Date.now()).first()
     ]);
-    return json({stats:{profiles:Number(profiles?.count||0),friendships:Number(friends?.count||0),pendingRequests:Number(pending?.count||0),pendingVerification:Number(pendingVerification?.count||0),official:Number(official?.count||0),verified:Number(verified?.count||0),posts:Number(posts?.count||0),communities:Number(communities?.count||0),channels:Number(channels?.count||0),messages:Number(messages?.count||0),media:Number(media?.count||0)}},200,origin);
+    return json({stats:{profiles:Number(profiles?.count||0),friendships:Number(friends?.count||0),pendingRequests:Number(pending?.count||0),pendingVerification:Number(pendingVerification?.count||0),official:Number(official?.count||0),verified:Number(verified?.count||0),posts:Number(posts?.count||0),communities:Number(communities?.count||0),channels:Number(channels?.count||0),messages:Number(messages?.count||0),media:Number(media?.count||0),online:Number(online?.count||0),activeSessions:Number(activeSessions?.count||0)}},200,origin);
   }
 
   const adminDetailMatch = path.match(/^\/admin\/profiles\/([^/]+)$/);
@@ -1849,14 +1907,15 @@ async function handle(request, env) {
     const url = new URL(request.url);
     const query = String(url.searchParams.get('query') || '').trim().slice(0,120);
     const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit') || 50)));
+    const offset=Math.max(0,Math.min(100000,Number(url.searchParams.get('offset')||0)));
     const pattern = `%${query}%`;
-    const rows = await env.DB.prepare(`SELECT wtink_id,name,position,avatar,banner,username,is_dev,is_admin,is_official,is_verified,created_at,updated_at,last_seen FROM profiles WHERE ?1 = '' OR wtink_id LIKE ?2 OR UPPER(name) LIKE UPPER(?2) OR LOWER(COALESCE(username,'')) LIKE LOWER(?2) ORDER BY updated_at DESC LIMIT ?3`).bind(query, pattern, limit).all();
-    return json({profiles:(rows.results||[]).map(row=>({...publicProfile(row),createdAt:Number(row.created_at||0),updatedAt:Number(row.updated_at||0),lastSeen:Number(row.last_seen||0),online:Number(row.last_seen||0)>=Date.now()-ONLINE_WINDOW_MS}))},200,origin);
+    const rows = await env.DB.prepare(`SELECT wtink_id,name,position,avatar,banner,username,is_dev,is_admin,is_official,is_verified,created_at,updated_at,last_seen FROM profiles WHERE ?1 = '' OR wtink_id LIKE ?2 OR UPPER(name) LIKE UPPER(?2) OR LOWER(COALESCE(username,'')) LIKE LOWER(?2) ORDER BY updated_at DESC LIMIT ?3 OFFSET ?4`).bind(query, pattern, limit,offset).all();
+    return json({profiles:(rows.results||[]).map(row=>({...publicProfile(row),createdAt:Number(row.created_at||0),updatedAt:Number(row.updated_at||0),lastSeen:Number(row.last_seen||0),online:Number(row.last_seen||0)>=Date.now()-ONLINE_WINDOW_MS})),nextOffset:(rows.results||[]).length===limit?offset+limit:null},200,origin);
   }
 
   const adminProfilePath = path.match(/^\/admin\/profiles\/([^/]+)(?:\/(revoke))?$/);
   if (adminProfilePath && request.method === 'POST' && adminProfilePath[2] === 'revoke') {
-    if (!(await adminProfile())) return json({error:'FORBIDDEN'}, 403, origin);
+    const admin=await adminProfile(); if(!admin)return json({error:'FORBIDDEN'},403,origin);
     const target = normalizeId(decodeURIComponent(adminProfilePath[1]));
     if (!validId(target)) return json({error:'INVALID_ID'},400,origin);
     const revokedTokenHash=await sha256(randomToken()); const revokedAt=Date.now();
@@ -1864,11 +1923,12 @@ async function handle(request, env) {
       env.DB.prepare('UPDATE profiles SET token_hash = ?1, updated_at = ?2, last_seen = ?2 WHERE wtink_id = ?3').bind(revokedTokenHash,revokedAt,target),
       env.DB.prepare('DELETE FROM auth_sessions WHERE profile_id = ?1').bind(target)
     ]);
+    await recordAudit(admin.wtink_id,'revoke_sessions','profile',target);
     return json({ok:true},200,origin);
   }
 
   if (adminProfilePath && request.method === 'DELETE') {
-    if (!(await adminProfile())) return json({error:'FORBIDDEN'}, 403, origin);
+    const admin=await adminProfile(); if(!admin)return json({error:'FORBIDDEN'},403,origin);
     const target = normalizeId(decodeURIComponent(adminProfilePath[1]));
     if (!validId(target) || target === DEV_WTINK_ID) return json({error:'FORBIDDEN'},403,origin);
     const exists = await env.DB.prepare('SELECT wtink_id FROM profiles WHERE wtink_id = ?1').bind(target).first();
@@ -1883,6 +1943,7 @@ async function handle(request, env) {
       env.DB.prepare('DELETE FROM webauthn_credentials WHERE profile_id = ?1').bind(target),
       env.DB.prepare('DELETE FROM profiles WHERE wtink_id = ?1').bind(target)
     ]);
+    await recordAudit(admin.wtink_id,'delete_profile','profile',target);
     return json({ok:true},200,origin);
   }
 

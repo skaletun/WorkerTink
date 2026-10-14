@@ -14,7 +14,7 @@ export function checkUsername(username:string){return request<{valid:boolean;ava
 
 export function updateUsername(username:string,token:string){return request<SearchResult>('/profiles',{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({profile:{username}})})}
 
-export function registerProfile(profile:UserProfile,pin:string){return request<RegisterResult>('/profiles',{method:'POST',body:JSON.stringify({profile,pin,privacyPolicyVersion:'1.0',termsVersion:'1.0'})})}
+export function registerProfile(profile:UserProfile,pin:string){return request<RegisterResult>('/profiles',{method:'POST',body:JSON.stringify({profile,pin,privacyPolicyVersion:'1.1',termsVersion:'1.1'})})}
 
 export function loginAccount(profileId:string,pin:string,deviceName?:string){return request<LoginResult>('/auth/login',{method:'POST',body:JSON.stringify({profileId,pin,deviceName:deviceName||((navigator as any).userAgentData?.platform||navigator.platform||'Устройство')})})}
 
