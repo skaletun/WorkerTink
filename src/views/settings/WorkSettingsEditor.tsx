@@ -1,8 +1,7 @@
 import {useEffect,useState} from 'react';
 import {isValidYmd,type State} from '../../core.ts';
-import {saveAccountSetup} from '../../directory.ts';
 import {Button,Field,SectionTitle,scheduleTypeOptions,applyScheduleType} from '../../app/AppShared.tsx';
-import {workSetupFromState,validateWorkSetup,queueWorkSetup,clearPendingWorkSetup,readPendingWorkSetup,type PendingWorkSetup} from '../../workSettings.ts';
+import {workSetupFromState,validateWorkSetup,queueWorkSetup,syncPendingWorkSetup,readPendingWorkSetup,type PendingWorkSetup} from '../../workSettings.ts';
 import type {SetupData} from '../../directory/types.ts';
 
 type Props={state:State;patch:(change:Partial<State>)=>void;onNotice:(message:string)=>void};
@@ -37,20 +36,18 @@ export function WorkSettingsEditor({state,patch,onNotice}:Props){
   if(!state.directoryToken){setError('Войдите в аккаунт, чтобы сохранить настройки работы.');return}
   const updatedAt=queueWorkSetup(profileId,draft);
   if(updatedAt===null){setError('Не удалось сохранить на устройстве. Проверьте доступность хранилища.');return}
-  const submitted={...draft};
-  patch(submitted);
+  patch({...draft});
   setEditing(false);setError('');
   setPending(readPendingWorkSetup(profileId));
   setSaving(true);
   try{
-   await saveAccountSetup(submitted,state.directoryToken);
-   clearPendingWorkSetup(profileId,updatedAt);
-   setPending(readPendingWorkSetup(profileId));
-   window.dispatchEvent(new Event('workertink:work-synced'));
-   onNotice('Рабочие данные сохранены на устройстве и в аккаунте');
-  }catch{
-   setPending(readPendingWorkSetup(profileId));
-   onNotice('Рабочие данные сохранены на устройстве. Синхронизация с аккаунтом повторится при подключении.');
+   const synced=await syncPendingWorkSetup(profileId,state.directoryToken);
+   const latest=readPendingWorkSetup(profileId);
+   setPending(latest);
+   if(synced&&!latest){
+    window.dispatchEvent(new Event('workertink:work-synced'));
+    onNotice('Рабочие данные сохранены на устройстве и в аккаунте');
+   }else onNotice('Рабочие данные сохранены на устройстве. Синхронизация с аккаунтом повторится при подключении.');
   }finally{setSaving(false)}
  };
  const dirty=JSON.stringify(draft)!==JSON.stringify(workSetupFromState(state));
