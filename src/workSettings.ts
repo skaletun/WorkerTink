@@ -1,5 +1,6 @@
 import {isValidYmd,normalizeWTinkId,type State} from './core.ts';
 import type {SetupData} from './directory/types.ts';
+import {saveAccountSetup} from './directory/identity.ts';
 
 export const WORK_FIELDS=['salary','taxRate','stage','vacTotal','startDate','scheduleType','scheduleShift','scheduleVakhtaMonths','schedulePairType','holidayCoeff','nightExtraPercent'] as const;
 
@@ -51,7 +52,7 @@ export function readPendingWorkSetup(profileId:string):PendingWorkSetup|null{
 export function queueWorkSetup(profileId:string,setup:SetupData):number|null{
  const key=pendingKey(profileId);
  if(!key||validateWorkSetup(setup))return null;
- const updatedAt=Date.now();
+ const updatedAt=Math.max(Date.now(),(readPendingWorkSetup(profileId)?.updatedAt||0)+1);
  try{
   localStorage.setItem(key,JSON.stringify({setup,updatedAt}));
   return updatedAt;
@@ -69,4 +70,27 @@ export function clearPendingWorkSetup(profileId:string,updatedAt:number):boolean
   localStorage.removeItem(key);
   return true;
  }catch{return false}
+}
+
+const activeSyncs=new Map<string,Promise<boolean>>();
+
+// One writer per account, shared by the settings form and background retries.
+// When an edit arrives during a request, send the newest revision afterwards.
+export async function syncPendingWorkSetup(profileId:string,token:string):Promise<boolean>{
+ const key=pendingKey(profileId);
+ if(!key||!token)return false;
+ const active=activeSyncs.get(key);
+ if(active)return active;
+ const task=(async()=>{
+  for(let attempt=0;attempt<8;attempt++){
+   const pending=readPendingWorkSetup(profileId);
+   if(!pending)return true;
+   try{await saveAccountSetup(pending.setup,token)}catch{return false}
+   clearPendingWorkSetup(profileId,pending.updatedAt);
+  }
+  return !readPendingWorkSetup(profileId);
+ })();
+ activeSyncs.set(key,task);
+ try{return await task}
+ finally{if(activeSyncs.get(key)===task)activeSyncs.delete(key)}
 }
