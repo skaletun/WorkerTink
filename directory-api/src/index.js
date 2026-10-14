@@ -1080,12 +1080,14 @@ async function handle(request, env) {
     if (target === owner.wtink_id) return json({error: 'SELF_REQUEST'}, 400, origin);
     const targetProfile = await env.DB.prepare('SELECT wtink_id, name, position, avatar, banner, username, is_dev, is_admin, is_official, is_verified FROM profiles WHERE wtink_id = ?1').bind(target).first();
     if (!targetProfile) return json({error: 'USER_NOT_FOUND'}, 404, origin);
+    const blocked = await env.DB.prepare('SELECT 1 FROM blocked_profiles WHERE (profile_id=?1 AND blocked_id=?2) OR (profile_id=?2 AND blocked_id=?1) LIMIT 1').bind(owner.wtink_id,target).first();
+    if (blocked) return json({error:'PROFILE_BLOCKED'},403,origin);
 
     const existing = await env.DB.prepare(`
       SELECT id, sender_id, receiver_id, status, created_at, updated_at
       FROM friend_requests
-      WHERE pair_key = ?1
-      ORDER BY created_at DESC LIMIT 1
+      WHERE pair_key = ?1 AND status IN ('pending', 'accepted')
+      ORDER BY CASE WHEN status='accepted' THEN 0 ELSE 1 END, created_at DESC LIMIT 1
     `).bind(pairKey(owner.wtink_id, target)).first();
     if (existing?.status === 'pending') {
       const loaded = await loadRequest(env, existing.id);
@@ -1105,8 +1107,10 @@ async function handle(request, env) {
       throw error;
     }
     const loaded = await loadRequest(env, id);
-    await createSocialNotification(env, target, owner.wtink_id, 'friendRequest', id, 'Новая заявка в друзья', `${owner.name} хочет добавить вас в друзья`, './?tab=friends');
-    await notifyProfile(env, target, 'friendRequest', {title:'Новая заявка в друзья', body:`${owner.name} хочет добавить вас в друзья`, url:'./?tab=social', tag:`wtink-friend-request-${id}`, urgency:'high'});
+    try {
+      await createSocialNotification(env, target, owner.wtink_id, 'friendRequest', id, 'Новая заявка в друзья', `${owner.name} хочет добавить вас в друзья`, './?tab=friends');
+      await notifyProfile(env, target, 'friendRequest', {title:'Новая заявка в друзья', body:`${owner.name} хочет добавить вас в друзья`, url:'./?tab=friends', tag:`wtink-friend-request-${id}`, urgency:'high'});
+    } catch {/* The request is already persisted; notification delivery is best effort. */}
     return json({request: requestView(loaded, profileFromJoined(loaded, 's'), profileFromJoined(loaded, 't'))}, 201, origin);
   }
 
@@ -1124,7 +1128,7 @@ async function handle(request, env) {
       FROM friend_requests r
       JOIN profiles s ON s.wtink_id = r.sender_id
       JOIN profiles t ON t.wtink_id = r.receiver_id
-      WHERE r.${column} = ?1
+      WHERE r.${column} = ?1 AND r.status = 'pending'
       ORDER BY r.created_at DESC
       LIMIT 100
     `).bind(owner.wtink_id).all();
@@ -1143,10 +1147,29 @@ async function handle(request, env) {
     await env.DB.prepare('UPDATE friend_requests SET status = ?1, updated_at = ?2 WHERE id = ?3 AND status = \'pending\'')
       .bind(status, Date.now(), action[1]).run();
     const updated = await loadRequest(env, action[1]);
-    if (status === 'accepted') { await createSocialNotification(env, row.sender_id, owner.wtink_id, 'friendAccepted', action[1], 'Заявка принята', `${owner.name} принял(а) вашу заявку в друзья`, './?tab=friends'); await notifyProfile(env, row.sender_id, 'friendAccepted', {title:'Заявка принята',body:`${owner.name} принял(а) вашу заявку в друзья`,url:'./?tab=social',tag:`workertink-friend-accepted-${owner.wtink_id}`}); }
+    if (status === 'accepted') {
+      try {
+        await createSocialNotification(env, row.sender_id, owner.wtink_id, 'friendAccepted', action[1], 'Заявка принята', `${owner.name} принял(а) вашу заявку в друзья`, './?tab=friends');
+        await notifyProfile(env, row.sender_id, 'friendAccepted', {title:'Заявка принята',body:`${owner.name} принял(а) вашу заявку в друзья`,url:'./?tab=friends',tag:`workertink-friend-accepted-${owner.wtink_id}`});
+      } catch {/* Acceptance must succeed even when notifications cannot be delivered. */}
+    }
     return json({request: requestView(updated, profileFromJoined(updated, 's'), profileFromJoined(updated, 't'))}, 200, origin);
   }
 
+
+  const cancelFriendRequest = path.match(/^\/friend-requests\/([^/]+)$/);
+  if (request.method === 'DELETE' && cancelFriendRequest) {
+    const owner = await authProfile(request, env);
+    if (!owner) return json({error:'UNAUTHORIZED'},401,origin);
+    const id=decodeURIComponent(cancelFriendRequest[1]);
+    const row=await env.DB.prepare('SELECT sender_id,status FROM friend_requests WHERE id=?1').bind(id).first();
+    if (!row) return json({error:'REQUEST_NOT_FOUND'},404,origin);
+    if (row.sender_id !== owner.wtink_id) return json({error:'FORBIDDEN'},403,origin);
+    if (row.status !== 'pending') return json({error:'REQUEST_ALREADY_HANDLED'},409,origin);
+    const result=await env.DB.prepare("DELETE FROM friend_requests WHERE id=?1 AND sender_id=?2 AND status='pending'").bind(id,owner.wtink_id).run();
+    if (!result.meta?.changes) return json({error:'REQUEST_ALREADY_HANDLED'},409,origin);
+    return json({ok:true},200,origin);
+  }
 
   const peerSessionPath = path.match(/^\/peer-sessions\/([^/]+)\/answer$/);
 
