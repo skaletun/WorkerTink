@@ -4,7 +4,7 @@ import type {UserProfile,State} from './core';
 import {canonicalWTinkId} from './core';
 import {sounds,unlockSounds} from './sounds';
 import {getChatKey,getChatMessages,getDirectoryFriends,putChatKey,sendChatMessage,clearChat,uploadChatMedia,getChatMedia,deleteChatMessage,editChatMessage,getChatReactions,setChatReaction,removeChatReaction,getChatPins,pinChatMessage,unpinChatMessage,setChatMute,getChatMute,removeFriend,blockProfile,type ChatKey,type ChatServerMessage,type DirectoryFriend} from './directory';
-import {decryptChat,encryptChat,encryptChatMedia,decryptChatMedia,getChatIdentity,getChatIdentityCandidates,decryptChatWithIdentity,type ChatEnvelope} from './chatCrypto';
+import {decryptChat,encryptChat,encryptChatMedia,decryptChatMediaCandidates,getChatIdentity,getChatIdentityCandidates,decryptChatWithIdentity,type ChatEnvelope} from './chatCrypto';
 
 type Props={token:string;profile:UserProfile;onNotice:(text:string)=>void;state?:State;onStateChange?:(patch:Partial<State>)=>void;onBackToFriends?:()=>void;onProfile?:(profile:UserProfile)=>void};
 type Plain={kind:'text'|'voice'|'image'|'video'|'file'|'note';text?:string;url?:string;name?:string;mime?:string;noteDate?:string;noteShift?:string;note?:string;mediaId?:string;iv?:string;caption?:string};
@@ -57,9 +57,46 @@ function reactionVisual(emoji:string){switch(emoji){case '❤️':return <Icon n
 function MessageCard({m,own,token,profileId,peerPublicKey,onReply,onEdit,onDelete,onPin,pinned,onMenu,menu,onApply,reactions,onReact,reactionMenu,onReactionMenu}:{m:LocalMessage;own:boolean;token:string;profileId:string;peerPublicKey?:JsonWebKey;onReply:()=>void;onEdit:()=>void;onDelete:(id:string,mode:'me'|'both')=>void;onPin:()=>void;pinned:boolean;onMenu:()=>void;menu:boolean;onApply:()=>void;reactions:{emoji:string;profileId:string}[];onReact:(emoji:string)=>void;reactionMenu:boolean;onReactionMenu:()=>void}){
  const deleted=Boolean(m.deletedAt);return <div className={`message-row-v2 ${own?'own':''}`}><div className={`message-bubble-v2 ${deleted?'deleted':''}`}>{m.replyPreview&&<div className="reply-preview"><b>Ответ</b><span>{m.replyPreview}</span></div>}{m.error?<span>Не удалось расшифровать</span>:m.plain?.kind==='text'?<p>{m.plain.text}</p>:m.plain?.kind==='image'&&(m.plain.url||m.plain.mediaId)?<LazyChatMedia kind="image" url={m.plain.url} mediaId={m.plain.mediaId} iv={m.plain.iv} token={token} profileId={profileId} peerPublicKey={peerPublicKey} mime={m.plain.mime||undefined} name={m.plain.name}/>:m.plain?.kind==='video'&&(m.plain.url||m.plain.mediaId)?<LazyChatMedia kind="video" url={m.plain.url} mediaId={m.plain.mediaId} iv={m.plain.iv} token={token} profileId={profileId} peerPublicKey={peerPublicKey} mime={m.plain.mime||undefined} name={m.plain.name}/>:m.plain?.kind==='voice'&&(m.plain.url||m.plain.mediaId)?<LazyChatMedia kind="voice" url={m.plain.url} mediaId={m.plain.mediaId} iv={m.plain.iv} token={token} profileId={profileId} peerPublicKey={peerPublicKey} mime={m.plain.mime||undefined} name={m.plain.name}/>:m.plain?.kind==='file'&&(m.plain.url||m.plain.mediaId)?<LazyChatMedia kind="file" url={m.plain.url} mediaId={m.plain.mediaId} iv={m.plain.iv} token={token} profileId={profileId} peerPublicKey={peerPublicKey} mime={m.plain.mime||undefined} name={m.plain.name}/>:m.plain?.kind==='note'?<div className="note-message"><b>Заметка смены</b><small className="note-author">{own?'От вас':'От коллеги'}</small><span>{m.plain.noteDate||'Дата не указана'} · {m.plain.noteShift||'смена'}</span><p>{m.plain.note}</p><button onClick={onApply}>Применить заметку</button></div>:deleted?<span>Сообщение удалено</span>:null}{m.plain?.caption&&<p className="media-caption">{m.plain.caption}</p>}<footer><time>{fmtTime(m.createdAt)}{m.editedAt?' · изменено':''}</time>{own&&<span className={`read-status ${m.readAt?'read':'unread'}`}>{m.readAt?<><Icon name="check" size={11} strokeWidth={2.2}/><Icon name="check" size={11} strokeWidth={2.2}/> Прочитано</>:<><Icon name="check" size={11} strokeWidth={2.2}/> Отправлено</>}</span>}<button className="message-reaction-trigger" onClick={onReactionMenu} aria-label="Реакция"><Icon name="heart" size={15}/></button><button className="message-more" onClick={onMenu} aria-label="Действия с сообщением"><Icon name="more" size={16}/></button></footer>{m.reactions?.length?<div className="message-reactions">{Object.entries(m.reactions.reduce((acc,r)=>{(acc[r.emoji]||(acc[r.emoji]=[])).push(r.profileId);return acc},{} as Record<string,string[]>)).map(([emoji,users])=><button key={emoji} onClick={()=>onReact(emoji)} title={users.length>1?`${users.length} реакций`:users.join(", ")}><span>{reactionVisual(emoji)}</span><small>{users.length}</small></button>)}</div>:null}{reactionMenu&&<div className="reaction-picker">{["❤️","👍","😂","😮","😢","🔥"].map(e=><button key={e} onClick={()=>onReact(e)}><span>{reactionVisual(e)}</span><span className="reaction-label">{reactionLabel(e)}</span></button>)}</div>}{menu&&<div className="message-menu"><button onClick={onReply}>Ответить</button><button onClick={onPin}>{pinned?'Открепить':'Закрепить'}</button>{own&&m.plain?.kind==='text'&&!deleted&&<button onClick={onEdit}>Изменить</button>}<button onClick={()=>onDelete(m.id,'me')}>Удалить у себя</button>{own&&!deleted&&<button onClick={()=>onDelete(m.id,'both')}>Удалить у обоих</button>}</div>}</div></div>}
 function LazyChatMedia({kind,url,mediaId,iv,token,profileId,peerPublicKey,mime,name}:{kind:'image'|'video'|'voice'|'file';url?:string;mediaId?:string;iv?:string;token:string;profileId:string;peerPublicKey?:JsonWebKey;mime?:string;name?:string}){
- const host=useRef<HTMLDivElement|null>(null);const [src,setSrc]=useState(url||'');const [loading,setLoading]=useState(!url);const [error,setError]=useState(false);
- useEffect(()=>{if(url){setSrc(url);setLoading(false);return}if(!mediaId||!iv||!peerPublicKey||!host.current)return;let cancelled=false;const load=async()=>{if(cancelled)return;setLoading(true);try{const encrypted=await getChatMedia(mediaId,token);const blob=await decryptChatMedia(profileId,peerPublicKey,iv,encrypted);if(cancelled)return;const objectUrl=URL.createObjectURL(new Blob([blob],{type:mime||'application/octet-stream'}));setSrc(objectUrl)}catch{if(!cancelled)setError(true)}finally{if(!cancelled)setLoading(false)}};const observer=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){observer.disconnect();void load()}},{rootMargin:'500px'});observer.observe(host.current);return()=>{cancelled=true;observer.disconnect();if(src&&!url)URL.revokeObjectURL(src)}},[url,mediaId,iv,token,profileId,peerPublicKey,mime]);
- if(loading)return <div ref={host} className="chat-media-placeholder">Загрузка вложения…</div>;if(error)return <div ref={host} className="chat-media-placeholder">Не удалось открыть вложение</div>;if(!src)return <div ref={host} className="chat-media-placeholder">Вложение</div>;if(kind==='image')return <img src={src} className="chat-media-v2" alt={name||'Фото'}/>;if(kind==='video')return <video src={src} className="chat-media-v2" controls playsInline preload="metadata"/>;if(kind==='file')return <a className="chat-file-v2" href={src} download={name||'workertink-file'}>↧ <span><b>{name||'Файл'}</b><small>{mime||'Вложение'}</small></span></a>;return <VoiceMessage src={src}/>;
+ const host=useRef<HTMLDivElement|null>(null);
+ const [src,setSrc]=useState(url||'');
+ const [loading,setLoading]=useState(!url);
+ const [error,setError]=useState('');
+ const [attempt,setAttempt]=useState(0);
+ useEffect(()=>{
+  if(url){setSrc(url);setLoading(false);setError('');return}
+  if(!mediaId||!iv||!peerPublicKey){setLoading(false);setError('Вложение недоступно: отсутствует ключ или адрес файла');return}
+  let cancelled=false,objectUrl='';
+  setSrc('');setLoading(true);setError('');
+  const load=async()=>{
+   try{
+    const encrypted=await getChatMedia(mediaId,token);
+    if(!encrypted.byteLength)throw new Error('MEDIA_EMPTY');
+    const clear=await decryptChatMediaCandidates(profileId,peerPublicKey,iv,encrypted);
+    if(cancelled)return;
+    objectUrl=URL.createObjectURL(new Blob([clear],{type:mime||'application/octet-stream'}));
+    setSrc(objectUrl);
+   }catch(e){
+    if(!cancelled){
+     const code=String(e);
+     setError(code.includes('MEDIA_NOT_FOUND')?'Вложение не найдено на сервере':
+      code.includes('FORBIDDEN')?'Нет доступа к вложению':
+      code.includes('E2E')||code.includes('OperationError')?'Не удалось расшифровать вложение на этом устройстве':
+      'Не удалось загрузить вложение');
+    }
+   }finally{if(!cancelled)setLoading(false)}
+  };
+  const observer=typeof IntersectionObserver!=='undefined'&&host.current?
+   new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){observer.disconnect();void load()}},{rootMargin:'500px'}):null;
+  if(observer)observer.observe(host.current!);else void load();
+  return()=>{cancelled=true;observer?.disconnect();if(objectUrl)URL.revokeObjectURL(objectUrl)};
+ },[url,mediaId,iv,token,profileId,JSON.stringify(peerPublicKey||null),mime,attempt]);
+ if(loading)return <div ref={host} className="chat-media-placeholder" role="status">Загрузка вложения…</div>;
+ if(error)return <div ref={host} className="chat-media-placeholder" role="alert"><span>{error}</span><button type="button" onClick={()=>setAttempt(x=>x+1)}>Повторить загрузку</button></div>;
+ if(!src)return <div ref={host} className="chat-media-placeholder">Вложение</div>;
+ if(kind==='image')return <img src={src} className="chat-media-v2" alt={name||'Фото'}/>;
+ if(kind==='video')return <video src={src} className="chat-media-v2" controls playsInline preload="metadata"/>;
+ if(kind==='file')return <a className="chat-file-v2" href={src} download={name||'wtinker-file'}>↧ <span><b>{name||'Файл'}</b><small>{mime||'Вложение'}</small></span></a>;
+ return <VoiceMessage src={src}/>;
 }
 
 function VoiceMessage({src}:{src:string}){
