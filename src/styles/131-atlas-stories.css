@@ -42,3 +42,29 @@
 .atlas-app .atlas-time-off-hero h1 em{color:#315a3b!important}
 .atlas-app .wt-network-studio .canva-composer .canva-composer-head>div :is(b,span){color:#192015!important}
 .atlas-app .wt-network-studio .canva-composer .canva-composer-trigger{color:#fff!important}
+
+
+/* Fix: network avatars were left unbounded after legacy controls were removed. */
+.network-avatar{display:inline-flex;align-items:center;justify-content:center;flex:none!important;width:46px!important;height:46px!important;min-width:46px!important;min-height:46px!important;max-width:46px!important;max-height:46px!important;aspect-ratio:1;object-fit:cover;object-position:center;border-radius:50%;overflow:hidden;vertical-align:middle}
+.network-avatar.sm{width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;max-width:34px!important;max-height:34px!important}
+.network-avatar.lg{width:72px!important;height:72px!important;min-width:72px!important;min-height:72px!important;max-width:72px!important;max-height:72px!important}
+.network-avatar.fallback{background:#243b2d;color:#dff96c;font-size:17px;font-weight:800}
+.atlas-app .wt-network-studio .canva-composer{width:100%;min-width:0;max-width:100%;overflow:hidden}
+.atlas-app .wt-network-studio .canva-composer-head{display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:12px;align-items:center;min-width:0;width:100%}
+.atlas-app .wt-network-studio .canva-composer-head>.network-avatar{grid-column:1;align-self:center}
+.atlas-app .wt-network-studio .canva-composer-head>div{grid-column:2;min-width:0;max-width:100%;overflow:hidden;display:flex;flex-direction:column;gap:5px;overflow-wrap:anywhere}
+.atlas-app .wt-network-studio .canva-composer-head>div>b{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#192015}
+.atlas-app .wt-network-studio .canva-composer-head>div>span{font-size:12px;color:#394c2d;line-height:1.35;overflow-wrap:anywhere}
+.atlas-app .wt-network-studio .canva-composer-trigger{grid-column:3;position:static;display:inline-flex;justify-content:center;align-items:center;max-width:100%;white-space:nowrap;flex:none}
+.atlas-app .wt-network-studio .canva-feed-column,.atlas-app .wt-network-studio .canva-network-grid{min-width:0;max-width:100%}
+@media(max-width:640px){
+ .atlas-app .wt-network-studio .canva-composer{padding:13px!important;border-radius:13px}
+ .atlas-app .wt-network-studio .canva-composer-head{grid-template-columns:42px minmax(0,1fr);gap:9px;min-height:0}
+ .atlas-app .wt-network-studio .canva-composer-head>.network-avatar{width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;max-width:42px!important;max-height:42px!important}
+ .atlas-app .wt-network-studio .canva-composer-head>div{grid-column:2}
+ .atlas-app .wt-network-studio .canva-composer-head>div>b{font-size:14px}
+ .atlas-app .wt-network-studio .canva-composer-head>div>span{font-size:11px;line-height:1.35}
+ .atlas-app .wt-network-studio .canva-composer-trigger{grid-column:1/-1;justify-self:stretch;width:100%;margin-top:4px;min-height:40px}
+ .atlas-app .wt-network-studio .canva-composer textarea{max-width:100%;min-width:0}
+ .atlas-app .wt-network-studio .canva-composer-foot{min-width:0;flex-wrap:wrap}
+}
