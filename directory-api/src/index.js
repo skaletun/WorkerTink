@@ -1813,7 +1813,7 @@ async function handle(request, env) {
     const input=await body(request); const note=cleanText(input?.note,1000); const now=Date.now(); const status=action==='approve'?'approved':'rejected';
     const changed=await env.DB.prepare("UPDATE verification_requests SET status=?1,note=?2,reviewed_at=?3,reviewed_by=?4 WHERE id=?5 AND status='pending'").bind(status,note,now,admin.wtink_id,id).run();
     if(!changed.meta?.changes)return json({error:'REQUEST_ALREADY_REVIEWED'},409,origin);
-    await env.DB.prepare("UPDATE profiles SET is_official=?1,updated_at=?2 WHERE wtink_id=?3").bind(action==='approve'?1:0,now,row.profile_id);
+    await env.DB.prepare("UPDATE profiles SET is_official=?1,updated_at=?2 WHERE wtink_id=?3").bind(action==='approve'?1:0,now,row.profile_id).run();
     await recordAudit(admin.wtink_id,'verification_'+action,'profile',row.profile_id,note);
     const target=await env.DB.prepare("SELECT wtink_id,name,position,avatar,banner,username,is_dev,is_admin,is_official,is_verified FROM profiles WHERE wtink_id=?1").bind(row.profile_id).first();
     return json({ok:true,request:{id,profile:publicProfile(target),status,note,createdAt:0,reviewedAt:now}},200,origin);
@@ -1827,6 +1827,7 @@ async function handle(request, env) {
     await env.DB.prepare("UPDATE profiles SET is_official=?1,updated_at=?2 WHERE wtink_id=?3").bind(official?1:0,Date.now(),target).run();
     const row=await env.DB.prepare("SELECT wtink_id,name,position,avatar,banner,username,is_dev,is_admin,is_official,is_verified FROM profiles WHERE wtink_id=?1").bind(target).first();
     if(!row)return json({error:'USER_NOT_FOUND'},404,origin);
+    await recordAudit(admin.wtink_id,official?'grant_official':'revoke_official','profile',target);
     return json({ok:true,profile:publicProfile(row)},200,origin);
   }
 
@@ -1914,7 +1915,7 @@ async function handle(request, env) {
 
   const adminProfilePath = path.match(/^\/admin\/profiles\/([^/]+)(?:\/(revoke))?$/);
   if (adminProfilePath && request.method === 'POST' && adminProfilePath[2] === 'revoke') {
-    if (!(await adminProfile())) return json({error:'FORBIDDEN'}, 403, origin);
+    const admin=await adminProfile(); if(!admin)return json({error:'FORBIDDEN'},403,origin);
     const target = normalizeId(decodeURIComponent(adminProfilePath[1]));
     if (!validId(target)) return json({error:'INVALID_ID'},400,origin);
     const revokedTokenHash=await sha256(randomToken()); const revokedAt=Date.now();
@@ -1922,11 +1923,12 @@ async function handle(request, env) {
       env.DB.prepare('UPDATE profiles SET token_hash = ?1, updated_at = ?2, last_seen = ?2 WHERE wtink_id = ?3').bind(revokedTokenHash,revokedAt,target),
       env.DB.prepare('DELETE FROM auth_sessions WHERE profile_id = ?1').bind(target)
     ]);
+    await recordAudit(admin.wtink_id,'revoke_sessions','profile',target);
     return json({ok:true},200,origin);
   }
 
   if (adminProfilePath && request.method === 'DELETE') {
-    if (!(await adminProfile())) return json({error:'FORBIDDEN'}, 403, origin);
+    const admin=await adminProfile(); if(!admin)return json({error:'FORBIDDEN'},403,origin);
     const target = normalizeId(decodeURIComponent(adminProfilePath[1]));
     if (!validId(target) || target === DEV_WTINK_ID) return json({error:'FORBIDDEN'},403,origin);
     const exists = await env.DB.prepare('SELECT wtink_id FROM profiles WHERE wtink_id = ?1').bind(target).first();
@@ -1941,6 +1943,7 @@ async function handle(request, env) {
       env.DB.prepare('DELETE FROM webauthn_credentials WHERE profile_id = ?1').bind(target),
       env.DB.prepare('DELETE FROM profiles WHERE wtink_id = ?1').bind(target)
     ]);
+    await recordAudit(admin.wtink_id,'delete_profile','profile',target);
     return json({ok:true},200,origin);
   }
 
