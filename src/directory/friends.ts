@@ -12,6 +12,8 @@ export function getIncoming(profileId:string,token:string){return request<{reque
 
 export function getOutgoing(profileId:string,token:string){return request<{requests:FriendRequest[]}>(`/friend-requests/outgoing?userId=${encodeURIComponent(profileId)}`,{headers:{Authorization:`Bearer ${token}`}})}
 
+export function cancelFriendRequest(id:string,token:string){return request<{ok:boolean}>(`/friend-requests/${encodeURIComponent(id)}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
+
 export function respondFriendRequest(id:string,action:'accept'|'decline',token:string){return request<RequestResult>(`/friend-requests/${encodeURIComponent(id)}/${action}`,{method:'POST',headers:{Authorization:`Bearer ${token}`}})}
 
 export function removeFriend(profileId:string,token:string){return request<{ok:boolean}>(`/friends/${encodeURIComponent(profileId)}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
