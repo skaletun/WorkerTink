@@ -1,0 +1,62 @@
+/* Community detail: content-first, width-safe layout on every viewport. */
+.atlas-app .community-detail,.atlas-app .community-detail-head,.atlas-app .community-detail-grid,.atlas-app .community-detail-grid>section,.atlas-app .community-detail-grid>aside{min-width:0;max-width:100%}
+.atlas-app .community-detail-head{display:flex;flex-direction:column;align-items:stretch;gap:13px;padding:0 0 23px;border-bottom:1px solid var(--atlas-stroke);margin:0 0 20px}
+.atlas-app .community-detail-head>.btn:first-child{align-self:flex-start;width:max-content;max-width:100%}
+.atlas-app .community-cover{width:100%;min-height:130px;max-height:240px;overflow:hidden;border-radius:10px;display:flex;align-items:center;justify-content:center;background-size:cover;background-position:center}
+.atlas-app .community-cover>span{display:grid;place-items:center;max-width:95%;overflow:hidden;text-overflow:ellipsis;color:#fff}
+.atlas-app .community-detail-head>h2{font-size:clamp(27px,3.5vw,44px);font-weight:730;letter-spacing:-.045em;line-height:1.16;overflow-wrap:anywhere}
+.atlas-app .community-detail-head>p{font-size:14px;line-height:1.65;overflow-wrap:anywhere}
+.atlas-app .community-meta{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;font-size:13px}
+.atlas-app .community-meta>span{display:flex;align-items:center;gap:5px;min-width:0;flex-wrap:wrap;overflow-wrap:anywhere}
+.atlas-app .community-meta button{max-width:100%;overflow-wrap:anywhere;text-align:left}
+.atlas-app .community-actions{display:flex;flex-wrap:wrap;gap:9px}
+.atlas-app .community-actions>button{min-height:40px;max-width:100%;white-space:normal;text-align:center}
+.atlas-app .community-detail-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,245px);align-items:start;gap:20px}
+.atlas-app .community-detail-grid>section{min-width:0}
+.atlas-app .community-detail-grid>aside{min-width:0}
+.atlas-app .community-members-card{width:100%;min-width:0}
+.atlas-app .community-members-card>button{width:100%;min-width:0;display:flex;align-items:center;gap:9px;text-align:left}
+.atlas-app .community-members-card>button>span{display:flex;flex-direction:column;gap:4px;min-width:0;overflow-wrap:anywhere}
+.atlas-app .community-members-card .network-avatar{flex:0 0 34px}
+.atlas-app .community-composer{min-width:0;max-width:100%;width:100%;gap:12px}
+.atlas-app .community-composer textarea{width:100%;max-width:100%;min-width:0;min-height:130px;resize:vertical}
+.atlas-app .community-composer>div:last-child{display:flex;align-items:center;gap:9px;flex-wrap:wrap;min-width:0}
+.atlas-app .community-composer>div:last-child>span{flex:1 1 125px;overflow-wrap:anywhere}
+.atlas-app .community-composer>div:last-child>.btn{min-height:40px;white-space:normal}
+.community-admin-backdrop{position:fixed;inset:0;z-index:650;display:flex;align-items:center;justify-content:center;padding:clamp(8px,2vw,24px);background:rgba(15,23,19,.78);backdrop-filter:blur(4px)}
+.community-admin-backdrop>.community-admin-panel{display:flex;flex-direction:column;gap:12px;position:relative;width:min(100%,630px);max-height:calc(100dvh - 22px - env(safe-area-inset-top) - env(safe-area-inset-bottom));overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:clamp(15px,3vw,28px);border:1px solid var(--atlas-stroke);border-radius:12px;background:var(--atlas-paper);color:var(--atlas-ink)}
+.community-admin-title{display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:-15px;z-index:5;padding:7px 0 14px;background:var(--atlas-paper);border-bottom:1px solid var(--atlas-stroke)}
+.community-admin-title>strong{font-size:19px;letter-spacing:-.035em}
+.community-admin-title>button{flex:0 0 auto}
+.community-admin-panel :is(input:not([type=file]),textarea,select){display:block;width:100%;max-width:100%;min-width:0;padding:11px;border:1px solid var(--atlas-stroke);background:var(--atlas-surface);color:var(--atlas-ink);border-radius:7px;font-size:14px}
+.community-admin-panel textarea{min-height:84px;resize:vertical}
+.community-admin-panel .space-customization{display:flex;align-items:center;gap:10px;flex-wrap:wrap;max-width:100%;min-width:0}
+.community-admin-panel .space-control{max-width:100%}
+.community-admin-panel .space-picker-popover,.community-admin-panel .space-theme-popover{z-index:9;max-width:min(300px,calc(100vw - 54px))}
+.community-admin-panel>.btn{width:100%;min-height:43px;white-space:normal}
+.community-admin-panel>.danger-button{background:transparent;color:#c24834}
+@media(max-width:760px){
+ .atlas-app .community-detail-grid{grid-template-columns:minmax(0,1fr)!important;gap:15px!important}
+ .atlas-app .community-detail-head{gap:11px;padding-bottom:19px;margin-bottom:15px}
+ .atlas-app .community-cover{min-height:105px;max-height:180px}
+ .atlas-app .community-detail-head>h2{font-size:30px}
+ .atlas-app .community-meta{display:grid;grid-template-columns:1fr;gap:5px}
+ .atlas-app .community-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;width:100%}
+ .atlas-app .community-actions>button{width:100%;min-width:0;max-width:100%;padding:11px!important;font-size:13px}
+ .atlas-app .community-detail-grid>aside{grid-row:auto}
+ .atlas-app .community-members-card{padding:14px}
+ .atlas-app .community-composer{padding:14px;margin:10px 0}
+ .atlas-app .community-composer>div:last-child{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ .atlas-app .community-composer>div:last-child>span{grid-column:1/-1}
+ .atlas-app .community-composer>div:last-child>.btn{width:100%;min-width:0;text-align:center}
+ .community-admin-backdrop{padding:max(8px,env(safe-area-inset-top)) 8px max(8px,env(safe-area-inset-bottom))}
+ .community-admin-backdrop>.community-admin-panel{max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));padding:15px}
+ .community-admin-title{top:-15px}
+ .community-admin-title>strong{font-size:17px}
+ .community-admin-panel .space-customization{align-items:stretch;flex-direction:column}
+ .community-admin-panel .space-control,.community-admin-panel .space-picker-button,.community-admin-panel .file-btn{width:100%;justify-content:flex-start}
+}
+@media(max-width:390px){
+ .atlas-app .community-composer>div:last-child{grid-template-columns:1fr}
+ .atlas-app .community-composer>div:last-child>span{grid-column:1}
+}
