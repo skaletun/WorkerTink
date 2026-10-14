@@ -41,7 +41,8 @@ export default function UpdateGate({children}:UpdateGateProps){
    updatingRef.current=true;
    setPhase('updating');
    markCurrentBuild();
-   void updateSWRef.current(true).catch(async()=>{
+   const fallbackReload=window.setTimeout(()=>window.location.reload(),5000);
+   void updateSWRef.current(true).then(()=>{window.clearTimeout(fallbackReload);setNeedRefresh(false);setPhase('ready');updatingRef.current=false}).catch(async()=>{
      const registration=registrationRef.current;
      try{
        if(registration?.waiting){
@@ -57,7 +58,7 @@ export default function UpdateGate({children}:UpdateGateProps){
        }
      }catch{}
      window.location.reload();
-   }).catch(()=>resetFailedUpdate());
+   }).catch(()=>{window.clearTimeout(fallbackReload);resetFailedUpdate()});
  };
 
  useEffect(()=>{
