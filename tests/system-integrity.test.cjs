@@ -80,7 +80,8 @@ if(!update.includes('onRegisteredSW(swUrl,registration)')) throw new Error('PWA 
 if(!update.includes("cache:'no-store'")) throw new Error('PWA update check must bypass HTTP cache');
 if(!update.includes("'cache-control':'no-cache'")) throw new Error('PWA update check must send no-cache header');
 if(update.includes("updateSWRef.current(false)")) throw new Error('PWA update must not leave the worker waiting after confirmation');
-if(!update.includes("localStorage.removeItem(BUILD_STORAGE_KEY)")) throw new Error('failed update must reset build marker');
+if(!update.includes("localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID)")) throw new Error('current build marker must be reconciled after update');
+if(!update.includes('dismissUpdate')||!update.includes('setNeedRefresh(false)')) throw new Error('update dialog must support dismissal and recover after installation');
 if(!sw.includes("event.data?.type==='SKIP_WAITING'")||!sw.includes('self.skipWaiting()')) throw new Error('custom prompt service worker missing SKIP_WAITING handler');
 if(!update.includes('WTINKER')) throw new Error('UpdateGate brand was not migrated');
 if(!pull.includes('EDGE_START')||!pull.includes('TRIGGER_DISTANCE')) throw new Error('PWA pull-to-refresh thresholds missing');
