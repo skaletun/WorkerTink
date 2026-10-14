@@ -170,6 +170,16 @@ test('atlas zero rebuild: all application routes, orbital selector, launcher, mo
   for(const route of routes){
    await page.goto('?tab='+route,{waitUntil:'networkidle'});
    await expect(page.locator('.atlas-app')).toBeVisible();
+   if(route==='social'&&viewport.width===390){
+    const composer=page.locator('.canva-composer-head');
+    if(await composer.count()){
+     const sizes=await composer.evaluate(el=>{const a=el.querySelector('.network-avatar'),r=el.getBoundingClientRect(),b=a?.getBoundingClientRect();return {width:b?.width||0,height:b?.height||0,right:r.right,viewport:innerWidth,composerWidth:r.width}});
+     expect(sizes.width).toBeLessThanOrEqual(50);
+     expect(sizes.height).toBeLessThanOrEqual(50);
+     expect(sizes.right).toBeLessThanOrEqual(sizes.viewport+1);
+     expect(sizes.composerWidth).toBeGreaterThan(200);
+    }
+   }
    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-window.innerWidth);
    expect(overflow,theme+' '+viewport.width+' '+route).toBeLessThanOrEqual(2);
    if(route==='absence')expect(await page.locator('.atlas-time-off-hero h1').evaluate(el=>getComputedStyle(el).color)).toBe('rgb(25, 32, 21)');
