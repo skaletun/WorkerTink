@@ -23,6 +23,8 @@ for(const table of ['chat_media','chat_media_chunks']){
  assert.ok(found,table+' migration missing');
  db.exec(found[0]);
 }
+// Applied by the real 0018_network_identity_channels migration.
+db.exec('ALTER TABLE chat_media ADD COLUMN group_id TEXT');
 const now=Date.now();
 const ids={admin:'WTINKID-214994',worker:'WTINKID-100001',friend:'WTINKID-100002'};
 for(const [user,id] of Object.entries(ids)){
