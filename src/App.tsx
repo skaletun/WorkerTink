@@ -124,7 +124,7 @@ useEffect(()=>{if(!directoryConfigured||!authProfileReady||!state.directoryToken
   searchAction={()=>navigate('people')}
   title={heading}
   kicker={kicker}
-  version="7.6.2"
+  version="8.1.0"
   mobileItems={([['home','Главная'],['social','Сеть'],['chat','Чаты'],['work','Работа'],['profile','Профиль']] as [Tab,string][]).map(([id,label])=>({id,label,icon:<Icon name={id}/> }))}
   mobileMore={<button className={mobileMenuOpen||['people','communities','calendar','pay','absence','friends','notifications','settings','admin'].includes(tab)?'active':''} onClick={()=>setMobileMenuOpen(v=>!v)} aria-expanded={mobileMenuOpen} aria-label="Все разделы"><Icon name="settings"/><span>Ещё</span></button>}
 >
