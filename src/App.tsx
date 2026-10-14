@@ -5,8 +5,9 @@ import {getSocialNotifications} from './directory.ts';
 import {PublicProfileView,LegalSurface} from './ProfileFeatures.tsx';
 import {State,normalizeWTinkId,calcMonth,monthKey,periodsOverlap,isValidYmd,type UserProfile} from './core.ts';
 import {loadState,saveState,normalizeState,exportableState,saveAuthToken,clearAuthToken} from './storage.ts';
+import {readPendingWorkSetup,clearPendingWorkSetup} from './workSettings.ts';
 import {parseNotesMarkdown,notesExport} from './markdown.ts';
-import {directoryConfigured,updateProfile,syncPushReminders,getAuthStatus,getDirectoryFriends,heartbeatPresence,putChatKey,getOwnChatKey,checkUsername,updateUsername} from './directory.ts';
+import {directoryConfigured,updateProfile,syncPushReminders,getAuthStatus,getDirectoryFriends,heartbeatPresence,saveAccountSetup,putChatKey,getOwnChatKey,checkUsername,updateUsername} from './directory.ts';
 import NetworkView from './NetworkView.tsx';
 import WorkHubView from './WorkHubView.tsx';
 import NotificationsView from './NotificationsView.tsx';
@@ -31,6 +32,7 @@ type Tab='home'|'social'|'people'|'communities'|'work'|'calendar'|'pay'|'absence
 function App(){
  const [booting,setBooting]=useState(true);
  const [authProfileReady,setAuthProfileReady]=useState(false);
+ const [settingsEntry,setSettingsEntry]=useState<'account'|'work'>('account');
  const [state,setState]=useState<State>(loadState);const [tab,setTab]=useState<Tab>(()=>{const path=window.location.pathname.replace(/^\/WorkerTink(?=\/|$)/,'')||'/';const value=new URLSearchParams(window.location.search).get('tab');if(/^\/community\//i.test(path))return 'social';if(/^\/chat\/group\//i.test(path)||/^\/channel\//i.test(path))return 'chat';if(['home','social','people','communities','work','calendar','pay','absence','friends','chat','notifications','profile','settings','admin'].includes(value||''))return value as Tab;return 'home'});const [view,setView]=useState(()=>new Date());const [mobileMenuOpen,setMobileMenuOpen]=useState(false);
  useEffect(()=>{const timer=window.setTimeout(()=>setBooting(false),720);return()=>window.clearTimeout(timer)},[]);
  useEffect(()=>{window.scrollTo(0,0)},[tab]);
@@ -50,7 +52,7 @@ function App(){
    if(cancelled)return;
    attempts=0;
    saveAuthToken(state.directoryToken);
-   setState(current=>{const setup=result.setup;return {...current,profile:{...current.profile,...result.profile,isDev:isDevProfile(result.profile),isAdmin:isAdminProfile(result.profile)},onePassEnabled:result.security.onePassAvailable,...(setup?{salary:setup.salary,taxRate:setup.taxRate,stage:setup.stage,vacTotal:setup.vacTotal,startDate:setup.startDate,scheduleType:setup.scheduleType,scheduleShift:setup.scheduleShift,scheduleVakhtaMonths:setup.scheduleVakhtaMonths,schedulePairType:setup.schedulePairType,holidayCoeff:setup.holidayCoeff,nightExtraPercent:setup.nightExtraPercent,setupComplete:true}:{})}});
+   setState(current=>{const setup=readPendingWorkSetup(result.profile.profileId)?.setup||result.setup;return {...current,profile:{...current.profile,...result.profile,isDev:isDevProfile(result.profile),isAdmin:isAdminProfile(result.profile)},onePassEnabled:result.security.onePassAvailable,...(setup?{salary:setup.salary,taxRate:setup.taxRate,stage:setup.stage,vacTotal:setup.vacTotal,startDate:setup.startDate,scheduleType:setup.scheduleType,scheduleShift:setup.scheduleShift,scheduleVakhtaMonths:setup.scheduleVakhtaMonths,schedulePairType:setup.schedulePairType,holidayCoeff:setup.holidayCoeff,nightExtraPercent:setup.nightExtraPercent,setupComplete:true}:{})}});
    setAuthProfileReady(true);
   }catch(error){
    if(cancelled)return;
@@ -70,7 +72,31 @@ function App(){
  void syncAuth();
  return()=>{cancelled=true;if(retryTimer!==undefined)window.clearTimeout(retryTimer)};
 },[state.directoryToken]);
-useEffect(()=>{if(!directoryConfigured||!authProfileReady||!state.directoryToken||!state.profile.profileId)return;let cancelled=false;(async()=>{try{const remote=await getOwnChatKey(state.directoryToken);if(cancelled)return;try{const id=await getChatIdentityMatching(state.profile.profileId,remote.key.publicKey);if(!cancelled)await putChatKey(id.publicKey,state.directoryToken);return}catch{} }catch{} try{const id=await getChatIdentity(state.profile.profileId);if(!cancelled)await putChatKey(id.publicKey,state.directoryToken)}catch{}})();return()=>{cancelled=true}},[authProfileReady,state.directoryToken,state.profile.profileId]);
+useEffect(()=>{
+ if(!directoryConfigured||!authProfileReady||!state.directoryToken||!state.profile.profileId)return;
+ const token=state.directoryToken,profileId=state.profile.profileId;
+ let cancelled=false,busy=false;
+ const syncPending=async()=>{
+  if(cancelled||busy)return;
+  const pending=readPendingWorkSetup(profileId);
+  if(!pending)return;
+  busy=true;
+  try{
+   await saveAccountSetup(pending.setup,token);
+   if(!cancelled&&clearPendingWorkSetup(profileId,pending.updatedAt))
+    window.dispatchEvent(new Event('workertink:work-synced'));
+  }catch{/* The local copy is durable; retry when online or visible. */}
+  finally{busy=false}
+ };
+ void syncPending();
+ const timer=window.setInterval(()=>void syncPending(),30000);
+ const onOnline=()=>void syncPending();
+ const onVisible=()=>{if(document.visibilityState==='visible')void syncPending()};
+ window.addEventListener('online',onOnline);
+ document.addEventListener('visibilitychange',onVisible);
+ return()=>{cancelled=true;window.clearInterval(timer);window.removeEventListener('online',onOnline);document.removeEventListener('visibilitychange',onVisible)};
+},[authProfileReady,state.directoryToken,state.profile.profileId]);
+ useEffect(()=>{if(!directoryConfigured||!authProfileReady||!state.directoryToken||!state.profile.profileId)return;let cancelled=false;(async()=>{try{const remote=await getOwnChatKey(state.directoryToken);if(cancelled)return;try{const id=await getChatIdentityMatching(state.profile.profileId,remote.key.publicKey);if(!cancelled)await putChatKey(id.publicKey,state.directoryToken);return}catch{} }catch{} try{const id=await getChatIdentity(state.profile.profileId);if(!cancelled)await putChatKey(id.publicKey,state.directoryToken)}catch{}})();return()=>{cancelled=true}},[authProfileReady,state.directoryToken,state.profile.profileId]);
  useEffect(()=>{if(!directoryConfigured||!state.directoryToken)return;const timer=window.setTimeout(()=>{void syncPushReminders(buildPushReminders(state),state.directoryToken).catch(()=>{})},1200);return()=>window.clearTimeout(timer)},[state.directoryToken,state.notifications.enabled,state.notifications.shifts,state.notifications.absences,state.notifications.payroll,state.notifications.groupMessages,state.notifications.channelInvites,state.notifications.social,state.notifications.events,state.startDate,state.scheduleType,state.scheduleShift,state.schedulePairType,state.scheduleVakhtaMonths,state.vacations,state.sickLeaves,state.paymentDates,state.shiftOverrides]);
  useEffect(()=>{if(!directoryConfigured||!state.directoryToken||!state.profile.profileId)return;let cancelled=false;const beat=async()=>{if(cancelled)return;try{await heartbeatPresence(state.directoryToken)}catch{}};void beat();const timer=window.setInterval(beat,20000);return()=>{cancelled=true;window.clearInterval(timer)}},[state.directoryToken,state.profile.profileId]);
  useEffect(()=>{if(!directoryConfigured||!state.directoryToken||!state.profile.profileId||!isElectronDesktop||!state.notifications.enabled)return;let cancelled=false;let initialized=false;const key='workertink:desktop:last-notification';const poll=async()=>{try{const result=await getSocialNotifications(state.directoryToken);if(cancelled)return;const rows=result.notifications||[];if(!rows.length)return;const lastTime=Number(localStorage.getItem(key+'-time')||0);const newest=rows[0];const fresh=initialized?rows.filter((n:any)=>Number(n.createdAt||0)>lastTime).slice(0,3):[];localStorage.setItem(key,String(newest.id));localStorage.setItem(key+'-time',String(newest.createdAt||Date.now()));if(initialized)for(const n of fresh){sounds.notification();showDesktopNotification({title:n.title||'WTinker',body:n.body||'Новое уведомление',url:n.url||'./?tab=notifications',tag:`wtink-${n.id}`});}initialized=true}catch{}};void poll();const timer=window.setInterval(()=>void poll(),25000);return()=>{cancelled=true;window.clearInterval(timer)}},[state.directoryToken,state.profile.profileId,state.notifications.enabled]);
@@ -90,7 +116,7 @@ useEffect(()=>{if(!directoryConfigured||!authProfileReady||!state.directoryToken
  const exportAllNotes=()=>{const dates=Object.keys(state.shiftNotes).filter(d=>state.shiftNotes[d]?.trim()).sort();if(!dates.length){setNotice('Нет заметок для экспорта');return}download('workertink-shift-notes.md',notesExport(state,dates));setNotice('Заметки экспортированы в MD')};
  const navItems:[Tab,string,string][]=[['home','Главная','Ваш рабочий контур'],['social','Лента','Публикации и рабочие новости'],['people','Люди','Коллеги и профессиональные связи'],['communities','Сообщества','Команды и профессиональные группы'],['chat','Чаты','Личные, группы и каналы'],['work','Работа','Рабочая сводка'],['calendar','Календарь','Рабочие смены и заметки'],['pay','Зарплата','Начисления и выплаты'],['absence','Отпуск и больничные','Периоды отсутствия'],['notifications','Уведомления','Социальные и рабочие события'],['friends','Друзья','Контакты и заявки'],['profile','Профиль','Ваша профессиональная страница'],['settings','Настройки','Аккаунт и безопасность'],...(isAdminProfile(state.profile)?[['admin','Админ','Управление каталогом'] as [Tab,string,string]]:[])];
  const saveUsername=async()=>{const value=usernameDraft.trim().replace(/^@/,'');if(!/^[A-Za-z0-9_]{3,32}$/.test(value)){setNotice('Username: 3–32 символа, только латиница, цифры и _');return}setUsernameBusy(true);try{const check=await checkUsername(value);if(!check.available){setNotice('Этот username уже занят');return}const r=await updateUsername(value,state.directoryToken);setState(s=>({...s,profile:{...s.profile,...r.profile}}));setUsernameGate(false);setNotice(`Ваш username: @${value}`)}catch(e){setNotice(String(e).includes('USERNAME_TAKEN')?'Этот username уже занят':'Не удалось сохранить username')}finally{setUsernameBusy(false)}};
- const syncTabUrl=(next:Tab)=>{const base=window.location.hostname.endsWith('github.io')?'/WorkerTink':'';const pathname=base?base+'/':'/';const url=new URL(window.location.href);url.pathname=pathname;url.searchParams.delete('wtRoute');url.searchParams.set('tab',next);url.hash='';window.history.replaceState({},'',url.pathname+url.search+url.hash)}; const navigate=(next:Tab)=>{setTab(next);setMobileMenuOpen(false);syncTabUrl(next);window.scrollTo(0,0)};
+ const syncTabUrl=(next:Tab)=>{const base=window.location.hostname.endsWith('github.io')?'/WorkerTink':'';const pathname=base?base+'/':'/';const url=new URL(window.location.href);url.pathname=pathname;url.searchParams.delete('wtRoute');url.searchParams.set('tab',next);url.hash='';window.history.replaceState({},'',url.pathname+url.search+url.hash)}; const navigate=(next:Tab)=>{if(next==='settings')setSettingsEntry('account');setTab(next);setMobileMenuOpen(false);syncTabUrl(next);window.scrollTo(0,0)};
  const openNotification=(notification:{url:string})=>{try{const target=new URL(notification.url||'./?tab=notifications',window.location.href);const base=window.location.hostname.endsWith('github.io')?'/WorkerTink':'';const path=target.pathname.startsWith(base)?target.pathname.slice(base.length)||'/':target.pathname;window.history.replaceState({},'',`${path}${target.search}${target.hash}`);const requested=target.searchParams.get('tab');if(requested&&['home','social','people','communities','work','calendar','pay','absence','friends','chat','notifications','profile','settings','admin'].includes(requested))setTab(requested as Tab);else if(path.startsWith('/community/'))setTab('social');else if(path.startsWith('/channel/')||path.startsWith('/chat/'))setTab('chat');else if(path.startsWith('/user/'))setTab('profile');else setTab('notifications');setMobileMenuOpen(false)}catch{navigate('notifications')}};
  const openProfile=(profile:UserProfile)=>{const id=normalizeWTinkId(profile.profileId);const cached=id===normalizeWTinkId(state.profile.profileId)?state.profile:Object.values(state.friends).find(x=>normalizeWTinkId(x.profile.profileId)===id)?.profile;const merged={...(cached||{}),...profile,username:profile.username||cached?.username||undefined,banner:profile.banner||cached?.banner||''};if(merged.username){const base=window.location.hostname.endsWith('github.io')?'/WorkerTink':'';window.history.pushState({},'',base+'/user/'+encodeURIComponent(merged.username));setViewedProfile({...merged,isDev:isDevProfile(merged),isAdmin:isAdminProfile(merged)});return}setViewedProfile({...merged,isDev:isDevProfile(merged),isAdmin:isAdminProfile(merged)})};
  const openChat=(profileId:string)=>{syncTabUrl('chat');const url=new URL(window.location.href);url.searchParams.set('chatWith',profileId);window.history.replaceState({},'',url.pathname+url.search);setTab('chat')};
@@ -132,7 +158,7 @@ useEffect(()=>{if(!directoryConfigured||!authProfileReady||!state.directoryToken
  <div className="tab-stage" key={tab}>
  {tab==='home'&&<HomeView state={state} patch={patch} onNotice={setNotice} go={navigate}/>}
  {tab==='social'&&<NetworkView token={state.directoryToken} profile={state.profile} onNotice={setNotice} onChat={openChat} onProfile={openProfile} initialArea="feed" initialGroupSlug={cleanRoute.match(/^\/community\/([^/]+)/)?.[1]}/>} {tab==='people'&&<NetworkView token={state.directoryToken} profile={state.profile} onNotice={setNotice} onChat={openChat} onProfile={openProfile} initialArea="people"/>} {tab==='communities'&&<NetworkView token={state.directoryToken} profile={state.profile} onNotice={setNotice} onChat={openChat} onProfile={openProfile} initialArea="groups"/>}
- {tab==='work'&&<WorkHubView state={state} calc={calc} view={view} onNetwork={()=>navigate('social')} onNavigate={next=>navigate(next)} token={state.directoryToken} onNotice={setNotice}/>}{tab==='calendar'&&<CalendarView state={state} view={view} days={monthDays} calc={calc} shiftMonth={n=>setView(new Date(view.getFullYear(),view.getMonth()+n,1))} onPay={()=>navigate('pay')} onAbsence={()=>navigate('absence')} onEdit={setEditorDate}/>}
+ {tab==='work'&&<WorkHubView state={state} calc={calc} view={view} onNetwork={()=>navigate('social')} onNavigate={next=>navigate(next)} onEditWork={()=>{navigate('settings');setSettingsEntry('work')}} token={state.directoryToken} onNotice={setNotice}/>}{tab==='calendar'&&<CalendarView state={state} view={view} days={monthDays} calc={calc} shiftMonth={n=>setView(new Date(view.getFullYear(),view.getMonth()+n,1))} onPay={()=>navigate('pay')} onAbsence={()=>navigate('absence')} onEdit={setEditorDate}/>}
  {tab==='pay'&&<PayView state={state} calc={calc} keyMonth={key} payment={payment} setAdvance={setAdvance} goMonth={n=>setView(new Date(view.getFullYear(),view.getMonth()+n,1))} goYear={n=>setView(new Date(view.getFullYear()+n,view.getMonth(),1))}/>} 
  {tab==='absence'&&<AbsenceView state={state} vac={vac} sick={sick} setVac={setVac} setSick={setSick} addPeriod={addPeriod} removePeriod={removePeriod}/>}
  {tab==='friends'&&<FriendsView state={state} setState={setState} onNotice={setNotice} onOpenChat={openChat} onProfile={openProfile}/>}
@@ -140,7 +166,7 @@ useEffect(()=>{if(!directoryConfigured||!authProfileReady||!state.directoryToken
  {tab==='chat'&&<ChatsHub token={state.directoryToken} profile={state.profile} state={state} onStateChange={patch} onNotice={setNotice} onProfile={openProfile} routePath={cleanRoute}/>}
  {tab==='profile'&&<ProfileView state={state} setState={setState} token={state.directoryToken} onNotice={setNotice} onSettings={()=>navigate('settings')}/>} 
  {tab==='admin'&&isAdminProfile(state.profile)&&<AdminView token={state.directoryToken} onNotice={setNotice}/>}
- {tab==='settings'&&<SettingsView state={state} patch={patch} exportData={exportData} importData={importData} importNotes={importNotes} exportAllNotes={exportAllNotes} reopenSetup={()=>patch({setupComplete:false})} onNotice={setNotice} isAdmin={isAdminProfile(state.profile)}/>} 
+ {tab==='settings'&&<SettingsView state={state} patch={patch} exportData={exportData} importData={importData} importNotes={importNotes} exportAllNotes={exportAllNotes} reopenSetup={()=>patch({setupComplete:false})} initialSection={settingsEntry} onNotice={setNotice} isAdmin={isAdminProfile(state.profile)}/>} 
  </div>
  <NotificationToasts token={state.directoryToken} onOpen={openNotification}/>
  {editorDate&&<ShiftEditor state={state} date={editorDate} setState={setState} close={()=>setEditorDate(null)} onNotice={setNotice}/>} {notice&&<button className="toast" onClick={()=>setNotice('')}>{notice}<span aria-hidden="true"><Icon name="close" size={14}/></span></button>}</div>
