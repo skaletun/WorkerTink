@@ -86,7 +86,7 @@ function LazyChatMedia({kind,url,mediaId,iv,token,profileId,peerPublicKey,mime,n
    }finally{if(!cancelled)setLoading(false)}
   };
   const observer=typeof IntersectionObserver!=='undefined'&&host.current?
-   new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){observer.disconnect();void load()}},{rootMargin:'500px'}):null;
+   new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){observer?.disconnect();void load()}},{rootMargin:'500px'}):null;
   if(observer)observer.observe(host.current!);else void load();
   return()=>{cancelled=true;observer?.disconnect();if(objectUrl)URL.revokeObjectURL(objectUrl)};
  },[url,mediaId,iv,token,profileId,JSON.stringify(peerPublicKey||null),mime,attempt]);
