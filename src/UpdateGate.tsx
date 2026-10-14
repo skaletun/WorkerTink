@@ -27,6 +27,8 @@ export default function UpdateGate({children}:UpdateGateProps){
    }catch{}
  };
 
+ const dismissUpdate=()=>{setNeedRefresh(false);setPhase('ready');updatingRef.current=false;try{sessionStorage.setItem(DISMISS_KEY,BUILD_ID)}catch{}};
+
  const resetFailedUpdate=()=>{
    updatingRef.current=false;
    setPhase('ready');
