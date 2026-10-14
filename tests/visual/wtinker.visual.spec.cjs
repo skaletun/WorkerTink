@@ -221,8 +221,7 @@ test('8.1.0 regression: QR controls, avatars, notes and stale update recovery',a
   const slider=page.locator('.avatar-editor-controls input[type="range"]').first();
   await slider.focus();
   await slider.press('End');
-  const after=await preview.evaluate(el=>getComputedStyle(el).transform);
-  expect(after).not.toBe(before);
+  await expect.poll(()=>preview.evaluate(el=>getComputedStyle(el).transform)).not.toBe(before);
   await page.screenshot({path:`visual-audit-artifacts/v810-${viewport.width}-avatar-editor.png`,fullPage:true});
   await page.locator('.avatar-editor-modal .modal-actions .btn.primary').click();
   await expect(page.locator('.avatar-editor-modal')).toHaveCount(0);
