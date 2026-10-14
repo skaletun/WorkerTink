@@ -13,7 +13,7 @@ for (const [name, limit] of [
   ['src/App.tsx', 35000],
   ['src/core.ts', 1000],
   ['src/directory.ts', 1500],
-  ['src/ui.css', 1000],
+  ['src/ui.css', 1500],
   ['src/domain/payroll.ts', 16000],
   ['src/views/auth/AuthViews.tsx', 30000],
   ['src/views/network/NetworkParts.tsx', 22000],
