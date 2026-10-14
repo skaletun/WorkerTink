@@ -67,20 +67,6 @@ WTinker объединяет профессиональную сеть и Work O
 | Данные | localStorage, IndexedDB, серверные хранилища для сетевых функций |
 | Проверки | Node regression & integration, TypeScript, Playwright desktop/mobile, CI и smoke |
 
-### Запуск для разработчиков
-
-Требуется актуальная поддерживаемая версия Node.js.
-
-```bash
-git clone https://github.com/skaletun/WorkerTink.git
-cd WorkerTink
-npm install
-npm test
-npm run build
-npm run dev
-```
-
-Взаимодействие с Directory API настраивается отдельно в `directory-api/`; см. [документацию сервера](./directory-api/README.md). Без настроенного каталога сетевые функции будут недоступны.
 
 ### Контроль качества и выпуск
 
