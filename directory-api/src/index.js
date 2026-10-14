@@ -927,6 +927,31 @@ async function handle(request, env) {
     return json({ok: true, deletedAt: now}, 200, origin);
   }
 
+  const qrStylePath=path.match(/^\/profiles\/([^/]+)\/qr-style$/);
+  const qrStyleDefault={shape:'Rounded',foreground:'#142a23',background:'#ffffff',card:'Soft'};
+  if(qrStylePath && request.method==='GET'){
+    const id=normalizeId(decodeURIComponent(qrStylePath[1]));
+    if(!validId(id))return json({error:'USER_NOT_FOUND'},404,origin);
+    const person=await env.DB.prepare('SELECT 1 FROM profiles WHERE wtink_id=?1').bind(id).first();
+    if(!person)return json({error:'USER_NOT_FOUND'},404,origin);
+    const row=await env.DB.prepare('SELECT shape,foreground,background,card,updated_at FROM profile_qr_styles WHERE profile_id=?1').bind(id).first();
+    return json({style:row?{shape:row.shape,foreground:row.foreground,background:row.background,card:row.card}:qrStyleDefault,updatedAt:Number(row?.updated_at||0)},200,origin);
+  }
+  if(path==='/profiles/me/qr-style'&&request.method==='PUT'){
+    const owner=await authProfile(request,env);
+    if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
+    const input=(await body(request))?.style;
+    const shape=input?.shape,card=input?.card,foreground=input?.foreground,background=input?.background;
+    if(!['Square','Rounded','Dots'].includes(shape)||!['Minimal','Soft','Poster'].includes(card)
+      ||typeof foreground!=='string'||!/^#[0-9a-f]{6}$/i.test(foreground)
+      ||typeof background!=='string'||!/^#[0-9a-f]{6}$/i.test(background))
+      return json({error:'INVALID_QR_STYLE'},400,origin);
+    const now=Date.now();
+    await env.DB.prepare('INSERT INTO profile_qr_styles(profile_id,shape,foreground,background,card,updated_at) VALUES(?1,?2,?3,?4,?5,?6) ON CONFLICT(profile_id) DO UPDATE SET shape=excluded.shape,foreground=excluded.foreground,background=excluded.background,card=excluded.card,updated_at=excluded.updated_at')
+      .bind(owner.wtink_id,shape,foreground.toLowerCase(),background.toLowerCase(),card,now).run();
+    return json({ok:true,style:{shape,foreground:foreground.toLowerCase(),background:background.toLowerCase(),card},updatedAt:now},200,origin);
+  }
+
   const profileMatch = path.match(/^\/profiles\/([^/]+)$/);
   if (request.method === 'GET' && profileMatch) {
     const wtinkId = normalizeId(decodeURIComponent(profileMatch[1]));
