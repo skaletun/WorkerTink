@@ -1,12 +1,13 @@
 import type {State} from '../core.ts';
-import {getScheduledShift,ymd} from '../core.ts';
+import {getWorkingShift,ymd} from '../core.ts';
 
 export function buildPushReminders(state:State){
  const reminders:{id:string;kind:'shift'|'absence'|'payroll';dueAt:number;title:string;body:string;tag:string}[]=[];
+ if(!state.notifications.enabled)return reminders;
  const now=new Date();
  const pushAt=(date:Date,hour:number,minute:number)=>{const d=new Date(date);d.setHours(hour,minute,0,0);return d.getTime()};
  if(state.notifications.shifts){
-  for(let i=0;i<90;i++){const date=new Date(now.getFullYear(),now.getMonth(),now.getDate()+i);const shift=getScheduledShift(state,date);if(shift==='off')continue;const hour=shift==='night'?20:8;const dueAt=pushAt(date,hour,0);if(dueAt<Date.now()+30*1000)continue;const dateKey=ymd(date);reminders.push({id:`shift:${dateKey}:${shift}`,kind:'shift',dueAt,title:'Предстоящая смена',body:`Сегодня ${shift==='night'?'ночная':shift==='full'?'суточная':'дневная'} смена.`,tag:`workertink-shift-${dateKey}`})}
+  for(let i=0;i<90;i++){const date=new Date(now.getFullYear(),now.getMonth(),now.getDate()+i);const shift=getWorkingShift(state,date);if(shift==='off')continue;const hour=shift==='night'?20:8;const dueAt=pushAt(date,hour,0);if(dueAt<Date.now()+30*1000)continue;const dateKey=ymd(date);reminders.push({id:`shift:${dateKey}:${shift}`,kind:'shift',dueAt,title:'Предстоящая смена',body:`Сегодня ${shift==='night'?'ночная':shift==='full'?'суточная':'дневная'} смена.`,tag:`workertink-shift-${dateKey}`})}
  }
  if(state.notifications.absences){
   for(const period of [...state.vacations.map(p=>({...p,kind:'Отпуск'})),...state.sickLeaves.map(p=>({...p,kind:'Больничный'}))]){const dueAt=pushAt(new Date(`${period.start}T12:00:00`),9,0);if(dueAt>=Date.now()-24*60*60*1000)reminders.push({id:`absence:${period.kind}:${period.start}:${period.end}`,kind:'absence',dueAt,title:`Начало: ${period.kind}`,body:`Период начинается ${period.start}.`,tag:`workertink-absence-${period.start}-${period.kind}`})}
