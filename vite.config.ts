@@ -23,7 +23,7 @@ export default defineConfig({
         theme_color:'#18271f',
         background_color:'#18271f',
         lang:'ru',
-        icons:[{src:'icon.svg',sizes:'any',type:'image/svg+xml',purpose:'any maskable'}]
+        icons:[{src:'icon-256.png',sizes:'256x256',type:'image/png',purpose:'any maskable'},{src:'icon.svg',sizes:'any',type:'image/svg+xml',purpose:'any'}]
       },
       injectManifest:{globPatterns:['**/*.{js,css,html,svg,png,ico}']}
     })
