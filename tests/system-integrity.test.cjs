@@ -99,5 +99,5 @@ if(!workflow.includes('VITE_BUILD_ID: ${{ github.sha }}')) throw new Error('prod
 console.log('WTinker system integrity regression tests: OK');
 // The generated logo is shipped to all browser, iOS and desktop icon paths.
 for(const name of ['public/icon-256.png','public/apple-touch-icon.png','build/icons/icon.png','build/icons/icon.ico','public/icon.svg','icon.svg'])if(!fs.existsSync(path.join(root,name)))throw new Error('Missing branded icon asset: '+name);
-if(!read('index.html').includes('icon-256.png'))throw new Error('Website favicon is not the generated icon');
-if(!read('src/AppShell.tsx').includes('src="./icon-256.png"'))throw new Error('Application header is missing generated logo');
+if(!fs.readFileSync(path.join(root,'index.html'),'utf8').includes('icon-256.png'))throw new Error('Website favicon is not the generated icon');
+if(!fs.readFileSync(path.join(root,'src/AppShell.tsx'),'utf8').includes('src="./icon-256.png"'))throw new Error('Application header is missing generated logo');
