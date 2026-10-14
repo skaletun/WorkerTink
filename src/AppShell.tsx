@@ -25,7 +25,7 @@ export default function AppShell({items,active,onNavigate,profile,profileAction,
  return <div className="atlas-app">
   <a href="#wt-main" className="atlas-skip">Перейти к содержимому</a>
   <header className="atlas-bar">
-   <button className="atlas-wordmark" type="button" onClick={()=>navigate('home')} aria-label="WTinker — главная"><span className="atlas-asterisk">✳</span><strong>WTINKER</strong><span className="atlas-wordmark-n">/ SPACE</span></button>
+   <button className="atlas-wordmark" type="button" onClick={()=>navigate('home')} aria-label="WTinker — главная"><span className="atlas-asterisk"><img src="./icon-256.png" alt="" /></span><strong>WTINKER</strong><span className="atlas-wordmark-n">/ SPACE</span></button>
    <div className="atlas-bar-locations"><span>ВАШЕ ПРОСТРАНСТВО</span><span className="atlas-path-separator">→</span><strong>{title}</strong></div>
    <div className="atlas-bar-actions"><button onClick={searchAction} aria-label="Найти людей" title="Поиск" type="button"><Icon name="search" size={18}/></button><button onClick={()=>navigate('notifications')} title="Уведомления" aria-label="Уведомления" type="button"><Icon name="bell" size={18}/></button><button onClick={profileAction} className="atlas-user" title="Профиль" type="button" aria-label="Открыть профиль">{profile}</button></div>
   </header>

@@ -6,7 +6,7 @@ import {directoryConfigured,registerProfile,loginAccount,getOnePassAvailability,
 import {Icon} from '../../Icon.tsx';
 import {isDevProfile,isAdminProfile,Button,Field,Avatar} from '../../app/AppShared.tsx';
 
-export function BootScreen(){return <div className="wt-boot-screen" role="status" aria-label="WTinker загружается"><div className="boot-orbit"><div className="boot-logo-wrap"><img src="./icon.svg" alt="WTinker" className="boot-logo"/></div></div><div className="boot-copy"><strong>WTinker</strong><span>Подготавливаем ваше пространство</span></div><div className="boot-progress"><i/></div></div>}
+export function BootScreen(){return <div className="wt-boot-screen" role="status" aria-label="WTinker загружается"><div className="boot-orbit"><div className="boot-logo-wrap"><img src="./icon-256.png" alt="WTinker" className="boot-logo"/></div></div><div className="boot-copy"><strong>WTinker</strong><span>Подготавливаем ваше пространство</span></div><div className="boot-progress"><i/></div></div>}
 
 export {default as SetupWizard} from './SetupWizard.tsx';
 
