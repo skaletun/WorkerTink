@@ -198,6 +198,14 @@ test('8.1.0 regression: QR controls, avatars, notes and stale update recovery',a
   expect(avatarSize).toBeGreaterThan(90);
   await page.getByRole('button',{name:'QR-код'}).first().click();
   await expect(page.locator('.qr-modal-branded .qr-render svg')).toBeVisible();
+  if(viewport.width<500){
+   const geometry=await page.locator('.qr-modal-branded').evaluate(el=>({top:el.getBoundingClientRect().top,bottom:el.getBoundingClientRect().bottom,height:window.innerHeight,scrollable:el.scrollHeight>el.clientHeight}));
+   expect(geometry.top).toBeGreaterThanOrEqual(-1);
+   expect(geometry.bottom).toBeLessThanOrEqual(geometry.height+1);
+   await page.locator('.qr-modal-branded').evaluate(el=>el.scrollTop=el.scrollHeight);
+   await expect(page.getByRole('button',{name:'Скачать SVG'})).toBeInViewport();
+  }
+
   await page.getByLabel('Форма QR').selectOption('Dots');
   await expect(page.locator('.qr-render')).toHaveAttribute('data-shape','Dots');
   const circles=await page.locator('.qr-render svg circle').count();
@@ -229,6 +237,14 @@ test('8.1.0 regression: QR controls, avatars, notes and stale update recovery',a
   await page.locator('button.calendar-day:not(.pre-start)').first().click();
   const editor=page.locator('.shift-modal');
   await expect(editor).toBeVisible();
+  if(viewport.width<500){
+   const geometry=await editor.evaluate(el=>({top:el.getBoundingClientRect().top,bottom:el.getBoundingClientRect().bottom,height:window.innerHeight}));
+   expect(geometry.top).toBeGreaterThanOrEqual(-1);
+   expect(geometry.bottom).toBeLessThanOrEqual(geometry.height+1);
+   await editor.evaluate(el=>el.scrollTop=el.scrollHeight);
+   await expect(editor.locator('.modal-actions .btn.primary')).toBeInViewport();
+  }
+
   await expect(editor.locator('.markdown-toolbar button')).toHaveCount(9);
   await expect(editor.locator('.markdown-wysiwyg')).toBeVisible();
   await editor.locator('.markdown-wysiwyg').fill('Заметка 8.1.0: новый редактор');
