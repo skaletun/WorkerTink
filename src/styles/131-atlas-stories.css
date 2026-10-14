@@ -1,5 +1,6 @@
 @import './132-profile-fixes.css';
 @import './133-editors-qr.css';
+@import './134-mobile-modals.css';
 /* Entire feed article renderer uses a date gutter and open journal, not old social cards. */
 .atlas-app .atlas-story{display:grid;grid-template-columns:83px minmax(0,1fr);gap:20px;padding:30px 0!important;border:0!important;border-bottom:1px solid var(--atlas-stroke)!important;border-radius:0!important;background:transparent!important}
 .atlas-story-margin{display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding-top:8px}
