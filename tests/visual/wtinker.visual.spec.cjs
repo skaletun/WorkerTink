@@ -179,3 +179,52 @@ test('atlas zero rebuild: all application routes, orbital selector, launcher, mo
   await context.close();
  }
 });
+
+test('8.1.0 regression: QR controls, avatars, notes and stale update recovery',async({browser})=>{
+ for(const viewport of [{width:1440,height:900},{width:390,height:844}]){
+  const context=await browser.newContext({viewport,acceptDownloads:true});
+  const page=await context.newPage();
+  await page.addInitScript(({payload})=>{
+   localStorage.setItem('workertink:v6',JSON.stringify(payload));
+   localStorage.setItem('workertink:auth-token',payload.directoryToken);
+   localStorage.setItem('workertink:last-seen-build','obsolete-7.6.2');
+  },{payload:state});
+  await page.route('**/*',r=>r.request().url().includes('workertink-directory.workertink-directory.workers.dev')?r.abort():r.continue());
+  await page.goto('?tab=profile',{waitUntil:'networkidle'});
+  await expect(page.locator('.update-gate')).toHaveCount(0);
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href',/8\.1\.0/);
+  await expect(page.locator('.canva-profile-identity>.avatar')).toBeVisible();
+  const avatarSize=await page.locator('.canva-profile-identity>.avatar').evaluate(el=>el.getBoundingClientRect().width);
+  expect(avatarSize).toBeGreaterThan(90);
+  await page.getByRole('button',{name:'QR-код'}).first().click();
+  await expect(page.locator('.qr-modal-branded .qr-render svg')).toBeVisible();
+  await page.getByLabel('Форма QR').selectOption('Dots');
+  await expect(page.locator('.qr-render')).toHaveAttribute('data-shape','Dots');
+  const circles=await page.locator('.qr-render svg circle').count();
+  expect(circles).toBeGreaterThan(20);
+  await page.getByLabel('Цвет QR').fill('#be3214');
+  await expect.poll(()=>page.locator('.qr-render svg').evaluate(el=>el.outerHTML.includes('#be3214'))).toBe(true);
+  await page.getByLabel('Оформление QR').selectOption('Poster');
+  await expect(page.locator('.qr-render')).toHaveAttribute('data-theme','Poster');
+  const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'Скачать SVG'}).click()]);
+  expect(download.suggestedFilename()).toMatch(/branded-qr\.svg$/);
+  await page.screenshot({path:`visual-audit-artifacts/v810-${viewport.width}-qr.png`,fullPage:true});
+  await page.getByRole('button',{name:'Закрыть QR'}).click();
+  await page.getByRole('button',{name:'QR-код'}).first().click();
+  await expect(page.getByLabel('Форма QR')).toHaveValue('Dots');
+  await page.getByRole('button',{name:'Закрыть QR'}).click();
+  await page.goto('?tab=calendar',{waitUntil:'networkidle'});
+  await page.locator('button.calendar-day:not(.pre-start)').first().click();
+  const editor=page.locator('.shift-modal');
+  await expect(editor).toBeVisible();
+  await expect(editor.locator('.markdown-toolbar button')).toHaveCount(9);
+  await expect(editor.locator('.markdown-wysiwyg')).toBeVisible();
+  await editor.locator('.markdown-wysiwyg').fill('Заметка 8.1.0: новый редактор');
+  await page.screenshot({path:`visual-audit-artifacts/v810-${viewport.width}-note-editor.png`,fullPage:true});
+  await editor.locator('.modal-actions .btn.primary').click();
+  await expect(editor).toHaveCount(0);
+  await page.reload({waitUntil:'networkidle'});
+  await expect(page.locator('.update-gate')).toHaveCount(0);
+  await context.close();
+ }
+});
