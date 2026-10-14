@@ -141,6 +141,23 @@ export async function decryptChatMedia(profileId:string,peerPublicKey:JsonWebKey
  return crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(iv)},key,ciphertext);
 }
 
+// Chat identities can be rotated/restored on a device. Try every locally
+// retained identity when decrypting older media, without ever uploading keys.
+export async function decryptChatMediaCandidates(profileId:string,peerPublicKey:JsonWebKey,iv:string,ciphertext:ArrayBuffer):Promise<ArrayBuffer>{
+ const candidates=await getChatIdentityCandidates(profileId);
+ if(!candidates.length)throw new Error('E2E_IDENTITY_MISSING');
+ const peer=await crypto.subtle.importKey('jwk',peerPublicKey,{name:'ECDH',namedCurve:'P-256'},false,[]);
+ let lastError:unknown=new Error('E2E_DECRYPT_FAILED');
+ for(const identity of candidates){
+  try{
+   const privateKey=await crypto.subtle.importKey('jwk',identity.privateKey,{name:'ECDH',namedCurve:'P-256'},false,['deriveKey']);
+   const key=await crypto.subtle.deriveKey({name:'ECDH',public:peer},privateKey,{name:'AES-GCM',length:256},false,['decrypt']);
+   return await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(iv)},key,ciphertext);
+  }catch(error){lastError=error}
+ }
+ throw lastError;
+}
+
 export async function encryptChat(profileId:string,peerPublicKey:JsonWebKey,payload:{kind:ChatEnvelope['kind'];text?:string;blob?:ArrayBuffer;name?:string;mime?:string}):Promise<ChatEnvelope>{
  const key=await derive(profileId,peerPublicKey);
  const iv=crypto.getRandomValues(new Uint8Array(12));
