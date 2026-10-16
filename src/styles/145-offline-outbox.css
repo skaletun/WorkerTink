@@ -1,0 +1,18 @@
+/* Offline outbox is a real data-control surface, not an empty dashboard card. */
+.wt-offline-queue{min-width:0}
+.wt-offline-queue-list{display:flex;flex-direction:column;margin-top:16px;border-top:1px solid var(--line)}
+.wt-offline-queue-item{display:flex;align-items:center;justify-content:space-between;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)}
+.wt-offline-queue-item>div:first-child{display:flex;flex-direction:column;gap:5px;min-width:0}
+.wt-offline-queue-item b{font-size:13px;font-weight:660;overflow-wrap:anywhere;color:var(--ink)}
+.wt-offline-queue-item small{font-size:11px;line-height:1.6;color:var(--muted)}
+.wt-offline-queue-actions{display:flex;flex:0 0 auto;align-items:center;gap:7px}
+.wt-offline-queue-actions .btn{min-height:35px;font-size:11px;padding:7px 10px}
+.wt-offline-queue-empty{padding:18px 0 0;font-size:12px;line-height:1.6;color:var(--muted)}
+.wt-offline-queue .wt-e2e-backup-actions{margin-top:18px}
+.wt-telegram-chat .message-bubble-v2 .wt-pending-icon{display:inline-flex;align-items:center;color:var(--muted)}
+.wt-telegram-chat .message-row-v2:has(.wt-pending-icon) .message-bubble-v2{opacity:.79}
+@media(max-width:640px){
+ .wt-offline-queue-item{align-items:flex-start;flex-direction:column;gap:9px}
+ .wt-offline-queue-actions{width:100%}
+ .wt-offline-queue-actions .btn{flex:1 1 0}
+}
