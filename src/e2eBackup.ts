@@ -121,14 +121,30 @@ export async function restoreEncryptedE2EBackup(raw:string,profileId:string,regi
  const contents=payload as {version?:unknown;profileId?:unknown;identities?:unknown};
  if(contents?.version!==VERSION||contents.profileId!==id||!Array.isArray(contents.identities)||
   !contents.identities.length||contents.identities.length>250)throw new Error('E2E_BACKUP_CORRUPT');
+ return restoreTrustedE2EIdentities(contents.identities,id,registeredPublicKey);
+}
+
+/** Used only after authenticated same-account pairing, encryption and human
+ * comparison of both device verification codes. No key is ever posted in clear.
+ */
+export async function exportTrustedE2EIdentities(profileId:string,registeredPublicKey:JsonWebKey):Promise<string>{
+ const id=canonical(profileId);
+ const candidates=await getChatIdentityCandidates(id);
+ if(!candidates.some(value=>matches(value.publicKey,registeredPublicKey)))throw new Error('E2E_IDENTITY_MISMATCH');
+ const identities=await Promise.all(candidates.map(validateIdentity));
+ const serialized=JSON.stringify({version:1,profileId:id,identities});
+ if(serialized.length>100000)throw new Error('E2E_TRANSFER_TOO_LARGE');
+ return serialized;
+}
+export async function restoreTrustedE2EIdentities(unknown:unknown,profileId:string,registeredPublicKey:JsonWebKey):Promise<{restored:number}>{
+ const id=canonical(profileId);
+ const contents=unknown as {version?:unknown;profileId?:unknown;identities?:unknown}|null;
+ if(!contents||contents.version!==1||contents.profileId!==id||!Array.isArray(contents.identities)||!contents.identities.length||contents.identities.length>250)throw new Error('E2E_BACKUP_CORRUPT');
  const verified=await Promise.all(contents.identities.map(validateIdentity));
  const registered=verified.find(identity=>matches(identity.publicKey,registeredPublicKey));
  if(!registered)throw new Error('E2E_BACKUP_SERVER_KEY_MISMATCH');
- // Validate the complete file before the first persistence mutation.
  const unique=verified.filter((identity,index,all)=>all.findIndex(candidate=>matches(candidate.publicKey,identity.publicKey))===index);
- for(const historic of unique){
-  if(!matches(historic.publicKey,registeredPublicKey))await importChatIdentity(id,historic);
- }
+ for(const historic of unique)if(!matches(historic.publicKey,registeredPublicKey))await importChatIdentity(id,historic);
  await importChatIdentity(id,registered);
  await getChatIdentityMatching(id,registeredPublicKey);
  return {restored:unique.length};
