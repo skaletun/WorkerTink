@@ -21,6 +21,7 @@ for(const table of ['chat_groups','chat_group_members','chat_group_messages','ch
  assert.ok(match,'Missing table in actual migration: '+table);
  db.exec(match[0]);
 }
+db.exec(migration('0030_group_message_idempotency.sql'));
 for(const [column,type] of [
  ['banner','TEXT'],['username','TEXT'],['is_dev','INTEGER'],['is_admin','INTEGER'],
  ['is_official','INTEGER'],['is_verified','INTEGER'],['pin_hash','TEXT'],['pin_salt','TEXT'],
@@ -138,4 +139,16 @@ assert.equal((await call('POST','/chat/messages','alice',{...candidate,body:'mod
 assert.equal(db.prepare('SELECT COUNT(*) AS n FROM social_messages WHERE sender_id=? AND client_message_id=?').get(ids.alice,retryId).n,1);
 assert.equal((await call('POST','/chat/messages','alice',{...candidate,clientMessageId:'invalid'})).status,400);
 
+const groupClientId='04ac1fc0-d695-44fb-8d83-5e85d0d9f332';
+const groupPayload={kind:'text',body:'{"v":1,"iv":"encrypted","data":"no-plain-text"}',clientMessageId:groupClientId};
+const firstGroupSend=await call('POST','/chat/groups/'+groupId+'/messages','alice',groupPayload);
+assert.equal(firstGroupSend.status,201,JSON.stringify(firstGroupSend.data));
+const groupReplay=await call('POST','/chat/groups/'+groupId+'/messages','alice',groupPayload);
+assert.equal(groupReplay.status,200,JSON.stringify(groupReplay.data));
+assert.equal(groupReplay.data.replayed,true);
+assert.equal(groupReplay.data.message.id,firstGroupSend.data.message.id);
+assert.equal(db.prepare('SELECT COUNT(*) AS n FROM chat_group_messages WHERE group_id=? AND sender_id=? AND client_message_id=?').get(groupId,ids.alice,groupClientId).n,1);
+assert.equal((await call('POST','/chat/groups/'+groupId+'/messages','alice',{...groupPayload,body:'altered ciphertext'})).status,409);
+assert.equal((await call('POST','/chat/groups/'+groupId+'/messages','alice',{...groupPayload,clientMessageId:'bad-identifier'})).status,400);
+assert.equal((await call('POST','/chat/groups/'+groupId+'/messages','unrelated',groupPayload)).status,403);
 console.log('WorkerTink chat lifecycle integration tests: OK');
