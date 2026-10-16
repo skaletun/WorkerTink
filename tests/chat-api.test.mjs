@@ -13,6 +13,7 @@ db.exec(migration('0001_initial.sql'));
 db.exec(migration('0010_social_network.sql'));
 db.exec(migration('0012_chat_e2ee_qr.sql'));
 db.exec(migration('0013_chat_controls.sql'));
+db.exec(migration('0029_chat_idempotency.sql'));
 db.exec(migration('0021_chat_pins.sql'));
 const network=migration('0018_network_identity_channels.sql');
 for(const table of ['chat_groups','chat_group_members','chat_group_messages','chat_group_message_deletions']){
