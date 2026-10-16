@@ -48,6 +48,8 @@ jobs:
         run: npx playwright test tests/visual/offline-outbox.visual.spec.cjs
       - name: Validate durable offline shift editor drafts
         run: npx playwright test tests/visual/shift-draft.visual.spec.cjs
+      - name: Validate durable encrypted group chat outbox
+        run: npx playwright test tests/visual/offline-group.visual.spec.cjs
       - name: Validate public landing at mobile, tablet and desktop sizes
         run: npx playwright test tests/visual/landing.visual.spec.cjs
       - name: Save landing visual evidence

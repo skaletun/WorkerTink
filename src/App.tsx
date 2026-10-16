@@ -19,6 +19,7 @@ import ChatsHub from './ChatsHub.tsx';
 import AppShell from './AppShell.tsx';
 import {getChatIdentity,getChatIdentityMatching} from './chatCrypto.ts';
 import {flushEncryptedOutbox} from './offlineOutbox.ts';
+import {flushGroupOutbox} from './offlineGroupOutbox.ts';
 import {Icon} from './Icon.tsx';
 import {isDevProfile,isAdminProfile,NameWithBadge,download,Avatar,type PeriodDraft} from './app/AppShared.tsx';
 import {buildPushReminders} from './app/reminders.ts';
@@ -63,7 +64,7 @@ function App(){
  useEffect(()=>{
   if(!authProfileReady||!state.directoryToken||!state.profile.profileId)return;
   const ownerId=state.profile.profileId,token=state.directoryToken;
-  const flush=()=>void flushEncryptedOutbox(ownerId,token).catch(()=>{});
+  const flush=()=>{void flushEncryptedOutbox(ownerId,token).catch(()=>{});void flushGroupOutbox(ownerId,token).catch(()=>{})};
   const onVisibility=()=>{if(document.visibilityState==='visible')flush()};
   window.addEventListener('online',flush);
   document.addEventListener('visibilitychange',onVisibility);
