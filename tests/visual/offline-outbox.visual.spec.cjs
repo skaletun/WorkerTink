@@ -53,7 +53,7 @@ test('encrypted chat ciphertext stays queued across reload and retries with one 
   await page.getByRole('button',{name:/Данные/}).click();
   await expect(page.locator('.wt-offline-queue')).toBeVisible();
   await expect(page.locator('.wt-offline-queue-item')).toHaveCount(1);
-  await expect(page.locator('.wt-offline-queue-item')).toContainText(friend.profileId);
+  await expect(page.locator('.wt-offline-queue-item')).toContainText(friend.profileId.toUpperCase());
   const records=await page.evaluate(async()=>{
    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open('workertink-offline-outbox');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});
    try{return await new Promise((resolve,reject)=>{const tx=db.transaction('chat-messages','readonly');const req=tx.objectStore('chat-messages').getAll();req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
