@@ -46,7 +46,7 @@ const known=await getChatIdentityCandidates(alice);
 assert.equal(known.some(x=>x.publicKey.x===initial.publicKey.x),true);
 await getChatIdentityMatching(alice,initial.publicKey);
 assert.equal((await decryptChatWithCandidates(alice,oldEnvelope,[receiver.publicKey])).text,'Ключ не должен исчезнуть после обновления');
-const output=await decryptChatMediaCandidates(receiver.profileId||bob,initial.publicKey,oldMedia.iv,oldMedia.ciphertext);
+const output=await decryptChatMediaCandidates(bob,initial.publicKey,oldMedia.iv,oldMedia.ciphertext);
 assert.deepEqual([...new Uint8Array(output)],[1,8,22,78,191]);
 
 // A persistence failure must never make an ephemeral key appear registered.
