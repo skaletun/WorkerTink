@@ -1,4 +1,4 @@
-import {getChatIdentityCandidates,getChatIdentityMatching,importChatIdentity} from './chatCrypto';
+import {getChatIdentityCandidates,getChatIdentityMatching,importChatIdentity} from './chatCrypto.ts';
 
 const FORMAT='wtinker-e2e-recovery';
 const VERSION=1;
