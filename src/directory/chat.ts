@@ -15,7 +15,7 @@ export function pinChatMessage(messageId:string,token:string){return request<{ok
 
 export function unpinChatMessage(messageId:string,token:string){return request<{ok:boolean}>(`/chat/messages/${encodeURIComponent(messageId)}/pin`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
 
-export function sendChatMessage(to:string,body:string,kind:'text'|'voice'|'image'|'video'|'file'|'note',token:string,mime?:string,name?:string,replyToId?:string,replyPreview?:string,noteDate?:string,noteShift?:string){return request<{ok:boolean;message:ChatServerMessage}>('/chat/messages',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({to,body,kind,mime,name,replyToId,replyPreview,noteDate,noteShift})})}
+export function sendChatMessage(to:string,body:string,kind:'text'|'voice'|'image'|'video'|'file'|'note',token:string,mime?:string,name?:string,replyToId?:string,replyPreview?:string,noteDate?:string,noteShift?:string,clientMessageId?:string){return request<{ok:boolean;message:ChatServerMessage}>('/chat/messages',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({to,body,kind,mime,name,replyToId,replyPreview,noteDate,noteShift,clientMessageId})})}
 
 export async function uploadChatMedia(to:string,kind:'voice'|'image'|'video'|'file',payload:{iv:string;ciphertext:ArrayBuffer;mime?:string;name?:string;size:number;groupId?:string},token:string){
  const init=await request<{id:string;chunkSize:number}>('/chat/media/init',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({to,groupId:payload.groupId||'',kind,iv:payload.iv,mime:payload.mime||'',name:payload.name||'',size:payload.size})});
