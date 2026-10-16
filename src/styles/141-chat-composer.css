@@ -1,0 +1,84 @@
+/* Telegram-like input anatomy, independent of the old 5-button toolbar. */
+.wt-chat-workspace .wt-telegram-chat .chat-compose-v2{
+ position:relative;flex:0 0 auto;min-height:0;margin:0;padding:12px 22px 17px;
+ border-top:1px solid var(--line);background:var(--surface);
+}
+.wt-chat-workspace .wt-telegram-chat .wt-compose-inputrow{
+ display:flex;align-items:flex-end;gap:10px;width:min(100%,1040px);margin-inline:auto;
+}
+.wt-chat-workspace .wt-telegram-chat .wt-attach-anchor{position:relative;display:flex;align-items:flex-end;flex:0 0 auto}
+.wt-chat-workspace .wt-telegram-chat .wt-attach-trigger{width:46px;height:46px;min-width:46px;color:var(--muted)}
+.wt-chat-workspace .wt-telegram-chat .wt-attach-trigger:disabled,.wt-chat-workspace .wt-telegram-chat .wt-emoji-trigger:disabled{opacity:.38;cursor:not-allowed}
+.wt-chat-workspace .wt-telegram-chat .wt-chat-textbox{position:relative;flex:1;display:flex;align-items:flex-end;min-width:0;min-height:46px;border:1px solid var(--line-strong);border-radius:23px;background:var(--surface-2)}
+.wt-chat-workspace .wt-telegram-chat .wt-chat-textbox:focus-within{border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+.wt-chat-workspace .wt-telegram-chat .wt-chat-textbox textarea{
+ flex:1;min-width:0;width:100%;min-height:45px;max-height:140px;
+ padding:12px 8px 11px 16px;margin:0;box-sizing:border-box;border:0;outline:none;
+ background:transparent;color:var(--ink);resize:none;line-height:1.45;font-size:14px;
+ font-family:inherit;overflow-y:auto;
+}
+.wt-chat-workspace .wt-telegram-chat .wt-chat-textbox textarea:focus{outline:none}
+.wt-chat-workspace .wt-telegram-chat .wt-chat-textbox textarea::placeholder{color:var(--muted)}
+.wt-chat-workspace .wt-telegram-chat .wt-emoji-trigger{width:40px;min-width:40px;height:44px;color:var(--muted)}
+.wt-chat-workspace .wt-chat-action-button{display:grid;place-items:center;flex:0 0 46px;width:46px;height:46px;min-width:46px;min-height:46px;padding:0;border:0;border-radius:50%;background:var(--accent);color:#fff;box-shadow:0 3px 10px #00000012;cursor:pointer}
+.wt-chat-workspace .wt-chat-action-button:hover:not(:disabled){filter:brightness(.95)}
+.wt-chat-workspace .wt-chat-action-button:disabled{opacity:.4;cursor:not-allowed}
+.wt-chat-workspace .wt-chat-attach-menu{
+ position:absolute;bottom:calc(100% + 14px);left:0;z-index:16;display:flex;flex-direction:column;
+ gap:2px;width:214px;max-width:min(300px,calc(100vw - 30px));padding:7px;
+ background:var(--surface);border:1px solid var(--line);border-radius:14px;
+ box-shadow:0 12px 35px #0000001c;
+}
+.wt-chat-workspace .wt-chat-attach-menu>button{display:flex;align-items:center;gap:12px;min-height:42px;padding:8px 11px;background:transparent;border:0;border-radius:9px;text-align:left;color:var(--ink);font-size:13px;font-weight:580;cursor:pointer}
+.wt-chat-workspace .wt-chat-attach-menu>button svg{color:var(--accent)}
+.wt-chat-workspace .wt-chat-attach-menu>button:hover,.wt-chat-workspace .wt-chat-attach-menu>button:focus-visible{background:var(--surface-2);outline:none}
+.wt-chat-workspace .wt-chat-emoji-menu{position:absolute;bottom:calc(100% + 13px);right:0;z-index:16;display:grid;grid-template-columns:repeat(4,1fr);gap:3px;width:228px;max-width:calc(100vw - 45px);padding:9px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 35px #0000001c}
+.wt-chat-workspace .wt-chat-emoji-menu button{display:grid;place-items:center;width:100%;height:43px;border:0;border-radius:8px;background:transparent;font-size:24px;cursor:pointer}
+.wt-chat-workspace .wt-chat-emoji-menu button:hover{background:var(--surface-2)}
+.wt-chat-workspace .wt-telegram-chat .chat-identity-error{
+ display:flex;align-items:center;gap:10px;width:min(100%,1040px);
+ min-height:39px;margin:0 auto 10px;padding:9px 11px;background:var(--surface-2);border:1px solid var(--line);
+ border-radius:12px;color:var(--ink-2);font-size:12px;line-height:1.45;
+}
+.wt-chat-workspace .chat-identity-error>div{flex:1;min-width:0}
+.wt-chat-workspace .chat-identity-error strong{font-weight:670;font-size:12px}
+.wt-chat-workspace .chat-identity-error p{margin-top:7px;white-space:normal;overflow-wrap:anywhere}
+.wt-chat-workspace .chat-identity-error>button{flex:0 0 auto;min-height:28px;padding:4px 6px;border:0;border-radius:6px;background:transparent;color:var(--accent);font-weight:670;font-size:11px;cursor:pointer}
+.wt-chat-workspace .chat-identity-error>button:hover{background:var(--accent-soft)}
+.wt-chat-workspace .wt-telegram-chat .reply-bar,
+.wt-chat-workspace .wt-telegram-chat .media-batch-preview,
+.wt-chat-workspace .wt-telegram-chat .voice-record-v2{width:min(100%,1040px);margin:0 auto 10px;border:0;border-left:3px solid var(--accent);border-radius:8px;background:var(--surface-2);padding:10px 14px}
+.wt-chat-workspace .wt-telegram-chat .reply-bar{align-items:center}
+.wt-chat-workspace .wt-telegram-chat .reply-bar>div{flex:1;min-width:0}
+.wt-chat-workspace .wt-telegram-chat .reply-bar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.wt-chat-workspace .wt-telegram-chat .media-batch-preview{max-height:190px;overflow-y:auto;border-left:0;border:1px solid var(--line)}
+.wt-chat-workspace .media-batch-preview .media-batch-grid{max-height:73px;overflow-y:auto}
+.wt-chat-workspace .media-batch-preview .media-batch-grid>div{display:flex;align-items:center;gap:6px;max-width:200px;padding:6px;border-radius:7px;background:var(--surface)}
+.wt-chat-workspace .media-batch-preview .media-batch-grid small{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt-chat-workspace .chat-pins-panel:not(:empty),.wt-chat-workspace .chat-search-panel{position:relative;z-index:2}
+.wt-chat-workspace .chat-search-panel>div:first-child{align-items:center;gap:8px}
+.wt-chat-workspace .chat-search-panel input{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:8px 12px}
+.wt-chat-workspace .chat-search-panel button{cursor:pointer}
+.wt-chat-workspace .chat-head-menu{z-index:15;right:15px;top:56px}
+.wt-chat-workspace .message-menu{top:calc(100% + 3px);right:0;z-index:10;max-width:min(260px,100%);border-radius:12px}
+.wt-chat-workspace .reaction-picker{top:calc(100% + 3px);right:0;z-index:10;border-radius:12px}
+.wt-chat-workspace .chat-profile-overlay{position:fixed;inset:0;z-index:700;background:#1118}
+.wt-chat-workspace .chat-file-v2{min-width:0}
+.wt-chat-workspace .message-row-v2.own .message-bubble-v2 footer{color:var(--ink)}
+.wt-chat-workspace .chat-media-placeholder{max-width:100%;min-width:0}
+@media(max-width:700px){
+ .wt-chat-workspace .wt-telegram-chat .chat-compose-v2{
+  padding:9px 10px max(11px,env(safe-area-inset-bottom));min-height:0;flex:0 0 auto;
+ }
+ .wt-chat-workspace .wt-telegram-chat .wt-compose-inputrow{gap:7px}
+ .wt-chat-workspace .wt-telegram-chat .wt-attach-trigger{width:38px;min-width:38px;height:44px}
+ .wt-chat-workspace .wt-telegram-chat .wt-chat-textbox{min-height:43px}
+ .wt-chat-workspace .wt-telegram-chat .wt-chat-textbox textarea{min-height:42px;padding:11px 4px 10px 13px;font-size:16px}
+ .wt-chat-workspace .wt-telegram-chat .wt-emoji-trigger{width:35px;min-width:35px;height:43px}
+ .wt-chat-workspace .wt-chat-action-button{flex-basis:43px;width:43px;height:43px;min-width:43px;min-height:43px}
+ .wt-chat-workspace .wt-telegram-chat .chat-identity-error{min-height:35px;padding:7px 9px;margin-bottom:6px}
+ .wt-chat-workspace .wt-chat-identity-error strong{font-size:11px}
+ .wt-chat-workspace .wt-chat-attach-menu{left:-4px}
+ .wt-chat-workspace .chat-media-v2{max-height:230px}
+}
+@media(prefers-reduced-motion:reduce){.wt-chat-workspace .wt-chat-action-button{transition:none}}
