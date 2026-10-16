@@ -121,7 +121,7 @@ export async function restoreEncryptedE2EBackup(raw:string,profileId:string,regi
  const contents=payload as {version?:unknown;profileId?:unknown;identities?:unknown};
  if(contents?.version!==VERSION||contents.profileId!==id||!Array.isArray(contents.identities)||
   !contents.identities.length||contents.identities.length>250)throw new Error('E2E_BACKUP_CORRUPT');
- return restoreTrustedE2EIdentities(contents.identities,id,registeredPublicKey);
+ return restoreTrustedE2EIdentities(contents,id,registeredPublicKey);
 }
 
 /** Used only after authenticated same-account pairing, encryption and human
