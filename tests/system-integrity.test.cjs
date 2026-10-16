@@ -10,6 +10,7 @@ const spaceControls=fs.readFileSync(path.join(root,'src/SpaceControls.tsx'),'utf
 const uiEntry=fs.readFileSync(path.join(root,'src/ui.css'),'utf8');
 const ui=uiEntry.replace(/@import\s+['"](.+?)['"]\s*;/g,(_,file)=>fs.readFileSync(path.resolve(root,'src',file),'utf8'));
 const update=fs.readFileSync(path.join(root,'src/UpdateGate.tsx'),'utf8');
+const updateCoordinator=read('src/updateCoordinator.ts');
 const pull=fs.readFileSync(path.join(root,'src/PullToRefresh.tsx'),'utf8');
 const shell=fs.readFileSync(path.join(root,'src/AppShell.tsx'),'utf8');
 if(fs.existsSync(path.join(root,'src/V7Shell.tsx'))) throw new Error('legacy V7 shell file still exists');
@@ -79,11 +80,12 @@ if(!network.includes('Promise.allSettled([getNetworkHome(token)')) throw new Err
 if(!network.includes("if(savedResult.status==='fulfilled')setSaved(savedResult.value.posts);else setSaved([])")) throw new Error('saved posts must be optional during network refresh');
 if(network.includes('Promise.all([getNetworkHome(token),import(\'./directory\').then(m=>m.getSocialFeed(token,60)),getSavedNetworkPosts(token)])')) throw new Error('network refresh still fails atomically on saved posts');
 
-if(!update.includes("updateSWRef.current(true)")) throw new Error('PWA update must activate the waiting worker and reload');
-if(!update.includes('onRegisteredSW(swUrl,registration)')) throw new Error('PWA update registration lifecycle hook is missing');
-if(!update.includes("cache:'no-store'")) throw new Error('PWA update check must bypass HTTP cache');
-if(!update.includes("'cache-control':'no-cache'")) throw new Error('PWA update check must send no-cache header');
-if(update.includes("updateSWRef.current(false)")) throw new Error('PWA update must not leave the worker waiting after confirmation');
+if(!update.includes('activateUpdate(registration,serviceWorker)')) throw new Error('PWA update must coordinate worker activation before reloading');
+if(!updateCoordinator.includes("worker.postMessage({type:'SKIP_WAITING'})")) throw new Error('PWA worker takeover must explicitly activate a waiting worker');
+if(!update.includes('onRegisteredSW(_url,registration)')) throw new Error('PWA update lifecycle hook is missing');
+if(!update.includes('registration.update()')) throw new Error('PWA update check must revalidate the worker rather than reuse cached page HTML');
+if(update.includes('updateSWRef.current(true)')) throw new Error('PWA update must not double-reload using two independent mechanisms');
+if(!sw.includes("event.waitUntil(self.skipWaiting())")) throw new Error('PWA must rescue installed clients running obsolete pre-update logic');
 if(!update.includes("localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID)")) throw new Error('current build marker must be reconciled after update');
 if(!update.includes('dismissUpdate')||!update.includes('setNeedRefresh(false)')) throw new Error('update dialog must support dismissal and recover after installation');
 if(!sw.includes("event.data?.type==='SKIP_WAITING'")||!sw.includes('self.skipWaiting()')) throw new Error('custom prompt service worker missing SKIP_WAITING handler');
