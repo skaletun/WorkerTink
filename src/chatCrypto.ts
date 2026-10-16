@@ -217,7 +217,7 @@ export const blobToArrayBuffer=(blob:Blob)=>blob.arrayBuffer();
 export async function importIdentityPrivateKey(identity:StoredIdentity){return crypto.subtle.importKey('jwk',identity.privateKey,{name:'ECDH',namedCurve:'P-256'},false,['deriveKey'])}
 
 
-export type GroupKeyPacket={iv:string;data:string};
+export type GroupKeyPacket={iv:string;data:string;senderPublicKey?:JsonWebKey};
 export async function generateGroupKey(){
   const key=await crypto.subtle.generateKey({name:'AES-GCM',length:256},true,['encrypt','decrypt']);
   return key;
@@ -232,7 +232,7 @@ export async function encryptGroupKeyForMember(profileId:string,peerPublicKey:Js
   const iv=crypto.getRandomValues(new Uint8Array(12));
   const raw=await exportGroupKey(groupKey);
   const data=await crypto.subtle.encrypt({name:'AES-GCM',iv},wrappingKey,raw);
-  return {iv:b64(iv),data:b64(data)};
+  return {iv:b64(iv),data:b64(data),senderPublicKey:own.publicKey};
 }
 export async function decryptGroupKeyForSelf(profileId:string,peerPublicKey:JsonWebKey,packet:GroupKeyPacket){
  const identities=await getChatIdentityCandidates(profileId);
