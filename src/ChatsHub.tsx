@@ -1,10 +1,49 @@
 import {useState} from 'react';
 import type {UserProfile,State} from './core';
+import {Icon} from './Icon';
 import ChatView from './ChatView';
 import GroupChatView from './GroupChatView';
 import ChannelsView from './ChannelsView';
-export default function ChatsHub({token,profile,state,onStateChange,onNotice,onProfile,routePath}:{token:string;profile:UserProfile;state:State;onStateChange:(p:Partial<State>)=>void;onNotice:(s:string)=>void;onProfile?:(profile:UserProfile)=>void;routePath?:string}){
- const [mode,setMode]=useState<'personal'|'groups'|'channels'>(()=>routePath?.startsWith('/chat/group/')?'groups':routePath?.startsWith('/channel/')?'channels':'personal');
- const groupId=routePath?.match(/^\/chat\/group\/([^/]+)/)?.[1]; const channelSlug=routePath?.match(/^\/channel\/([^/]+)/)?.[1];
- return <section className="canva-page canva-chats redesign-page redesign-chats chats-hub"><header className="canva-page-head"><div><span className="redesign-overline">Общение</span><h1>Разговоры, которые не теряются</h1><p>Личные E2E-чаты, групповые обсуждения и корпоративные каналы — разные форматы одного общения.</p></div></header><div className="canva-chat-switch chats-mode-nav"><div className="chats-mode-copy"><b>Формат разговора</b><span>Выберите пространство</span></div><button type="button" aria-pressed={mode==='personal'} className={mode==='personal'?'active':''} onClick={()=>setMode('personal')}><span>Личные</span><small>E2E</small></button><button type="button" aria-pressed={mode==='groups'} className={mode==='groups'?'active':''} onClick={()=>setMode('groups')}><span>Группы</span><small>команды</small></button><button type="button" aria-pressed={mode==='channels'} className={mode==='channels'?'active':''} onClick={()=>setMode('channels')}><span>Каналы</span><small>корпоративные</small></button></div>{mode==='personal'&&<ChatView token={token} profile={profile} state={state} onStateChange={onStateChange} onNotice={onNotice} onProfile={onProfile}/>} {mode==='groups'&&<GroupChatView token={token} profile={profile} onNotice={onNotice} onProfile={onProfile} initialGroupId={groupId}/>} {mode==='channels'&&<ChannelsView token={token} profile={profile} onNotice={onNotice} onProfile={onProfile} initialSlug={channelSlug}/>}</section>
+
+type Mode='personal'|'groups'|'channels';
+type Props={
+ token:string;
+ profile:UserProfile;
+ state:State;
+ onStateChange:(p:Partial<State>)=>void;
+ onNotice:(s:string)=>void;
+ onProfile?:(profile:UserProfile)=>void;
+ onExit:()=>void;
+ routePath?:string;
+ initialPeerId?:string;
+};
+
+export default function ChatsHub({token,profile,state,onStateChange,onNotice,onProfile,onExit,routePath,initialPeerId}:Props){
+ const [mode,setMode]=useState<Mode>(()=>routePath?.startsWith('/chat/group/')?'groups':routePath?.startsWith('/channel/')?'channels':'personal');
+ const groupId=routePath?.match(/^\/chat\/group\/([^/]+)/)?.[1];
+ const channelSlug=routePath?.match(/^\/channel\/([^/]+)/)?.[1];
+
+ const modes:readonly {id:Mode;label:string}[]=[
+  {id:'personal',label:'Личные'},
+  {id:'groups',label:'Группы'},
+  {id:'channels',label:'Каналы'}
+ ];
+ const navigation=<nav className="wt-chat-mode-tabs" aria-label="Типы переписок">
+  {modes.map(item=><button key={item.id} type="button" aria-current={mode===item.id?'page':undefined} className={mode===item.id?'active':''} onClick={()=>setMode(item.id)}>{item.label}</button>)}
+ </nav>;
+
+ return <section className="wt-chat-workspace" aria-label="Сообщения WTinker">
+  {mode==='personal'?
+   <ChatView key="personal" token={token} profile={profile} state={state} onStateChange={onStateChange} onNotice={onNotice} onProfile={onProfile} onExit={onExit} navigation={navigation} initialPeerId={initialPeerId}/>:
+   <div className="wt-chat-secondary">
+    <header className="wt-chat-secondary-bar">
+     <button type="button" onClick={onExit} className="wt-chat-icon-button" aria-label="Вернуться в WTinker"><Icon name="chevronLeft" size={22}/></button>
+     <div><strong>{mode==='groups'?'Групповые чаты':'Корпоративные каналы'}</strong><small>WTinker · сообщения</small></div>
+    </header>
+    {navigation}
+    <div className="wt-chat-secondary-content">
+     {mode==='groups'?<GroupChatView token={token} profile={profile} onNotice={onNotice} onProfile={onProfile} initialGroupId={groupId}/>:<ChannelsView token={token} profile={profile} onNotice={onNotice} onProfile={onProfile} initialSlug={channelSlug}/>}
+    </div>
+   </div>}
+ </section>;
 }
