@@ -130,7 +130,7 @@ export default function DevicePairingCard({profileId,token}:Props){
  const confirmed=mode==='target'?session?.targetConfirmed:session?.sourceConfirmed;
  const both=Boolean(session?.targetConfirmed&&session?.sourceConfirmed);
  return <section className="settings-card full-width wt-device-pairing" data-settings-section="account" aria-labelledby="wt-device-pairing-title">
-  <div className="wt-e2e-backup-heading"><span className="wt-e2e-backup-icon"><Icon name="smartphone" size={21}/></span><div><span className="canva-kicker">Secure Sync · перенос между устройствами</span><h2 id="wt-device-pairing-title">Подключить другое устройство</h2></div></div>
+  <div className="wt-e2e-backup-heading"><span className="wt-e2e-backup-icon"><Icon name="shield" size={21}/></span><div><span className="canva-kicker">Secure Sync · перенос между устройствами</span><h2 id="wt-device-pairing-title">Подключить другое устройство</h2></div></div>
   <p className="hint">Переносите существующие E2E-ключи между двумя авторизованными устройствами WTinker. QR действует 5 минут, ключи шифруются на исходном устройстве. На обоих экранах необходимо сравнить и подтвердить одинаковый код.</p>
   {!mode&&!done&&<div className="wt-e2e-backup-actions">
    <button type="button" className="btn primary" onClick={()=>void begin()} disabled={busy||!token}>Это новое устройство</button>
