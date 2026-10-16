@@ -55,10 +55,12 @@ export async function checkE2EHealth(
  const id=profileId.trim().toUpperCase();
  if(!/^WTINKID-\d{6}$/.test(id))return result;
  let candidates:Identity[]=[];
+ let verified:Identity[]=[];
  try{
   candidates=await bounded(deps.local(id),6000);
   const checks=await bounded(Promise.all(candidates.map(validIdentity)),6000);
-  result.recoverableIdentities=checks.filter(Boolean).length;
+  verified=candidates.filter((_,index)=>checks[index]);
+  result.recoverableIdentities=verified.length;
   result.malformedIdentities=checks.length-result.recoverableIdentities;
   result.local=result.recoverableIdentities?'ready':checks.length?'invalid':'missing';
  }catch{
@@ -68,8 +70,7 @@ export async function checkE2EHealth(
  try{
   const remote=await bounded(deps.remote(token),8000);
   if(!remote.key?.publicKey)result.remote='not-registered';
-  else if(candidates.length===0)result.remote='mismatch';
-  else result.remote=candidates.some(identity=>same(identity.publicKey,remote.key.publicKey))?'matched':'mismatch';
+  else result.remote=verified.some(identity=>same(identity.publicKey,remote.key.publicKey))?'matched':'mismatch';
  }catch(error){result.remote=reason(error)}
  // Only whitelisted status enums and counts leave this function. Neither
  // public nor private JWK material, user id or auth token enters diagnostics.
