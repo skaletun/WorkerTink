@@ -50,7 +50,7 @@ export type GroupChat={id:string;name:string;description:string;avatar:string;ow
 
 export type GroupChatMember={profile:UserProfile;role:string;joinedAt:number};
 
-export type GroupChatDetail={group:GroupChat;members:GroupChatMember[];key:{iv:string;data:string}|null};
+export type GroupChatDetail={group:GroupChat;members:GroupChatMember[];key:{iv:string;data:string;senderPublicKey?:JsonWebKey}|null};
 
 export type GroupChatMessage=ChatServerMessage;
 
