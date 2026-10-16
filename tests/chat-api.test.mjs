@@ -125,7 +125,7 @@ assert.equal(group.data.messages.length,1);
 assert.equal(group.data.messages[0].replyToId,sentId);
 assert.equal(group.data.messages[0].replyPreview,'group reply');
 assert.equal((await call('GET','/chat/groups/'+groupId+'/messages','unrelated')).status,403);
-const sentId=first.data.message.id;
+
 const retryId='70629708-8d22-4601-a854-d63b50152501';
 const candidate={to:ids.bob,kind:'text',body:'{"v":1,"iv":"idempotent","data":"cipher"}',clientMessageId:retryId};
 const queued=await call('POST','/chat/messages','alice',candidate);
