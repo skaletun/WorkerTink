@@ -1,7 +1,7 @@
 const {test,expect}=require('@playwright/test');
 const {webcrypto}=require('node:crypto');
 test('E2E diagnostics verify locally preserved key and export a secret-free report',async({browser})=>{
- const identityKey=await webcrypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveBits']);
+ const identityKey=await webcrypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveKey']);
  const pair={privateKey:await webcrypto.subtle.exportKey('jwk',identityKey.privateKey),publicKey:await webcrypto.subtle.exportKey('jwk',identityKey.publicKey)};
  const profile={profileId:'WTinkID-993528',name:'E2E Diagnostics',username:'e2e_audit',position:'QA',avatar:'',banner:'',isDev:false,isAdmin:false,isOfficial:false,isVerified:false};
  for(const viewport of [{width:390,height:844},{width:1440,height:900}]){
