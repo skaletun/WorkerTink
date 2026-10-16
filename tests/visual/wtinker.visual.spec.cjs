@@ -282,6 +282,7 @@ test('8.1.0 regression — full-screen Telegram-style private chat navigation',a
    if(!url.hostname.includes('workertink-directory'))return route.continue();
    const path=url.pathname,method=route.request().method();
    const answer=(json,status=200)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(json)});
+   if(path==='/profiles'&&method==='PUT')return answer({profile});
    if(path==='/friends'&&method==='GET')return answer({friends:[friend('WTinkID-200001','Анна Смирнова','anna_s'),friend('WTinkID-200002','Дмитрий Орлов','d_orlov')]});
    if(path==='/chat/keys/me')return answer({error:'CHAT_KEY_NOT_READY'},404);
    if(path.startsWith('/chat/keys/')&&method==='GET')return answer({key:{profileId:'WTinkID-200001',publicKey:peerPublicKey,updatedAt:Date.now()}});
@@ -321,6 +322,7 @@ test('8.1.0 regression — full-screen Telegram-style private chat navigation',a
   await page.getByRole('textbox',{name:'Текст сообщения'}).fill('Привет из WTinker');
   await page.getByRole('button',{name:'Отправить сообщение'}).click();
   await expect(page.locator('.message-bubble-v2')).toContainText('Привет из WTinker');
+  await page.screenshot({path:'visual-audit-artifacts/messenger-'+viewport.width+'-sent.png'});
   const bounds=await page.locator('.wt-compose-inputrow').boundingBox();
   expect(bounds).toBeTruthy();
   expect(bounds.y+bounds.height).toBeLessThanOrEqual(viewport.height+2);
