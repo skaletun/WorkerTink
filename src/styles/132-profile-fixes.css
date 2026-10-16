@@ -73,3 +73,91 @@
 .update-gate-later{display:block;margin:10px auto 0}
 @media(max-width:780px){.atlas-app .canva-profile-identity{grid-template-columns:auto 1fr}.atlas-app .canva-profile-buttons{grid-column:1/-1;flex-direction:row;flex-wrap:wrap}.public-profile-facts{grid-template-columns:1fr 1fr}.public-profile-facts>span:last-child{grid-column:1/-1}.avatar-editor-modal .avatar-editor-body,.banner-editor-modal .banner-editor-body{grid-template-columns:1fr}}
 @media(max-width:480px){.atlas-app .canva-profile-identity{grid-template-columns:1fr}.atlas-app .canva-profile-identity>.avatar.lg{width:110px!important;height:110px!important}.atlas-app .canva-profile-buttons>*{flex:1;min-width:135px}.atlas-app .canva-profile-metrics{grid-template-columns:1fr 1fr}.public-profile-facts{grid-template-columns:1fr}.public-profile-facts>span:last-child{grid-column:auto}.public-profile-body>.public-avatar{width:108px;height:108px;margin-top:-87px}}
+
+
+/* The banner is a responsive photographic surface; the avatar crosses its
+   lower edge by exactly half of its visible diameter. */
+.atlas-app .canva-profile-hero{overflow:hidden}
+.atlas-app .canva-profile-cover{
+ box-sizing:border-box;
+ width:100%;
+ height:auto;
+ min-height:clamp(145px,21vw,240px);
+ max-height:420px;
+ aspect-ratio:1600/420;
+ background-size:cover;
+ background-position:center;
+ background-repeat:no-repeat;
+}
+.atlas-app .canva-profile-identity{
+ --profile-avatar-size:clamp(110px,12vw,172px);
+ --profile-avatar-radius:calc(var(--profile-avatar-size) / 2);
+ align-items:start;
+}
+.atlas-app .canva-profile-identity>.avatar.lg{
+ position:relative;
+ z-index:1;
+ width:var(--profile-avatar-size)!important;
+ height:var(--profile-avatar-size)!important;
+ min-width:var(--profile-avatar-size);
+ margin-top:calc(-1 * var(--profile-avatar-radius) - 24px);
+ border-radius:50%;
+ object-fit:cover;
+ object-position:center;
+}
+.profile-modal-cover{
+ width:100%;
+ height:auto;
+ min-height:155px;
+ max-height:290px;
+ aspect-ratio:1600/420;
+ background-size:cover;
+ background-position:center;
+ background-repeat:no-repeat;
+}
+.profile-modal-main>.avatar.lg{
+ position:relative;
+ z-index:1;
+ flex-shrink:0;
+ width:116px!important;
+ height:116px!important;
+ min-width:116px;
+ margin-top:calc(-58px - clamp(17px,3vw,37px));
+ border-radius:50%;
+ object-fit:cover;
+ object-position:center;
+}
+.public-profile-banner{
+ width:100%;
+ min-height:clamp(155px,22vw,280px);
+ max-height:360px;
+ aspect-ratio:1600/420;
+ background-size:cover!important;
+ background-position:center!important;
+ background-repeat:no-repeat;
+}
+.public-profile-body>.public-avatar{
+ --public-avatar-size:clamp(100px,13vw,165px);
+ width:var(--public-avatar-size);
+ height:var(--public-avatar-size);
+ margin-top:calc(-1 * var(--public-avatar-size) / 2 - clamp(19px,4vw,47px));
+ position:relative;
+ z-index:1;
+}
+@media(max-width:780px){
+ .atlas-app .canva-profile-identity{align-items:start}
+ .atlas-app .canva-profile-cover{min-height:150px}
+}
+@media(max-width:480px){
+ .atlas-app .canva-profile-identity{--profile-avatar-size:110px}
+ .atlas-app .canva-profile-identity>.avatar.lg{
+  width:var(--profile-avatar-size)!important;
+  height:var(--profile-avatar-size)!important;
+  margin-top:calc(-55px - 24px);
+ }
+ .public-profile-body>.public-avatar{
+  --public-avatar-size:108px;
+  margin-top:calc(-54px - clamp(19px,4vw,47px));
+ }
+ .profile-modal-cover{min-height:155px}
+}
