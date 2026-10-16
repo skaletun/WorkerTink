@@ -1,0 +1,85 @@
+{
+  "format": "wtinker-e2e-compatibility",
+  "version": 1,
+  "fixtureOnly": true,
+  "sender": {
+    "publicKey": {
+      "kty": "EC",
+      "crv": "P-256",
+      "x": "-1A4jylJjQqTrSXsTDQDe508w8ykeH62_tq-KzAD6sg",
+      "y": "n3dlyp1iiOb_c09c0I86WSHPVLIbs5i1CsDSV3-gdHI",
+      "ext": true,
+      "key_ops": []
+    },
+    "privateKey": {
+      "kty": "EC",
+      "crv": "P-256",
+      "x": "-1A4jylJjQqTrSXsTDQDe508w8ykeH62_tq-KzAD6sg",
+      "y": "n3dlyp1iiOb_c09c0I86WSHPVLIbs5i1CsDSV3-gdHI",
+      "d": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAdbzRU",
+      "ext": true,
+      "key_ops": [
+        "deriveKey"
+      ]
+    }
+  },
+  "recipient": {
+    "publicKey": {
+      "kty": "EC",
+      "crv": "P-256",
+      "x": "4TgAvq9qfe3k3d-HTkrcwnG_Bp6M_Cxe-YkIS-wzsmA",
+      "y": "FlckNJo3faNuNXp5z3M80kzhKYG9mhlnWwix027VaAE",
+      "ext": true,
+      "key_ops": []
+    },
+    "privateKey": {
+      "kty": "EC",
+      "crv": "P-256",
+      "x": "4TgAvq9qfe3k3d-HTkrcwnG_Bp6M_Cxe-YkIS-wzsmA",
+      "y": "FlckNJo3faNuNXp5z3M80kzhKYG9mhlnWwix027VaAE",
+      "d": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADreaLE",
+      "ext": true,
+      "key_ops": [
+        "deriveKey"
+      ]
+    }
+  },
+  "legacy": {
+    "text": {
+      "v": 1,
+      "kind": "text",
+      "iv": "AAECAwQFBgcICQoL",
+      "data": "Er3T7Lw7cVaOR+WKW6xeIO4NI5rVTvn5WTMPbaeSikdLFPaN1vB/7aVOaqKzFgqg+Ls="
+    },
+    "note": {
+      "v": 1,
+      "kind": "note",
+      "iv": "DA0ODxAREhMUFRYX",
+      "data": "4wLSI9aBBsbJ17HAUUMKrk6duirHE7mYUINKMxLr/ZFy0/7hI6bbXkf//gAjFP8="
+    },
+    "media": {
+      "iv": "GBkaGxwdHh8gISIj",
+      "ciphertext": "F/PtyJHH3z7nP+X3/z2QnQC9//wWCLc4ZVdYX3IE1CmeU2LzjVZMa5AO",
+      "expected": "bGVnYWN5LXBob3RvLW1lZGlhLXBheWxvYWQ="
+    },
+    "groupRawKey": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+    "groupEnvelope": {
+      "v": 1,
+      "kind": "text",
+      "iv": "JCUmJygpKissLS4v",
+      "data": "iK3Xu1s6fxMbqwBydPc/NaTkFN8mLb9dqUUIIPTU8kx4j+gJiG7+u+4i88RSOb4UnpBrwElXlZDD"
+    },
+    "groupWrappedKey": {
+      "iv": "MDEyMzQ1Njc4OTo7",
+      "data": "kgZ+vi4neIBQ3iej7gQAReKwDCYeSwzIJQjT5qpYzi/dhCrpLVS0yM4aK3otOoyl",
+      "senderPublicKey": {
+        "kty": "EC",
+        "crv": "P-256",
+        "x": "-1A4jylJjQqTrSXsTDQDe508w8ykeH62_tq-KzAD6sg",
+        "y": "n3dlyp1iiOb_c09c0I86WSHPVLIbs5i1CsDSV3-gdHI",
+        "ext": true,
+        "key_ops": []
+      }
+    }
+  }
+}

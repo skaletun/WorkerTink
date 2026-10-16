@@ -35,10 +35,12 @@ const reason=(error:unknown)=>{
 async function validIdentity(value:Identity):Promise<boolean>{
  try{
   if(!value||!same(value.privateKey,value.publicKey)||typeof value.privateKey.d!=='string')return false;
-  const privateKey=await crypto.subtle.importKey('jwk',value.privateKey,{name:'ECDH',namedCurve:'P-256'},false,['deriveBits']);
+  // WTinker identities are generated with ['deriveKey']; attempting
+  // ['deriveBits'] rejects their JWK key_ops on Safari and Chromium.
+  const privateKey=await crypto.subtle.importKey('jwk',value.privateKey,{name:'ECDH',namedCurve:'P-256'},false,['deriveKey']);
   const publicKey=await crypto.subtle.importKey('jwk',value.publicKey,{name:'ECDH',namedCurve:'P-256'},false,[]);
-  const bits=await crypto.subtle.deriveBits({name:'ECDH',public:publicKey},privateKey,256);
-  return bits.byteLength===32;
+  const derived=await crypto.subtle.deriveKey({name:'ECDH',public:publicKey},privateKey,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+  return derived.algorithm.name==='AES-GCM';
  }catch{return false}
 }
 async function bounded<T>(task:Promise<T>,ms:number):Promise<T>{
