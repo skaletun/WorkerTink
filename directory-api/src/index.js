@@ -1488,9 +1488,11 @@ async function handle(request, env) {
   }
   const messageAction=path.match(/^\/chat\/messages\/([^/]+)(?:\/(me|both))?$/);
   if(messageAction && request.method==='PUT' && !messageAction[2]){
-    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const id=decodeURIComponent(messageAction[1]); const input=await body(request); const text=cleanText(input?.body,12000);
+    const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin); const id=decodeURIComponent(messageAction[1]); const input=await body(request); const text=cleanText(input?.body,30000);
     const row=await env.DB.prepare('SELECT id,sender_id,receiver_id,kind,created_at FROM social_messages WHERE id=?1').bind(id).first(); if(!row)return json({error:'MESSAGE_NOT_FOUND'},404,origin);
     if(normalizeId(row.sender_id)!==normalizeId(owner.wtink_id)||row.kind!=='text')return json({error:'EDIT_NOT_ALLOWED'},403,origin); if(!text)return json({error:'INVALID_MESSAGE'},400,origin);
+    let envelope;try{envelope=JSON.parse(text)}catch{return json({error:'INVALID_ENCRYPTED_MESSAGE'},400,origin)}
+    if(envelope?.v!==1||envelope?.kind!=='text'||typeof envelope.iv!=='string'||typeof envelope.data!=='string'||!envelope.iv||!envelope.data)return json({error:'INVALID_ENCRYPTED_MESSAGE'},400,origin);
     const now=Date.now(); await env.DB.prepare('UPDATE social_messages SET body=?1,edited_at=?2 WHERE id=?3').bind(text,now,id).run();
     return json({ok:true,message:{id,from:displayId(row.sender_id),to:displayId(row.receiver_id),body:text,kind:'text',createdAt:Number(row.created_at),readAt:null,editedAt:now,deletedAt:null}},200,origin);
   }
