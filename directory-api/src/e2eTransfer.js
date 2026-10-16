@@ -7,7 +7,7 @@ const view=(row,hash)=>({id:row.id,role:hash===row.target_session_hash?'target':
 export async function handleE2ETransfer(request,env,origin,helpers){
  const {json,authProfile,sha256,bearer,body}=helpers;
  const path=new URL(request.url).pathname;
- const root=path==='/chat/e2e-transfer',match=path.match(/^\/chat\/e2e-transfer\/([a-f0-9-]{36})(?:\/(confirm|payload))?$/i);
+ const root=path==='/chat/e2e-transfer',match=path.match(/^\/chat\/e2e-transfer\/([a-f0-9-]{36})(?:\/(confirm|payload|ack))?$/i);
  if(!root&&!match)return null;
  if(!['GET','POST','DELETE'].includes(request.method))return json({error:'NOT_FOUND'},404,origin);
  const owner=await authProfile(request,env);
@@ -57,10 +57,14 @@ export async function handleE2ETransfer(request,env,origin,helpers){
  }else if(request.method==='GET'&&action==='payload'){
   if(!target)return json({error:'TRANSFER_TARGET_ONLY'},403,origin);
   if(!session.source_confirmed_at||!session.target_confirmed_at||!session.encrypted_payload)return json({error:'TRANSFER_PAYLOAD_NOT_READY'},409,origin);
+  return json({ciphertext:session.encrypted_payload},200,origin);
+ }else if(request.method==='POST'&&action==='ack'){
+  if(!target)return json({error:'TRANSFER_TARGET_ONLY'},403,origin);
+  if(!session.source_confirmed_at||!session.target_confirmed_at||!session.encrypted_payload)return json({error:'TRANSFER_PAYLOAD_NOT_READY'},409,origin);
   const updated=await env.DB.prepare('UPDATE e2e_transfer_sessions SET consumed_at=?1 WHERE id=?2 AND consumed_at IS NULL AND cancelled_at IS NULL AND expires_at>?1 AND encrypted_payload IS NOT NULL').bind(now,id).run();
   if(!updated.meta?.changes)return json({error:'TRANSFER_CONSUMED'},410,origin);
   await record(id,'consumed');
-  return json({ciphertext:session.encrypted_payload},200,origin);
+  return json({ok:true},200,origin);
  }else if(request.method==='DELETE'&&!action){
   if(!source&&!target)return json({error:'TRANSFER_FORBIDDEN'},403,origin);
   const updated=await env.DB.prepare('UPDATE e2e_transfer_sessions SET cancelled_at=?1 WHERE id=?2 AND cancelled_at IS NULL AND consumed_at IS NULL').bind(now,id).run();
