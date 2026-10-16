@@ -89,13 +89,13 @@ export async function sendQueuedEncryptedMessage(record:OutboxMessage,token:stri
 /** Never persists auth tokens: the current logged-in session is supplied at
  * delivery time. Each item keeps its original client id across retries.
  */
-export async function flushEncryptedOutbox(ownerId:string,token:string):Promise<void>{
+export async function flushEncryptedOutbox(ownerId:string,token:string,force=false):Promise<void>{
  if(!token||!ownerId||typeof navigator!=='undefined'&&!navigator.onLine)return;
  if(inFlight)return inFlight;
  inFlight=(async()=>{
   const queue=await pendingEncryptedMessages(ownerId);
   for(const record of queue){
-   if(record.status!=='pending'||record.nextAttemptAt>Date.now())continue;
+   if(record.status!=='pending'||(!force&&record.nextAttemptAt>Date.now()))continue;
    const delivered=await sendQueuedEncryptedMessage(record,token);
    if(!delivered){
     // Preserve FIFO for transient errors; permanently blocked items stay
