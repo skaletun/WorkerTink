@@ -302,11 +302,14 @@ test('8.1.0 regression — full-screen Telegram-style private chat navigation',a
   await expect(page.locator('.chats-mode-nav')).toHaveCount(0);
   await expect(page.locator('.chat-list-head h1')).toHaveText('Чаты');
   await expect(page.locator('.chat-contact-v2')).toHaveCount(2);
+  require('node:fs').mkdirSync('visual-audit-artifacts',{recursive:true});
+  await page.screenshot({path:'visual-audit-artifacts/messenger-'+viewport.width+'-list.png'});
   await page.getByRole('searchbox',{name:'Поиск по чатам'}).fill('Анна');
   await expect(page.locator('.chat-contact-v2')).toHaveCount(1);
   await page.locator('.chat-contact-v2').first().click();
   await expect(page.locator('.chat-head-person')).toContainText('Анна Смирнова');
   await expect(page.locator('.wt-compose-inputrow')).toBeVisible();
+  await page.screenshot({path:'visual-audit-artifacts/messenger-'+viewport.width+'-dialog.png'});
   await expect(page.getByRole('button',{name:'Прикрепить файл'})).toBeEnabled({timeout:10000});
   await page.getByRole('button',{name:'Прикрепить файл'}).click();
   await expect(page.getByRole('menuitem',{name:'Фото'})).toBeVisible();
