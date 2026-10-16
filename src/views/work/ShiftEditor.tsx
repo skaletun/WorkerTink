@@ -33,11 +33,28 @@ export function ShiftEditor({state,date,setState,close,onNotice}:{state:State;da
  useEffect(()=>{
   const pageHidden=()=>{if(draftTimer.current!==null)window.clearTimeout(draftTimer.current);writeDraft()};
   const visibility=()=>{if(document.visibilityState==='hidden')pageHidden()};
+  // UpdateGate calls this synchronously BEFORE activating a new worker.
+  // Do not allow a pending editor write to be silently discarded.
+  const beforeUpdate=(event:Event)=>{
+   if(committed.current||!draftDirty.current)return;
+   if(draftTimer.current!==null)window.clearTimeout(draftTimer.current);
+   try{
+    const content=ref.current?htmlToMarkdown(ref.current):latest.current.note;
+    latest.current.note=content;
+    writeShiftDraft(state.profile.profileId,date,content,latest.current.shift);
+    setDraftStatus('Черновик сохранён на устройстве');
+   }catch{
+    event.preventDefault();
+    setDraftStatus('Не удалось сохранить черновик. Обновление отменено.');
+   }
+  };
   window.addEventListener('pagehide',pageHidden);
   document.addEventListener('visibilitychange',visibility);
+  window.addEventListener('wtinker:before-update',beforeUpdate);
   return()=>{
    window.removeEventListener('pagehide',pageHidden);
    document.removeEventListener('visibilitychange',visibility);
+   window.removeEventListener('wtinker:before-update',beforeUpdate);
    if(draftTimer.current!==null)window.clearTimeout(draftTimer.current);
    writeDraft();
   };

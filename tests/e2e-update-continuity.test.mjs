@@ -66,15 +66,19 @@ assert.equal((await decryptChatWithCandidates(alice,oldEnvelope,[receiver.public
 const output=await decryptChatMediaCandidates(bob,initial.publicKey,oldMedia.iv,oldMedia.ciphertext);
 assert.deepEqual([...new Uint8Array(output)],[1,8,22,78,191]);
 
-// A full or unavailable local key store must not get an update success.
+// QuotaExceeded on storage writes must not block a read-only update guard.
 writable=false;
-await assert.rejects(()=>protectE2EBeforeUpdate(),/E2E_KEY_PERSISTENCE_FAILED/);
+assert.equal(await protectE2EBeforeUpdate(),'preserved');
 writable=true;
 assert.equal(await protectE2EBeforeUpdate(),'preserved');
-// Malformed account state is not evidence that it is safe to skip identity verification.
+// Corrupt account state must not strand a user on an obsolete version.
 records.set('workertink:v6','{invalid JSON');
-await assert.rejects(()=>protectE2EBeforeUpdate(),/E2E_UPDATE_PROFILE_UNAVAILABLE/);
+assert.equal(await protectE2EBeforeUpdate(),'unverified');
 records.set('workertink:v6',JSON.stringify({profile:{profileId:alice}}));
+const getItem=localStorage.getItem;
+localStorage.getItem=()=>{throw new Error('SecurityError')};
+assert.equal(await protectE2EBeforeUpdate(),'unverified');
+localStorage.getItem=getItem;
 
 // A persistence failure must never make an ephemeral key appear registered.
 writable=false;

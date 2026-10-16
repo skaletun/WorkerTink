@@ -1,6 +1,14 @@
 import {precacheAndRoute,cleanupOutdatedCaches} from 'workbox-precaching';
 precacheAndRoute(self.__WB_MANIFEST||[]);
 cleanupOutdatedCaches();
+
+// An obsolete client can contain a pre-update E2E guard that deadlocks and
+// cannot itself be patched while it is running. Activate the newly installed
+// shell without force-navigating any open tabs. Existing unsaved editor state
+// is left untouched until the user chooses to reload or reopens the PWA.
+self.addEventListener('install',event=>{event.waitUntil(self.skipWaiting())});
+self.addEventListener('activate',event=>{event.waitUntil(self.clients.claim())});
+
 self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')self.skipWaiting();});
 self.addEventListener('message',event=>{if(event.data?.type!=='workertink:cleanup-runtime-cache')return;event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>!key.startsWith('workbox-precache')).map(key=>caches.delete(key)))));});
 self.addEventListener('push',event=>{let payload={title:'WTinker',body:'Новое уведомление',url:'./'};try{if(event.data)payload={...payload,...event.data.json()}}catch{}event.waitUntil(self.registration.showNotification(payload.title||'WTinker',{body:payload.body||'',icon:'./icon.svg',badge:'./icon.svg',tag:payload.tag||undefined,renotify:true,data:{url:payload.url||'./',type:payload.type||'',peerSessionId:payload.peerSessionId||''}}));});
