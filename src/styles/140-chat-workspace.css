@@ -1,0 +1,116 @@
+/* WTinker messenger is a first-class app route, not a nested card. */
+html:has(.atlas-chat-mode),body:has(.atlas-chat-mode){height:100%;overflow:hidden;overscroll-behavior:none}
+.atlas-app.atlas-chat-mode{display:flex;flex-direction:column;width:100%;height:100dvh;min-height:0;max-height:100dvh;overflow:hidden;background:var(--surface);color:var(--ink)}
+.atlas-chat-mode>.atlas-bar,.atlas-chat-mode>.atlas-footer,.atlas-chat-mode>.atlas-tray{display:none!important}
+.atlas-chat-mode .atlas-main{display:block;flex:1;min-height:0;max-width:none;width:100%;margin:0;padding:0;overflow:hidden}
+.atlas-chat-mode .atlas-route-stage{height:100%;min-height:0;max-width:none;margin:0;padding:0;overflow:hidden}
+.atlas-chat-mode .atlas-route-ticket{display:none!important}
+.atlas-chat-mode .atlas-route-content{display:block;height:100%;min-height:0;max-width:none;width:100%;margin:0!important;padding:0!important;overflow:hidden}
+.atlas-chat-mode .wt-page-content,.atlas-chat-mode .tab-stage{display:block;width:100%;max-width:none;height:100%;min-height:0;margin:0!important;padding:0!important;overflow:hidden}
+.wt-chat-workspace{width:100%;height:100%;min-height:0;overflow:hidden;background:var(--surface)}
+.wt-chat-workspace .chat-page-rebuilt.wt-telegram-chat{display:block;min-height:0;max-height:none;width:100%;height:100%;margin:0;border:0!important;border-radius:0!important;overflow:hidden}
+.wt-chat-workspace .wt-telegram-chat .chat-shell-v2{display:grid;grid-template-columns:clamp(300px,27vw,390px) minmax(0,1fr);height:100%;min-height:0;max-height:none;border:0;border-radius:0;overflow:hidden}
+.wt-chat-workspace .wt-telegram-chat .chat-contacts-v2{display:flex;flex-direction:column;height:100%;min-height:0;max-height:none;padding:0;border:0;border-right:1px solid var(--line);background:var(--surface);overflow:hidden}
+.wt-chat-workspace .wt-telegram-chat .chat-list-head{display:flex;flex:0 0 auto;align-items:center;justify-content:flex-start;gap:11px;min-height:75px;margin:0;padding:12px 20px;border-bottom:0;background:var(--surface)}
+.wt-chat-workspace .wt-telegram-chat .chat-list-head h1{font-size:23px;line-height:1.2;font-weight:780;letter-spacing:-.045em;color:var(--ink)}
+.wt-chat-workspace .chat-list-head .chat-list-count{margin-left:auto;background:var(--surface-2);color:var(--muted);font-size:11px}
+.wt-chat-icon-button{display:grid;place-items:center;flex:0 0 auto;width:40px;height:40px;min-width:40px;border:0;border-radius:50%;background:transparent;color:var(--ink-2);cursor:pointer;transition:background-color .16s ease}
+.wt-chat-icon-button:hover,.wt-chat-icon-button.is-open{background:var(--surface-2);color:var(--ink)}
+.wt-chat-workspace .wt-chat-mode-tabs{display:flex;align-items:stretch;flex:0 0 auto;gap:0;padding:0 14px;min-height:48px;overflow-x:auto;border-bottom:1px solid var(--line);scrollbar-width:none;background:var(--surface)}
+.wt-chat-mode-tabs::-webkit-scrollbar{display:none}
+.wt-chat-workspace .wt-chat-mode-tabs>button{position:relative;flex:1;min-width:72px;min-height:46px;padding:8px 11px 11px;border:0;border-radius:0;background:transparent;color:var(--muted);font-weight:650;font-size:13px;white-space:nowrap;cursor:pointer}
+.wt-chat-workspace .wt-chat-mode-tabs>button.active{color:var(--accent)}
+.wt-chat-workspace .wt-chat-mode-tabs>button.active::after{content:"";position:absolute;left:14px;right:14px;bottom:0;height:3px;border-radius:4px 4px 0 0;background:var(--accent)}
+.wt-chat-workspace .wt-chat-contact-search{display:flex;align-items:center;gap:11px;flex:0 0 auto;margin:13px 14px 14px;padding:0 13px;height:43px;min-height:43px;border:1px solid transparent;border-radius:22px;background:var(--surface-2);color:var(--muted)}
+.wt-chat-contact-search:focus-within{border-color:color-mix(in srgb,var(--accent) 42%,var(--line));color:var(--accent)}
+.wt-chat-contact-search input{display:block;flex:1;min-width:0;width:100%;height:100%;padding:0;border:0;outline:none;background:transparent;color:var(--ink);font-size:13px}
+.wt-chat-contact-search input::placeholder{color:var(--muted)}
+.wt-chat-contact-search input::-webkit-search-cancel-button{display:none}
+.wt-chat-contact-search>button{display:grid;place-items:center;width:25px;height:25px;border:0;background:transparent;color:inherit;cursor:pointer}
+.wt-chat-contact-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 7px 12px}
+.wt-chat-workspace .wt-telegram-chat .chat-contact-v2{min-height:72px;width:100%;margin:1px 0;padding:9px 13px;border:0;border-radius:10px;display:flex;gap:12px;align-items:center}
+.wt-chat-workspace .wt-telegram-chat .chat-contact-v2.active{background:var(--accent-soft)}
+.wt-chat-workspace .wt-telegram-chat .chat-contact-v2.active::before{display:none}
+.wt-chat-contact-avatar{position:relative;display:block;flex:0 0 51px;width:51px;height:51px}
+.wt-chat-workspace .wt-chat-contact-avatar>.chat-avatar{width:51px;height:51px;min-width:51px;border-radius:50%;object-fit:cover}
+.wt-online-dot{position:absolute;right:0;bottom:0;width:13px;height:13px;border:2px solid var(--surface);background:var(--success,#388969);border-radius:50%}
+.wt-chat-contact-copy{display:flex;flex-direction:column;flex:1;min-width:0;gap:7px}
+.wt-chat-contact-heading{display:flex;align-items:center;min-width:0}
+.wt-chat-workspace .wt-chat-contact-heading b{display:block;font-size:14px;color:var(--ink);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.wt-chat-workspace .wt-chat-contact-copy>small{font-size:12px;font-weight:450;color:var(--muted);line-height:1.25;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.wt-contact-chevron{display:none;color:var(--muted)}
+.wt-chat-workspace .chat-main-v2{height:100%;min-height:0;background:var(--canvas)}
+.wt-chat-workspace .chat-head-v2{position:relative;flex:0 0 auto;min-height:70px;padding:12px 22px;background:var(--surface);border-bottom:1px solid var(--line);box-shadow:0 1px 1px #00000006;z-index:3}
+.wt-chat-workspace .chat-head-person{gap:12px}
+.wt-chat-workspace .chat-head-person>.chat-avatar{width:44px;height:44px;flex-basis:44px}
+.wt-chat-workspace .chat-head-person b{font-size:15px;line-height:1.2;font-weight:730}
+.wt-chat-workspace .chat-head-person small{font-size:11px;color:var(--muted);font-weight:460}
+.wt-chat-workspace .chat-head-actions{gap:5px}
+.wt-chat-workspace .chat-head-actions button{display:grid;place-items:center;width:39px;height:39px;min-width:39px;min-height:39px;border:0;border-radius:50%;color:var(--ink-2);background:transparent}
+.wt-chat-workspace .chat-head-actions button:hover{background:var(--surface-2)}
+.wt-chat-workspace .chat-back-mobile{display:none}
+.wt-chat-workspace .chat-messages-v2{flex:1;min-height:0;max-height:none;margin:0;padding:20px clamp(17px,5vw,72px) 24px;overflow-y:auto;overscroll-behavior:contain;gap:7px;background:var(--canvas)}
+.wt-chat-workspace .chat-messages-v2>div[data-message-id]{max-width:990px;width:100%;margin:0 auto}
+.wt-chat-workspace .chat-empty-v2.large{min-height:0;flex:1}
+.wt-chat-workspace .message-bubble-v2{max-width:min(74%,610px);font-size:14px;line-height:1.46;box-shadow:0 2px 3px #00000009}
+.wt-chat-workspace .message-bubble-v2>p{font-size:14px;line-height:1.52}
+.wt-chat-workspace .chat-day-divider time{font-size:11px}
+.wt-chat-secondary{display:flex;flex-direction:column;height:100%;min-height:0;overflow:hidden}
+.wt-chat-secondary-bar{display:flex;align-items:center;gap:12px;min-height:68px;padding:11px 20px;border-bottom:1px solid var(--line);background:var(--surface)}
+.wt-chat-secondary-bar>div{display:flex;flex-direction:column;gap:4px;min-width:0}
+.wt-chat-secondary-bar strong{font-size:16px;color:var(--ink)}
+.wt-chat-secondary-bar small{color:var(--muted);font-size:11px}
+.wt-chat-secondary>.wt-chat-mode-tabs{max-width:420px;width:100%;border-bottom:0}
+.wt-chat-secondary-content{flex:1;min-height:0;overflow:auto;padding:14px}
+.wt-chat-secondary-content :is(.group-chat-page,.channels-layout){max-height:none}
+@media(max-width:700px){
+ .wt-chat-workspace .wt-telegram-chat .chat-shell-v2{display:block;height:100%;min-height:0;max-height:none}
+ .wt-chat-workspace .wt-telegram-chat .chat-contacts-v2{display:flex;width:100%;height:100%;min-height:0;max-height:none;border:0}
+ .wt-chat-workspace .wt-telegram-chat .chat-main-v2{display:none;width:100%;height:100%;min-height:0;max-height:none}
+ .wt-chat-workspace .wt-telegram-chat .chat-shell-v2.has-selection .chat-contacts-v2{display:none}
+ .wt-chat-workspace .wt-telegram-chat .chat-shell-v2.has-selection .chat-main-v2{display:flex}
+ .wt-chat-workspace .wt-telegram-chat .chat-list-head{padding:10px 13px;min-height:60px;gap:7px}
+ .wt-chat-workspace .wt-telegram-chat .chat-list-head h1{font-size:22px}
+ .wt-chat-workspace .wt-telegram-chat .chat-contact-v2{min-height:78px;margin:0;padding:11px 13px}
+ .wt-chat-workspace .wt-telegram-chat .wt-chat-contact-list{padding:0 6px}
+ .wt-chat-workspace .wt-telegram-chat .chat-contact-v2 .wt-contact-chevron{display:block}
+ .wt-chat-workspace .wt-telegram-chat .chat-head-v2{min-height:61px;padding:8px 9px 8px 6px;gap:4px}
+ .wt-chat-workspace .wt-telegram-chat .chat-back-mobile{display:grid;place-items:center;flex:0 0 37px;width:37px;min-width:37px;min-height:37px;height:37px;border:0;border-radius:50%;color:var(--ink)}
+ .wt-chat-workspace .wt-telegram-chat .chat-head-person{gap:9px}
+ .wt-chat-workspace .wt-telegram-chat .chat-head-person>.chat-avatar{width:38px;height:38px;flex-basis:38px}
+ .wt-chat-workspace .wt-telegram-chat .chat-head-person b{font-size:14px}
+ .wt-chat-workspace .wt-telegram-chat .chat-head-person small{font-size:10px}
+ .wt-chat-workspace .wt-telegram-chat .chat-head-actions{gap:0}
+ .wt-chat-workspace .wt-telegram-chat .chat-head-actions button{width:36px;height:36px;min-width:36px;min-height:36px}
+ .wt-chat-workspace .wt-telegram-chat .chat-head-actions button[title="Профиль"],.wt-chat-workspace .wt-telegram-chat .chat-head-actions button[title="Закреплённые сообщения"]{display:none}
+ .wt-chat-workspace .wt-telegram-chat .chat-messages-v2{padding:14px 10px 14px;scrollbar-gutter:auto}
+ .wt-chat-workspace .wt-telegram-chat .message-bubble-v2{max-width:87%;min-width:64px;font-size:13px}
+ .wt-chat-workspace .wt-telegram-chat .message-bubble-v2>p{font-size:13px}
+ .wt-chat-workspace .wt-telegram-chat .chat-empty-v2{min-height:0}
+ .wt-chat-workspace .chat-identity-error{font-size:11px}
+ .wt-chat-secondary-content{padding:8px}
+}
+@media(display-mode:standalone){
+ .atlas-chat-mode .wt-chat-workspace{padding-top:env(safe-area-inset-top)}
+}
+@media(prefers-reduced-motion:reduce){.wt-chat-icon-button{transition:none}}
+
+
+/* Override older generic input and avatar-flex contracts inside the messenger. */
+.wt-chat-workspace .wt-telegram-chat .chat-contact-v2>.wt-chat-contact-avatar{
+ display:block;flex:0 0 51px;width:51px;min-width:51px;height:51px;min-height:51px;
+}
+.wt-chat-workspace .wt-telegram-chat .chat-contact-v2>.wt-chat-contact-copy{
+ display:flex;flex:1 1 0;min-width:0;width:auto;gap:7px;
+}
+.wt-chat-workspace .wt-telegram-chat .wt-chat-contact-search input[type="search"]{
+ box-sizing:border-box;display:block;flex:1 1 0;width:100%;min-width:0;max-width:none;
+ height:100%;min-height:0;margin:0;padding:0;border:0;border-radius:0;
+ outline:none;box-shadow:none;background:transparent;color:var(--ink);
+ font-family:inherit;font-size:13px;
+}
+.wt-chat-workspace .wt-telegram-chat .wt-chat-contact-search input[type="search"]:focus{
+ border:0;outline:none;box-shadow:none;background:transparent;
+}
+.wt-chat-workspace .wt-telegram-chat .wt-chat-contact-search>svg{flex-shrink:0}
+.wt-chat-workspace .wt-telegram-chat .wt-chat-contact-avatar .wt-online-dot{right:0;bottom:0}

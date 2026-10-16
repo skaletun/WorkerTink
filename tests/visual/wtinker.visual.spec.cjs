@@ -266,3 +266,83 @@ test('8.1.0 regression: QR controls, avatars, notes and stale update recovery',a
   await context.close();
  }
 });
+
+
+test('8.1.0 regression — full-screen Telegram-style private chat navigation',async({browser})=>{
+ const {webcrypto}=require('node:crypto');
+ const pair=await webcrypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveKey']);
+ const peerPublicKey=await webcrypto.subtle.exportKey('jwk',pair.publicKey);
+ for(const viewport of [{width:390,height:844},{width:1440,height:900}]){
+  const context=await browser.newContext({viewport,colorScheme:'light'});
+  const page=await context.newPage();
+  const errors=[];page.on('pageerror',error=>errors.push(String(error)));
+  await prepare(page,'light');
+  await page.route('**/*',route=>{
+   const url=new URL(route.request().url());
+   if(!url.hostname.includes('workertink-directory'))return route.continue();
+   const path=url.pathname,method=route.request().method();
+   const answer=(json,status=200)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(json)});
+   if(path==='/profiles'&&method==='PUT')return answer({profile});
+   if(path==='/friends'&&method==='GET')return answer({friends:[friend('WTinkID-200001','Анна Смирнова','anna_s'),friend('WTinkID-200002','Дмитрий Орлов','d_orlov')]});
+   if(path==='/chat/keys/me')return answer({error:'CHAT_KEY_NOT_READY'},404);
+   if(path.startsWith('/chat/keys/')&&method==='GET')return answer({key:{profileId:'WTinkID-200001',publicKey:peerPublicKey,updatedAt:Date.now()}});
+   if(path==='/chat/keys'&&method==='PUT')return answer({ok:true,key:{profileId:profile.profileId,publicKey:route.request().postDataJSON().publicKey,updatedAt:Date.now()}});
+   if(path.startsWith('/chat/messages/')&&method==='GET')return answer({messages:[]});
+   if(path==='/chat/messages'&&method==='POST'){
+    const input=route.request().postDataJSON();
+    const envelope=JSON.parse(input.body);
+    if(envelope.v!==1||!envelope.iv||!envelope.data)return answer({error:'INVALID_ENVELOPE'},400);
+    return answer({ok:true,message:{id:'visual-message-'+Date.now(),from:profile.profileId,to:input.to,body:input.body,kind:input.kind,createdAt:Date.now(),readAt:null}});
+   }
+   return answer({error:'NOT_FOUND'},404);
+  });
+  await page.goto('/?tab=chat',{waitUntil:'domcontentloaded'});
+  await expect(page.locator('.atlas-chat-mode')).toBeVisible();
+  await expect(page.locator('.atlas-bar')).toBeHidden();
+  await expect(page.locator('.atlas-tray')).toBeHidden();
+  await expect(page.locator('.chats-mode-nav')).toHaveCount(0);
+  await expect(page.locator('.chat-list-head h1')).toHaveText('Чаты');
+  await expect(page.locator('.chat-contact-v2')).toHaveCount(2);
+  require('node:fs').mkdirSync('visual-audit-artifacts',{recursive:true});
+  await page.screenshot({path:'visual-audit-artifacts/messenger-'+viewport.width+'-list.png'});
+  await page.getByRole('searchbox',{name:'Поиск по чатам'}).fill('Анна');
+  await expect(page.locator('.chat-contact-v2')).toHaveCount(1);
+  await page.locator('.chat-contact-v2').first().click();
+  await expect(page.locator('.chat-head-person')).toContainText('Анна Смирнова');
+  await expect(page.locator('.wt-compose-inputrow')).toBeVisible();
+  await page.screenshot({path:'visual-audit-artifacts/messenger-'+viewport.width+'-dialog.png'});
+  await expect(page.getByRole('button',{name:'Прикрепить файл'})).toBeEnabled({timeout:10000});
+  await page.getByRole('button',{name:'Прикрепить файл'}).click();
+  await expect(page.getByRole('menuitem',{name:'Фото'})).toBeVisible();
+  await expect(page.getByRole('menuitem',{name:'Заметка смены'})).toBeVisible();
+  await page.getByRole('button',{name:'Прикрепить файл'}).click();
+  await page.getByRole('button',{name:'Добавить эмодзи'}).click();
+  await page.getByRole('button',{name:'Добавить 😊'}).click();
+  await expect(page.getByRole('textbox',{name:'Текст сообщения'})).toHaveValue('😊');
+  await page.getByRole('textbox',{name:'Текст сообщения'}).fill('Привет из WTinker');
+  await page.getByRole('button',{name:'Отправить сообщение'}).click();
+  await expect(page.locator('.message-bubble-v2')).toContainText('Привет из WTinker');
+  await page.screenshot({path:'visual-audit-artifacts/messenger-'+viewport.width+'-sent.png'});
+  await page.locator('.message-bubble-v2').first().click({button:'right'});
+  await expect(page.getByRole('button',{name:'Реакция'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Скопировать'})).toBeVisible();
+  await page.getByRole('button',{name:'Ответить'}).click();
+  await expect(page.locator('.reply-bar')).toContainText('Привет из WTinker');
+  await page.getByRole('button',{name:'Отменить ответ'}).click();
+
+  const bounds=await page.locator('.wt-compose-inputrow').boundingBox();
+  expect(bounds).toBeTruthy();
+  expect(bounds.y+bounds.height).toBeLessThanOrEqual(viewport.height+2);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth-window.innerWidth)).toBeLessThanOrEqual(2);
+  if(viewport.width<700){
+   await expect(page.locator('.chat-contacts-v2')).toBeHidden();
+   await page.getByRole('button',{name:'Назад к списку чатов'}).click();
+   await expect(page.locator('.chat-contact-v2')).toHaveCount(1);
+   await expect(page.locator('.chat-main-v2')).toBeHidden();
+  }else{
+   await expect(page.locator('.chat-contacts-v2')).toBeVisible();
+  }
+  expect(errors).toEqual([]);
+  await context.close();
+ }
+});

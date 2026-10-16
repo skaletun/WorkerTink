@@ -26,3 +26,14 @@ jobs:
         run: npm test
       - name: TypeScript and production build
         run: npm run build
+      - name: Install Chromium for messenger visual regression
+        run: npx playwright install --with-deps chromium
+      - name: Validate standalone mobile and desktop chat
+        run: npx playwright test tests/visual/wtinker.visual.spec.cjs --grep 'full-screen Telegram-style private chat navigation'
+      - name: Keep messenger visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: messenger-visual-evidence
+          path: visual-audit-artifacts/messenger-*.png
+          if-no-files-found: ignore
