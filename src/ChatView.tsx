@@ -110,6 +110,16 @@ export default function ChatView({token,profile,onNotice,state,onStateChange,onE
      }catch{out.push({...m,error:true})}
     }
     if(!cancelled){
+     const queued=await pendingEncryptedMessages(profile.profileId).catch(()=>[]);
+     for(const pending of queued.filter(record=>canonicalWTinkId(record.to)===canonicalWTinkId(selected.profileId))){
+      try{
+       const env=JSON.parse(pending.body) as ChatEnvelope;
+       const clear=await decryptChatWithCandidates(profile.profileId,env,[remote.key.publicKey]);
+       const plain:Plain=clear.kind==='text'?{kind:'text',text:clear.text}:clear.kind==='note'?{kind:'note',note:clear.text,noteDate:pending.noteDate,noteShift:pending.noteShift}:{kind:clear.kind,name:pending.name,mime:pending.mime,mediaId:env.mediaId,iv:env.iv,peerPublicKeys:[remote.key.publicKey]};
+       out.push({id:'pending:'+pending.id,from:profile.profileId,to:selected.profileId,body:pending.body,kind:pending.kind,createdAt:pending.createdAt,readAt:null,plain,pending:true,pendingId:pending.id});
+      }catch{}
+     }
+     out.sort((a,b)=>a.createdAt-b.createdAt);
      setMessages(out);
      const last=out.filter(message=>!message.deletedAt).at(-1);
      if(last)setPreviews(prev=>({...prev,[selected.profileId]:last.plain?.text||last.plain?.note||last.plain?.caption||(last.plain?.kind==='image'?'Фотография':last.plain?.kind==='voice'?'Голосовое сообщение':last.plain?.kind==='video'?'Видео':'Файл')}));
@@ -119,6 +129,15 @@ export default function ChatView({token,profile,onNotice,state,onStateChange,onE
   return()=>{cancelled=true;setMessages(items=>{items.forEach(m=>m.plain?.url&&URL.revokeObjectURL(m.plain.url));return []})};
  },[selected?.profileId,token,profile.profileId]);
  useEffect(()=>{if(!messages.length)return;void Promise.all(messages.map(async m=>{try{const r=await getChatReactions(m.id,token);setMessages(ms=>ms.map(x=>x.id===m.id?{...x,reactions:r.reactions}:x))}catch{}}))},[messages.length,token,selected?.profileId]);
+ useEffect(()=>{
+  const delivered=(event:Event)=>{
+   const data=(event as CustomEvent<{id:string;message:ChatServerMessage}>).detail;
+   if(!data?.id||!data.message)return;
+   setMessages(items=>items.map(item=>item.pendingId===data.id?{...item,...data.message,pending:false,pendingId:undefined}:item));
+  };
+  window.addEventListener('wtinker:outbox-delivered',delivered);
+  return()=>window.removeEventListener('wtinker:outbox-delivered',delivered);
+ },[]);
  const search=async()=>{const q=searchQuery.trim().toLocaleLowerCase('ru-RU');if(!q){setSearchResults([]);return}setSearchResults(messages.filter(m=>{const text=[m.plain?.text,m.plain?.note,m.plain?.caption,m.replyPreview].filter(Boolean).join(' ').toLocaleLowerCase('ru-RU');return text.includes(q)}).slice(0,100))};
  const searchHit=(id:string)=>{const el=document.querySelector(`[data-message-id="${CSS.escape(id)}"]`);el?.scrollIntoView({behavior:'smooth',block:'center'});setSearchOpen(false)};
  const togglePin=async(messageId:string)=>{try{if(pinnedIds.includes(messageId)){await unpinChatMessage(messageId,token);setPinnedIds(ids=>ids.filter(id=>id!==messageId));setMessages(ms=>ms.map(m=>m.id===messageId?{...m,pinned:false}:m));onNotice('Сообщение откреплено')}else{await pinChatMessage(messageId,token);setPinnedIds(ids=>[...ids,messageId]);setMessages(ms=>ms.map(m=>m.id===messageId?{...m,pinned:true}:m));onNotice('Сообщение закреплено')}}catch{onNotice('Не удалось изменить закрепление')}};
