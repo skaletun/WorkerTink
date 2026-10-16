@@ -1,41 +1,195 @@
-import {useState} from 'react';
 import {Icon} from './Icon.tsx';
 
 const base=()=>window.location.hostname.endsWith('github.io')?'/WorkerTink/':'/';
-const link=(query:string)=>base()+'?'+query;
-const features=[
- {number:'01',title:'Планируй смены',description:'Графики 5/2, 2/2, вахты и ручные изменения — в одном календаре.',icon:'calendar'},
- {number:'02',title:'Считай зарплату',description:'Оклад, доплаты, авансы, отпускные и больничные с понятной детализацией.',icon:'pay'},
- {number:'03',title:'Находи коллег',description:'Профессиональные профили, связи, сообщества и групповые рабочие пространства.',icon:'people'},
- {number:'04',title:'Общайся защищённо',description:'Личные сообщения и вложения с шифрованием на устройстве, групповые обсуждения.',icon:'chat'}
+const auth=(mode:'join'|'login')=>base()+'?auth='+mode;
+
+const capabilities=[
+ {id:'01',title:'График смен',text:'Рабочие дни, ночные смены, выходные и отпуска — в календаре с понятной структурой.',link:'Календарь и смены'},
+ {id:'02',title:'Зарплата и начисления',text:'Считайте предполагаемую зарплату с учётом авансов, доплат, отпуска и больничных.',link:'Личные расчёты'},
+ {id:'03',title:'Люди и сообщества',text:'Находите коллег по username или WTinkID, общайтесь и создавайте рабочие сообщества.',link:'Профессиональная сеть'},
+ {id:'04',title:'Личные чаты',text:'Переписка, фотографии, файлы и голосовые сообщения с оконечным шифрованием.',link:'Защищённое общение'}
 ] as const;
-const faqs=[
- ['WTinker — только календарь?','Нет. Это рабочее пространство: график, выплаты, заметки, коллеги, сообщества, личные и групповые чаты.'],
- ['Работает ли без интернета?','Календарь и локальные расчёты доступны офлайн после установки PWA. Друзья, переписка и синхронизация аккаунта требуют соединения.'],
- ['Где мои данные?','Рабочие записи и расчёты хранятся на устройстве. Настройки аккаунта, социальные данные, метаданные и зашифрованные сообщения обрабатываются через Directory API.'],
- ['Это замена расчётному листку?','Нет. WTinker помогает планировать и проверять приблизительные начисления по введённым данным. Официальные суммы необходимо сверять с работодателем.']
+
+const questions=[
+ {q:'Нужно ли устанавливать WTinker?',a:'Нет. Приложение работает в браузере. Его также можно установить на главный экран телефона как PWA.'},
+ {q:'Работают ли расчёты без интернета?',a:'Календарь и локальные расчёты доступны без подключения после первоначальной загрузки приложения. Переписка, поиск людей и синхронизация аккаунта требуют интернета.'},
+ {q:'Какие данные доступны серверу?',a:'Рабочие записи и личные расчёты хранятся в браузере. Данные аккаунта и социальные функции используют сервер. Личные сообщения и вложения шифруются на устройстве. Закрытые ключи для их расшифровки остаются в локальном хранилище.'},
+ {q:'Можно ли использовать расчёт зарплаты как расчётный лист?',a:'Нет. Это личный инструмент для оценки начислений по введённым параметрам, а не официальный документ работодателя.'}
 ] as const;
+
+const week=[
+ {day:'Пн',date:'12',kind:'work',label:'День'},
+ {day:'Вт',date:'13',kind:'work',label:'День'},
+ {day:'Ср',date:'14',kind:'off',label:'Выходной'},
+ {day:'Чт',date:'15',kind:'off',label:'Выходной'},
+ {day:'Пт',date:'16',kind:'work',label:'День'},
+ {day:'Сб',date:'17',kind:'work',label:'День'},
+ {day:'Вс',date:'18',kind:'off',label:'Выходной'}
+] as const;
+
+function Wordmark(){
+ return <a className="wl-wordmark" href={base()} aria-label="WTinker — на главную">
+  <img src={base()+'icon-256.png'} alt="" width="37" height="37"/>
+  <span>WTinker</span>
+ </a>;
+}
+
+function ProductPreview(){
+ return <div className="wl-product" aria-label="Демонстрация интерфейса календаря и заметок WTinker">
+  <div className="wl-product-top">
+   <div className="wl-product-app"><img src={base()+'icon-256.png'} alt="" width="22" height="22"/><span>WTinker</span></div>
+   <span className="wl-product-status">Рабочее пространство</span>
+  </div>
+  <div className="wl-product-body">
+   <aside className="wl-product-side" aria-label="Разделы приложения">
+    <div className="is-current"><Icon name="calendar" size={17}/><span>Календарь</span></div>
+    <div><Icon name="pay" size={17}/><span>Зарплата</span></div>
+    <div><Icon name="people" size={17}/><span>Люди</span></div>
+    <div><Icon name="chat" size={17}/><span>Чаты</span></div>
+   </aside>
+   <div className="wl-product-content">
+    <div className="wl-product-heading">
+     <div><span className="wl-preview-label">Личный график</span><h3>Октябрь 2026</h3></div>
+     <span className="wl-schedule-type">График 2/2</span>
+    </div>
+    <div className="wl-calendar-grid">
+     {week.map(item=><div className={'wl-calendar-day '+(item.kind==='work'?'is-work':'is-off')} key={item.date}>
+      <span>{item.day}</span>
+      <strong>{item.date}</strong>
+      <small>{item.label}</small>
+     </div>)}
+    </div>
+    <div className="wl-product-bottom">
+     <div className="wl-preview-note">
+      <span className="wl-preview-label">Записи на смену</span>
+      <strong>Всё важное под рукой</strong>
+      <p>Заметки привязаны к дате в календаре.</p>
+     </div>
+     <div className="wl-preview-pay">
+      <Icon name="pay" size={19}/>
+      <div><strong>Мой расчёт</strong><span>Оклад, доплаты, аванс</span></div>
+     </div>
+    </div>
+   </div>
+  </div>
+ </div>;
+}
+
 export default function MarketingLanding(){
- const [openFaq,setOpenFaq]=useState<number|null>(0);
  return <div className="wt-landing">
-  <header className="wt-landing-header"><a className="wt-landing-logo" href={base()} aria-label="WTinker — главная"><b>✳</b><span>wtinker.</span></a><nav aria-label="Навигация по странице"><a href="#possibilities">Возможности</a><a href="#how-it-works">Как работает</a><a href="#questions">Вопросы</a></nav><div className="wt-landing-header-actions"><a className="wt-landing-login" href={link('auth=login')}>Войти</a><a className="wt-landing-top-cta" href={link('auth=join')}>Начать <span>↗</span></a></div></header>
-  <main>
-   <section className="wt-landing-hero"><div className="wt-landing-intro"><span className="wt-landing-eyebrow"><i/> ЛЮДИ × РАБОТА × ВАШ РИТМ</span><h1>Работа.<br/><em>В одном ритме.</em></h1><p>Смены, деньги, коллеги и разговоры — наконец в одном месте. WTinker собирает твой рабочий день в понятную систему.</p><div className="wt-landing-actions"><a className="wt-landing-primary" href={link('auth=join')}>Создать аккаунт <span>↗</span></a><a className="wt-landing-secondary" href="#possibilities">Посмотреть возможности <Icon name="chevronRight" size={18}/></a></div><div className="wt-landing-proof"><span><Icon name="check" size={15}/> PWA на телефоне</span><span><Icon name="check" size={15}/> Рабочие расчёты офлайн</span></div></div>
-    <div className="wt-landing-visual" aria-label="Иллюстрация интерфейса календаря, чата и финансов WTinker">
-     <div className="wt-landing-visual-label">WORK / IN MOTION <span>01—04</span></div>
-     <div className="wt-preview-display"><div className="wt-preview-top"><b>Понедельник, 14</b><span>ОКТ 2026</span></div><div className="wt-preview-headline">Ваш месяц.<br/><em>Ваши правила.</em></div><div className="wt-preview-calendar">{['ПН','ВТ','СР','ЧТ','ПТ','СБ','ВС'].map(day=><span className="wt-preview-weekday" key={day}>{day}</span>)}{Array.from({length:35},(_,i)=><i key={i} className={i%7===5||i%7===6?'off':i%5===0?'night':i===13?'current':'day'}>{i<31?i+1:''}</i>)}</div><div className="wt-preview-foot"><span>● Смена</span><span>● Ночь</span><span>● Выходной</span></div></div>
-     <div className="wt-preview-float wt-preview-float-chat"><span>СООБЩЕНИЯ</span><b>Команда на связи</b><p>Договорились. До завтра! 👋</p><small>Защищённый разговор</small></div>
-     <div className="wt-preview-float wt-preview-float-pay"><span>ПРОГНОЗ ДОХОДА</span><b>87 450 ₽</b><small>Пример интерфейса, не ваш расчёт</small></div>
-     <span className="wt-landing-visual-disclaimer">Иллюстрация продукта · демонстрационные данные</span>
+  <a href="#main-content" className="wl-skip">Перейти к содержимому</a>
+  <header className="wl-header">
+   <div className="wl-container wl-header-content">
+    <Wordmark/>
+    <nav aria-label="Навигация по лендингу">
+     <a href="#features">Возможности</a>
+     <a href="#product">Приложение</a>
+     <a href="#security">Безопасность</a>
+    </nav>
+    <div className="wl-header-actions">
+     <a href={auth('login')} className="wl-login">Войти</a>
+     <a href={auth('join')} className="wl-button wl-button-small">Регистрация <Icon name="chevronRight" size={17}/></a>
+    </div>
+   </div>
+  </header>
+
+  <main id="main-content">
+   <section className="wl-hero">
+    <div className="wl-container wl-hero-grid">
+     <div className="wl-hero-copy">
+      <p className="wl-kicker">Рабочее пространство</p>
+      <h1>Рабочие дела.<br/><span>Без лишнего.</span></h1>
+      <p className="wl-hero-description">График смен, расчёт зарплаты, заметки и общение с коллегами. Всё, что нужно для рабочего дня, в одном приложении.</p>
+      <div className="wl-hero-actions">
+       <a href={auth('join')} className="wl-button wl-button-primary">Создать аккаунт <Icon name="chevronRight" size={19}/></a>
+       <a href="#product" className="wl-inline-link">Посмотреть интерфейс <Icon name="chevronRight" size={17}/></a>
+      </div>
+      <p className="wl-hero-footnote">В браузере и на телефоне · основные личные расчёты работают офлайн</p>
+     </div>
+     <div className="wl-hero-art">
+      <div className="wl-preview-surround">
+       <span className="wl-preview-overline">Обзор приложения</span>
+       <ProductPreview/>
+       <span className="wl-preview-caption">Демонстрационные данные. Не отражают реальный график пользователя.</span>
+      </div>
+     </div>
     </div>
    </section>
-   <div className="wt-landing-ticker" aria-label="Что объединяет WTinker"><span>РАБОЧИЙ ГРАФИК</span><i>✳</i><span>ЛЮДИ И КОМАНДЫ</span><i>✳</i><span>ЗАРПЛАТА</span><i>✳</i><span>ЗАЩИЩЁННЫЕ ЧАТЫ</span><i>✳</i><span>ВАШ КОНТРОЛЬ</span></div>
-   <section id="possibilities" className="wt-landing-section"><div className="wt-landing-section-intro"><span>01 / ИНСТРУМЕНТЫ</span><h2>Не ещё одно приложение.<br/><em>Твоя рабочая среда.</em></h2><p>Нужное в течение смены — под рукой. Не переключайся между пятью отдельными сервисами.</p></div><div className="wt-landing-feature-grid">{features.map(f=><article key={f.number} className="wt-landing-feature"><div><span>{f.number} / WTINKER</span><Icon name={f.icon} size={24}/></div><h3>{f.title}</h3><p>{f.description}</p></article>)}</div></section>
-   <section id="how-it-works" className="wt-landing-story"><div><span>02 / ТВОЯ СИСТЕМА</span><h2>Начни с графика.<br/><em>Продолжай вместе.</em></h2></div><ol><li><b>01</b><div><strong>Создай профиль</strong><p>Имя, должность и свой WTinkID — твоя точка входа.</p></div></li><li><b>02</b><div><strong>Настрой работу</strong><p>Выбери смены, оклад и отпуск. В любой момент можно изменить параметры.</p></div></li><li><b>03</b><div><strong>Подключай людей</strong><p>Находи коллег, переписывайся и собирай рабочее пространство.</p></div></li></ol></section>
-   <section className="wt-landing-privacy"><div><span>03 / КОНТРОЛЬ ДАННЫХ</span><h2>Работа — твоя.<br/>Данные — тоже.</h2><p>Персональный календарь и расчёты сохраняются на устройстве. Аккаунт, социальные функции и синхронизация работают через сервер. Содержимое личных сообщений и вложений шифруется на устройстве.</p><a href={base()+'rules/privacy'}>Как мы работаем с данными <Icon name="chevronRight" size={17}/></a></div><div className="wt-landing-lock"><Icon name="shield" size={100}/><strong>ЛОКАЛЬНО + E2E</strong><small>Разные данные — разные уровни хранения и защиты</small></div></section>
-   <section id="questions" className="wt-landing-faq"><div><span>04 / ВОПРОСЫ</span><h2>Без мелкого шрифта.</h2></div><div>{faqs.map(([question,answer],i)=><article key={question}><button type="button" aria-expanded={openFaq===i} onClick={()=>setOpenFaq(openFaq===i?null:i)}><b>{question}</b><span>{openFaq===i?'−':'+'}</span></button>{openFaq===i&&<p>{answer}</p>}</article>)}</div></section>
-   <section className="wt-landing-closing"><span>НАЧНИ В СВОЁМ РИТМЕ</span><h2>Рабочая жизнь.<br/><em>Проще вместе.</em></h2><a href={link('auth=join')}>Попробовать WTinker <span>↗</span></a></section>
+
+   <section className="wl-section wl-features" id="features">
+    <div className="wl-container">
+     <div className="wl-section-heading">
+      <p className="wl-kicker">Возможности</p>
+      <h2>Один сервис для ежедневных задач.</h2>
+      <p>Без переключения между календарём, калькулятором и мессенджером.</p>
+     </div>
+     <div className="wl-feature-list">
+      {capabilities.map(item=><article key={item.id} className="wl-feature">
+       <span className="wl-feature-number">{item.id}</span>
+       <div><h3>{item.title}</h3><p>{item.text}</p></div>
+       <span className="wl-feature-type">{item.link}</span>
+      </article>)}
+     </div>
+    </div>
+   </section>
+
+   <section className="wl-section wl-workflow" id="product">
+    <div className="wl-container wl-workflow-grid">
+     <div className="wl-workflow-intro">
+      <p className="wl-kicker">Как это работает</p>
+      <h2>От своей смены до общего дела.</h2>
+      <p>Начните с личного графика. Остальные инструменты доступны по мере необходимости.</p>
+      <a href={auth('join')} className="wl-inline-link">Перейти к регистрации <Icon name="chevronRight" size={18}/></a>
+     </div>
+     <ol className="wl-steps">
+      <li><span>01</span><div><h3>Создайте профиль</h3><p>Укажите имя и username, чтобы коллеги могли вас найти.</p></div></li>
+      <li><span>02</span><div><h3>Настройте график и расчёты</h3><p>Выберите режим смен и параметры оплаты. При необходимости скорректируйте вручную.</p></div></li>
+      <li><span>03</span><div><h3>Общайтесь и работайте вместе</h3><p>Добавляйте коллег, создавайте сообщества и обменивайтесь сообщениями.</p></div></li>
+     </ol>
+    </div>
+   </section>
+
+   <section className="wl-section wl-security" id="security">
+    <div className="wl-container wl-security-grid">
+     <div>
+      <p className="wl-kicker">Безопасность и данные</p>
+      <h2>Переписка остаётся личной.</h2>
+      <p>Содержимое личных сообщений и вложений шифруется на вашем устройстве. Рабочие записи и расчёты сохраняются локально; учётная запись и социальные функции используют сервер.</p>
+      <a href={base()+'rules/privacy'} className="wl-inline-link">Политика конфиденциальности <Icon name="chevronRight" size={17}/></a>
+     </div>
+     <div className="wl-security-points">
+      <div><Icon name="lock" size={21}/><span><strong>Оконечное шифрование</strong><small>Личные сообщения и файлы</small></span></div>
+      <div><Icon name="calendar" size={21}/><span><strong>Локальные записи</strong><small>График, заметки и расчёты</small></span></div>
+      <div><Icon name="shield" size={21}/><span><strong>Контроль ключей</strong><small>E2E-ключи сохраняются на устройстве. При их утрате восстановление переписки может быть невозможно.</small></span></div>
+     </div>
+    </div>
+   </section>
+
+   <section className="wl-section wl-questions" id="questions">
+    <div className="wl-container wl-questions-grid">
+     <div><p className="wl-kicker">Частые вопросы</p><h2>Что важно знать</h2></div>
+     <div className="wl-faq-list">{questions.map(item=><details key={item.q}>
+      <summary>{item.q}<Icon name="chevronDown" size={19}/></summary>
+      <p>{item.a}</p>
+     </details>)}</div>
+    </div>
+   </section>
+
+   <section className="wl-final">
+    <div className="wl-container wl-final-content">
+     <div><p className="wl-kicker">WTinker</p><h2>Для работы и тех,<br/>с кем вы работаете.</h2></div>
+     <a className="wl-button wl-button-light" href={auth('join')}>Начать работу <Icon name="chevronRight" size={19}/></a>
+    </div>
+   </section>
   </main>
-  <footer className="wt-landing-footer"><div className="wt-landing-logo"><b>✳</b><span>wtinker.</span></div><p>Люди, работа, один ритм. © 2026 WTinker</p><nav><a href={base()+'rules/privacy'}>Конфиденциальность</a><a href={base()+'rules/terms'}>Условия</a><a href="mailto:support@workertink.app">Связаться</a></nav></footer>
+
+  <footer className="wl-footer"><div className="wl-container wl-footer-content">
+   <div><Wordmark/><small>© 2026 WTinker</small></div>
+   <nav aria-label="Юридическая информация и контакты">
+    <a href={base()+'rules/privacy'}>Конфиденциальность</a>
+    <a href={base()+'rules/terms'}>Условия использования</a>
+    <a href="mailto:support@workertink.app">Контакты</a>
+   </nav>
+  </div></footer>
  </div>;
 }
