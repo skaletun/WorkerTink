@@ -323,6 +323,13 @@ test('8.1.0 regression — full-screen Telegram-style private chat navigation',a
   await page.getByRole('button',{name:'Отправить сообщение'}).click();
   await expect(page.locator('.message-bubble-v2')).toContainText('Привет из WTinker');
   await page.screenshot({path:'visual-audit-artifacts/messenger-'+viewport.width+'-sent.png'});
+  await page.locator('.message-bubble-v2').first().click({button:'right'});
+  await expect(page.getByRole('button',{name:'Реакция'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Скопировать'})).toBeVisible();
+  await page.getByRole('button',{name:'Ответить'}).click();
+  await expect(page.locator('.reply-bar')).toContainText('Привет из WTinker');
+  await page.getByRole('button',{name:'Отменить ответ'}).click();
+
   const bounds=await page.locator('.wt-compose-inputrow').boundingBox();
   expect(bounds).toBeTruthy();
   expect(bounds.y+bounds.height).toBeLessThanOrEqual(viewport.height+2);
