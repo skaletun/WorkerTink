@@ -143,6 +143,8 @@ const groupClientId='04ac1fc0-d695-44fb-8d83-5e85d0d9f332';
 const groupPayload={kind:'text',body:'{"v":1,"iv":"encrypted","data":"no-plain-text"}',clientMessageId:groupClientId};
 const firstGroupSend=await call('POST','/chat/groups/'+groupId+'/messages','alice',groupPayload);
 assert.equal(firstGroupSend.status,201,JSON.stringify(firstGroupSend.data));
+assert.match(firstGroupSend.data.message.id,/^[a-f0-9-]{36}$/i);
+assert.notEqual(firstGroupSend.data.message.id,groupId,'server must return the message UUID, not the group ID');
 const groupReplay=await call('POST','/chat/groups/'+groupId+'/messages','alice',groupPayload);
 assert.equal(groupReplay.status,200,JSON.stringify(groupReplay.data));
 assert.equal(groupReplay.data.replayed,true);
