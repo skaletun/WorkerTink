@@ -3,9 +3,9 @@ import {webcrypto} from 'node:crypto';
 if(!globalThis.crypto)globalThis.crypto=webcrypto;
 const {checkE2EHealth,redactedE2EHealthReport}=await import('../src/e2eHealth.ts');
 const id='WTinkID-578420';
-const first=await webcrypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveBits']);
+const first=await webcrypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveKey']);
 const pair={privateKey:await webcrypto.subtle.exportKey('jwk',first.privateKey),publicKey:await webcrypto.subtle.exportKey('jwk',first.publicKey)};
-const second=await webcrypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveBits']);
+const second=await webcrypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveKey']);
 const other=await webcrypto.subtle.exportKey('jwk',second.publicKey);
 const deps=(keys,server,online=true)=>({
  local:async profileId=>{assert.equal(profileId,id.toUpperCase());return keys},
