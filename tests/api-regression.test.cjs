@@ -34,14 +34,15 @@ assert.match(api,/SELECT id,sender_id,receiver_id,group_id,mime,size,total_chunk
 assert.match(api,/FROM chat_group_members WHERE group_id=\?1 AND profile_id=\?2/);
 assert.match(api,/const access=await canViewSocialPost\(env,owner\.wtink_id,id\);/);
 
-assert.match(api,/social_messages \(id,sender_id,receiver_id,body,kind,mime,name,created_at\)/);
+assert.match(api,/social_messages \(id,sender_id,receiver_id,body,kind,mime,name,created_at,client_message_id\)/);
 assert.match(api,/webauthn_credentials\(id,profile_id,user_id,public_key,counter,device_type,backed_up,transports,device_name,created_at,updated_at\).*VALUES \(\?1,\?2,\?3,\?4,\?5,\?6,\?7,\?8,\?9,\?10,\?11\)/);
 assert.match(api,/!\['voice','image','video','file'\]\.includes\(kind\)/);
 assert.match(api,/body:r\.body,kind:r\.kind/);
 assert.doesNotMatch(app,/Входящий P2P-запрос/);
 assert.doesNotMatch(app,/workertink:peer-action/);
 assert.match(chat,/E2E/);
-assert.match(chat,/sendChatMessage/);
+assert.match(chat,/queueEncryptedMessage/);
+assert.match(chat,/sendQueuedEncryptedMessage/);
 assert.match(chat,/chat-file-input/);
 assert.match(chat,/Применить заметку/);
 assert.match(sw,/precacheAndRoute/);

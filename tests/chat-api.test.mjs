@@ -13,6 +13,7 @@ db.exec(migration('0001_initial.sql'));
 db.exec(migration('0010_social_network.sql'));
 db.exec(migration('0012_chat_e2ee_qr.sql'));
 db.exec(migration('0013_chat_controls.sql'));
+db.exec(migration('0029_chat_idempotency.sql'));
 db.exec(migration('0021_chat_pins.sql'));
 const network=migration('0018_network_identity_channels.sql');
 for(const table of ['chat_groups','chat_group_members','chat_group_messages','chat_group_message_deletions']){
@@ -124,4 +125,17 @@ assert.equal(group.data.messages.length,1);
 assert.equal(group.data.messages[0].replyToId,sentId);
 assert.equal(group.data.messages[0].replyPreview,'group reply');
 assert.equal((await call('GET','/chat/groups/'+groupId+'/messages','unrelated')).status,403);
+
+const retryId='70629708-8d22-4601-a854-d63b50152501';
+const candidate={to:ids.bob,kind:'text',body:'{"v":1,"iv":"idempotent","data":"cipher"}',clientMessageId:retryId};
+const queued=await call('POST','/chat/messages','alice',candidate);
+assert.equal(queued.status,201,JSON.stringify(queued.data));
+const replay=await call('POST','/chat/messages','alice',candidate);
+assert.equal(replay.status,200,JSON.stringify(replay.data));
+assert.equal(replay.data.message.id,queued.data.message.id);
+assert.equal(replay.data.replayed,true);
+assert.equal((await call('POST','/chat/messages','alice',{...candidate,body:'modified ciphertext'})).status,409);
+assert.equal(db.prepare('SELECT COUNT(*) AS n FROM social_messages WHERE sender_id=? AND client_message_id=?').get(ids.alice,retryId).n,1);
+assert.equal((await call('POST','/chat/messages','alice',{...candidate,clientMessageId:'invalid'})).status,400);
+
 console.log('WorkerTink chat lifecycle integration tests: OK');
