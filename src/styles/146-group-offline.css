@@ -1,0 +1,3 @@
+.group-message .wt-group-pending{font-size:11px;color:var(--muted);font-weight:550}
+.group-message:has(.wt-group-pending){opacity:.82}
+.wt-offline-queue-item>b{color:var(--ink)}

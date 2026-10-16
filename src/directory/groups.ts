@@ -22,7 +22,7 @@ export function putChatGroupMemberKey(id:string,profileId:string,packet:{iv:stri
 
 export function getChatGroupMessages(id:string,token:string){return request<{messages:GroupChatMessage[]}>(`/chat/groups/${encodeURIComponent(id)}/messages`,{headers:{Authorization:`Bearer ${token}`}})}
 
-export function sendChatGroupMessage(id:string,body:string,kind:ChatServerMessage['kind'],token:string,mime?:string,name?:string,replyToId?:string,replyPreview?:string){return request<{ok:boolean;message:GroupChatMessage}>(`/chat/groups/${encodeURIComponent(id)}/messages`,{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({body,kind,mime,name,replyToId,replyPreview})})}
+export function sendChatGroupMessage(id:string,body:string,kind:ChatServerMessage['kind'],token:string,mime?:string,name?:string,replyToId?:string,replyPreview?:string,clientMessageId?:string){return request<{ok:boolean;message:GroupChatMessage}>(`/chat/groups/${encodeURIComponent(id)}/messages`,{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({body,kind,mime,name,replyToId,replyPreview,clientMessageId})})}
 
 export function deleteChatGroupMessage(id:string,mode:'me'|'both',token:string){return request<{ok:boolean}>(`/chat/groups/messages/${encodeURIComponent(id)}/${mode}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}})}
 
