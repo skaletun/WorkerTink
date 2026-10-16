@@ -20,10 +20,15 @@ async function waitForControllerChange(container:ServiceWorkerContainer,previous
   if(container.controller!==previous)done(true);
  });
 }
+async function withTimeout<T>(promise:Promise<T>,timeoutMs:number):Promise<T>{
+ return new Promise((resolve,reject)=>{
+  const timer=setTimeout(()=>reject(new UpdateError('REGISTRATION_UPDATE_FAILED')),timeoutMs);
+  promise.then(value=>{clearTimeout(timer);resolve(value)},error=>{clearTimeout(timer);reject(new UpdateError('REGISTRATION_UPDATE_FAILED',error))});
+ });
+}
 
-/** The page must NEVER clear a cache, IndexedDB, or localStorage to switch
- * worker versions. A waiting worker can already be activated while offline.
- * We do not navigate on timeout: the user must be able to retry safely.
+/** No cache/IDB/localStorage deletion. If there is no new worker, report a
+ * retryable error rather than reloading the same obsolete application shell.
  */
 export async function activateUpdate(
  registration:ServiceWorkerRegistration|null,
@@ -31,32 +36,32 @@ export async function activateUpdate(
  timeoutMs=12000
 ):Promise<UpdateActivation>{
  if(!registration||!container)return 'unavailable';
- const previous=container.controller;
+ const previousController=container.controller;
+ const previousActive=registration.active;
  let worker=registration.waiting;
  if(!worker){
-  if(typeof navigator!=='undefined'&&!navigator.onLine)throw new UpdateError('NO_NETWORK');
-  try{
-   await Promise.race([
-    registration.update(),
-    new Promise<never>((_,reject)=>setTimeout(()=>reject(new UpdateError('REGISTRATION_UPDATE_FAILED')),timeoutMs))
-   ]);
-  }catch(error){throw error instanceof UpdateError?error:new UpdateError('REGISTRATION_UPDATE_FAILED',error)}
+  if(typeof navigator!=='undefined'&&navigator.onLine===false)throw new UpdateError('NO_NETWORK');
+  await withTimeout(registration.update(),timeoutMs);
+  // On iOS the update() promise can resolve before installing->installed.
+  // A new SW may also auto-activate without entering the waiting state.
+  const deadline=Date.now()+timeoutMs;
+  while(!registration.waiting&&registration.active===previousActive&&container.controller===previousController&&Date.now()<deadline){
+   await new Promise(resolve=>setTimeout(resolve,120));
+  }
   worker=registration.waiting;
  }
  if(worker){
-  const change=waitForControllerChange(container,previous,timeoutMs);
+  const change=waitForControllerChange(container,previousController,timeoutMs);
   worker.postMessage({type:'SKIP_WAITING'});
   if(!(await change))throw new UpdateError('ACTIVATION_TIMEOUT');
   return 'activated';
  }
- // With skipWaiting()+clients.claim() in the injected worker, the newly
- // installed SW may have already activated before the user taps Update.
- if(container.controller!==previous||registration.active)return 'already-active';
- return 'unavailable';
+ if(container.controller!==previousController||registration.active!==previousActive&&Boolean(registration.active))return 'already-active';
+ throw new UpdateError('REGISTRATION_UPDATE_FAILED');
 }
 
-/** Synchronous application checkpoint. Consumers (editors) may cancel on
- * actual write failure. This does not discard or mutate any chat credentials.
+/** Synchronous application checkpoint. Consumers (open editors) may cancel
+ * when an actual local draft write fails. Keys and ciphertext are untouched.
  */
 export function checkpointOpenEditors(target:Pick<Window,'dispatchEvent'>=window):boolean{
  return target.dispatchEvent(new Event('wtinker:before-update',{cancelable:true}));
