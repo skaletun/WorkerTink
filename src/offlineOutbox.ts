@@ -73,6 +73,19 @@ const isTransient=(error:string)=>/Failed to fetch|NetworkError|Load failed|HTTP
 function emitted(id:string,message:ChatServerMessage){
  if(typeof window!=='undefined')window.dispatchEvent(new CustomEvent('wtinker:outbox-delivered',{detail:{id,message}}));
 }
+export async function sendQueuedEncryptedMessage(record:OutboxMessage,token:string):Promise<ChatServerMessage|null>{
+ if(!token||typeof navigator!=='undefined'&&!navigator.onLine)return null;
+ try{
+  const response=await sendChatMessage(record.to,record.body,record.kind,token,record.mime,record.name,record.replyToId,record.replyPreview,record.noteDate,record.noteShift,record.id);
+  await removeOne(record.id);
+  emitted(record.id,response.message);
+  return response.message;
+ }catch(error){
+  const code=String(error),attempts=record.attempts+1;
+  await writeOne({...record,attempts,status:isTransient(code)?'pending':'blocked',nextAttemptAt:Date.now()+retryBackoff(attempts),lastError:code.slice(0,130)});
+  return null;
+ }
+}
 /** Never persists auth tokens: the current logged-in session is supplied at
  * delivery time. Each item keeps its original client id across retries.
  */
@@ -83,15 +96,12 @@ export async function flushEncryptedOutbox(ownerId:string,token:string):Promise<
   const queue=await pendingEncryptedMessages(ownerId);
   for(const record of queue){
    if(record.status!=='pending'||record.nextAttemptAt>Date.now())continue;
-   try{
-    const result=await sendChatMessage(record.to,record.body,record.kind,token,record.mime,record.name,record.replyToId,record.replyPreview,record.noteDate,record.noteShift,record.id);
-    await removeOne(record.id);
-    emitted(record.id,result.message);
-   }catch(error){
-    const code=String(error);
-    const attempts=record.attempts+1;
-    await writeOne({...record,attempts,status:isTransient(code)?'pending':'blocked',nextAttemptAt:Date.now()+retryBackoff(attempts),lastError:code.slice(0,130)});
-    if(isTransient(code))break;
+   const delivered=await sendQueuedEncryptedMessage(record,token);
+   if(!delivered){
+    // Preserve FIFO for transient errors; permanently blocked items stay
+    // visible for explicit retry or discard in the user-facing queue.
+    const updated=(await pendingEncryptedMessages(ownerId)).find(item=>item.id===record.id);
+    if(updated?.status==='pending')break;
    }
   }
  })().finally(()=>{inFlight=null});
