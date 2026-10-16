@@ -142,7 +142,7 @@ function localPut(profileId:string,identity:StoredIdentity):boolean{
   const key=storageKey(profileId);
   const previous=JSON.parse(localStorage.getItem(key)||'null');
   if(isIdentity(previous)&&!samePublicKey(previous.publicKey,identity.publicKey)){
-   try{localStorage.setItem('workertink:chat-e2e:history:'+fingerprint(previous.publicKey)+':'+canonicalId(profileId),JSON.stringify(previous))}catch{}
+   localStorage.setItem('workertink:chat-e2e:history:'+fingerprint(previous.publicKey)+':'+canonicalId(profileId),JSON.stringify(previous));
   }
   localStorage.setItem(key,JSON.stringify(identity));
   return true;
