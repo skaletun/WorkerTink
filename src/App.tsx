@@ -18,6 +18,7 @@ import HomeView from './HomeView.tsx';
 import ChatsHub from './ChatsHub.tsx';
 import AppShell from './AppShell.tsx';
 import {getChatIdentity,getChatIdentityMatching} from './chatCrypto.ts';
+import {flushEncryptedOutbox} from './offlineOutbox.ts';
 import {Icon} from './Icon.tsx';
 import {isDevProfile,isAdminProfile,NameWithBadge,download,Avatar,type PeriodDraft} from './app/AppShared.tsx';
 import {buildPushReminders} from './app/reminders.ts';
@@ -58,6 +59,19 @@ function App(){
  const [usernameGate,setUsernameGate]=useState(false);const [usernameDraft,setUsernameDraft]=useState('');const [usernameBusy,setUsernameBusy]=useState(false);const [installEvent,setInstallEvent]=useState<any>(null);const [installBanner,setInstallBanner]=useState(false);
  useEffect(()=>{if(!notice)return;const timer=window.setTimeout(()=>setNotice(''),4000);return()=>window.clearTimeout(timer)},[notice]);
  useEffect(()=>{if(!saveState(state))setNotice('Не удалось сохранить профиль: хранилище браузера переполнено')},[state]);
+
+ useEffect(()=>{
+  if(!authProfileReady||!state.directoryToken||!state.profile.profileId)return;
+  const ownerId=state.profile.profileId,token=state.directoryToken;
+  const flush=()=>void flushEncryptedOutbox(ownerId,token).catch(()=>{});
+  const onVisibility=()=>{if(document.visibilityState==='visible')flush()};
+  window.addEventListener('online',flush);
+  document.addEventListener('visibilitychange',onVisibility);
+  const timer=window.setInterval(flush,30000);
+  flush();
+  return()=>{window.removeEventListener('online',flush);document.removeEventListener('visibilitychange',onVisibility);window.clearInterval(timer)};
+ },[authProfileReady,state.directoryToken,state.profile.profileId]);
+
  const directorySync=useRef('');
  useEffect(()=>{if(!directoryConfigured||!state.directoryToken||!state.profile.name)return;const signature=JSON.stringify(state.profile);if(directorySync.current===signature)return;let cancelled=false;(async()=>{try{await updateProfile(state.profile,state.directoryToken);if(!cancelled)directorySync.current=signature}catch{if(!cancelled)setNotice('Не удалось синхронизировать профиль с каталогом')}})();return()=>{cancelled=true}},[state.profile,state.directoryToken]);
  useEffect(()=>{setAuthProfileReady(false);if(!directoryConfigured||!state.directoryToken){setAuthProfileReady(true);return}let cancelled=false;let retryTimer:number|undefined;let attempts=0;
