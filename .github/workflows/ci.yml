@@ -34,6 +34,10 @@ jobs:
         run: npx playwright test tests/visual/e2e-update.visual.spec.cjs
       - name: Validate PWA upgrade preserves private key and offline queue
         run: npx playwright test tests/visual/pwa-update-rescue.visual.spec.cjs
+      - name: Install WebKit for Safari engine regression
+        run: npx playwright install --with-deps webkit
+      - name: Validate Safari engine PWA upgrade and private data retention
+        run: npx playwright test tests/visual/pwa-update-rescue.visual.spec.cjs --browser=webkit
       - name: Validate encrypted E2E recovery UI
         run: npx playwright test tests/visual/e2e-backup.visual.spec.cjs
       - name: Validate authenticated cross-device E2E pairing
