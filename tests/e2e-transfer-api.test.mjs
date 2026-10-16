@@ -70,10 +70,9 @@ assert.equal((await call('GET',root+'/'+cancelId,'target')).status,410);
 const stale=await call('POST',root,'target',{publicKey:firstJwk});
 db.prepare('UPDATE e2e_transfer_sessions SET expires_at=? WHERE id=?').run(Date.now()-1000,stale.data.session.id);
 assert.equal((await call('GET',root+'/'+stale.data.session.id,'target')).status,410);
-for(let i=0;i<3;i++){
- // Three active sessions at most, including any still active from the tests.
+for(let i=0;i<4;i++){
  const result=await call('POST',root,'target',{publicKey:firstJwk});
- if(i<2)assert.equal(result.status,201);
+ if(i<3)assert.equal(result.status,201);
  else assert.equal(result.status,429);
 }
 db.close();
