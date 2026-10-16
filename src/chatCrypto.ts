@@ -59,10 +59,24 @@ function localCandidates(profileId:string):StoredIdentity[]{
  }catch{}
  return out;
 }
-function localGet(profileId:string):StoredIdentity|null{return localCandidates(profileId)[0]||null;}
+function localGet(profileId:string):StoredIdentity|null{
+ try{const current=JSON.parse(localStorage.getItem(storageKey(profileId))||'null');if(isIdentity(current))return current}catch{}
+ return localCandidates(profileId)[0]||null;
+}
 function samePublicKey(a:JsonWebKey,b:JsonWebKey){return a?.kty==='EC'&&b?.kty==='EC'&&a.crv===b.crv&&a.x===b.x&&a.y===b.y;}
 
-function localPut(profileId:string,identity:StoredIdentity){try{localStorage.setItem(storageKey(profileId),JSON.stringify(identity))}catch{}}
+function localPut(profileId:string,identity:StoredIdentity){
+ try{
+  const key=storageKey(profileId);
+  const previous=JSON.parse(localStorage.getItem(key)||'null');
+  if(isIdentity(previous)&&!samePublicKey(previous.publicKey,identity.publicKey)){
+   // Preserve the old private key before replacing a stale browser mirror.
+   const fingerprint=(previous.publicKey.x||'').replace(/[^\w-]/g,'').slice(0,24);
+   localStorage.setItem(`workertink:chat-e2e:history:${fingerprint}:${canonicalId(profileId)}`,JSON.stringify(previous));
+  }
+  localStorage.setItem(key,JSON.stringify(identity));
+ }catch{}
+}
 
 async function generateIdentity():Promise<StoredIdentity>{
  const pair=await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveKey']);
@@ -101,7 +115,6 @@ export async function getChatIdentityCandidates(profileId:string):Promise<Stored
  const out:StoredIdentity[]=[];const seen=new Set<string>();
  const add=(identity:StoredIdentity|null)=>{if(!identity)return;const marker=JSON.stringify(identity.publicKey);if(!seen.has(marker)){seen.add(marker);out.push(identity)}};
  add(await vaultGet(id));for(const candidate of localCandidates(id))add(candidate);
- if(!out.length)add(await getChatIdentity(id));
  return out;
 }
 async function deriveWithIdentity(identity:StoredIdentity,peerPublicKey:JsonWebKey){
@@ -163,7 +176,7 @@ export async function encryptChat(profileId:string,peerPublicKey:JsonWebKey,payl
  const iv=crypto.getRandomValues(new Uint8Array(12));
  const plain=payload.blob??enc.encode(JSON.stringify({text:payload.text??''})).buffer;
  const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,plain);
- return {v:1,kind:payload.kind,iv:b64(iv),data:b64(cipher),name:payload.name,mime:payload.mime};
+ return {v:1,kind:payload.kind,iv:b64(iv),data:b64(cipher),name:payload.name,mime:payload.mime,senderPublicKey:(await getChatIdentity(profileId)).publicKey,recipientPublicKey:peerPublicKey};
 }
 
 export async function decryptChat(profileId:string,peerPublicKey:JsonWebKey,envelope:ChatEnvelope):Promise<{kind:ChatEnvelope['kind'];text?:string;blob?:ArrayBuffer;name?:string;mime?:string}>{
@@ -173,13 +186,38 @@ export async function decryptChat(profileId:string,peerPublicKey:JsonWebKey,enve
  return {kind:envelope.kind,blob:plain,name:envelope.name,mime:envelope.mime};
 }
 
+/** Decrypt a conversation across stored local identity versions and the peer keys
+ * attached to messages. Legacy envelopes can use the extra peer candidates.
+ * Without either party's original private key AES-GCM data cannot be recovered.
+ */
+export async function decryptChatWithCandidates(profileId:string,envelope:ChatEnvelope,peerKeys:JsonWebKey[]){
+ const identities=await getChatIdentityCandidates(profileId);
+ if(!identities.length)throw new Error('E2E_IDENTITY_MISSING');
+ const keys=peerKeys.filter((key,index,list)=>key?.kty==='EC'&&key.crv==='P-256'&&list.findIndex(candidate=>samePublicKey(candidate,key))===index);
+ if(!keys.length)throw new Error('E2E_PEER_KEY_MISSING');
+ let lastError:unknown=new Error('E2E_DECRYPT_FAILED');
+ for(const key of keys)for(const identity of identities){
+  try{return await decryptChatWithIdentity(identity,key,envelope)}catch(error){lastError=error}
+ }
+ throw lastError;
+}
+
+export async function decryptChatMediaPeerCandidates(profileId:string,peerKeys:JsonWebKey[],iv:string,ciphertext:ArrayBuffer):Promise<ArrayBuffer>{
+ const keys=peerKeys.filter((key,index,list)=>key?.kty==='EC'&&key.crv==='P-256'&&list.findIndex(candidate=>samePublicKey(candidate,key))===index);
+ let lastError:unknown=new Error('E2E_PEER_KEY_MISSING');
+ for(const key of keys){
+  try{return await decryptChatMediaCandidates(profileId,key,iv,ciphertext)}catch(error){lastError=error}
+ }
+ throw lastError;
+}
+
 export async function exportPublicKey(profileId:string){return (await getChatIdentity(profileId)).publicKey}
 
 export const blobToArrayBuffer=(blob:Blob)=>blob.arrayBuffer();
 export async function importIdentityPrivateKey(identity:StoredIdentity){return crypto.subtle.importKey('jwk',identity.privateKey,{name:'ECDH',namedCurve:'P-256'},false,['deriveKey'])}
 
 
-export type GroupKeyPacket={iv:string;data:string};
+export type GroupKeyPacket={iv:string;data:string;senderPublicKey?:JsonWebKey};
 export async function generateGroupKey(){
   const key=await crypto.subtle.generateKey({name:'AES-GCM',length:256},true,['encrypt','decrypt']);
   return key;
@@ -194,15 +232,20 @@ export async function encryptGroupKeyForMember(profileId:string,peerPublicKey:Js
   const iv=crypto.getRandomValues(new Uint8Array(12));
   const raw=await exportGroupKey(groupKey);
   const data=await crypto.subtle.encrypt({name:'AES-GCM',iv},wrappingKey,raw);
-  return {iv:b64(iv),data:b64(data)};
+  return {iv:b64(iv),data:b64(data),senderPublicKey:own.publicKey};
 }
 export async function decryptGroupKeyForSelf(profileId:string,peerPublicKey:JsonWebKey,packet:GroupKeyPacket){
-  const own=await getChatIdentity(profileId);
-  const privateKey=await crypto.subtle.importKey('jwk',own.privateKey,{name:'ECDH',namedCurve:'P-256'},false,['deriveKey']);
-  const peer=await crypto.subtle.importKey('jwk',peerPublicKey,{name:'ECDH',namedCurve:'P-256'},false,[]);
-  const wrappingKey=await crypto.subtle.deriveKey({name:'ECDH',public:peer},privateKey,{name:'AES-GCM',length:256},false,['decrypt']);
-  const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(packet.iv)},wrappingKey,unb64(packet.data));
-  return importGroupKey(raw);
+ const identities=await getChatIdentityCandidates(profileId);
+ if(!identities.length)throw new Error('E2E_IDENTITY_MISSING');
+ let lastError:unknown=new Error('E2E_GROUP_KEY_UNAVAILABLE');
+ for(const identity of identities){
+  try{
+   const wrappingKey=await deriveWithIdentity(identity,peerPublicKey);
+   const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(packet.iv)},wrappingKey,unb64(packet.data));
+   return importGroupKey(raw);
+  }catch(error){lastError=error}
+ }
+ throw lastError;
 }
 export async function encryptGroupEnvelope(groupKey:CryptoKey,kind:ChatEnvelope['kind'],text?:string,blob?:ArrayBuffer,name?:string,mime?:string,meta?:Record<string,unknown>):Promise<ChatEnvelope&{meta?:Record<string,unknown>}>{
   const iv=crypto.getRandomValues(new Uint8Array(12));

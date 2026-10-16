@@ -97,7 +97,26 @@ useEffect(()=>{
  document.addEventListener('visibilitychange',onVisible);
  return()=>{cancelled=true;window.clearInterval(timer);window.removeEventListener('online',onOnline);document.removeEventListener('visibilitychange',onVisible)};
 },[authProfileReady,state.directoryToken,state.profile.profileId]);
- useEffect(()=>{if(!directoryConfigured||!authProfileReady||!state.directoryToken||!state.profile.profileId)return;let cancelled=false;(async()=>{try{const remote=await getOwnChatKey(state.directoryToken);if(cancelled)return;try{const id=await getChatIdentityMatching(state.profile.profileId,remote.key.publicKey);if(!cancelled)await putChatKey(id.publicKey,state.directoryToken);return}catch{} }catch{} try{const id=await getChatIdentity(state.profile.profileId);if(!cancelled)await putChatKey(id.publicKey,state.directoryToken)}catch{}})();return()=>{cancelled=true}},[authProfileReady,state.directoryToken,state.profile.profileId]);
+ useEffect(()=>{
+  if(!directoryConfigured||!authProfileReady||!state.directoryToken||!state.profile.profileId)return;
+  let cancelled=false;
+  (async()=>{
+   try{
+    const remote=await getOwnChatKey(state.directoryToken);
+    if(cancelled)return;
+    // Never replace an already registered account key with a newly generated
+    // device identity: it would make existing ciphertext unreadable.
+    await getChatIdentityMatching(state.profile.profileId,remote.key.publicKey);
+   }catch(error){
+    if(cancelled||!String(error).includes('CHAT_KEY_NOT_READY'))return;
+    try{
+     const identity=await getChatIdentity(state.profile.profileId);
+     if(!cancelled)await putChatKey(identity.publicKey,state.directoryToken);
+    }catch{}
+   }
+  })();
+  return()=>{cancelled=true};
+ },[authProfileReady,state.directoryToken,state.profile.profileId]);
  useEffect(()=>{if(!directoryConfigured||!state.directoryToken)return;const timer=window.setTimeout(()=>{void syncPushReminders(buildPushReminders(state),state.directoryToken).catch(()=>{})},1200);return()=>window.clearTimeout(timer)},[state.directoryToken,state.notifications.enabled,state.notifications.shifts,state.notifications.absences,state.notifications.payroll,state.notifications.groupMessages,state.notifications.channelInvites,state.notifications.social,state.notifications.events,state.startDate,state.scheduleType,state.scheduleShift,state.schedulePairType,state.scheduleVakhtaMonths,state.vacations,state.sickLeaves,state.paymentDates,state.shiftOverrides]);
  useEffect(()=>{if(!directoryConfigured||!state.directoryToken||!state.profile.profileId)return;let cancelled=false;const beat=async()=>{if(cancelled)return;try{await heartbeatPresence(state.directoryToken)}catch{}};void beat();const timer=window.setInterval(beat,20000);return()=>{cancelled=true;window.clearInterval(timer)}},[state.directoryToken,state.profile.profileId]);
  useEffect(()=>{if(!directoryConfigured||!state.directoryToken||!state.profile.profileId||!isElectronDesktop||!state.notifications.enabled)return;let cancelled=false;let initialized=false;const key='workertink:desktop:last-notification';const poll=async()=>{try{const result=await getSocialNotifications(state.directoryToken);if(cancelled)return;const rows=result.notifications||[];if(!rows.length)return;const lastTime=Number(localStorage.getItem(key+'-time')||0);const newest=rows[0];const fresh=initialized?rows.filter((n:any)=>Number(n.createdAt||0)>lastTime).slice(0,3):[];localStorage.setItem(key,String(newest.id));localStorage.setItem(key+'-time',String(newest.createdAt||Date.now()));if(initialized)for(const n of fresh){sounds.notification();showDesktopNotification({title:n.title||'WTinker',body:n.body||'Новое уведомление',url:n.url||'./?tab=notifications',tag:`wtink-${n.id}`});}initialized=true}catch{}};void poll();const timer=window.setInterval(()=>void poll(),25000);return()=>{cancelled=true;window.clearInterval(timer)}},[state.directoryToken,state.profile.profileId,state.notifications.enabled]);
