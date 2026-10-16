@@ -20,7 +20,7 @@ function valid(value:unknown,id:string,date:string):value is ShiftDraft{
  return Boolean(draft&&draft.version===1&&draft.profileId===id&&draft.date===date&&
   typeof draft.note==='string'&&draft.note.length<=MAX_TEXT_LENGTH&&ALLOWED_SHIFTS.includes(draft.shift as ShiftValue)&&
   typeof draft.revision==='string'&&/^[a-f0-9-]{36}$/i.test(draft.revision)&&
-  Number.isSafeInteger(draft.updatedAt)&&draft.updatedAt>0&&
+  typeof draft.updatedAt==='number'&&Number.isSafeInteger(draft.updatedAt)&&draft.updatedAt>0&&
   (draft.phase==='editing'||draft.phase==='committing'));
 }
 function persisted(state:Partial<State>|null,draft:ShiftDraft):boolean{
