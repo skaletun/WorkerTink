@@ -97,6 +97,26 @@ async function vaultPut(profileId:string,identity:StoredIdentity):Promise<boolea
   }catch{db.close();resolve(false)}
  });
 }
+/** The first persisted identity wins, even if two browser tabs initialize at once. */
+async function vaultCreateIfMissing(profileId:string,proposed:StoredIdentity):Promise<StoredIdentity|null>{
+ const db=await openVault();if(!db)return null;
+ return new Promise(resolve=>{
+  try{
+   const id=canonicalId(profileId);
+   const tx=db.transaction(STORE,'readwrite');
+   const store=tx.objectStore(STORE);
+   let result:StoredIdentity|null=null;
+   const req=store.get(id);
+   req.onsuccess=()=>{
+    const old=req.result?.identity;
+    if(isIdentity(old))result=old;
+    else{result=proposed;store.put({profileId:id,identity:proposed,updatedAt:Date.now()})}
+   };
+   tx.oncomplete=()=>{db.close();resolve(result)};
+   tx.onerror=tx.onabort=()=>{db.close();resolve(null)};
+  }catch{db.close();resolve(null)}
+ });
+}
 function localCandidates(profileId:string):StoredIdentity[]{
  const out:StoredIdentity[]=[];const seen=new Set<string>();
  try{
@@ -165,7 +185,11 @@ export async function getChatIdentity(profileId:string):Promise<StoredIdentity>{
   if(local){await persistIdentity(id,local);return local}
   // A single in-flight creation per account prevents StrictMode/components
   // from racing to overwrite the initial E2E identity during an update.
-  const identity=await generateIdentity();
+  const localBeforeCreate=localGet(id);
+  if(localBeforeCreate){await persistIdentity(id,localBeforeCreate);return localBeforeCreate}
+  const proposed=await generateIdentity();
+  const committed=await vaultCreateIfMissing(id,proposed);
+  const identity=committed||localGet(id)||proposed;
   await persistIdentity(id,identity);
   return identity;
  });
