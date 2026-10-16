@@ -1,0 +1,27 @@
+/* Secure Sync stage 1 — compact account-security card; consistent with WTinker tokens. */
+.wt-e2e-backup-card{min-width:0}
+.wt-e2e-backup-heading{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.wt-e2e-backup-heading>div{min-width:0}
+.wt-e2e-backup-icon{display:grid;place-items:center;flex:0 0 43px;width:43px;height:43px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--accent)}
+.wt-e2e-backup-heading h2{margin-top:4px;font-size:19px;line-height:1.3;letter-spacing:-.035em}
+.wt-e2e-backup-card>.hint{max-width:74ch;line-height:1.75}
+.wt-e2e-backup-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:19px}
+.wt-e2e-backup-form{display:flex;flex-direction:column;align-items:flex-start;gap:16px;margin-top:17px;padding:18px;border:1px solid var(--line);border-radius:11px;background:var(--surface-2)}
+.wt-e2e-backup-form>p{max-width:70ch;font-size:12px;line-height:1.75;color:var(--ink-2)}
+.wt-e2e-backup-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;width:100%}
+.wt-e2e-backup-fields label{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:12px;color:var(--ink-2);font-weight:670}
+.wt-e2e-backup-fields input{display:block;width:100%;max-width:100%;margin:0}
+.wt-e2e-backup-fields input[type=file]{font-size:12px;padding:9px;background:var(--surface)}
+.wt-e2e-backup-fields small{display:block;word-break:break-all;font-size:11px}
+.wt-e2e-backup-status{margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-left:3px solid var(--success);border-radius:6px;background:var(--surface-2);color:var(--ink);font-size:12px;line-height:1.65}
+.wt-e2e-backup-status.is-error{border-left-color:var(--danger)}
+.wt-e2e-backup-footnote{display:flex;align-items:flex-start;gap:8px;margin-top:17px;font-size:11px;line-height:1.65;color:var(--muted)}
+.wt-e2e-backup-footnote svg{flex-shrink:0;margin-top:1px;color:var(--muted)}
+@media(max-width:680px){
+ .wt-e2e-backup-fields{grid-template-columns:1fr}
+ .wt-e2e-backup-heading h2{font-size:17px}
+ .wt-e2e-backup-actions{width:100%}
+ .wt-e2e-backup-actions .btn{flex:1 1 140px}
+ .wt-e2e-backup-form{padding:13px}
+ .wt-e2e-backup-form>.btn{width:100%}
+}
