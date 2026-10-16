@@ -12,13 +12,13 @@ export function getChatGroupLink(id:string,token:string){return request<{group:G
 
 export function joinChatGroup(id:string,token:string){return request<{ok:boolean}>(`/chat/groups/${encodeURIComponent(id)}/join`,{method:'POST',headers:{Authorization:`Bearer ${token}`}})}
 
-export function putChatGroupKey(id:string,packet:{iv:string;data:string},token:string){return request<{ok:boolean}>(`/chat/groups/${encodeURIComponent(id)}/keys`,{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(packet)})}
+export function putChatGroupKey(id:string,packet:{iv:string;data:string;senderPublicKey?:JsonWebKey},token:string){return request<{ok:boolean}>(`/chat/groups/${encodeURIComponent(id)}/keys`,{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(packet)})}
 
 export function addChatGroupMember(id:string,profileId:string,token:string){return request<{ok:boolean;profile:UserProfile;role:string}>(`/chat/groups/${encodeURIComponent(id)}/members`,{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({profileId})})}
 
 export function removeChatGroupMember(id:string,profileId:string,token:string){return request<{ok:boolean}>(`/chat/groups/${encodeURIComponent(id)}/members`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify({profileId})})}
 
-export function putChatGroupMemberKey(id:string,profileId:string,packet:{iv:string;data:string},token:string){return request<{ok:boolean}>(`/chat/groups/${encodeURIComponent(id)}/keys/${encodeURIComponent(profileId)}`,{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(packet)})}
+export function putChatGroupMemberKey(id:string,profileId:string,packet:{iv:string;data:string;senderPublicKey?:JsonWebKey},token:string){return request<{ok:boolean}>(`/chat/groups/${encodeURIComponent(id)}/keys/${encodeURIComponent(profileId)}`,{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(packet)})}
 
 export function getChatGroupMessages(id:string,token:string){return request<{messages:GroupChatMessage[]}>(`/chat/groups/${encodeURIComponent(id)}/messages`,{headers:{Authorization:`Bearer ${token}`}})}
 
