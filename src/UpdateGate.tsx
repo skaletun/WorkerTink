@@ -1,140 +1,119 @@
 import {useEffect,useRef,useState,type ReactNode} from 'react';
 import {registerSW} from 'virtual:pwa-register';
 import {Icon} from './Icon';
-import {protectE2EBeforeUpdate} from './e2eUpdateSafety';
+import {protectE2EBeforeUpdate,type E2EUpdateHealth} from './e2eUpdateSafety.ts';
+import {activateUpdate,checkpointOpenEditors} from './updateCoordinator.ts';
 
 type Phase='ready'|'updating';
 type UpdateGateProps={children:ReactNode};
 
 const BUILD_ID=import.meta.env.VITE_BUILD_ID||'dev';
 const BUILD_STORAGE_KEY='workertink:last-seen-build';
-const RELOAD_KEY='workertink:update-reload';
-const DISMISS_KEY='workertink:update-dismissed-build';
+const DISMISS_KEY='workertink:update-dismissed-until';
 const UPDATE_CHECK_INTERVAL=2*60*1000;
+const DISMISS_FOR_MS=5*60*1000;
+const warning=(error:unknown)=>{
+ const code=String(error);
+ if(code.includes('NO_NETWORK'))return 'Подключение недоступно. Если обновление ещё не загружено, подключитесь к интернету и повторите попытку. Личные данные и E2E-ключи не затронуты.';
+ if(code.includes('ACTIVATION_TIMEOUT'))return 'Новый Service Worker не подтвердил активацию. Обновление не прервано и данные не очищались. Закройте другие вкладки WTinker и повторите попытку.';
+ if(code.includes('UPDATE_EDITOR_NOT_SAVED'))return 'Не удалось надёжно сохранить открытый редактор. Проверьте свободное место в браузере и повторите попытку. Не закрывайте редактор до сохранения.';
+ return 'Не удалось переключить версию приложения. Данные и ключи не удалялись. Проверьте интернет и повторите попытку.';
+};
 
 export default function UpdateGate({children}:UpdateGateProps){
  const [needRefresh,setNeedRefresh]=useState(false);
  const [phase,setPhase]=useState<Phase>('ready');
  const [keySafetyError,setKeySafetyError]=useState('');
- const updateSWRef=useRef<(reloadPage?:boolean)=>Promise<void>>(async()=>{});
+ const [keyHealth,setKeyHealth]=useState<E2EUpdateHealth|null>(null);
  const registrationRef=useRef<ServiceWorkerRegistration|null>(null);
  const disposedRef=useRef(false);
  const updatingRef=useRef(false);
+ const alreadyActivatedRef=useRef(false);
 
- const markCurrentBuild=()=>{
-   try{
-     localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID);
-     sessionStorage.setItem(RELOAD_KEY,BUILD_ID);
-     sessionStorage.removeItem(DISMISS_KEY);
-   }catch{}
- };
-
- const dismissUpdate=()=>{setNeedRefresh(false);setPhase('ready');setKeySafetyError('');updatingRef.current=false;try{sessionStorage.setItem(DISMISS_KEY,BUILD_ID)}catch{}};
-
- const resetFailedUpdate=()=>{
-   updatingRef.current=false;
-   setPhase('ready');
-   try{
-     localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID);
-     sessionStorage.removeItem(RELOAD_KEY);
-   }catch{}
+ const dismissUpdate=()=>{
+  setNeedRefresh(false);setPhase('ready');setKeySafetyError('');
+  updatingRef.current=false;
+  try{sessionStorage.setItem(DISMISS_KEY,String(Date.now()+DISMISS_FOR_MS))}catch{}
  };
 
  const requestReload=async()=>{
-   if(updatingRef.current)return;
-   updatingRef.current=true;
-   setPhase('updating');
-   setKeySafetyError('');
-   try{await protectE2EBeforeUpdate()}
-   catch(error){
-     console.error('[WTinker] E2E identity continuity check prevented update:',error);
-     setKeySafetyError('Локальное хранилище E2E-ключей недоступно или повреждено. Обновление остановлено, потому что сохранность существующих ключей подтвердить нельзя. Не очищайте данные WTinker. Проверьте свободное место, разрешения на хранение данных и попробуйте снова.');
-     setPhase('ready');
-     updatingRef.current=false;
-     return;
+  if(updatingRef.current)return;
+  updatingRef.current=true;setPhase('updating');setKeySafetyError('');
+  try{
+   // Preflight only READS E2E keys. Missing keys on a new browser or an
+   // inaccessible vault do not become a permanent software-update deadlock.
+   const health=await protectE2EBeforeUpdate();
+   setKeyHealth(health);
+   if(!checkpointOpenEditors())throw new Error('UPDATE_EDITOR_NOT_SAVED');
+   const serviceWorker='serviceWorker' in navigator?navigator.serviceWorker:null;
+   const registration=registrationRef.current||(serviceWorker?await serviceWorker.getRegistration():null);
+   if(serviceWorker&&registration){
+    const result=alreadyActivatedRef.current&&registration.active?'already-active':await activateUpdate(registration,serviceWorker);
+    if(result==='unavailable')throw new Error('UPDATE_WORKER_UNAVAILABLE');
+   }else if(!navigator.onLine){
+    throw new Error('NO_NETWORK');
    }
-   markCurrentBuild();
-   const fallbackReload=window.setTimeout(()=>window.location.reload(),5000);
-   void updateSWRef.current(true).then(()=>{window.clearTimeout(fallbackReload);setNeedRefresh(false);setPhase('ready');updatingRef.current=false;window.location.reload()}).catch(async()=>{
-     const registration=registrationRef.current;
-     try{
-       if(registration?.waiting){
-         registration.waiting.postMessage({type:'SKIP_WAITING'});
-         await new Promise<void>(resolve=>{
-           let settled=false;
-           const done=()=>{if(settled)return;settled=true;resolve()};
-           navigator.serviceWorker.addEventListener('controllerchange',done,{once:true});
-           window.setTimeout(done,1800);
-         });
-       }else if(registration){
-         await registration.update();
-       }
-     }catch{}
-     window.location.reload();
-   }).catch(()=>{window.clearTimeout(fallbackReload);resetFailedUpdate()});
+   // The new version records its own build identifier only after the
+   // replacement bundle actually loads. Never acknowledge an old build here.
+   window.location.reload();
+  }catch(error){
+   console.error('[WTinker] PWA update could not complete:',error);
+   setKeySafetyError(warning(error));
+   setPhase('ready');updatingRef.current=false;
+  }
  };
 
  useEffect(()=>{
-   disposedRef.current=false;
-   try{
-     const reloadedFor= sessionStorage.getItem(RELOAD_KEY);
-     if(reloadedFor){
-       sessionStorage.removeItem(RELOAD_KEY);
-       localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID);
-     }
-   }catch{}
-
-   try{
-     const previous=localStorage.getItem(BUILD_STORAGE_KEY);
-     if(previous===null){
-       localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID);
-     }else if(previous!==BUILD_ID){
-       // A page that successfully loaded this bundle must never be blocked by stale build IDs.
-       localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID);
-     }
-   }catch{}
-
-   if(!('serviceWorker' in navigator))return;
-
-   let intervalId:number|undefined;
-   let runCheckOnFocus=()=>{};
-   const check=async(swUrl:string,registration:ServiceWorkerRegistration|undefined)=>{
-     if(disposedRef.current||!registration||registration.installing||!navigator.onLine)return;
-     try{
-       const response=await fetch(swUrl,{cache:'no-store',headers:{cache:'no-store','cache-control':'no-cache'}});
-       if(response.ok)await registration.update();
-     }catch{}
-   };
-
-   updateSWRef.current=registerSW({
-     immediate:true,
-     onNeedRefresh(){
-       if(disposedRef.current)return;
-       if(sessionStorage.getItem(DISMISS_KEY)===BUILD_ID)return;
-       setNeedRefresh(true);
-       setPhase('ready');
-       updatingRef.current=false;
-     },
-     onOfflineReady(){},
-     onRegisteredSW(swUrl,registration){
-       if(disposedRef.current||!registration)return;
-       registrationRef.current=registration;
-       const runCheck=()=>void check(swUrl,registration);
-       runCheckOnFocus=runCheck;
-       intervalId=window.setInterval(runCheck,UPDATE_CHECK_INTERVAL);
-       window.addEventListener('focus',runCheck);
-       window.addEventListener('online',runCheck);
-       runCheck();
-     },
-     onRegisterError(error){console.warn('[WTinker] Service Worker registration failed',error)}
-   });
-
-   return()=>{
-     disposedRef.current=true;
-     if(intervalId)window.clearInterval(intervalId);
-     window.removeEventListener('focus',runCheckOnFocus);
-     window.removeEventListener('online',runCheckOnFocus);
-   };
+  disposedRef.current=false;
+  // Recording a loaded build is safe. It is not a signal that a waiting
+  // worker installed successfully and is never used to clear private data.
+  try{localStorage.setItem(BUILD_STORAGE_KEY,BUILD_ID)}catch{}
+  if(!('serviceWorker' in navigator))return;
+  let intervalId:number|undefined;
+  let controllerKnown=Boolean(navigator.serviceWorker.controller);
+  const onControllerChange=()=>{
+   if(disposedRef.current)return;
+   if(controllerKnown){
+    alreadyActivatedRef.current=true;
+    setNeedRefresh(true);setPhase('ready');
+   }
+   controllerKnown=true;
+  };
+  navigator.serviceWorker.addEventListener('controllerchange',onControllerChange);
+  let runCheckOnFocus=()=>{};
+  const check=async(registration:ServiceWorkerRegistration)=>{
+   if(disposedRef.current||registration.installing||!navigator.onLine)return;
+   try{await registration.update()}catch{}
+  };
+  registerSW({
+   immediate:true,
+   onNeedRefresh(){
+    if(disposedRef.current)return;
+    let delayed=false;
+    try{delayed=Number(sessionStorage.getItem(DISMISS_KEY)||0)>Date.now()}catch{}
+    if(delayed)return;
+    setNeedRefresh(true);setPhase('ready');
+   },
+   onOfflineReady(){},
+   onRegisteredSW(_url,registration){
+    if(disposedRef.current||!registration)return;
+    registrationRef.current=registration;
+    const runCheck=()=>void check(registration);
+    runCheckOnFocus=runCheck;
+    intervalId=window.setInterval(runCheck,UPDATE_CHECK_INTERVAL);
+    window.addEventListener('focus',runCheck);
+    window.addEventListener('online',runCheck);
+    runCheck();
+   },
+   onRegisterError(error){console.warn('[WTinker] Service Worker registration failed',error)}
+  });
+  return()=>{
+   disposedRef.current=true;
+   if(intervalId!==undefined)window.clearInterval(intervalId);
+   window.removeEventListener('focus',runCheckOnFocus);
+   window.removeEventListener('online',runCheckOnFocus);
+   navigator.serviceWorker.removeEventListener('controllerchange',onControllerChange);
+  };
  },[]);
 
  return <>
@@ -142,18 +121,19 @@ export default function UpdateGate({children}:UpdateGateProps){
   {needRefresh&&<div className="update-gate" role="dialog" aria-modal="true" aria-labelledby="update-gate-title">
    <div className="update-gate-backdrop"/>
    <section className="update-gate-card">
-    <button className="update-gate-dismiss" type="button" onClick={dismissUpdate} aria-label="Закрыть уведомление об обновлении"><Icon name="close" size={18}/></button>
+    <button className="update-gate-dismiss" type="button" onClick={dismissUpdate} disabled={phase==='updating'} aria-label="Закрыть уведомление об обновлении"><Icon name="close" size={18}/></button>
     <div className="update-gate-icon" aria-hidden="true"><span className="update-gate-icon-ring"/><span className="update-gate-icon-arrow"><Icon name="refresh" size={18}/></span></div>
     <div className="update-gate-copy">
      <span className="update-gate-eyebrow">WTINKER</span>
      <h2 id="update-gate-title">{phase==='updating'?'Обновляем WTinker':'Доступно важное обновление'}</h2>
-     <p>{phase==='updating'?'Устанавливаем новую версию и переключаем приложение на новую версию Service Worker.':'Вышла новая версия приложения. Обновление нужно, чтобы продолжить работу на актуальной версии.'}</p>
+     <p>{phase==='updating'?'Проверяем локальные данные и переключаем приложение на новую версию.':'Вышла новая версия приложения. Для продолжения работы установите её без удаления переписки и ключей.'}</p>
     </div>
     {keySafetyError&&<p role="alert" className="update-gate-key-warning">{keySafetyError}</p>}
+    {keyHealth==='unverified'&&!keySafetyError&&<p role="status" className="update-gate-key-warning">Доступность локального E2E-хранилища проверить не удалось. Само обновление не очищает ключи. Для старых сообщений может потребоваться восстановление ключа.</p>}
     <div className="update-gate-progress" aria-hidden="true"><span className={phase==='updating'?'is-active':''}/><span className={phase==='updating'?'is-active':''}/><span className={phase==='updating'?'is-active':''}/></div>
-    <button className="btn primary update-gate-action" type="button" disabled={phase==='updating'} onClick={requestReload}>{phase==='updating'?'Обновление…':'Обновить сейчас'}</button>
-    <button className="btn quiet update-gate-later" type="button" onClick={dismissUpdate}>Позже</button>
-    <small className="update-gate-note">Обновление не удаляет ключи, уже сохранённые на устройстве. Если ключа здесь нет, для старой переписки потребуется Secure Sync или резервная копия.</small>
+    <button className="btn primary update-gate-action" type="button" disabled={phase==='updating'} onClick={()=>void requestReload()}>{phase==='updating'?'Обновление…':'Обновить сейчас'}</button>
+    <button className="btn quiet update-gate-later" type="button" disabled={phase==='updating'} onClick={dismissUpdate}>Позже</button>
+    <small className="update-gate-note">Приложение не удаляет E2E-ключи и очередь отправки. Если ключ отсутствовал до обновления, восстановите его через Secure Sync или резервную копию.</small>
    </section>
   </div>}
  </>;
