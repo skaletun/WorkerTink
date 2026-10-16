@@ -1,3 +1,4 @@
+import {handleE2ETransfer} from './e2eTransfer.js';
 const ID_RE = /^WTINKID-\d{6}$/i;
 const displayId = (value) => { const match = String(value || '').match(/^(?:WTINKID)-(\d{6})$/i); return match ? `WTinkID-${match[1]}` : String(value || ''); };
 const NAME_MAX = 80;
@@ -872,6 +873,8 @@ async function handle(request, env) {
     return json({ok:true},200,origin);
   }
 
+  const transferResponse=await handleE2ETransfer(request,env,origin,{json,authProfile,sha256,bearer,body});
+  if(transferResponse)return transferResponse;
   if (request.method === 'PUT' && path === '/chat/keys') {
     const owner=await authProfile(request,env); if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
     const input=await body(request); const publicKey=input?.publicKey;
@@ -2022,6 +2025,8 @@ async function processPushReminders(env) {
     await env.DB.prepare('UPDATE push_reminders SET sent_at = ?1, updated_at = ?1 WHERE id = ?2 AND sent_at IS NULL').bind(Date.now(),row.id).run();
   }
   await env.DB.prepare('DELETE FROM push_reminders WHERE sent_at IS NOT NULL AND sent_at < ?1').bind(now - 7*24*60*60*1000).run();
+  await env.DB.prepare('DELETE FROM e2e_transfer_sessions WHERE expires_at < ?1').bind(now - 60*60*1000).run();
+  await env.DB.prepare('DELETE FROM e2e_transfer_audit WHERE created_at < ?1').bind(now - 14*24*60*60*1000).run();
 }
 
 export default {fetch: async (request, env, ctx) => { try { return await handle(request, env, ctx); } catch (error) { const origin = corsOrigin(request, env) || '*'; return json({error:'INTERNAL_ERROR'},500,origin); } }, async scheduled(controller, env) { await processPushReminders(env); }};
