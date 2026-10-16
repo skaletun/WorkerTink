@@ -17,6 +17,7 @@ const {
  encryptChatMedia,decryptChatMediaCandidates
 }=await import('../src/chatCrypto.ts');
 
+const {protectE2EBeforeUpdate}=await import('../src/e2eUpdateSafety.ts');
 const alice='WTinkID-987651';
 const bob='WTinkID-987652';
 const concurrent=await Promise.all(Array.from({length:36},()=>getChatIdentity(alice)));
@@ -28,6 +29,22 @@ const oldEnvelope=await encryptChat(alice,receiver.publicKey,{kind:'text',text:'
 const oldMedia=await encryptChatMedia(alice,receiver.publicKey,{kind:'file',blob:new Uint8Array([1,8,22,78,191]).buffer});
 assert.equal((await decryptChatWithCandidates(bob,oldEnvelope,[initial.publicKey])).text,'Ключ не должен исчезнуть после обновления');
 assert.equal(await checkpointChatIdentityForUpdate(alice,initial.publicKey),'preserved');
+records.set('workertink:v6',JSON.stringify({profile:{profileId:alice},directoryToken:'stale-signed-in-session'}));
+records.set('workertink:auth-token','stale-signed-in-session');
+let fetches=0;
+const previousFetch=globalThis.fetch;
+globalThis.fetch=async()=>{fetches++;throw new Error('network unavailable')};
+assert.equal(await protectE2EBeforeUpdate(),'preserved',
+ 'PWA update must rely on durable local keys, not a reachable directory API');
+assert.equal(fetches,0,'update guard must not request a remote registered key');
+records.set('workertink:v6',JSON.stringify({profile:{profileId:'WTinkID-956700'}}));
+assert.equal(await protectE2EBeforeUpdate(),'not-initialized',
+ 'a newly signed-in browser with no local private key must still accept app updates');
+assert.equal(records.has('workertink:chat-e2e:v1:WTINKID-956700'),false,
+ 'update guard cannot generate replacement keys');
+records.set('workertink:v6',JSON.stringify({profile:{profileId:alice}}));
+globalThis.fetch=previousFetch;
+
 assert.deepEqual((await getChatIdentityMatching(alice,initial.publicKey)).publicKey,initial.publicKey);
 assert.equal((await getChatIdentity(alice)).publicKey.x,initial.publicKey.x);
 
@@ -48,6 +65,16 @@ await getChatIdentityMatching(alice,initial.publicKey);
 assert.equal((await decryptChatWithCandidates(alice,oldEnvelope,[receiver.publicKey])).text,'Ключ не должен исчезнуть после обновления');
 const output=await decryptChatMediaCandidates(bob,initial.publicKey,oldMedia.iv,oldMedia.ciphertext);
 assert.deepEqual([...new Uint8Array(output)],[1,8,22,78,191]);
+
+// A full or unavailable local key store must not get an update success.
+writable=false;
+await assert.rejects(()=>protectE2EBeforeUpdate(),/E2E_KEY_PERSISTENCE_FAILED/);
+writable=true;
+assert.equal(await protectE2EBeforeUpdate(),'preserved');
+// Malformed account state is not evidence that it is safe to skip identity verification.
+records.set('workertink:v6','{invalid JSON');
+await assert.rejects(()=>protectE2EBeforeUpdate(),/E2E_UPDATE_PROFILE_UNAVAILABLE/);
+records.set('workertink:v6',JSON.stringify({profile:{profileId:alice}}));
 
 // A persistence failure must never make an ephemeral key appear registered.
 writable=false;
