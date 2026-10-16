@@ -50,6 +50,7 @@ test('encrypted chat ciphertext stays queued across reload and retries with one 
   await expect(page.locator('.wt-pending-icon')).toBeVisible({timeout:12000});
   await expect(page.locator('.message-bubble-v2')).toContainText('Зашифрованная офлайн-запись');
   await page.goto('/?tab=settings',{waitUntil:'domcontentloaded'});
+  await page.getByRole('button',{name:/Данные/}).click();
   await expect(page.locator('.wt-offline-queue')).toBeVisible();
   await expect(page.locator('.wt-offline-queue-item')).toHaveCount(1);
   await expect(page.locator('.wt-offline-queue-item')).toContainText(friend.profileId);
