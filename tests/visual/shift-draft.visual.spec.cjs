@@ -14,7 +14,7 @@ test('offline shift draft recovers after reload and only clears after durable Sa
   const page=await context.newPage();
   const errors=[];page.on('pageerror',e=>errors.push(String(e)));
   await page.addInitScript(data=>{
-   localStorage.setItem('workertink:v6',JSON.stringify({...data.initial,theme:data.theme}));
+   if(!localStorage.getItem('workertink:v6'))localStorage.setItem('workertink:v6',JSON.stringify({...data.initial,theme:data.theme}));
    localStorage.setItem('workertink:auth-token','shift-draft-session');
   },{initial,theme});
   await page.route('**/*',route=>{
