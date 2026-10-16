@@ -20,7 +20,7 @@ export default function OfflineQueueCard({ownerId,token}:{ownerId:string;token:s
  },[ownerId]);
  const send=async()=>{
   setBusy(true);setNotice('');
-  try{await flushEncryptedOutbox(ownerId,token);await refresh();setNotice('Проверили очередь отправки. Неотправленные сообщения сохраняются на устройстве.')}
+  try{await flushEncryptedOutbox(ownerId,token,true);await refresh();setNotice('Проверили очередь отправки. Неотправленные сообщения сохраняются на устройстве.')}
   catch{setNotice('Не удалось отправить очередь. Сообщения сохранены.');setError(true)}
   finally{setBusy(false)}
  };
