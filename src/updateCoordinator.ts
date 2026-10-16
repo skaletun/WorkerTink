@@ -1,8 +1,9 @@
 export type UpdateActivation='activated'|'already-active'|'unavailable';
 
 export class UpdateError extends Error{
- constructor(public readonly code:'NO_NETWORK'|'ACTIVATION_TIMEOUT'|'REGISTRATION_UPDATE_FAILED',cause?:unknown){
-  super(code,{cause});this.name='UpdateError';
+ readonly code:'NO_NETWORK'|'ACTIVATION_TIMEOUT'|'REGISTRATION_UPDATE_FAILED';
+ constructor(code:'NO_NETWORK'|'ACTIVATION_TIMEOUT'|'REGISTRATION_UPDATE_FAILED',cause?:unknown){
+  super(code,{cause});this.name='UpdateError';this.code=code;
  }
 }
 
