@@ -22,7 +22,7 @@ export default function AppShell({items,active,onNavigate,profile,profileAction,
   window.addEventListener('keydown',listener);return()=>window.removeEventListener('keydown',listener);
  },[searchAction]);
  useEffect(()=>{setLauncher(false)},[active]);
- return <div className="atlas-app">
+ return <div className={`atlas-app ${active==='chat'?'atlas-chat-mode':''}`}>
   <a href="#wt-main" className="atlas-skip">Перейти к содержимому</a>
   <header className="atlas-bar">
    <button className="atlas-wordmark" type="button" onClick={()=>navigate('home')} aria-label="WTinker — главная"><span className="atlas-asterisk"><img src="./icon-256.png" alt="" /></span><strong>WTINKER</strong><span className="atlas-wordmark-n">/ SPACE</span></button>
