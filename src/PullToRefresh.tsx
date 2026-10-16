@@ -1,7 +1,8 @@
 import {useEffect,useRef,useState,type ReactNode} from 'react';
 import {Icon} from './Icon';
+import {protectE2EBeforeUpdate} from './e2eUpdateSafety';
 
-type PullPhase='idle'|'pulling'|'ready'|'refreshing';
+type PullPhase='idle'|'pulling'|'ready'|'refreshing'|'error';
 
 const EDGE_START=36;
 const TRIGGER_DISTANCE=72;
@@ -65,7 +66,14 @@ export default function PullToRefresh({children}:{children:ReactNode}){
         stateRef.current=s;
         setPhase('refreshing');
         scheduleDistance(82);
-        window.setTimeout(()=>window.location.reload(),520);
+        window.setTimeout(()=>{
+          void protectE2EBeforeUpdate().then(()=>window.location.reload()).catch(error=>{
+            console.error('[WTinker] Pull-to-refresh prevented for E2E key safety:',error);
+            stateRef.current.refreshing=false;
+            setPhase('error');
+            window.setTimeout(()=>{setPhase('idle');scheduleDistance(0)},2000);
+          });
+        },520);
         return;
       }
       setPhase('idle');
@@ -87,7 +95,7 @@ export default function PullToRefresh({children}:{children:ReactNode}){
 
   if((window.matchMedia?.('(display-mode: standalone)').matches||Boolean((navigator as any).standalone))&&((window.matchMedia?.('(pointer: coarse)').matches)||/android|iphone|ipad|ipod/i.test(navigator.userAgent))){
     const progress=Math.min(1,distance/TRIGGER_DISTANCE);
-    return <div className="pull-refresh-root"><div className="pull-refresh-indicator" data-phase={phase} style={{transform:`translate3d(-50%,${Math.max(-8,distance-18)}px,0)`}} aria-live="polite" aria-hidden={phase==='idle'}><span className="pull-refresh-icon"><Icon name={phase==='refreshing'?'refresh':'chevronDown'} size={17}/></span><span className="pull-refresh-text">{phase==='refreshing'?'Обновляем…':phase==='ready'?'Отпустите для обновления':'Потяните для обновления'}</span><i className="pull-refresh-progress" style={{transform:`scaleX(${Math.max(.08,progress)})`}}/></div>{children}</div>;
+    return <div className="pull-refresh-root"><div className="pull-refresh-indicator" data-phase={phase} style={{transform:`translate3d(-50%,${Math.max(-8,distance-18)}px,0)`}} aria-live="polite" aria-hidden={phase==='idle'}><span className="pull-refresh-icon"><Icon name={phase==='refreshing'?'refresh':'chevronDown'} size={17}/></span><span className="pull-refresh-text">{phase==='refreshing'?'Обновляем…':phase==='ready'?'Отпустите для обновления':phase==='error'?'Ключ E2E не сохранён · обновление отменено':'Потяните для обновления'}</span><i className="pull-refresh-progress" style={{transform:`scaleX(${Math.max(.08,progress)})`}}/></div>{children}</div>;
   }
   return <>{children}</>;
 }

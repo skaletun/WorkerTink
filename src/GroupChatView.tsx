@@ -1,9 +1,9 @@
 import {Icon} from './Icon';
 import {useEffect,useRef,useState} from 'react';
 import type {UserProfile} from './core';
-import {addChatGroupMember,clearChatGroup,createChatGroup,deleteChatGroupMessage,getChatGroup,getChatGroupMessages,getChatKey,getChatGroups,putChatGroupKey,putChatGroupMemberKey,sendChatGroupMessage,uploadChatMedia,getChatMedia,type GroupChat,type GroupChatDetail,type GroupChatMessage} from './directory';
+import {addChatGroupMember,clearChatGroup,createChatGroup,deleteChatGroupMessage,getChatGroup,getChatGroupMessages,getChatKey,getOwnChatKey,getChatGroups,putChatGroupKey,putChatGroupMemberKey,sendChatGroupMessage,uploadChatMedia,getChatMedia,type GroupChat,type GroupChatDetail,type GroupChatMessage} from './directory';
 import {sounds,unlockSounds} from './sounds';
-import {decryptGroupEnvelope,encryptGroupEnvelope,encryptGroupKeyForMember,encryptGroupMedia,generateGroupKey,getChatIdentity,importGroupKey,decryptGroupMedia,decryptGroupKeyForSelf} from './chatCrypto';
+import {decryptGroupEnvelope,encryptGroupEnvelope,encryptGroupKeyForMember,encryptGroupMedia,generateGroupKey,getChatIdentity,getChatIdentityMatching,importGroupKey,decryptGroupMedia,decryptGroupKeyForSelf} from './chatCrypto';
 
 type RenderedGroupMessage=GroupChatMessage&{decryptionFailed?:boolean};
 type Props={token:string;profile:UserProfile;onNotice:(text:string)=>void;onProfile?:(profile:UserProfile)=>void;initialGroupId?:string};
@@ -20,7 +20,13 @@ export default function GroupChatView({token,profile,onNotice,onProfile,initialG
  useEffect(()=>{if(!initialGroupId)return;let cancelled=false;(async()=>{try{const info=await import('./directory').then(m=>m.getChatGroupLink(initialGroupId,token));if(cancelled)return;if(!info.group.joined){await import('./directory').then(m=>m.joinChatGroup(initialGroupId,token));}const g=info.group;await open(g); }catch(e){onNotice(String(e).includes('INVITE_REQUIRED')?'Это приватный чат. Вступление возможно только по приглашению.':'Не удалось открыть командный чат по ссылке')}})();return()=>{cancelled=true}},[initialGroupId,token]);
  const prepareKey=async(g:GroupChat)=>{
   const d=await getChatGroup(g.id,token);setDetail(d);
-  const ownIdentity=await getChatIdentity(profile.profileId);
+  // Resolve the backend-registered identity before decrypting or rewrapping a
+  // group key. A stale key in a browser cache must never replace this identity.
+  const registered=await getOwnChatKey(token).catch(error=>{
+   if(String(error).includes('CHAT_KEY_NOT_READY'))return null;
+   throw error;
+  });
+  const ownIdentity=registered?await getChatIdentityMatching(profile.profileId,registered.key.publicKey):await getChatIdentity(profile.profileId);
   if(!d.key){
    if(d.group.role!=='owner')throw new Error('GROUP_KEY_NOT_READY');
    const groupKey=await generateGroupKey();

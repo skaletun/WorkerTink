@@ -15,12 +15,29 @@ const unb64=(value:string)=>{const s=atob(value);const a=new Uint8Array(s.length
 const canonicalId=(profileId:string)=>String(profileId||'').trim().toUpperCase();
 const storageKey=(profileId:string)=>KEY_PREFIX+canonicalId(profileId);
 
+function samePublicKey(a:JsonWebKey,b:JsonWebKey){
+ return a?.kty==='EC'&&b?.kty==='EC'&&a.crv==='P-256'&&b.crv==='P-256'&&a.x===b.x&&a.y===b.y;
+}
 function isIdentity(value:unknown):value is StoredIdentity{
  if(!value||typeof value!=='object')return false;
  const v=value as Record<string,unknown>;
- return Boolean(v.privateKey&&typeof v.privateKey==='object'&&v.publicKey&&typeof v.publicKey==='object');
+ const priv=v.privateKey as JsonWebKey|null;
+ const pub=v.publicKey as JsonWebKey|null;
+ return Boolean(priv&&pub&&samePublicKey(priv,pub)&&typeof priv.d==='string'&&priv.d.length>10&&typeof pub.x==='string'&&pub.x.length>10&&typeof pub.y==='string'&&pub.y.length>10);
 }
-
+const fingerprint=(key:JsonWebKey)=>[key.x,key.y].join('.').replace(/[^A-Za-z0-9_.-]/g,'').slice(0,128);
+const historyKey=(id:string,key:JsonWebKey)=>'HISTORY:'+canonicalId(id)+':'+fingerprint(key);
+const identityLocks=new Map<string,Promise<void>>();
+async function lockIdentity<T>(profileId:string,work:()=>Promise<T>):Promise<T>{
+ const id=canonicalId(profileId);
+ const previous=identityLocks.get(id)||Promise.resolve();
+ let release!:()=>void;
+ const next=new Promise<void>(resolve=>{release=resolve});
+ identityLocks.set(id,next);
+ await previous;
+ try{return await work()}
+ finally{if(identityLocks.get(id)===next)identityLocks.delete(id);release()}
+}
 function openVault():Promise<IDBDatabase|null>{
  if(typeof indexedDB==='undefined')return Promise.resolve(null);
  return new Promise(resolve=>{
@@ -29,20 +46,77 @@ function openVault():Promise<IDBDatabase|null>{
    req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(STORE))db.createObjectStore(STORE,{keyPath:'profileId'})};
    req.onsuccess=()=>resolve(req.result);
    req.onerror=()=>resolve(null);
+   req.onblocked=()=>resolve(null);
   }catch{resolve(null)}
  });
 }
-
 async function vaultGet(profileId:string):Promise<StoredIdentity|null>{
  const db=await openVault();if(!db)return null;
- return new Promise(resolve=>{try{const tx=db.transaction(STORE,'readonly');const req=tx.objectStore(STORE).get(canonicalId(profileId));req.onsuccess=()=>{const value=req.result?.identity;resolve(isIdentity(value)?value:null)};req.onerror=()=>resolve(null);tx.oncomplete=()=>db.close()}catch{resolve(null)}});
+ return new Promise(resolve=>{
+  try{
+   const tx=db.transaction(STORE,'readonly');
+   const req=tx.objectStore(STORE).get(canonicalId(profileId));
+   let found:StoredIdentity|null=null;
+   req.onsuccess=()=>{const value=req.result?.identity;found=isIdentity(value)?value:null};
+   tx.oncomplete=()=>{db.close();resolve(found)};
+   tx.onabort=tx.onerror=()=>{db.close();resolve(null)};
+  }catch{db.close();resolve(null)}
+ });
 }
-
-async function vaultPut(profileId:string,identity:StoredIdentity):Promise<void>{
- const db=await openVault();if(!db)return;
- await new Promise<void>(resolve=>{try{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put({profileId:canonicalId(profileId),identity,updatedAt:Date.now()});tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();resolve()}}catch{resolve()}});
+async function vaultHistorical(profileId:string):Promise<StoredIdentity[]>{
+ const db=await openVault();if(!db)return [];
+ const id=canonicalId(profileId);
+ return new Promise(resolve=>{
+  try{
+   const tx=db.transaction(STORE,'readonly');
+   const req=tx.objectStore(STORE).getAll();
+   let found:StoredIdentity[]=[];
+   req.onsuccess=()=>{found=(req.result||[]).filter(row=>typeof row?.profileId==='string'&&row.profileId.startsWith('HISTORY:'+id+':')&&isIdentity(row.identity)).map(row=>row.identity as StoredIdentity)};
+   tx.oncomplete=()=>{db.close();resolve(found)};
+   tx.onabort=tx.onerror=()=>{db.close();resolve([])};
+  }catch{db.close();resolve([])}
+ });
 }
-
+async function vaultPut(profileId:string,identity:StoredIdentity):Promise<boolean>{
+ const db=await openVault();if(!db)return false;
+ return new Promise(resolve=>{
+  try{
+   const id=canonicalId(profileId);
+   const tx=db.transaction(STORE,'readwrite');
+   const store=tx.objectStore(STORE);
+   const existing=store.get(id);
+   existing.onsuccess=()=>{
+    const old=existing.result?.identity;
+    if(isIdentity(old)&&!samePublicKey(old.publicKey,identity.publicKey)){
+     store.put({profileId:historyKey(id,old.publicKey),identity:old,updatedAt:Date.now()});
+    }
+    store.put({profileId:id,identity,updatedAt:Date.now()});
+   };
+   tx.oncomplete=()=>{db.close();resolve(true)};
+   tx.onerror=tx.onabort=()=>{db.close();resolve(false)};
+  }catch{db.close();resolve(false)}
+ });
+}
+/** The first persisted identity wins, even if two browser tabs initialize at once. */
+async function vaultCreateIfMissing(profileId:string,proposed:StoredIdentity):Promise<StoredIdentity|null>{
+ const db=await openVault();if(!db)return null;
+ return new Promise(resolve=>{
+  try{
+   const id=canonicalId(profileId);
+   const tx=db.transaction(STORE,'readwrite');
+   const store=tx.objectStore(STORE);
+   let result:StoredIdentity|null=null;
+   const req=store.get(id);
+   req.onsuccess=()=>{
+    const old=req.result?.identity;
+    if(isIdentity(old))result=old;
+    else{result=proposed;store.put({profileId:id,identity:proposed,updatedAt:Date.now()})}
+   };
+   tx.oncomplete=()=>{db.close();resolve(result)};
+   tx.onerror=tx.onabort=()=>{db.close();resolve(null)};
+  }catch{db.close();resolve(null)}
+ });
+}
 function localCandidates(profileId:string):StoredIdentity[]{
  const out:StoredIdentity[]=[];const seen=new Set<string>();
  try{
@@ -52,7 +126,7 @@ function localCandidates(profileId:string):StoredIdentity[]{
    if(canonicalId(key.split(':').pop()||'')!==canonicalId(profileId))continue;
    const parsed=JSON.parse(localStorage.getItem(key)||'null');
    if(isIdentity(parsed)){
-    const marker=JSON.stringify(parsed.publicKey);
+    const marker=fingerprint(parsed.publicKey);
     if(!seen.has(marker)){seen.add(marker);out.push(parsed)}
    }
   }
@@ -63,19 +137,32 @@ function localGet(profileId:string):StoredIdentity|null{
  try{const current=JSON.parse(localStorage.getItem(storageKey(profileId))||'null');if(isIdentity(current))return current}catch{}
  return localCandidates(profileId)[0]||null;
 }
-function samePublicKey(a:JsonWebKey,b:JsonWebKey){return a?.kty==='EC'&&b?.kty==='EC'&&a.crv===b.crv&&a.x===b.x&&a.y===b.y;}
-
-function localPut(profileId:string,identity:StoredIdentity){
+function localPut(profileId:string,identity:StoredIdentity):boolean{
  try{
   const key=storageKey(profileId);
   const previous=JSON.parse(localStorage.getItem(key)||'null');
   if(isIdentity(previous)&&!samePublicKey(previous.publicKey,identity.publicKey)){
-   // Preserve the old private key before replacing a stale browser mirror.
-   const fingerprint=(previous.publicKey.x||'').replace(/[^\w-]/g,'').slice(0,24);
-   localStorage.setItem(`workertink:chat-e2e:history:${fingerprint}:${canonicalId(profileId)}`,JSON.stringify(previous));
+   localStorage.setItem('workertink:chat-e2e:history:'+fingerprint(previous.publicKey)+':'+canonicalId(profileId),JSON.stringify(previous));
   }
   localStorage.setItem(key,JSON.stringify(identity));
- }catch{}
+  return true;
+ }catch{return false}
+}
+async function persistIdentity(profileId:string,identity:StoredIdentity):Promise<void>{
+ // IndexedDB is authoritative, localStorage is an independently recoverable mirror.
+ // Never acknowledge a generated/imported key unless at least one persistent write committed.
+ const vaultSaved=await vaultPut(profileId,identity);
+ const localSaved=localPut(profileId,identity);
+ if(!vaultSaved&&!localSaved)throw new Error('E2E_KEY_PERSISTENCE_FAILED');
+}
+async function identityCandidates(profileId:string):Promise<StoredIdentity[]>{
+ const id=canonicalId(profileId);
+ const out:StoredIdentity[]=[];const seen=new Set<string>();
+ const add=(identity:StoredIdentity|null)=>{if(!identity)return;const marker=fingerprint(identity.publicKey);if(!seen.has(marker)){seen.add(marker);out.push(identity)}};
+ add(await vaultGet(id));
+ for(const candidate of await vaultHistorical(id))add(candidate);
+ for(const candidate of localCandidates(id))add(candidate);
+ return out;
 }
 
 async function generateIdentity():Promise<StoredIdentity>{
@@ -91,32 +178,62 @@ async function generateIdentity():Promise<StoredIdentity>{
  */
 export async function getChatIdentity(profileId:string):Promise<StoredIdentity>{
  const id=canonicalId(profileId);if(!id)throw new Error('E2E_PROFILE_ID_REQUIRED');
- const fromVault=await vaultGet(id);if(fromVault){localPut(id,fromVault);return fromVault}
- const fromLocal=localGet(id);if(fromLocal){await vaultPut(id,fromLocal);localPut(id,fromLocal);return fromLocal}
- const identity=await generateIdentity();
- await vaultPut(id,identity);localPut(id,identity);
- return identity;
+ return lockIdentity(id,async()=>{
+  const vault=await vaultGet(id);
+  if(vault){localPut(id,vault);return vault}
+  const local=localGet(id);
+  if(local){await persistIdentity(id,local);return local}
+  // A single in-flight creation per account prevents StrictMode/components
+  // from racing to overwrite the initial E2E identity during an update.
+  const localBeforeCreate=localGet(id);
+  if(localBeforeCreate){await persistIdentity(id,localBeforeCreate);return localBeforeCreate}
+  const proposed=await generateIdentity();
+  const committed=await vaultCreateIfMissing(id,proposed);
+  const identity=committed||localGet(id)||proposed;
+  await persistIdentity(id,identity);
+  return identity;
+ });
 }
 
-/** Return an already stored identity matching the server's public key.
- * This is used during deployments/migrations so a stale legacy localStorage
- * entry can win over an accidentally created fresh identity. Never generates
- * a new key when the server already has an identity for the account.
+/** Restore an existing identity matching the server's immutable public key.
+ * This operation never generates or rotates a key.
  */
 export async function getChatIdentityMatching(profileId:string,expectedPublicKey:JsonWebKey):Promise<StoredIdentity>{
  const id=canonicalId(profileId);if(!id)throw new Error('E2E_PROFILE_ID_REQUIRED');
- const fromVault=await vaultGet(id);if(fromVault&&samePublicKey(fromVault.publicKey,expectedPublicKey)){localPut(id,fromVault);return fromVault}
- for(const candidate of localCandidates(id))if(samePublicKey(candidate.publicKey,expectedPublicKey)){await vaultPut(id,candidate);localPut(id,candidate);return candidate}
- throw new Error('E2E_IDENTITY_MISMATCH');
+ return lockIdentity(id,async()=>{
+  const candidates=await identityCandidates(id);
+  const match=candidates.find(candidate=>samePublicKey(candidate.publicKey,expectedPublicKey));
+  if(!match)throw new Error('E2E_IDENTITY_MISMATCH');
+  await persistIdentity(id,match);
+  return match;
+ });
 }
-
 export async function getChatIdentityCandidates(profileId:string):Promise<StoredIdentity[]>{
  const id=canonicalId(profileId);if(!id)throw new Error('E2E_PROFILE_ID_REQUIRED');
- const out:StoredIdentity[]=[];const seen=new Set<string>();
- const add=(identity:StoredIdentity|null)=>{if(!identity)return;const marker=JSON.stringify(identity.publicKey);if(!seen.has(marker)){seen.add(marker);out.push(identity)}};
- add(await vaultGet(id));for(const candidate of localCandidates(id))add(candidate);
- return out;
+ return lockIdentity(id,()=>identityCandidates(id));
 }
+
+/** A read-only pre-reload continuity check: do not create keys during updates.
+ * If the backend has a public key, insist on retaining the matching private key.
+ * Keep all historical keys in the vault; never prune them on a new deployment.
+ */
+export async function checkpointChatIdentityForUpdate(profileId:string,expectedPublicKey?:JsonWebKey):Promise<'preserved'|'not-initialized'>{
+ const id=canonicalId(profileId);if(!id)throw new Error('E2E_PROFILE_ID_REQUIRED');
+ return lockIdentity(id,async()=>{
+  const candidates=await identityCandidates(id);
+  if(!candidates.length){
+   if(expectedPublicKey)throw new Error('E2E_UPDATE_BLOCKED_KEY_MISSING');
+   return 'not-initialized';
+  }
+  const selected=expectedPublicKey?candidates.find(candidate=>samePublicKey(candidate.publicKey,expectedPublicKey)):candidates[0];
+  if(!selected)throw new Error('E2E_UPDATE_BLOCKED_KEY_MISMATCH');
+  await persistIdentity(id,selected);
+  const verification=await identityCandidates(id);
+  if(!verification.some(candidate=>samePublicKey(candidate.publicKey,selected.publicKey)))throw new Error('E2E_UPDATE_BLOCKED_STORAGE_UNAVAILABLE');
+  return 'preserved';
+ });
+}
+
 async function deriveWithIdentity(identity:StoredIdentity,peerPublicKey:JsonWebKey){
  const privateKey=await crypto.subtle.importKey('jwk',identity.privateKey,{name:'ECDH',namedCurve:'P-256'},false,['deriveKey']);
  const publicKey=await crypto.subtle.importKey('jwk',peerPublicKey,{name:'ECDH',namedCurve:'P-256'},false,[]);
@@ -131,7 +248,8 @@ export async function decryptChatWithIdentity(identity:StoredIdentity,peerPublic
 
 export async function importChatIdentity(profileId:string,identity:StoredIdentity){
  if(!isIdentity(identity))throw new Error('E2E_IDENTITY_INVALID');
- await vaultPut(profileId,identity);localPut(profileId,identity);return identity;
+ const id=canonicalId(profileId);if(!id)throw new Error('E2E_PROFILE_ID_REQUIRED');
+ return lockIdentity(id,async()=>{await persistIdentity(id,identity);return identity});
 }
 export const exportChatIdentity=async(profileId:string)=>getChatIdentity(profileId);
 

@@ -1,6 +1,7 @@
 import {useEffect,useRef,useState,type ReactNode} from 'react';
 import {registerSW} from 'virtual:pwa-register';
 import {Icon} from './Icon';
+import {protectE2EBeforeUpdate} from './e2eUpdateSafety';
 
 type Phase='ready'|'updating';
 type UpdateGateProps={children:ReactNode};
@@ -14,6 +15,7 @@ const UPDATE_CHECK_INTERVAL=2*60*1000;
 export default function UpdateGate({children}:UpdateGateProps){
  const [needRefresh,setNeedRefresh]=useState(false);
  const [phase,setPhase]=useState<Phase>('ready');
+ const [keySafetyError,setKeySafetyError]=useState('');
  const updateSWRef=useRef<(reloadPage?:boolean)=>Promise<void>>(async()=>{});
  const registrationRef=useRef<ServiceWorkerRegistration|null>(null);
  const disposedRef=useRef(false);
@@ -27,7 +29,7 @@ export default function UpdateGate({children}:UpdateGateProps){
    }catch{}
  };
 
- const dismissUpdate=()=>{setNeedRefresh(false);setPhase('ready');updatingRef.current=false;try{sessionStorage.setItem(DISMISS_KEY,BUILD_ID)}catch{}};
+ const dismissUpdate=()=>{setNeedRefresh(false);setPhase('ready');setKeySafetyError('');updatingRef.current=false;try{sessionStorage.setItem(DISMISS_KEY,BUILD_ID)}catch{}};
 
  const resetFailedUpdate=()=>{
    updatingRef.current=false;
@@ -38,10 +40,19 @@ export default function UpdateGate({children}:UpdateGateProps){
    }catch{}
  };
 
- const requestReload=()=>{
+ const requestReload=async()=>{
    if(updatingRef.current)return;
    updatingRef.current=true;
    setPhase('updating');
+   setKeySafetyError('');
+   try{await protectE2EBeforeUpdate()}
+   catch(error){
+     console.error('[WTinker] E2E identity continuity check prevented update:',error);
+     setKeySafetyError('Не удалось подтвердить сохранность E2E-ключей. Обновление приостановлено, чтобы защитить переписку. Повторите попытку после проверки соединения или восстановите ключ на этом устройстве.');
+     setPhase('ready');
+     updatingRef.current=false;
+     return;
+   }
    markCurrentBuild();
    const fallbackReload=window.setTimeout(()=>window.location.reload(),5000);
    void updateSWRef.current(true).then(()=>{window.clearTimeout(fallbackReload);setNeedRefresh(false);setPhase('ready');updatingRef.current=false;window.location.reload()}).catch(async()=>{
@@ -138,10 +149,11 @@ export default function UpdateGate({children}:UpdateGateProps){
      <h2 id="update-gate-title">{phase==='updating'?'Обновляем WTinker':'Доступно важное обновление'}</h2>
      <p>{phase==='updating'?'Устанавливаем новую версию и переключаем приложение на новую версию Service Worker.':'Вышла новая версия приложения. Обновление нужно, чтобы продолжить работу на актуальной версии.'}</p>
     </div>
+    {keySafetyError&&<p role="alert" className="update-gate-key-warning">{keySafetyError}</p>}
     <div className="update-gate-progress" aria-hidden="true"><span className={phase==='updating'?'is-active':''}/><span className={phase==='updating'?'is-active':''}/><span className={phase==='updating'?'is-active':''}/></div>
     <button className="btn primary update-gate-action" type="button" disabled={phase==='updating'} onClick={requestReload}>{phase==='updating'?'Обновление…':'Обновить сейчас'}</button>
     <button className="btn quiet update-gate-later" type="button" onClick={dismissUpdate}>Позже</button>
-    <small className="update-gate-note">Ваши настройки, профиль и рабочие данные сохраняются.</small>
+    <small className="update-gate-note">Ключи E2E и переписки сохраняются без перевыпуска и сброса при обновлении.</small>
    </section>
   </div>}
  </>;
