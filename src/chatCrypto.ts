@@ -239,10 +239,10 @@ async function deriveWithIdentity(identity:StoredIdentity,peerPublicKey:JsonWebK
  const publicKey=await crypto.subtle.importKey('jwk',peerPublicKey,{name:'ECDH',namedCurve:'P-256'},false,[]);
  return crypto.subtle.deriveKey({name:'ECDH',public:publicKey},privateKey,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
 }
-export async function decryptChatWithIdentity(identity:StoredIdentity,peerPublicKey:JsonWebKey,envelope:ChatEnvelope):Promise<{kind:ChatEnvelope['kind'];text?:string;blob?:ArrayBuffer;name?:string;mime?:string}>{
+export async function decryptChatWithIdentity(identity:StoredIdentity,peerPublicKey:JsonWebKey,envelope:ChatEnvelope):Promise<{kind:ChatEnvelope['kind'];text?:string;replyPreview?:string;blob?:ArrayBuffer;name?:string;mime?:string}>{
  const key=await deriveWithIdentity(identity,peerPublicKey);
  const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(envelope.iv)},key,unb64(envelope.data));
- if(envelope.kind==='text'||envelope.kind==='note'){const parsed=JSON.parse(dec.decode(plain)) as {text?:string};return {kind:envelope.kind,text:parsed.text??''}}
+ if(envelope.kind==='text'||envelope.kind==='note'){const parsed=JSON.parse(dec.decode(plain)) as {text?:string;replyPreview?:string};return {kind:envelope.kind,text:parsed.text??'',replyPreview:parsed.replyPreview}}
  return {kind:envelope.kind,blob:plain,name:envelope.name,mime:envelope.mime};
 }
 
@@ -289,18 +289,18 @@ export async function decryptChatMediaCandidates(profileId:string,peerPublicKey:
  throw lastError;
 }
 
-export async function encryptChat(profileId:string,peerPublicKey:JsonWebKey,payload:{kind:ChatEnvelope['kind'];text?:string;blob?:ArrayBuffer;name?:string;mime?:string}):Promise<ChatEnvelope>{
+export async function encryptChat(profileId:string,peerPublicKey:JsonWebKey,payload:{kind:ChatEnvelope['kind'];text?:string;replyPreview?:string;blob?:ArrayBuffer;name?:string;mime?:string}):Promise<ChatEnvelope>{
  const key=await derive(profileId,peerPublicKey);
  const iv=crypto.getRandomValues(new Uint8Array(12));
- const plain=payload.blob??enc.encode(JSON.stringify({text:payload.text??''})).buffer;
+ const plain=payload.blob??enc.encode(JSON.stringify({text:payload.text??'',replyPreview:payload.replyPreview||undefined})).buffer;
  const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,plain);
  return {v:1,kind:payload.kind,iv:b64(iv),data:b64(cipher),name:payload.name,mime:payload.mime,senderPublicKey:(await getChatIdentity(profileId)).publicKey,recipientPublicKey:peerPublicKey};
 }
 
-export async function decryptChat(profileId:string,peerPublicKey:JsonWebKey,envelope:ChatEnvelope):Promise<{kind:ChatEnvelope['kind'];text?:string;blob?:ArrayBuffer;name?:string;mime?:string}>{
+export async function decryptChat(profileId:string,peerPublicKey:JsonWebKey,envelope:ChatEnvelope):Promise<{kind:ChatEnvelope['kind'];text?:string;replyPreview?:string;blob?:ArrayBuffer;name?:string;mime?:string}>{
  const key=await derive(profileId,peerPublicKey);
  const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(envelope.iv)},key,unb64(envelope.data));
- if(envelope.kind==='text'||envelope.kind==='note'){const parsed=JSON.parse(dec.decode(plain)) as {text?:string};return {kind:envelope.kind,text:parsed.text??''}}
+ if(envelope.kind==='text'||envelope.kind==='note'){const parsed=JSON.parse(dec.decode(plain)) as {text?:string;replyPreview?:string};return {kind:envelope.kind,text:parsed.text??'',replyPreview:parsed.replyPreview}}
  return {kind:envelope.kind,blob:plain,name:envelope.name,mime:envelope.mime};
 }
 
