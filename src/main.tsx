@@ -7,4 +7,5 @@ import './ui.css';
 import './styles/144-device-transfer.css';
 import './styles/145-offline-outbox.css';
 import './styles/146-group-offline.css';
+import './styles/147-e2e-integrity.css';
 createRoot(document.getElementById('root')!).render(<StrictMode><UpdateGate><PullToRefresh><App/></PullToRefresh></UpdateGate></StrictMode>);

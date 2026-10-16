@@ -1,0 +1,8 @@
+/* Secure Sync integrity diagnostics: plain facts, no decorative status tokens. */
+.wt-e2e-integrity-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}
+.wt-e2e-integrity-results>div{display:flex;flex-direction:column;gap:6px;min-width:0;border:1px solid var(--line);border-radius:9px;padding:14px;background:var(--surface)}
+.wt-e2e-integrity-results>div>span{font-size:11px;color:var(--muted);line-height:1.5}
+.wt-e2e-integrity-results>div>b{font-size:13px;font-weight:680;color:var(--ink);overflow-wrap:anywhere;line-height:1.6}
+.wt-e2e-integrity-results>p,.wt-e2e-integrity-results>small{grid-column:1/-1}
+.wt-e2e-integrity-results>small{color:var(--muted);font-size:11px}
+@media(max-width:560px){.wt-e2e-integrity-results{grid-template-columns:1fr}}
