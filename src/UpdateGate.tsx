@@ -48,7 +48,7 @@ export default function UpdateGate({children}:UpdateGateProps){
    try{await protectE2EBeforeUpdate()}
    catch(error){
      console.error('[WTinker] E2E identity continuity check prevented update:',error);
-     setKeySafetyError('Не удалось подтвердить сохранность E2E-ключей. Обновление приостановлено, чтобы защитить переписку. Повторите попытку после проверки соединения или восстановите ключ на этом устройстве.');
+     setKeySafetyError('Локальное хранилище E2E-ключей недоступно или повреждено. Обновление остановлено, потому что сохранность существующих ключей подтвердить нельзя. Не очищайте данные WTinker. Проверьте свободное место, разрешения на хранение данных и попробуйте снова.');
      setPhase('ready');
      updatingRef.current=false;
      return;
@@ -153,7 +153,7 @@ export default function UpdateGate({children}:UpdateGateProps){
     <div className="update-gate-progress" aria-hidden="true"><span className={phase==='updating'?'is-active':''}/><span className={phase==='updating'?'is-active':''}/><span className={phase==='updating'?'is-active':''}/></div>
     <button className="btn primary update-gate-action" type="button" disabled={phase==='updating'} onClick={requestReload}>{phase==='updating'?'Обновление…':'Обновить сейчас'}</button>
     <button className="btn quiet update-gate-later" type="button" onClick={dismissUpdate}>Позже</button>
-    <small className="update-gate-note">Ключи E2E и переписки сохраняются без перевыпуска и сброса при обновлении.</small>
+    <small className="update-gate-note">Обновление не удаляет ключи, уже сохранённые на устройстве. Если ключа здесь нет, для старой переписки потребуется Secure Sync или резервная копия.</small>
    </section>
   </div>}
  </>;
