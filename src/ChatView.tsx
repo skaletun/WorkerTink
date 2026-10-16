@@ -21,8 +21,17 @@ function fmtDate(ts:number){const d=new Date(ts),today=new Date();return d.toDat
 export default function ChatView({token,profile,onNotice,state,onStateChange,onExit,navigation,initialPeerId='',onProfile}:Props){
  const [friends,setFriends]=useState<DirectoryFriend[]>([]),[reactionMenu,setReactionMenu]=useState<string|null>(null),[selected,setSelected]=useState<UserProfile|null>(null),[messages,setMessages]=useState<LocalMessage[]>([]),[draft,setDraft]=useState(''),[caption,setCaption]=useState(''),[pendingFiles,setPendingFiles]=useState<File[]>([]),[busy,setBusy]=useState(false),[recording,setRecording]=useState(false),[recordMs,setRecordMs]=useState(0),[peerKey,setPeerKey]=useState<ChatKey|null>(null),[identityError,setIdentityError]=useState(''),[reply,setReply]=useState<LocalMessage|null>(null),[editing,setEditing]=useState<LocalMessage|null>(null),[menuOpen,setMenuOpen]=useState(false),[searchOpen,setSearchOpen]=useState(false),[searchQuery,setSearchQuery]=useState(''),[searchResults,setSearchResults]=useState<LocalMessage[]>([]),[muteOpen,setMuteOpen]=useState(false),[muteUntil,setMuteUntil]=useState<number|null>(null),[pinsOpen,setPinsOpen]=useState(false),[pinnedIds,setPinnedIds]=useState<string[]>([]),[menuMessage,setMenuMessage]=useState<string|null>(null),[contactSearch,setContactSearch]=useState(''),[attachmentOpen,setAttachmentOpen]=useState(false),[emojiOpen,setEmojiOpen]=useState(false),[keyDetailsOpen,setKeyDetailsOpen]=useState(false),[previews,setPreviews]=useState<Record<string,string>>({});
  const recorder=useRef<MediaRecorder|null>(null),chunks=useRef<Blob[]>([]),timer=useRef<number|null>(null),fileRef=useRef<HTMLInputElement|null>(null),videoRef=useRef<HTMLInputElement|null>(null),bottomRef=useRef<HTMLDivElement|null>(null),scanTimer=useRef<number|null>(null);
+ const handledInitialPeer=useRef('');
  const current=useMemo(()=>friends.find(f=>canonicalWTinkId(f.profile.profileId)===canonicalWTinkId(selected?.profileId||'')),[friends,selected]);
  const visibleFriends=useMemo(()=>friends.filter(f=>(f.profile.name+' '+(f.profile.username||'')+' '+f.profile.profileId).toLocaleLowerCase('ru-RU').includes(contactSearch.toLocaleLowerCase('ru-RU').trim())),[friends,contactSearch]);
+ useEffect(()=>{
+  if(!initialPeerId||handledInitialPeer.current===initialPeerId)return;
+  const match=friends.find(f=>canonicalWTinkId(f.profile.profileId)===canonicalWTinkId(initialPeerId));
+  if(!match)return;
+  handledInitialPeer.current=initialPeerId;
+  setSelected(match.profile);
+ },[initialPeerId,friends]);
+
  const selectPeer=(peer:UserProfile)=>{
   if(canonicalWTinkId(selected?.profileId||'')===canonicalWTinkId(peer.profileId))return;
   setSelected(peer);setAttachmentOpen(false);setEmojiOpen(false);setMenuOpen(false);setSearchOpen(false);setPinsOpen(false);setDraft('');setPendingFiles([]);
@@ -42,7 +51,7 @@ export default function ChatView({token,profile,onNotice,state,onStateChange,onE
   window.addEventListener('popstate',restore);
   return()=>window.removeEventListener('popstate',restore);
  },[friends]);
- const loadFriends=async()=>{try{const r=await getDirectoryFriends(token);setFriends(current=>{const same=current.length===r.friends.length&&current.every((f,i)=>{const n=r.friends[i];return f.profile.profileId===n.profile.profileId&&f.online===n.online&&f.lastSeen===n.lastSeen});return same?current:r.friends});if(!selected){const preferred=r.friends.find(f=>canonicalWTinkId(f.profile.profileId)===canonicalWTinkId(initialPeerId));if(preferred)setSelected(preferred.profile)}}catch{onNotice('Не удалось загрузить список друзей')}};
+ const loadFriends=async()=>{try{const r=await getDirectoryFriends(token);setFriends(current=>{const same=current.length===r.friends.length&&current.every((f,i)=>{const n=r.friends[i];return f.profile.profileId===n.profile.profileId&&f.online===n.online&&f.lastSeen===n.lastSeen});return same?current:r.friends});if(!selected){}}catch{onNotice('Не удалось загрузить список друзей')}};
  useEffect(()=>{void loadFriends();const t=window.setInterval(()=>{if(document.visibilityState!=='hidden')void loadFriends()},30000);return()=>window.clearInterval(t)},[token,profile.profileId]);
  useEffect(()=>{
   if(!selected)return;
@@ -137,11 +146,11 @@ export default function ChatView({token,profile,onNotice,state,onStateChange,onE
     <span className="chat-list-count">{friends.length}</span>
    </div>
    {navigation}
-   <label className="wt-chat-contact-search">
+   <div className="wt-chat-contact-search">
     <Icon name="search" size={19}/>
     <input type="search" value={contactSearch} onChange={e=>setContactSearch(e.target.value)} placeholder="Поиск" aria-label="Поиск по чатам"/>
     {contactSearch&&<button type="button" onClick={()=>setContactSearch('')} aria-label="Очистить поиск"><Icon name="close" size={17}/></button>}
-   </label>
+   </div>
    <div className="wt-chat-contact-list">
     {visibleFriends.map(f=><button type="button" key={f.profile.profileId} className={selected?.profileId===f.profile.profileId?'chat-contact-v2 active':'chat-contact-v2'} onClick={()=>selectPeer(f.profile)}>
      <span className="wt-chat-contact-avatar"><Avatar p={f.profile} size="sm"/>{f.online&&<i aria-label="В сети" className="wt-online-dot"/>}</span>
