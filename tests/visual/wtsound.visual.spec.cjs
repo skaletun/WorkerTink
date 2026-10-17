@@ -64,3 +64,28 @@ test('WTSound large collections use bounded rendering and search every track',as
  await seedSavedTracks(page,Array.from({length:101},(_,i)=>({artist:'Artist',title:'Song '+String(i+1).padStart(4,'0')})));
  await page.getByRole('navigation',{name:'Разделы WTSound'}).getByRole('button',{name:'Моя коллекция',exact:true}).click();await expect(page.locator('.sound-track')).toHaveCount(100);await page.getByRole('button',{name:'Показать ещё · 1',exact:true}).click();await expect(page.locator('.sound-track')).toHaveCount(101);await page.getByRole('searchbox',{name:'Поиск музыки'}).fill('Song 0101');await expect(page.locator('.sound-track')).toHaveCount(1);await expect(page.locator('.sound-track')).toContainText('Song 0101');await context.close();
 });
+
+test('WTSound discovers a CC audio file, imports locally and keeps attribution',async({browser})=>{
+ const context=await browser.newContext({viewport:{width:900,height:800},serviceWorkers:'block'});
+ await setup(context);
+ await context.route('https://api.openverse.org/v1/audio/**',route=>route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({next:null,results:[{id:'openverse-demo',title:'Free Sample',creator:'Demo Artist',url:'https://assets.example.net/demo.wav',foreign_landing_url:'https://assets.example.net/credits',license:'by',license_url:'https://creativecommons.org/licenses/by/4.0/',filetype:'wav',filesize:90000,mature:false,attribution:'Demo Artist · CC BY 4.0'}]})}));
+ await context.route('https://assets.example.net/demo.wav',route=>route.fulfill({status:200,contentType:'audio/wav',headers:{'access-control-allow-origin':'*'},body:wav(1)}));
+ const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/?tab=sound');
+ await page.locator('.sound-navigation').getByRole('button',{name:'Поиск музыки'}).click();
+ await page.getByRole('combobox',{name:'Источник поиска'}).selectOption('openverse');
+ await page.getByRole('searchbox',{name:'Название, исполнитель или жанр'}).fill('demo');
+ await page.locator('.sound-discover-form').getByRole('button',{name:'Найти'}).click();
+ await expect(page.locator('.sound-discover-result')).toHaveCount(1);
+ await expect(page.locator('.sound-discover-result')).toContainText('Demo Artist');
+ await page.getByRole('button',{name:'Добавить в медиатеку'}).click();
+ await expect(page.locator('.sound-discover-result')).toContainText('Добавлено ✓',{timeout:20000});
+ await page.locator('.sound-navigation').getByRole('button',{name:'Моя коллекция'}).click();
+ await expect(page.locator('.sound-track')).toHaveCount(1);
+ await expect(page.locator('.sound-track')).toContainText('Free Sample');
+ await page.getByRole('button',{name:'Действия: Free Sample'}).click();
+ await expect(page.getByRole('link',{name:'Источник записи'})).toHaveAttribute('href','https://assets.example.net/credits');
+ await expect(page.getByRole('link',{name:'Условия лицензии'})).toHaveAttribute('href','https://creativecommons.org/licenses/by/4.0/');
+ expect(errors).toEqual([]);
+ await context.close();
+});
