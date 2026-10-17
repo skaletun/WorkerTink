@@ -46,6 +46,8 @@ export default function SoundDiscover(){
  const [warnings,setWarnings]=useState<string[]>([]),[error,setError]=useState(''),[added,setAdded]=useState<Record<string,string>>({});
  const [adding,setAdding]=useState(''),[downloaded,setDownloaded]=useState(0),[total,setTotal]=useState<number|null>(null);
  const [preview,setPreview]=useState(''),[previewError,setPreviewError]=useState(''),[onlyDownloads,setOnlyDownloads]=useState(false);
+ const [previewTime,setPreviewTime]=useState(0),[previewDuration,setPreviewDuration]=useState(0);
+ const previewAudio=useRef<HTMLAudioElement|null>(null);
  const downloadAbort=useRef<AbortController|null>(null);
  useEffect(()=>()=>downloadAbort.current?.abort(),[]);
  useEffect(()=>{
@@ -90,6 +92,7 @@ export default function SoundDiscover(){
  };
  const known=useMemo(()=>new Set(library.tracks.filter(t=>Boolean(t.fileHash)).map(t=>t.source?.id).filter(Boolean)),[library.tracks]);
  const visible=useMemo(()=>results.filter(t=>!onlyDownloads||t.downloadable!==false),[results,onlyDownloads]);
+ const changePreview=(direction:number)=>{const index=visible.findIndex(t=>t.id===preview);if(index<0||visible.length<2)return;for(let step=1;step<visible.length;step++){const next=visible[(index+step*direction+visible.length*10)%visible.length];if(next?.previewUrl||next?.url){setPreview(next.id);setPreviewError('');setPreviewTime(0);setPreviewDuration(0);return}}};
  const activeMode=source==='music'||source==='audius'||source==='jamendo'?'music':source==='archives'||source==='openverse'||source==='commons'||source==='archive'?'archives':'all';
  return <section className="sound-section sound-discover" aria-label="Поиск музыки">
   <div className="sound-discover-hero">
@@ -148,7 +151,7 @@ export default function SoundDiscover(){
      </div>
      <div className="sound-discover-copy">
       <strong title={track.title}>{track.title}</strong>
-      <span className="sound-discover-artist" title={track.artist}>{track.artist}{track.album&&<span> · {track.album}</span>}</span>
+      <span className="sound-discover-artist" title={track.artist}>{track.artist}</span>
       <div className="sound-discover-secondary">
        <span className="sound-discover-platform">{CATALOG_NAMES[track.catalog]}</span>
        {track.genre&&<span>{track.genre}</span>}
@@ -160,7 +163,7 @@ export default function SoundDiscover(){
      </div>
      <span className="sound-discover-duration">{formatDuration(track.duration)||'—'}</span>
      <div className="sound-discover-actions">
-      <button className="sound-button sound-discover-play" type="button" disabled={!canPlay} onClick={()=>{setPreview(p=>p===track.id?'':track.id);setPreviewError('')}} aria-label={'Предпрослушивание: '+track.title} title="Предпрослушивание">
+      <button className="sound-button sound-discover-play" type="button" disabled={!canPlay} onClick={()=>{setPreview(p=>p===track.id?'':track.id);setPreviewError('');setPreviewTime(0);setPreviewDuration(0)}} aria-label={'Предпрослушивание: '+track.title} title="Предпрослушивание">
        <Icon name="play" size={17}/> <span>{showPreview?'Скрыть':'Слушать'}</span>
       </button>
       <button className="sound-button sound-primary sound-discover-add" type="button"
@@ -172,7 +175,22 @@ export default function SoundDiscover(){
       </button>
      </div>
      {showPreview&&<div className="sound-discover-preview">
-      <audio controls autoPlay preload="none" src={track.previewUrl||track.url} aria-label={'Прослушать '+track.title} onError={()=>setPreviewError(track.id)}>Браузер не поддерживает аудио.</audio>
+      <div className="sound-discover-preview-controls">
+       <button type="button" aria-label="Предыдущая запись" disabled={visible.length<2} onClick={()=>changePreview(-1)}><Icon name="previous" size={18}/></button>
+       <audio ref={previewAudio} controls autoPlay preload="metadata" src={track.previewUrl||track.url} aria-label={'Прослушать '+track.title}
+        onTimeUpdate={e=>setPreviewTime(e.currentTarget.currentTime)} onLoadedMetadata={e=>setPreviewDuration(Number.isFinite(e.currentTarget.duration)?e.currentTarget.duration:0)}
+        onDurationChange={e=>setPreviewDuration(Number.isFinite(e.currentTarget.duration)?e.currentTarget.duration:0)}
+        onEnded={()=>changePreview(1)}
+        onError={()=>setPreviewError(track.id)}>Браузер не поддерживает аудио.</audio>
+       <button type="button" aria-label="Следующая запись" disabled={visible.length<2} onClick={()=>changePreview(1)}><Icon name="next" size={18}/></button>
+      </div>
+      <div className="sound-discover-preview-seek">
+       <span>{formatDuration(previewTime)}</span>
+       <input type="range" aria-label="Перемотка предпрослушивания" min={0} max={Math.max(1,previewDuration)} step={0.1}
+        value={Math.min(previewTime,previewDuration||0)} disabled={!previewDuration}
+        onChange={e=>{if(previewAudio.current&&Number.isFinite(previewAudio.current.duration)){previewAudio.current.currentTime=Number(e.target.value);setPreviewTime(Number(e.target.value))}}}/>
+       <span>{formatDuration(previewDuration)}</span>
+      </div>
       {previewError===track.id&&<small role="status">Поток недоступен в браузере. Можно слушать на сайте источника.</small>}
       <a href={track.page} target="_blank" rel="noopener noreferrer">Открыть оригинал ↗</a>
       {track.licenseUrl&&<a href={track.licenseUrl} target="_blank" rel="noopener noreferrer">Лицензия ↗</a>}
