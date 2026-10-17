@@ -44,7 +44,7 @@ export class SoundController{
    let nextQueue=queue||library.queue;if(!nextQueue.includes(id))nextQueue=library.tracks.filter(this.playable).map(t=>t.id);if(!nextQueue.includes(id))nextQueue=[id];let queueIndex=Math.max(0,Math.min(nextQueue.length-1,index??nextQueue.indexOf(id)));
    if(queue&&library.shuffle){const rest=[...queue];rest.splice(queueIndex,1);nextQueue=[id,...this.shuffled(rest)];queueIndex=0}
    await this.mutate(current=>({...current,currentId:id,position:startPosition,queue:nextQueue,queueIndex,originalQueue:queue||current.originalQueue,tracks:current.tracks.map(t=>t.id===id?{...t,plays:t.plays+1,lastPlayed:Date.now()}:t)}));
-   if(epoch!==this.loadEpoch)return;this.emit({time:startPosition,duration:track.duration});await engine.load(blob,track,startPosition,true,artwork||undefined);if(epoch===this.loadEpoch)void this.primeNext().catch(()=>{});
+   if(epoch!==this.loadEpoch)return;this.emit({time:startPosition,duration:track.duration});try{localStorage.setItem('wtsound:resume:'+this.owner,JSON.stringify({currentId:id,position:startPosition,savedAt:Date.now()}))}catch{}await engine.load(blob,track,startPosition,true,artwork||undefined);if(epoch===this.loadEpoch)void this.primeNext().catch(()=>{});
   }catch(e){if(epoch===this.loadEpoch)this.report(e)}finally{if(epoch===this.loadEpoch)this.emit({buffering:false})}
  }
  private shuffled(ids:string[]){const result=[...ids];for(let i=result.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[result[i],result[j]]=[result[j],result[i]]}return result}
