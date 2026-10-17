@@ -1,12 +1,15 @@
 /** Legal, user-initiated audio discovery. No provider login tokens or proxy endpoints. */
 export const MAX_REMOTE_BYTES=100*1024*1024;
 export const PAGE_SIZE=20;
-export const CATALOGS=['commons','jamendo','openverse','archive'] as const;
+export const CATALOGS=['audius','jamendo','openverse','commons','archive'] as const;
+export const MUSIC_CATALOGS=['audius','jamendo'] as const;
+export const ARCHIVE_CATALOGS=['openverse','commons','archive'] as const;
 export type Catalog=typeof CATALOGS[number];
-export const CATALOG_NAMES:Record<Catalog,string>={commons:'Wikimedia Commons',jamendo:'Jamendo',openverse:'Openverse',archive:'Internet Archive'};
+export const CATALOG_NAMES:Record<Catalog,string>={audius:'Audius',jamendo:'Jamendo',openverse:'Openverse',commons:'Wikimedia Commons',archive:'Internet Archive'};
 export type DiscoveryTrack={
  id:string;catalog:Catalog;title:string;artist:string;album:string;url:string;page:string;
  license:string;licenseUrl:string;attribution:string;size:number|null;mime:string;extension:string;
+ artwork?:string;previewUrl?:string;duration?:number|null;genre?:string;downloadable?:boolean;popularity?:number;
 };
 export type SearchPage={tracks:DiscoveryTrack[];hasMore:boolean};
 export type SearchOptions={page?:number;signal?:AbortSignal;jamendoClientId?:string;fetcher?:typeof fetch};
@@ -30,8 +33,40 @@ async function json(url:string,opts:SearchOptions):Promise<ObjectMap>{
  return obj(await response.json());
 }
 function buildUrl(base:string,params:Record<string,string|number>):string{const u=new URL(base);for(const [k,v] of Object.entries(params))u.searchParams.set(k,String(v));return u.href}
-function valid(track:DiscoveryTrack):boolean{return Boolean(track.title&&safeUrl(track.url)&&safeUrl(track.page)&&track.size!==0)}
+function valid(track:DiscoveryTrack):boolean{return Boolean(track.title&&safeUrl(track.page)&&track.size!==0&&(safeUrl(track.url)||safeUrl(track.previewUrl)))}
 function uniques(tracks:DiscoveryTrack[]):DiscoveryTrack[]{const seen=new Set<string>();return tracks.filter(t=>{if(!valid(t))return false;const key=t.url.split('#')[0];if(seen.has(key))return false;seen.add(key);return true})}
+/** Official Audius public read-only search; downloadable is determined by each artist. */
+export async function searchAudius(term:string,opts:SearchOptions={}):Promise<SearchPage>{
+ const url=buildUrl('https://api.audius.co/v1/tracks/search',{
+  query:term,limit:PAGE_SIZE,offset:(pageNumber(opts.page)-1)*PAGE_SIZE,sort_method:'relevant'
+ });
+ const response=await json(url,opts);
+ const entries=Array.isArray(response.data)?response.data:[],tracks:DiscoveryTrack[]=[];
+ for(const raw of entries){
+  const t=obj(raw),id=str(t.id),title=str(t.title),user=obj(t.user);
+  if(!id||!title||t.is_unlisted===true||t.is_stream_gated===true||t.is_delete===true)continue;
+  const gate=obj(t.stream_conditions);
+  if(Object.keys(gate).length&&str(gate.type)&&str(gate.type)!=='none')continue;
+  const downloadGate=obj(t.download_conditions);
+  const gated=Object.keys(downloadGate).length>0&&str(downloadGate.type)!=='none';
+  const downloadable=t.is_downloadable===true&&!gated;
+  const base='https://api.audius.co/v1/tracks/'+encodeURIComponent(id);
+  const artwork=obj(t.artwork);
+  const image=safeUrl(artwork['480x480'])||safeUrl(artwork['150x150'])||safeUrl(artwork['1000x1000']);
+  const rawLink=str(t.permalink);
+  const page=safeUrl(rawLink)||safeUrl('https://audius.co'+(rawLink.startsWith('/')?rawLink:'/tracks/'+encodeURIComponent(id)));
+  if(!page)continue;
+  const stream=base+'/stream';
+  tracks.push({
+   id:'audius:'+id,catalog:'audius',title,artist:str(user.name)||str(user.handle)||'Неизвестный исполнитель',
+   album:str(t.album_name),url:downloadable?base+'/download':'',previewUrl:stream,
+   page,license:str(t.license)||'Права принадлежат автору',licenseUrl:'',attribution:'',
+   size:null,mime:'audio/mpeg',extension:'mp3',artwork:image,duration:positive(t.duration),
+   genre:str(t.genre),downloadable,popularity:Number(t.play_count)||0
+  });
+ }
+ return {tracks:uniques(tracks),hasMore:entries.length===PAGE_SIZE};
+}
 export async function searchCommons(term:string,opts:SearchOptions={}):Promise<SearchPage>{
  const page=pageNumber(opts.page),params={action:'query',format:'json',origin:'*',generator:'search',gsrsearch:'filetype:audio '+term,gsrnamespace:'6',gsrlimit:String(PAGE_SIZE),gsroffset:String((page-1)*PAGE_SIZE),prop:'imageinfo',iiprop:'url|mime|size|extmetadata',iilimit:'1'};
  const data=await json(buildUrl('https://commons.wikimedia.org/w/api.php',params),opts),pages=Object.values(obj(obj(data.query).pages)),tracks:DiscoveryTrack[]=[];
@@ -54,7 +89,7 @@ export async function searchJamendo(term:string,opts:SearchOptions={}):Promise<S
   const id=str(t.id)||String(t.id||'');
   if(!id||!str(t.name))continue;
   const licenseUrl=safeUrl(t.license_ccurl);
-  tracks.push({id:'jamendo:'+id,catalog:'jamendo',title:str(t.name),artist:str(t.artist_name)||'Исполнитель не указан',album:str(t.album_name),url,page:safeUrl(t.shareurl)||'https://www.jamendo.com/track/'+encodeURIComponent(id),license:licenseUrl?'Creative Commons':'Проверьте лицензию',licenseUrl,attribution:'',size:null,mime:'audio/mpeg',extension:'mp3'});
+  tracks.push({id:'jamendo:'+id,catalog:'jamendo',title:str(t.name),artist:str(t.artist_name)||'Исполнитель не указан',album:str(t.album_name),url,page:safeUrl(t.shareurl)||'https://www.jamendo.com/track/'+encodeURIComponent(id),license:licenseUrl?'Creative Commons':'Проверьте лицензию',licenseUrl,attribution:'',size:null,mime:'audio/mpeg',extension:'mp3',artwork:safeUrl(t.image)||safeUrl(t.album_image),previewUrl:safeUrl(t.audio),duration:positive(t.duration),genre:str(obj(t.musicinfo).genre)||str(t.genre),downloadable:true});
  }
  return {tracks:uniques(tracks),hasMore:items.length===PAGE_SIZE};
 }
@@ -66,7 +101,7 @@ export async function searchOpenverse(term:string,opts:SearchOptions={}):Promise
   const rawExt=str(t.filetype).replace(/^\./,'').toLowerCase()||extFromUrl(url),mime=rawExt.startsWith('audio/')?rawExt:mimeFromExtension(rawExt),ext=extension(rawExt,mime);
   const size=positive(t.filesize);const licenseUrl=safeUrl(t.license_url),license=str(t.license).toUpperCase();
   if(!license&& !licenseUrl)continue;
-  tracks.push({id:'openverse:'+id,catalog:'openverse',title:str(t.title)||'Без названия',artist:str(t.creator)||'Автор не указан',album:'',url,page,license:license||'См. лицензию',licenseUrl,attribution:str(t.attribution),size,mime,extension:ext});
+  tracks.push({id:'openverse:'+id,catalog:'openverse',title:str(t.title)||'Без названия',artist:str(t.creator)||'Автор не указан',album:'',url,page,license:license||'См. лицензию',licenseUrl,attribution:str(t.attribution),size,mime,extension:ext,artwork:safeUrl(t.thumbnail),previewUrl:url,duration:positive(t.duration),downloadable:true});
  }
  return {tracks:uniques(tracks),hasMore:Boolean(data.next)};
 }
@@ -97,7 +132,7 @@ export async function searchArchive(term:string,opts:SearchOptions={}):Promise<S
     if(!playable)return null;
     const fileName=str(playable.name),ext=extFromUrl(fileName),url='https://archive.org/download/'+encodeURIComponent(id)+'/'+fileName.split('/').map(encodeURIComponent).join('/');
     const artist=Array.isArray(metadata.creator)?str(metadata.creator[0]):str(metadata.creator);
-    return {id:'archive:'+id+':'+fileName,catalog:'archive' as Catalog,title:str(metadata.title)||str(item.title)||fileName.replace(/\.[^.]+$/,''),artist:artist||'Автор не указан',album:'',url,page:'https://archive.org/details/'+encodeURIComponent(id),license:'Creative Commons / Public Domain',licenseUrl,attribution:'',size:positive(playable.size),mime:mimeFromExtension(ext),extension:extension(ext,mimeFromExtension(ext))} satisfies DiscoveryTrack;
+    return {id:'archive:'+id+':'+fileName,catalog:'archive' as Catalog,title:str(metadata.title)||str(item.title)||fileName.replace(/\.[^.]+$/,''),artist:artist||'Автор не указан',album:'',url,page:'https://archive.org/details/'+encodeURIComponent(id),license:'Creative Commons / Public Domain',licenseUrl,attribution:'',size:positive(playable.size),mime:mimeFromExtension(ext),extension:extension(ext,mimeFromExtension(ext)),artwork:'https://archive.org/services/img/'+encodeURIComponent(id),previewUrl:url,duration:positive(playable.length),downloadable:true} satisfies DiscoveryTrack;
    }catch(error){if(opts.signal?.aborted)throw error;return null}
   }));
   for(const t of batch)if(t)tracks.push(t);
@@ -107,21 +142,26 @@ export async function searchArchive(term:string,opts:SearchOptions={}):Promise<S
 export async function searchCatalog(catalog:Catalog,term:string,opts:SearchOptions={}):Promise<SearchPage>{
  const q=term.trim().slice(0,200);
  if(q.length<2)return {tracks:[],hasMore:false};
+ if(catalog==='audius')return searchAudius(q,opts);
  if(catalog==='commons')return searchCommons(q,opts);
  if(catalog==='jamendo')return searchJamendo(q,opts);
  if(catalog==='openverse')return searchOpenverse(q,opts);
  return searchArchive(q,opts);
 }
 export type SearchAll={tracks:DiscoveryTrack[];hasMore:boolean;errors:string[]};
-export async function searchAll(term:string,opts:SearchOptions={}):Promise<SearchAll>{
- const available=CATALOGS.filter(c=>c!=='jamendo'||Boolean(opts.jamendoClientId));
+export async function searchSources(term:string,sources:readonly Catalog[],opts:SearchOptions={}):Promise<SearchAll>{
+ const available=sources.filter(c=>c!=='jamendo'||Boolean(opts.jamendoClientId));
  const results=await Promise.allSettled(available.map(c=>searchCatalog(c,term,opts)));
  if(opts.signal?.aborted)throw new DOMException('Cancelled','AbortError');
  const tracks:DiscoveryTrack[]=[],errors:string[]=[];let hasMore=false;
  for(let i=0;i<results.length;i++){const result=results[i];if(result.status==='fulfilled'){tracks.push(...result.value.tracks);hasMore=hasMore||result.value.hasMore}else errors.push(CATALOG_NAMES[available[i]]+': '+(result.reason instanceof Error?result.reason.message:String(result.reason)))}
  return {tracks:uniques(tracks),hasMore,errors};
 }
+export const searchAll=(term:string,opts:SearchOptions={})=>searchSources(term,CATALOGS,opts);
+export const searchMusic=(term:string,opts:SearchOptions={})=>searchSources(term,MUSIC_CATALOGS,opts);
+export const searchArchives=(term:string,opts:SearchOptions={})=>searchSources(term,ARCHIVE_CATALOGS,opts);
 export async function downloadDiscoveryTrack(track:DiscoveryTrack,opts:{signal?:AbortSignal;onProgress?:(received:number,total:number|null)=>void;fetcher?:typeof fetch}={}):Promise<File>{
+ if(track.downloadable===false)throw new Error('Автор не разрешил скачивание этого трека. Используйте предпрослушивание или откройте страницу автора.');
  if(!safeUrl(track.url))throw new Error('Небезопасный адрес аудиофайла');
  if(track.size!==null&&track.size>MAX_REMOTE_BYTES)throw new Error('Размер файла превышает 100 МБ');
  const response=await (opts.fetcher||fetch)(track.url,{signal:opts.signal});
