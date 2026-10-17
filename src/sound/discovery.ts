@@ -38,7 +38,7 @@ function uniques(tracks:DiscoveryTrack[]):DiscoveryTrack[]{const seen=new Set<st
 /** Official Audius public read-only search; downloadable is determined by each artist. */
 export async function searchAudius(term:string,opts:SearchOptions={}):Promise<SearchPage>{
  const url=buildUrl('https://api.audius.co/v1/tracks/search',{
-  query:term,limit:PAGE_SIZE,offset:(pageNumber(opts.page)-1)*PAGE_SIZE,sort_method:'relevant'
+  query:term,limit:PAGE_SIZE,offset:(pageNumber(opts.page)-1)*PAGE_SIZE,sort_method:'relevant',app_name:'WorkerTink'
  });
  const response=await json(url,opts);
  const entries=Array.isArray(response.data)?response.data:[],tracks:DiscoveryTrack[]=[];
@@ -46,7 +46,7 @@ export async function searchAudius(term:string,opts:SearchOptions={}):Promise<Se
   const t=obj(raw),id=str(t.id),title=str(t.title),user=obj(t.user);
   if(!id||!title||t.is_unlisted===true||t.is_stream_gated===true||t.is_delete===true)continue;
   const gate=obj(t.stream_conditions);
-  if(Object.keys(gate).length&&str(gate.type)&&str(gate.type)!=='none')continue;
+  if(Object.keys(gate).length&&str(gate.type)!=='none')continue;
   const downloadGate=obj(t.download_conditions);
   const gated=Object.keys(downloadGate).length>0&&str(downloadGate.type)!=='none';
   const downloadable=t.is_downloadable===true&&!gated;
