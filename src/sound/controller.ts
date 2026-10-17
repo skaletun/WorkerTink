@@ -6,7 +6,7 @@ import {cloudTracks,deleteCloud,downloadCloud,soundCapabilities,uploadCloud} fro
 export type SoundState={library:Library;ready:boolean;playing:boolean;buffering:boolean;time:number;duration:number;offline:Set<string>;error:string;busy:string;cloud:boolean;providers:{vk:boolean;yandex:boolean};online:boolean};
 export class SoundController{
  private state:SoundState={library:emptyLibrary(),ready:false,playing:false,buffering:false,time:0,duration:0,offline:new Set(),error:'',busy:'',cloud:false,providers:{vk:false,yandex:false},online:navigator.onLine};
- private listeners=new Set<()=>void>();private engine:SoundEngine|null=null;private writes:Promise<unknown>=Promise.resolve();private mutation=0;private epoch=0;private loadEpoch=0;private lastCheckpoint=0;private channel:BroadcastChannel|null=null;
+ private listeners=new Set<()=>void>();private engine:SoundEngine|null=null;private writes:Promise<unknown>=Promise.resolve();private mutation=0;private epoch=0;private loadEpoch=0;private lastCheckpoint=0;private prepared:{id:string;blob:Blob;artwork:Blob|null}|null=null;private channel:BroadcastChannel|null=null;
  constructor(readonly owner:string,private token:string){}
  subscribe=(fn:()=>void)=>{this.listeners.add(fn);return()=>{this.listeners.delete(fn)}};
  snapshot=()=>this.state;
@@ -24,40 +24,42 @@ export class SoundController{
   if(typeof BroadcastChannel!=='undefined'&&!this.channel){this.channel=new BroadcastChannel('wtsound:'+this.owner);this.channel.onmessage=e=>{if(e.data?.type==='play'){this.engine?.pause();return}if(e.data?.type==='library')void this.writes.then(async()=>{const [remote,offline]=await Promise.all([readLibrary(this.owner),audioIds(this.owner)]);if(epoch!==this.epoch)return;this.emit({library:{...this.state.library,tracks:remote.tracks,playlists:remote.playlists},offline})}).catch(this.report)}}
   void soundCapabilities(this.token).then(async caps=>{if(epoch!==this.epoch)return;this.emit({cloud:caps.cloud,providers:{vk:caps.vk,yandex:caps.yandex}});if(caps.cloud){const result=await cloudTracks(this.token);if(epoch!==this.epoch)return;const local=this.state.library;const merged=result.tracks.map(remote=>{const existing=local.tracks.find(t=>t.id===remote.id);return existing?{...existing,cloud:true}:remote});await this.mutate(current=>({...current,tracks:[...current.tracks.filter(t=>!merged.some(r=>r.id===t.id)),...merged]}))}}).catch(()=>{});
  }catch(e){if(epoch===this.epoch)this.emit({error:'Не удалось открыть музыкальную библиотеку: '+String(e),ready:false})}}
- dispose(){this.channel?.close();this.channel=null;++this.epoch;++this.loadEpoch;this.engine?.dispose();this.engine=null}
+ dispose(){this.channel?.close();this.channel=null;++this.epoch;++this.loadEpoch;this.prepared=null;this.engine?.dispose();this.engine=null}
  connectivity=()=>this.emit({online:navigator.onLine});
  checkpoint=()=>{if(this.state.ready){const {time,library}=this.state;void this.mutate(l=>({...l,position:time,currentId:library.currentId,queue:library.queue,queueIndex:library.queueIndex,originalQueue:library.originalQueue})).catch(()=>{})}};
  private getEngine(){if(!this.engine){this.engine=new SoundEngine({state:(playing,buffering)=>this.emit({playing,buffering}),time:(time,duration)=>{
-  this.emit({time,duration:Number.isFinite(duration)?duration:0});if(Date.now()-this.lastCheckpoint>5000){this.lastCheckpoint=Date.now();this.checkpoint()}
+  this.emit({time,duration:Number.isFinite(duration)?duration:0});if(this.state.playing&&document.visibilityState==='visible'&&Date.now()-this.lastCheckpoint>60000){this.lastCheckpoint=Date.now();this.checkpoint()}
  },ended:()=>{if(this.state.library.repeat==='one'){this.seek(0);void this.resume()}else void this.next(true)},error:this.report,next:()=>{void this.next()},previous:()=>{void this.previous()}});this.engine.volume(this.state.library.volume);this.engine.equalizer(this.state.library.eq)}return this.engine}
  playable=(t:Track)=>this.state.offline.has(t.id)||(this.state.online&&Boolean(t.cloud));
- async play(id:string,queue?:string[],index?:number){
+ async play(id:string,queue?:string[],index?:number,startPosition=0){
   const library=this.state.library,track=library.tracks.find(t=>t.id===id);if(!track||!this.playable(track)){this.report(new Error('Для этого трека нужен аудиофайл. Загрузите его в WTSound'));return}
   const epoch=++this.loadEpoch;this.emit({buffering:true,error:''});
   try{
-   const engine=this.getEngine();engine.unlock();engine.pause();this.channel?.postMessage({type:'play'});
-   const blob=await readAudio(this.owner,id)||track.cloud&&await downloadCloud(this.token,id);if(epoch!==this.loadEpoch)return;if(!blob)throw new Error('Аудиофайл не найден на устройстве');
-   const artwork=await readArtwork(this.owner,id);if(epoch!==this.loadEpoch)return;
-   let nextQueue=queue||library.queue;if(!nextQueue.includes(id))nextQueue=[id];let queueIndex=Math.max(0,Math.min(nextQueue.length-1,index??nextQueue.indexOf(id)));
+   const engine=this.getEngine();engine.unlock();this.channel?.postMessage({type:'play'});
+   const cached=this.prepared?.id===id?this.prepared:null;this.prepared=null;
+   const blob=cached?.blob||await readAudio(this.owner,id)||track.cloud&&await downloadCloud(this.token,id);if(epoch!==this.loadEpoch)return;if(!blob)throw new Error('Аудиофайл не найден на устройстве');
+   const artwork=cached?cached.artwork:await readArtwork(this.owner,id);if(epoch!==this.loadEpoch)return;
+   let nextQueue=queue||library.queue;if(!nextQueue.includes(id))nextQueue=library.tracks.filter(this.playable).map(t=>t.id);if(!nextQueue.includes(id))nextQueue=[id];let queueIndex=Math.max(0,Math.min(nextQueue.length-1,index??nextQueue.indexOf(id)));
    if(queue&&library.shuffle){const rest=[...queue];rest.splice(queueIndex,1);nextQueue=[id,...this.shuffled(rest)];queueIndex=0}
-   await this.mutate(current=>({...current,currentId:id,position:0,queue:nextQueue,queueIndex,originalQueue:queue||current.originalQueue,tracks:current.tracks.map(t=>t.id===id?{...t,plays:t.plays+1,lastPlayed:Date.now()}:t)}));
-   if(epoch!==this.loadEpoch)return;this.emit({time:0,duration:track.duration});await engine.load(blob,track,0,true,artwork);
+   await this.mutate(current=>({...current,currentId:id,position:startPosition,queue:nextQueue,queueIndex,originalQueue:queue||current.originalQueue,tracks:current.tracks.map(t=>t.id===id?{...t,plays:t.plays+1,lastPlayed:Date.now()}:t)}));
+   if(epoch!==this.loadEpoch)return;this.emit({time:startPosition,duration:track.duration});await engine.load(blob,track,startPosition,true,artwork);if(epoch===this.loadEpoch)void this.primeNext().catch(()=>{});
   }catch(e){if(epoch===this.loadEpoch)this.report(e)}finally{if(epoch===this.loadEpoch)this.emit({buffering:false})}
  }
  private shuffled(ids:string[]){const result=[...ids];for(let i=result.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[result[i],result[j]]=[result[j],result[i]]}return result}
- async resume(){try{if(!this.engine?.audio.src){const {currentId,queueIndex,position}=this.state.library;await this.play(currentId,undefined,queueIndex);if(position)this.seek(position)}else await this.engine.play()}catch(e){this.report(e)}}
+ private async primeNext(){const library=this.state.library;const i=library.queueIndex+1;const id=library.queue[i]||(library.repeat==='all'?library.queue[0]:undefined);if(!id||id===library.currentId)return;const track=library.tracks.find(t=>t.id===id);if(!track||!this.state.offline.has(id)||Number(track.size||0)>20*1024*1024)return;const blob=await readAudio(this.owner,id);if(blob&&blob.size<=20*1024*1024&&this.state.library.currentId!==id)this.prepared={id,blob,artwork:await readArtwork(this.owner,id)}}
+ async resume(){try{if(!this.engine?.audio.src){const {currentId,queueIndex,position}=this.state.library;if(!currentId)return;await this.play(currentId,undefined,queueIndex,position)}else await this.engine.play()}catch(e){this.report(e)}}
  toggle=()=>{if(this.state.playing){this.engine?.pause();this.checkpoint()}else void this.resume()};
- seek=(value:number)=>{this.engine?.seek(value);this.emit({time:value});this.checkpoint()};
- private adjacent(direction:number){const {library}=this.state;for(let step=1;step<=library.queue.length;step++){let index=library.queueIndex+step*direction;if(index<0||index>=library.queue.length){if(library.repeat==='off')return null;index=(index%library.queue.length+library.queue.length)%library.queue.length}const id=library.queue[index],track=library.tracks.find(t=>t.id===id);if(track&&this.playable(track))return {id,index}}return null}
- async next(ended=false){const next=this.adjacent(1);if(next)await this.play(next.id,undefined,next.index);else if(ended){this.engine?.pause();this.emit({playing:false,time:0});await this.mutate(l=>({...l,position:0}))}}
- async previous(){if(this.state.time>3){this.seek(0);return}const next=this.adjacent(-1);if(next)await this.play(next.id,undefined,next.index)}
+ seek=(value:number)=>{const duration=this.state.duration||this.state.library.tracks.find(t=>t.id===this.state.library.currentId)?.duration||0;const time=Math.max(0,Math.min(Number.isFinite(value)?value:0,duration||value));this.engine?.seek(time);this.emit({time});this.checkpoint()};
+ private adjacent(direction:number,manual=false){const {library}=this.state;for(let step=1;step<=library.queue.length;step++){let index=library.queueIndex+step*direction;if(index<0||index>=library.queue.length){if(library.repeat==='off'&&!manual)return null;index=(index%library.queue.length+library.queue.length)%library.queue.length}const id=library.queue[index],track=library.tracks.find(t=>t.id===id);if(track&&this.playable(track))return {id,index}}return null}
+ async next(ended=false){const next=this.adjacent(1,!ended);if(next)await this.play(next.id,undefined,next.index);else if(ended){this.engine?.pause();this.emit({playing:false,time:0});await this.mutate(l=>({...l,position:0}))}}
+ async previous(){if(this.state.time>3){this.seek(0);return}const next=this.adjacent(-1,true);if(next)await this.play(next.id,undefined,next.index)}
  async settings(patch:Partial<Pick<Library,'volume'|'repeat'|'shuffle'>>){if(patch.volume!==undefined)this.engine?.volume(patch.volume);await this.mutate(l=>{let queue=l.queue,queueIndex=l.queueIndex,originalQueue=l.originalQueue;if(patch.shuffle===true&&!l.shuffle){originalQueue=[...queue];const rest=[...queue];rest.splice(queueIndex,1);queue=l.currentId?[l.currentId,...this.shuffled(rest)]:this.shuffled(rest);queueIndex=0}else if(patch.shuffle===false&&l.shuffle&&originalQueue.length){queue=[...originalQueue];queueIndex=Math.max(0,queue.indexOf(l.currentId))}return {...l,...patch,queue,queueIndex,originalQueue}})}
  async equalizer(eq:Equalizer){this.getEngine().equalizer(eq);await this.mutate(l=>({...l,eq}))}
  async like(id:string){await this.mutate(l=>({...l,tracks:l.tracks.map(t=>t.id===id?{...t,liked:!t.liked}:t)}))}
- async createPlaylist(title:string){if(!title.trim())throw new Error('Введите название плейлиста');const now=Date.now(),p:Playlist={id:crypto.randomUUID(),title:title.trim().slice(0,200),description:'',trackIds:[],createdAt:now,updatedAt:now};await this.mutate(l=>({...l,playlists:[p,...l.playlists]}));return p.id}
+ async createPlaylist(title:string,firstTrackId?:string){if(!title.trim())throw new Error('Введите название плейлиста');const now=Date.now(),p:Playlist={id:crypto.randomUUID(),title:title.trim().slice(0,200),description:'',trackIds:firstTrackId&&this.state.library.tracks.some(t=>t.id===firstTrackId)?[firstTrackId]:[],createdAt:now,updatedAt:now};await this.mutate(l=>({...l,playlists:[p,...l.playlists]}));return p.id}
  async editPlaylist(id:string,patch:Partial<Pick<Playlist,'title'|'description'|'trackIds'>>){await this.mutate(l=>({...l,playlists:l.playlists.map(p=>p.id===id?{...p,...patch,updatedAt:Date.now()}:p)}))}
  async deletePlaylist(id:string){await this.mutate(l=>({...l,playlists:l.playlists.filter(p=>p.id!==id)}))}
- async addToPlaylist(playlistId:string,trackId:string){await this.mutate(l=>({...l,playlists:l.playlists.map(p=>p.id===playlistId&&!p.trackIds.includes(trackId)?{...p,trackIds:[...p.trackIds,trackId],updatedAt:Date.now()}:p)}))}
+ async addToPlaylist(playlistId:string,trackId:string){if(!this.state.library.tracks.some(t=>t.id===trackId))throw new Error('Трек отсутствует в коллекции');if(!this.state.library.playlists.some(p=>p.id===playlistId))throw new Error('Плейлист не найден');await this.mutate(l=>({...l,playlists:l.playlists.map(p=>p.id===playlistId&&!p.trackIds.includes(trackId)?{...p,trackIds:[...p.trackIds,trackId],updatedAt:Date.now()}:p)}))}
  async import(input:ImportResult){let result=mergeImport(this.state.library,input);await this.mutate(l=>{result=mergeImport(l,input);return result.library});return result}
  async upload(files:File[],targetId?:string,origin?:Partial<Pick<Track,'title'|'artist'|'album'|'source'|'license'|'licenseUrl'|'attribution'>>):Promise<{added:number;skipped:number;failed:string[]}>{
   if(this.state.busy)throw new Error('Дождитесь завершения текущей загрузки');
