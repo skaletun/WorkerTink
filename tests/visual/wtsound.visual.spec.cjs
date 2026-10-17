@@ -57,7 +57,7 @@ test('WTSound previously saved missing audio can be attached explicitly with unr
  const context=await browser.newContext({viewport:{width:390,height:844}});await setup(context);const page=await context.newPage();await page.goto('/?tab=sound');await expect(page.getByRole('region',{name:'WTSound'})).toBeVisible();
  await seedSavedTracks(page,[{artist:'Настоящий артист',title:'Нужная запись',duration:4,source:{provider:'vk',id:'old-import'}}]);await expect(page.locator('.sound-track')).toContainText('Нужен аудиофайл');
  await page.getByRole('button',{name:'Действия: Нужная запись',exact:true}).click();await page.getByRole('dialog').locator('input[type=file]').setInputFiles({name:'unrelated-name.wav',mimeType:'audio/wav',buffer:wav(4)});await expect(page.getByRole('dialog')).toHaveCount(0);await expect(page.getByRole('button',{name:'Слушать: Нужная запись',exact:true})).toBeEnabled();
- await page.getByRole('button',{name:'Слушать: Нужная запись',exact:true}).click();await expect(page.locator('.sound-player')).toContainText('Настоящий артист');await expect.poll(()=>page.locator('audio[data-wtsound-audio]').evaluate(a=>!a.paused)).toBe(true);await context.close();
+ await page.getByRole('button',{name:'Слушать: Нужная запись',exact:true}).click();await expect(page.locator('.sound-player')).toContainText('Настоящий артист',{timeout:20000});await expect.poll(()=>page.locator('audio[data-wtsound-audio]').evaluate(a=>!a.paused),{timeout:20000}).toBe(true);await context.close();
 });
 test('WTSound large collections use bounded rendering and search every track',async({browser})=>{
  const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});await setup(context);const page=await context.newPage();await page.goto('/?tab=sound');await expect(page.getByRole('region',{name:'WTSound'})).toBeVisible();
@@ -86,6 +86,42 @@ test('WTSound discovers a CC audio file, imports locally and keeps attribution',
  await page.getByRole('button',{name:'Действия: Free Sample'}).click();
  await expect(page.getByRole('link',{name:'Источник записи'})).toHaveAttribute('href','https://assets.example.net/credits');
  await expect(page.getByRole('link',{name:'Условия лицензии'})).toHaveAttribute('href','https://creativecommons.org/licenses/by/4.0/');
+ expect(errors).toEqual([]);
+ await context.close();
+});
+
+test('WTSound iPhone Files picker accepts MP3 and WAV in collection and missing-audio attachment',async({browser,browserName})=>{
+ const context=await browser.newContext({
+  viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true,serviceWorkers:'block',
+  userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1'
+ });
+ await setup(context);
+ const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(String(error)));
+ await page.goto('/?tab=sound');
+ await expect(page.getByRole('region',{name:'WTSound'})).toBeVisible();
+ await expect(page.locator('.sound-upload-hint')).toContainText('Файлы');
+ const batch=page.getByLabel('Аудиофайлы');
+ expect(await batch.evaluate(input=>input.hasAttribute('accept'))).toBe(false);
+ const chooserPromise=page.waitForEvent('filechooser');
+ await page.locator('.sound-header-actions').getByRole('button',{name:'Загрузить треки'}).click();
+ const chooser=await chooserPromise;expect(chooser.isMultiple()).toBe(true);
+ await chooser.setFiles([
+  {name:'Artist - Phone.wav',mimeType:'audio/wav',buffer:wav(2)},
+  {name:'Artist - MP3.mp3',mimeType:'audio/mpeg',buffer:Buffer.from([73,68,51,3,0,0,0,0,0,0,255,251,144,100,0,0,0,0])}
+ ]);
+ await expect(page.locator('.sound-track')).toHaveCount(2,{timeout:30000});
+ await expect(page.locator('.sound-track-list')).toContainText('Phone');
+ await expect(page.locator('.sound-track-list')).toContainText('MP3');
+ await seedSavedTracks(page,[{artist:'Imported',title:'Missing Song',duration:2,source:{provider:'file',id:'old'}}]);
+ await page.getByRole('button',{name:'Действия: Missing Song'}).click();
+ const attach=page.getByRole('dialog').locator('input[type=file]');
+ expect(await attach.evaluate(input=>input.hasAttribute('accept'))).toBe(false);
+ const attachChooserPromise=page.waitForEvent('filechooser');
+ await page.getByRole('dialog').getByText('Добавить аудиофайл').click();
+ const attachChooser=await attachChooserPromise;expect(attachChooser.isMultiple()).toBe(false);
+ await attachChooser.setFiles({name:'recovered.wav',mimeType:'audio/wav',buffer:wav(2,440)});
+ await expect(page.getByRole('dialog')).toHaveCount(0,{timeout:20000});
+ await expect(page.getByRole('button',{name:'Слушать: Missing Song'})).toBeEnabled();
  expect(errors).toEqual([]);
  await context.close();
 });

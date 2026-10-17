@@ -47,3 +47,8 @@
 .sound-discover-more{margin-top:18px}
 .sound-discover-form :focus-visible,.sound-discover-results :focus-visible{outline:2px solid var(--sound-accent);outline-offset:3px}
 @media(max-width:640px){.sound-discover-form{align-items:stretch}.sound-discover-form>.sound-button{width:100%}.sound-discover-actions{justify-content:flex-start}.sound-discover-result{gap:14px}}
+
+/* iOS WebKit: the file picker must not use accept="audio/*" (WebKit bug 242110).
+   Show the Files location hint on compact screens; validation still happens in inspectAudio. */
+.sound-upload-hint{display:none}
+@media(max-width:720px){.sound-upload-hint{display:block;margin:-12px 0 16px;color:var(--muted);font-size:12px;line-height:1.5}}
