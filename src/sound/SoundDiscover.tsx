@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState} from 'react';
+import {useEffect,useRef,useState,type FormEvent} from 'react';
 import {useSound} from './SoundProvider.tsx';
 import {CATALOG_NAMES,MAX_REMOTE_BYTES,downloadDiscoveryTrack,searchAll,searchCatalog,type Catalog,type DiscoveryTrack} from './discovery.ts';
 
@@ -41,7 +41,7 @@ export default function SoundDiscover(){
   }).catch(e=>{if(!abort.signal.aborted)setError(friendlyError(e))}).finally(()=>{if(!abort.signal.aborted)setLoading(false)});
   return ()=>abort.abort();
  },[request]);
- const submit=(event:React.FormEvent<HTMLFormElement>)=>{
+ const submit=(event:FormEvent<HTMLFormElement>)=>{
   event.preventDefault();const term=query.trim();
   if(term.length<2||!online)return;
   setPreview('');setAdded({});setRequest({term,source,page:1});
