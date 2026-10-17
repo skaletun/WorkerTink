@@ -20,22 +20,33 @@ In iOS WebKit, `<input type="file" accept="audio/*">` can mistakenly filter for 
 
 On iPhone, use WTSound → «Загрузить треки» → «Обзор» / «Выбрать файл» → «Файлы», then select an actual `.mp3`, `.wav`, or `.m4a` file from «На iPhone» or iCloud Drive. Files locked inside an external streaming service (including protected Apple Music tracks) cannot be accessed as ordinary local files. The automated Playwright test uses an iPhone-like mobile viewport in Chromium and WebKit to validate the file inputs, chooser triggers, two uploads and missing-track attachment. Real iOS native picker behavior still requires confirmation on a physical iPhone.
 
-## Music discovery and local import
+## Music discovery — music-first search
 
-The WTSound **Поиск музыки** area now searches four legal/open-catalog sources:
+WTSound's discovery screen uses a **music-first** search inspired by open-source player designs:
 
-- **Wikimedia Commons** — public MediaWiki API, audio file pages, license metadata and original files.
-- **Openverse** — anonymous public audio API, aggregating openly licensed files from multiple providers (including Freesound, Jamendo and others). Results show the original page and attribution, if indexed.
-- **Internet Archive** — advanced-search items followed by per-item metadata requests; only entries that **explicitly declare a Creative Commons or CC0/public-domain URL** and have an original downloadable audio file under 100 MB are offered. An archive entry alone is not proof of download permission.
-- **Jamendo** — optional official v3 API; shows only tracks with `audiodownload_allowed === true`, with CC licensing and the original track link.
+- [Nuclear](https://github.com/nukeop/nuclear): provider metadata adapters, separate search categories (artists/tracks/albums), independent source capabilities, and queue-oriented search.
+- [MusicFree](https://github.com/maotoumao/MusicFree): a standardized provider-plugin interface with searching/streaming independent from the presentation layer and pagination owned by the UI.
+- [Feishin](https://github.com/jeffvli/feishin) and Navidrome: private/self-hosted library search; useful as UI references, but not public global discovery sources.
 
-**Setup:** Commons, Openverse and Archive need no keys. Jamendo requires a production client ID created at https://developer.jamendo.com/; set `VITE_JAMENDO_CLIENT_ID` as a **build-time Vite environment variable** and rebuild/redeploy. Do not ship Jamendo's documentation/test ID to production. The selector disables Jamendo when no ID is configured. Do not put client secrets or OAuth tokens into a `VITE_*` variable.
+The default **Музыка** mode searches **Audius** and optional **Jamendo**. This prioritizes actual songs with artists and cover art rather than archival field recordings. The secondary **Свободные записи** mode searches **Openverse**, **Wikimedia Commons** and **Internet Archive** (useful for audio samples, recordings and Creative Commons / public-domain resources). **Везде** searches all configured sources. Source selection and paging remain available.
 
-The combined search fans out across configured sources with partial-error handling, supports per-provider selection and pagination, displays original page, CC license and artist attribution, and allows on-demand audio previews. A user-initiated download streams the audio with a strict 100 MB cap, validates HTTPS redirects and content type, and supports progress and cancellation before the existing music-metadata/IDB storage pipeline. SHA-256 hash deduplication is reused, and the UI confirms whether a track was imported or already existed. The media's catalog title, artist, album, license, attribution and source link are saved locally and shown in the track menu.
+### Audius (no key required for read-only search)
 
-**Constraints:** The app is a personal library, not a licensed streaming aggregation service. Individual licenses can require credit, share-alike, noncommercial use or prohibit derivatives; verify the original page before reuse. Indexed links and remote downloads may change or block CORS; WTSound reports this and links to the official source rather than bypassing access restrictions. There is no unrestricted backend download proxy, scraping, DRM bypass or hidden credentials. First-time search/download requires connectivity; audio copied into IndexedDB remains available offline according to storage policy. No new npm dependencies are needed: built-in `fetch` and the existing `music-metadata` dependency handle metadata and local audio.
+The official `https://api.audius.co/v1/tracks/search` endpoint supports query, pagination and relevance sorting. Results map track title, user name, cover art, duration, genre, stream and artist permalink to WTSound's normalized discovery result. Streaming-only records stay visible for online preview. Download is enabled **only** if the Audius response explicitly has `is_downloadable === true` and no download access gate. The app uses the official `/tracks/{id}/download` endpoint only for that case; it never treats stream URLs as downloadable content or bypasses purchase/follow gates. The official source page is provided with each result. Individual track rights remain with creators; Audius is **not** automatically a Creative Commons library.
 
-**Validation:** `npm run test:sound` runs `tests/wtsound-discovery.test.mjs` with mocked APIs to verify licenses, rejected download permissions, pagination, failure isolation and size/type limits. Existing WTSound Playwright and broader CI suites remain required. Production Jamendo and browser CORS still require a real API ID and deployment verification.
+Official API documentation: https://docs.audius.co/api/ and https://docs.audius.co/sdk/tracks/.
+
+### Other sources and attribution
+
+Jamendo is optional and requires a build-time `VITE_JAMENDO_CLIENT_ID` created at https://developer.jamendo.com/. Only tracks with `audiodownload_allowed === true` are included. Jamendo album artwork, public preview audio, album and duration are displayed.
+
+Wikimedia Commons uses MediaWiki file pages and their license/artist metadata. Openverse is an aggregator that returns audio metadata, thumbnails, and license URLs. Internet Archive requires an explicit, original item-level CC/CC0 license and a downloadable audio file below 100 MB. Archive recordings can be non-musical and are **not** included in the default song search.
+
+Search results now have cover art or a music-note fallback, clear hierarchy for title/artist, source/genre/license cues, track duration, touch-sized controls and responsive mobile/desktop layouts. A single inline preview player is shown for the selected result. Downloads stream with a hard 100 MB limit, abort control and explicit errors for CORS-restricted origins. WTSound imports through its existing SHA-256 deduplicated IndexedDB storage pipeline, retaining title, artist, album, license, attribution and original source page.
+
+These integrations use documented/public API endpoints and do not install arbitrary remote plugins, scrape streaming pages, extract protected content, or download unlicensed commercial streams. Generic YouTube/SoundCloud/Bandcamp scrapers from community players were reviewed but not embedded into the PWA. Some remote preview/download hosts restrict CORS and some sources have regional service restrictions or rate limits. Actual third-party APIs and iOS playback must be verified on a real device after deployment.
+
+Validation: `npm run test:sound` covers provider normalization, artwork, Audius download gates, partial source failures, audio response/type/size validation and pagination; Playwright WTSound coverage includes mocked Audius search and mobile track cards, alongside the existing imports and offline playback.
 
 ## Playlist transfer — В разработке
 
