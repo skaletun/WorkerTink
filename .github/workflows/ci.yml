@@ -28,6 +28,15 @@ jobs:
         run: npm run build
       - name: Install Chromium for messenger visual regression
         run: npx playwright install --with-deps chromium
+      - name: Validate WTSound audio, disabled transfer, EQ and offline PWA
+        run: npx playwright test tests/visual/wtsound.visual.spec.cjs
+      - name: Save WTSound chromium visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtsound-chromium-visual-evidence
+          path: visual-audit-artifacts/wtsound-*.png
+          if-no-files-found: ignore
       - name: Validate standalone mobile and desktop chat
         run: npx playwright test tests/visual/wtinker.visual.spec.cjs --grep 'full-screen Telegram-style private chat navigation'
       - name: Validate E2E key retention after application reload
@@ -36,6 +45,15 @@ jobs:
         run: npx playwright test tests/visual/pwa-update-rescue.visual.spec.cjs
       - name: Install WebKit for Safari engine regression
         run: npx playwright install --with-deps webkit
+      - name: Validate WTSound on Safari engine
+        run: npx playwright test tests/visual/wtsound.visual.spec.cjs --browser=webkit
+      - name: Save WTSound webkit visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtsound-webkit-visual-evidence
+          path: visual-audit-artifacts/wtsound-*.png
+          if-no-files-found: ignore
       - name: Validate Safari engine PWA upgrade and private data retention
         run: npx playwright test tests/visual/pwa-update-rescue.visual.spec.cjs --browser=webkit
       - name: Validate encrypted E2E recovery UI

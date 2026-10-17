@@ -73,3 +73,5 @@ test-results/
 .DS_Store
 .vscode
 .idea
+# Browser screenshots and traces are uploaded as CI artifacts
+/visual-audit-artifacts/

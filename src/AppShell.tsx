@@ -5,10 +5,10 @@ type NavItem={id:string;label:string;sub:string;icon:ReactNode};
 type Props={items:NavItem[];active:string;onNavigate:(id:string)=>void;profile:ReactNode;profileAction:()=>void;privacy:ReactNode;children:ReactNode;searchAction:()=>void;title:string;kicker:string;version:string;mobileItems:{id:string;label:string;icon:ReactNode}[];mobileMore:ReactNode};
 const sets=[
  {id:'live',title:'01 / МОЙ ДЕНЬ',message:'Личное пространство',list:['home','calendar','work','pay','absence']},
- {id:'world',title:'02 / ЛЮДИ И СВЯЗЬ',message:'Коллеги и общение',list:['social','people','communities','chat','friends']},
+ {id:'world',title:'02 / ЛЮДИ И СВЯЗЬ',message:'Коллеги и общение',list:['sound','social','people','communities','chat','friends']},
  {id:'identity',title:'03 / МОЙ ПРОФИЛЬ',message:'Профиль и управление',list:['notifications','profile','settings','admin']}
 ];
-const spaces=['home','social','calendar','pay','chat'];
+const spaces=['home','social','sound','calendar','chat'];
 export default function AppShell({items,active,onNavigate,profile,profileAction,privacy,children,searchAction,title,kicker,version,mobileItems,mobileMore}:Props){
  const [launcher,setLauncher]=useState(false);
  const map=new Map(items.map(i=>[i.id,i]));
