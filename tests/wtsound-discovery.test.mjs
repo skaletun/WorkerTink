@@ -1,15 +1,22 @@
 import assert from 'node:assert/strict';
-import {searchCommons,searchJamendo,searchOpenverse,searchArchive,searchAll,safeUrl,downloadDiscoveryTrack,MAX_REMOTE_BYTES} from '../src/sound/discovery.ts';
+import {searchCommons,searchJamendo,searchOpenverse,searchArchive,searchAudius,searchMusic,searchArchives,searchAll,safeUrl,downloadDiscoveryTrack,MAX_REMOTE_BYTES} from '../src/sound/discovery.ts';
 
 const reply=(body,status=200,headers={})=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json',...headers}});
 const commons={query:{pages:{'42':{title:'File:Signal.ogg',imageinfo:[{url:'https://upload.wikimedia.org/commons/a/signal.ogg',mime:'audio/ogg',size:1200,descriptionurl:'https://commons.wikimedia.org/wiki/File:Signal.ogg',extmetadata:{Artist:{value:'<b>Musician &amp; Band</b>'},LicenseShortName:{value:'CC BY-SA 4.0'},LicenseUrl:{value:'https://creativecommons.org/licenses/by-sa/4.0/'}}}]},'43':{title:'File:Photo.png',imageinfo:[{url:'https://upload.wikimedia.org/a.png',mime:'image/png'}]}}},continue:{gsroffset:20}};
 const jamendo={headers:{status:'success'},results:[{id:'1',name:'Music',artist_name:'Band',album_name:'Album',audiodownload_allowed:true,audiodownload:'https://storage.jamendo.com/download/1/',license_ccurl:'https://creativecommons.org/licenses/by/4.0/'},{id:'2',name:'No Download',audiodownload_allowed:false,audiodownload:'',artist_name:'Band'}]};
 const openverse={results:[{id:'uuid',title:'Recording',creator:'Composer',url:'https://example.org/song.mp3',foreign_landing_url:'https://example.org/about',license:'by',license_url:'https://creativecommons.org/licenses/by/4.0/',filetype:'mp3',filesize:1080,mature:false,attribution:'Composer CC BY'},{id:'unsafe',title:'Malicious',creator:'No',url:'https://localhost/private.mp3',foreign_landing_url:'https://example.org/abc',license:'cc0'}],next:'https://api.openverse.org/v1/audio/?page=2'};
+const audius={data:[
+ {id:'D7KyD',title:'Evening Lights',user:{name:'Night Drive'},permalink:'/nightdrive/evening-lights',duration:203,genre:'Electronic',artwork:{'480x480':'https://audius.example/cover.jpg'},is_downloadable:true,license:'CC BY'},
+ {id:'A2Z4p',title:'Streaming Only',user:{name:'Independent'},permalink:'/independent/streaming-only',is_downloadable:false},
+ {id:'C3X2s',title:'Follower-Only Download',user:{name:'Limited'},permalink:'/limited/follower-only',is_downloadable:true,download_conditions:{type:'follow'}},
+ {id:'P1234',title:'Paid Track',user:{name:'Paywall'},permalink:'/paywall/paid',is_downloadable:true,is_stream_gated:true}
+]};
 const archiveSearch={response:{numFound:2,docs:[{identifier:'record-cc',title:'Live Set'},{identifier:'record-no-license',title:'Unlicensed'}]}};
 const archiveLicensed={metadata:{title:'Live Set',creator:'Artist',licenseurl:'http://creativecommons.org/licenses/by/4.0/'},files:[{name:'set.mp3',source:'original',size:'102400',format:'MP3'},{name:'spectrogram.png',source:'original',size:'1024',format:'JPEG'}]};
 const archiveNotLicensed={metadata:{licenseurl:'https://example.com/terms'},files:[{name:'track.mp3',source:'original',size:'1024'}]};
 const requests=[];
 const fetcher=async input=>{const u=new URL(String(input));requests.push(u.href);
+ if(u.hostname==='api.audius.co')return reply(audius);
  if(u.hostname==='commons.wikimedia.org')return reply(commons);
  if(u.hostname==='api.jamendo.com')return reply(jamendo);
  if(u.hostname==='api.openverse.org')return reply(openverse);
@@ -36,14 +43,33 @@ const archiveResult=await searchArchive('live set',{fetcher});
 assert.equal(archiveResult.tracks.length,1,'Archive entries without a verifiable CC license must be excluded');
 assert.equal(archiveResult.tracks[0].licenseUrl,'https://creativecommons.org/licenses/by/4.0/');
 assert.match(archiveResult.tracks[0].url,/archive.org\/download\/record-cc\/set.mp3$/);
+const audiusResult=await searchAudius('night drive',{fetcher,page:1});
+assert.equal(audiusResult.tracks.length,3,'Stream-gated Audius tracks are omitted');
+assert.equal(audiusResult.tracks[0].title,'Evening Lights');
+assert.equal(audiusResult.tracks[0].artist,'Night Drive');
+assert.equal(audiusResult.tracks[0].duration,203);
+assert.equal(audiusResult.tracks[0].artwork,'https://audius.example/cover.jpg');
+assert.equal(audiusResult.tracks[0].downloadable,true);
+assert.match(audiusResult.tracks[0].url,/\/tracks\/D7KyD\/download$/);
+assert.match(audiusResult.tracks[0].previewUrl,/\/tracks\/D7KyD\/stream$/);
+assert.equal(audiusResult.tracks[1].downloadable,false);
+assert.equal(audiusResult.tracks[1].url,'','Streaming-only Audius track has no download URL');
+assert.equal(audiusResult.tracks[2].downloadable,false,'Follow-gated download is never offered');
+assert.equal(new URL(requests.find(u=>u.includes('/tracks/search'))).searchParams.get('sort_method'),'relevant');
+const musicResult=await searchMusic('music',{fetcher});
+assert.equal(musicResult.tracks.length,3,'Music search defaults to Audius without Jamendo key');
+assert.equal(musicResult.tracks.every(t=>t.catalog==='audius'),true);
+const archivesResult=await searchArchives('music',{fetcher});
+assert.equal(archivesResult.tracks.length,3,'Archive results are separate from music results');
+await assert.rejects(downloadDiscoveryTrack(audiusResult.tracks[1],{fetcher:async()=>{throw Error('Must not download')}}),/не разрешил скачивание/);
 const all=await searchAll('music',{fetcher});
-assert.equal(all.tracks.length,3,'All sources without Jamendo key');
+assert.equal(all.tracks.length,6,'All sources combine the new music provider with archival catalogs');
 assert.deepEqual(all.errors,[]);
 const partial=await searchAll('music',{fetcher:async(url,opts)=>{
  if(String(url).includes('api.openverse.org'))return reply({},429);
  return fetcher(url,opts);
 }});
-assert.equal(partial.tracks.length,2);
+assert.equal(partial.tracks.length,5);
 assert.match(partial.errors.join(' '),/Openverse/);
 const track=commonsResult.tracks[0];
 const audio=new Uint8Array([79,103,103,83,0,1,2,3]);
