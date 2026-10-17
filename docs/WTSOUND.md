@@ -14,6 +14,12 @@ WTSound is integrated into the authenticated WTinker app at `?tab=sound`, the bo
 - Transactional library mutations prevent two tabs from overwriting each other's additions; BroadcastChannel refreshes library changes and pauses a second active player in the same account.
 - Account-scoped cloud audio endpoints backed by optional R2, with authenticated access, bounded uploads, MIME validation and no publicly exposed audio URLs. Uploads are idempotent by track ID and file hash. Limits: 100 MB for local files; 50 MB per cloud file, 10,000 cloud tracks and 5 GB per account.
 
+## iPhone / iPad local file picker
+
+In iOS WebKit, `<input type="file" accept="audio/*">` can mistakenly filter for video and grey out MP3/WAV/M4A files (WebKit issue [242110](https://bugs.webkit.org/show_bug.cgi?id=242110)). Both the bulk upload picker and the per-track missing-file attachment intentionally **omit `accept`**. The system Files picker can then choose audio files without iOS MIME filtering. The app still validates allowed extensions/MIME types, the 100 MB local size limit, reads tags and deduplicates using the existing `inspectAudio` pipeline; removing the picker filter does **not** disable content validation.
+
+On iPhone, use WTSound → «Загрузить треки» → «Обзор» / «Выбрать файл» → «Файлы», then select an actual `.mp3`, `.wav`, or `.m4a` file from «На iPhone» or iCloud Drive. Files locked inside an external streaming service (including protected Apple Music tracks) cannot be accessed as ordinary local files. The automated Playwright test uses an iPhone-like mobile viewport in Chromium and WebKit to validate the file inputs, chooser triggers, two uploads and missing-track attachment. Real iOS native picker behavior still requires confirmation on a physical iPhone.
+
 ## Music discovery and local import
 
 The WTSound **Поиск музыки** area now searches four legal/open-catalog sources:
