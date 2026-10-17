@@ -41,7 +41,7 @@ test('WTSound account isolation, playlist editing and real offline PWA restart',
  const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'allow'});await setup(context);const page=await context.newPage();await page.goto('/?tab=sound');await expect(page.getByRole('region',{name:'WTSound'})).toBeVisible();
  await page.getByLabel('Аудиофайлы').setInputFiles({name:'Artist - Offline.wav',mimeType:'audio/wav',buffer:wav(4)});await expect(page.locator('.sound-track')).toHaveCount(1);
  await page.getByRole('navigation',{name:'Разделы WTSound'}).getByRole('button',{name:'Плейлисты',exact:true}).click();await page.getByRole('button',{name:'Создать плейлист',exact:true}).first().click();await page.getByLabel('Название',{exact:true}).fill('My playlist');await page.getByRole('button',{name:'Сохранить',exact:true}).click();await expect(page.getByRole('heading',{name:'My playlist',exact:true})).toBeVisible();
- await page.getByRole('navigation',{name:'Разделы WTSound'}).getByRole('button',{name:'Моя коллекция',exact:true}).click();await page.getByRole('button',{name:'Действия: Offline',exact:true}).click();await page.getByLabel('Добавить в плейлист',{exact:true}).selectOption({label:'My playlist'});await page.getByRole('navigation',{name:'Разделы WTSound'}).getByRole('button',{name:'Плейлисты',exact:true}).click();await page.getByRole('button',{name:/My playlist/}).click();await expect(page.locator('.sound-track')).toHaveCount(1);
+ await page.getByRole('navigation',{name:'Разделы WTSound'}).getByRole('button',{name:'Моя коллекция',exact:true}).click();await page.getByRole('button',{name:'Добавить в плейлист: Offline',exact:true}).click();await page.getByRole('dialog',{name:'Добавить в плейлист: Offline'}).getByRole('button',{name:/My playlist/}).click();await page.getByRole('navigation',{name:'Разделы WTSound'}).getByRole('button',{name:'Плейлисты',exact:true}).click();await page.getByRole('button',{name:/My playlist/}).click();await expect(page.locator('.sound-track')).toHaveCount(1);
  await page.evaluate(async()=>{await navigator.serviceWorker.ready;if(!navigator.serviceWorker.controller)await new Promise(resolve=>navigator.serviceWorker.addEventListener('controllerchange',resolve,{once:true}))});
  await context.setOffline(true);await page.reload({waitUntil:'domcontentloaded'});await expect(page.getByRole('region',{name:'WTSound'})).toBeVisible();await page.getByRole('navigation',{name:'Разделы WTSound'}).getByRole('button',{name:'Скачанное',exact:true}).click();await expect(page.locator('.sound-track')).toHaveCount(1);await page.getByRole('button',{name:'Слушать: Offline',exact:true}).click();await expect.poll(()=>page.locator('audio[data-wtsound-audio]').evaluate(a=>!a.paused)).toBe(true);
  const otherOwner=await page.evaluate(async()=>{const db=await new Promise((resolve,reject)=>{const request=indexedDB.open('wtinker-wtsound',1);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)});return new Promise(resolve=>{const request=db.transaction('libraries').objectStore('libraries').get('WTINKID-111111');request.onsuccess=()=>{db.close();resolve(request.result)}})});expect(otherOwner).toBeUndefined();await context.close();
@@ -152,5 +152,75 @@ test('WTSound music-first results show Audius artwork, artist, access rights and
  await second.getByRole('button',{name:'Предпрослушивание: Listen Only'}).click();
  await expect(second.locator('audio')).toHaveAttribute('src','https://api.audius.co/v1/tracks/audius-stream/stream');
  await expect(page.getByRole('button',{name:'Свободные записи'})).toBeVisible();
+ expect(errors).toEqual([]);await context.close();
+});
+
+test('WTSound collection playlists support one-tap add, create-and-add and no Albums section',async({browser})=>{
+ const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});await setup(context);
+ const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+ await page.goto('/?tab=sound');
+ await page.getByLabel('Аудиофайлы').setInputFiles([
+  {name:'DJ - Alpha.wav',mimeType:'audio/wav',buffer:wav(22)},
+  {name:'DJ - Beta.wav',mimeType:'audio/wav',buffer:wav(22,340)}
+ ]);
+ await expect(page.locator('.sound-track')).toHaveCount(2,{timeout:30000});
+ const nav=page.getByRole('navigation',{name:'Разделы WTSound'});
+ await expect(nav.getByRole('button',{name:'Альбомы'})).toHaveCount(0);
+ await nav.getByRole('button',{name:'Моя коллекция'}).click();
+ await page.getByRole('button',{name:'Добавить в плейлист: Alpha'}).click();
+ const pick=page.getByRole('dialog',{name:'Добавить в плейлист: Alpha'});
+ await pick.getByPlaceholder('Название плейлиста').fill('Дорога');
+ await pick.getByRole('button',{name:'Создать и добавить'}).click();
+ await expect(pick).toHaveCount(0);
+ await page.getByRole('button',{name:'Добавить в плейлист: Beta'}).click();
+ const pickSecond=page.getByRole('dialog',{name:'Добавить в плейлист: Beta'});
+ await pickSecond.getByRole('button',{name:/Дорога/}).click();
+ await expect(pickSecond).toHaveCount(0);
+ await nav.getByRole('button',{name:'Плейлисты',exact:true}).click();
+ await page.getByRole('button',{name:/Дорога/}).click();
+ await expect(page.locator('.sound-track')).toHaveCount(2);
+ await page.reload();
+ await nav.getByRole('button',{name:'Плейлисты',exact:true}).click();
+ await page.getByRole('button',{name:/Дорога/}).click();
+ await expect(page.locator('.sound-track')).toHaveCount(2);
+ expect(errors).toEqual([]);await context.close();
+});
+
+test('WTSound top mini-player, fullscreen seek, track switching and restored position',async({browser})=>{
+ const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});await setup(context);
+ const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(String(e)));
+ await page.goto('/?tab=sound');
+ await page.getByLabel('Аудиофайлы').setInputFiles([
+  {name:'Artist - One.wav',mimeType:'audio/wav',buffer:wav(50)},
+  {name:'Artist - Two.wav',mimeType:'audio/wav',buffer:wav(50,330)}
+ ]);
+ await expect(page.locator('.sound-track')).toHaveCount(2,{timeout:30000});
+ await page.getByRole('button',{name:'Слушать: One',exact:true}).click();
+ const mini=page.getByRole('complementary',{name:'Мини-плеер WTSound'});
+ await expect(mini).toBeVisible();
+ await expect(mini).toContainText('One');
+ const pos=await mini.evaluate(el=>el.getBoundingClientRect());
+ expect(pos.top).toBeLessThan(190);expect(pos.top).toBeGreaterThanOrEqual(0);
+ await mini.getByRole('slider',{name:'Перемотать мини-плеер'}).fill('15');
+ await expect.poll(()=>page.locator('audio[data-wtsound-audio]').evaluate(a=>a.currentTime)).toBeGreaterThan(14);
+ await mini.getByRole('button',{name:'Развернуть плеер на весь экран'}).click().catch(async()=>mini.getByRole('button',{name:/Открыть плеер:/}).click());
+ const full=page.getByRole('dialog',{name:'Полноэкранный плеер WTSound'});
+ await expect(full).toBeVisible();
+ await expect(full.locator('.sound-full-art')).toBeVisible();
+ await full.getByRole('slider',{name:'Позиция воспроизведения'}).fill('22');
+ await expect.poll(()=>page.locator('audio[data-wtsound-audio]').evaluate(a=>a.currentTime)).toBeGreaterThan(21);
+ await full.getByRole('button',{name:'Следующий трек'}).click();
+ await expect(full).toContainText('Two');
+ await full.getByRole('button',{name:'Предыдущий трек'}).click();
+ await expect(full).toContainText('One');
+ await full.getByRole('button',{name:'Свернуть полноэкранный плеер'}).click();
+ await mini.getByRole('button',{name:'Скрыть мини-плеер'}).click();
+ await expect(mini.getByRole('button',{name:'Показать мини-плеер'})).toBeVisible();
+ await page.locator('.atlas-tray').getByRole('button',{name:'Главная',exact:true}).click();
+ await expect(mini.getByRole('button',{name:'Показать мини-плеер'})).toBeVisible();
+ await mini.getByRole('button',{name:'Показать мини-плеер'}).click();
+ await expect(mini).toContainText('One');
+ await page.reload();
+ await expect(mini).toContainText('One');
  expect(errors).toEqual([]);await context.close();
 });
