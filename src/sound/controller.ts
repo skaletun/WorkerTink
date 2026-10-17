@@ -59,17 +59,27 @@ export class SoundController{
  async deletePlaylist(id:string){await this.mutate(l=>({...l,playlists:l.playlists.filter(p=>p.id!==id)}))}
  async addToPlaylist(playlistId:string,trackId:string){await this.mutate(l=>({...l,playlists:l.playlists.map(p=>p.id===playlistId&&!p.trackIds.includes(trackId)?{...p,trackIds:[...p.trackIds,trackId],updatedAt:Date.now()}:p)}))}
  async import(input:ImportResult){let result=mergeImport(this.state.library,input);await this.mutate(l=>{result=mergeImport(l,input);return result.library});return result}
- async upload(files:File[],targetId?:string){if(this.state.busy)return;const failed:string[]=[];this.emit({error:'',busy:'Подготавливаем загрузку'});try{
-  await persistStorage();for(let i=0;i<files.length;i++){
-   this.emit({busy:`Загружаем ${i+1} из ${files.length}: ${files[i].name}`});
-   try{await ensureSpace(files[i].size);const {track,cover}=await inspectAudio(files[i]);const duplicate=this.state.library.tracks.find(t=>t.fileHash===track.fileHash);if(duplicate&&this.state.offline.has(duplicate.id)&&!targetId)continue;
-    const target=targetId?this.state.library.tracks.find(t=>t.id===targetId):undefined;const match=target||duplicate||this.state.library.tracks.find(t=>!t.fileHash&&trackKey(t)===trackKey(track)&&(!t.duration||!track.duration||Math.abs(t.duration-track.duration)<3));
-    const saved=match?{...track,...(target?{title:target.title,artist:target.artist,album:target.album||track.album}:{}),id:match.id,liked:match.liked,source:match.source,plays:match.plays,lastPlayed:match.lastPlayed,cloud:match.cloud}:track;
-    await writeAudio(this.owner,saved.id,files[i]);if(cover)await writeArtwork(this.owner,saved.id,cover);
-    await this.mutate(l=>({...l,tracks:[saved,...l.tracks.filter(t=>t.id!==saved.id)]}));this.emit({offline:new Set([...this.state.offline,saved.id])});
-   }catch(e){failed.push(e instanceof Error?e.message:String(e))}
-  }
- }finally{this.emit({busy:'',error:failed.join('\n')})}}
+ async upload(files:File[],targetId?:string,origin?:Partial<Pick<Track,'title'|'artist'|'album'|'source'|'license'|'licenseUrl'|'attribution'>>):Promise<{added:number;skipped:number;failed:string[]}>{
+  if(this.state.busy)throw new Error('Дождитесь завершения текущей загрузки');
+  const failed:string[]=[];let added=0,skipped=0;this.emit({error:'',busy:'Подготавливаем загрузку'});
+  try{
+   await persistStorage();for(let i=0;i<files.length;i++){
+    this.emit({busy:`Загружаем ${i+1} из ${files.length}: ${files[i].name}`});
+    try{
+     await ensureSpace(files[i].size);const {track:inspected,cover}=await inspectAudio(files[i]);
+     const track:Track=origin?{...inspected,title:origin.title?.trim().slice(0,300)||inspected.title,artist:origin.artist?.trim().slice(0,300)||inspected.artist,album:origin.album?.trim().slice(0,300)||inspected.album,source:origin.source,license:origin.license,licenseUrl:origin.licenseUrl,attribution:origin.attribution}:inspected;
+     const duplicate=this.state.library.tracks.find(t=>t.fileHash===track.fileHash);
+     if(duplicate&&this.state.offline.has(duplicate.id)&&!targetId){skipped++;continue}
+     const target=targetId?this.state.library.tracks.find(t=>t.id===targetId):undefined;
+     const match=target||duplicate||this.state.library.tracks.find(t=>!t.fileHash&&trackKey(t)===trackKey(track)&&(!t.duration||!track.duration||Math.abs(t.duration-track.duration)<3));
+     const saved:Track=match?{...track,...(target?{title:target.title,artist:target.artist,album:target.album||track.album}:{}),id:match.id,liked:match.liked,source:match.source||track.source,license:match.license||track.license,licenseUrl:match.licenseUrl||track.licenseUrl,attribution:match.attribution||track.attribution,plays:match.plays,lastPlayed:match.lastPlayed,cloud:match.cloud}:track;
+     await writeAudio(this.owner,saved.id,files[i]);if(cover)await writeArtwork(this.owner,saved.id,cover);
+     await this.mutate(l=>({...l,tracks:[saved,...l.tracks.filter(t=>t.id!==saved.id)]}));this.emit({offline:new Set([...this.state.offline,saved.id])});added++;
+    }catch(e){failed.push(e instanceof Error?e.message:String(e))}
+   }
+  }finally{this.emit({busy:'',error:failed.join('\n')})}
+  return {added,skipped,failed};
+ }
  async download(id:string){const track=this.state.library.tracks.find(t=>t.id===id);if(!track?.cloud||this.state.offline.has(id))return;this.emit({busy:'Сохраняем трек для офлайн-прослушивания'});try{await ensureSpace(track.size||0);const blob=await downloadCloud(this.token,id);await writeAudio(this.owner,id,blob);this.emit({offline:new Set([...this.state.offline,id])});this.channel?.postMessage({type:'library'});await persistStorage()}catch(e){this.report(e)}finally{this.emit({busy:''})}}
  async syncCloud(id:string){const track=this.state.library.tracks.find(t=>t.id===id);if(!track||!this.state.cloud)return;this.emit({busy:'Загружаем трек в облако'});try{const blob=await readAudio(this.owner,id);if(!blob)throw new Error('Сначала загрузите аудиофайл');await uploadCloud(this.token,track,blob);await this.mutate(l=>({...l,tracks:l.tracks.map(t=>t.id===id?{...t,cloud:true}:t)}))}catch(e){this.report(e)}finally{this.emit({busy:''})}}
  async removeOffline(id:string){const track=this.state.library.tracks.find(t=>t.id===id);if(!track?.cloud)throw new Error('Это единственная копия трека. Используйте «Удалить трек»');if(this.state.library.currentId===id){++this.loadEpoch;this.engine?.dispose();this.engine=null;this.emit({playing:false})}await removeAudio(this.owner,id);const offline=new Set(this.state.offline);offline.delete(id);this.emit({offline});this.channel?.postMessage({type:'library'})}
