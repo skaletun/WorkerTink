@@ -1,5 +1,5 @@
 export type Provider='vk'|'yandex'|'file';
-export type Track={id:string;title:string;artist:string;album:string;duration:number;genre:string;year:number;addedAt:number;liked:boolean;plays:number;lastPlayed:number;fileHash?:string;fileName?:string;mime?:string;size?:number;artwork?:string;cloud?:boolean;source?:{provider:Provider;id:string;url?:string}};
+export type Track={id:string;title:string;artist:string;album:string;duration:number;genre:string;year:number;addedAt:number;liked:boolean;plays:number;lastPlayed:number;fileHash?:string;fileName?:string;mime?:string;size?:number;license?:string;licenseUrl?:string;attribution?:string;artwork?:string;cloud?:boolean;source?:{provider:Provider;id:string;url?:string}};
 export type Playlist={id:string;title:string;description:string;trackIds:string[];createdAt:number;updatedAt:number;source?:{provider:Provider;url?:string}};
 export type Equalizer={enabled:boolean;preset:string;gains:number[];preamp:number};
 export type Library={tracks:Track[];playlists:Playlist[];eq:Equalizer;volume:number;repeat:'off'|'all'|'one';shuffle:boolean;queue:string[];queueIndex:number;originalQueue:string[];currentId:string;position:number};
