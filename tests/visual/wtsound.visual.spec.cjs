@@ -110,8 +110,8 @@ test('WTSound iPhone Files picker accepts MP3 and WAV in collection and missing-
   {name:'Artist - MP3.mp3',mimeType:'audio/mpeg',buffer:Buffer.from([73,68,51,3,0,0,0,0,0,0,255,251,144,100,0,0,0,0])}
  ]);
  await expect(page.locator('.sound-track')).toHaveCount(2,{timeout:30000});
- await expect(page.locator('.sound-track')).toContainText('Phone');
- await expect(page.locator('.sound-track')).toContainText('MP3');
+ await expect(page.locator('.sound-track-list')).toContainText('Phone');
+ await expect(page.locator('.sound-track-list')).toContainText('MP3');
  await seedSavedTracks(page,[{artist:'Imported',title:'Missing Song',duration:2,source:{provider:'file',id:'old'}}]);
  await page.getByRole('button',{name:'Действия: Missing Song'}).click();
  const attach=page.getByRole('dialog').locator('input[type=file]');
