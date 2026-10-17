@@ -125,3 +125,32 @@ test('WTSound iPhone Files picker accepts MP3 and WAV in collection and missing-
  expect(errors).toEqual([]);
  await context.close();
 });
+
+test('WTSound music-first results show Audius artwork, artist, access rights and original links',async({browser})=>{
+ const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});await setup(context);
+ const artwork='https://assets.example.net/audius-cover.png';
+ await context.route('https://api.audius.co/v1/tracks/search**',route=>route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({data:[
+  {id:'audius-down',title:'Night Drive',user:{name:'Electronic Artist'},permalink:'/artist/night-drive',genre:'Electronic',duration:181,artwork:{'480x480':artwork},is_downloadable:true,license:'CC BY'},
+  {id:'audius-stream',title:'Listen Only',user:{name:'Another Artist'},permalink:'/another/listen-only',is_downloadable:false}
+ ]})}));
+ await context.route(artwork,route=>route.fulfill({status:200,contentType:'image/png',headers:{'access-control-allow-origin':'*'},body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==','base64')}));
+ const page=await context.newPage();const errors=[];page.on('pageerror',error=>errors.push(String(error)));
+ await page.goto('/?tab=sound');
+ await page.locator('.sound-navigation').getByRole('button',{name:'Поиск музыки'}).click();
+ await expect(page.getByRole('button',{name:'Музыка',exact:true})).toHaveAttribute('aria-pressed','true');
+ await page.getByRole('searchbox',{name:'Название, исполнитель или жанр'}).fill('night');
+ await page.locator('.sound-discover-form').getByRole('button',{name:'Найти музыку'}).click();
+ await expect(page.locator('.sound-discover-result')).toHaveCount(2);
+ const first=page.locator('.sound-discover-result').first(),second=page.locator('.sound-discover-result').nth(1);
+ await expect(first).toContainText('Electronic Artist');
+ await expect(first).toContainText('3:01');
+ await expect(first.locator('.sound-discover-cover img')).toHaveAttribute('src',artwork);
+ await expect(first.getByRole('link',{name:'Источник'})).toHaveAttribute('href','https://audius.co/artist/night-drive');
+ await expect(first.getByRole('button',{name:/Добавить в медиатеку/})).toBeEnabled();
+ await expect(second).toContainText('Только прослушивание');
+ await expect(second.getByRole('button',{name:/Без скачивания/})).toBeDisabled();
+ await second.getByRole('button',{name:'Предпрослушивание: Listen Only'}).click();
+ await expect(second.locator('audio')).toHaveAttribute('src','https://api.audius.co/v1/tracks/audius-stream/stream');
+ await expect(page.getByRole('button',{name:'Свободные записи'})).toBeVisible();
+ expect(errors).toEqual([]);await context.close();
+});
