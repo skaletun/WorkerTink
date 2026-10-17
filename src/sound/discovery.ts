@@ -71,7 +71,7 @@ export async function searchOpenverse(term:string,opts:SearchOptions={}):Promise
  return {tracks:uniques(tracks),hasMore:Boolean(data.next)};
 }
 const CC_URL=/^https:\/\/creativecommons\.org\/(?:licenses\/|publicdomain\/)/i;
-function licensedArchiveUrl(value:unknown):string{const u=safeUrl(Array.isArray(value)?value[0]:value);return CC_URL.test(u)?u:''}
+function licensedArchiveUrl(value:unknown):string{const raw=Array.isArray(value)?value[0]:value;const normalized=typeof raw==='string'?raw.replace(/^http:\/\/creativecommons\.org\//i,'https://creativecommons.org/'):raw;const u=safeUrl(normalized);return CC_URL.test(u)?u:''}
 export async function searchArchive(term:string,opts:SearchOptions={}):Promise<SearchPage>{
  // A listing is not proof of license. Download only metadata-confirmed CC/CC0 recordings.
  const words=term.replace(/[^\p{L}\p{N}\s_-]/gu,' ').trim().slice(0,150).split(/\s+/).filter(Boolean);
@@ -137,5 +137,5 @@ export async function downloadDiscoveryTrack(track:DiscoveryTrack,opts:{signal?:
  if(!received)throw new Error('Источник вернул пустой аудиофайл');
  const name=(track.artist+' - '+track.title).replace(/[\\/<>:"|?*\x00-\x1f]/g,'_').trim().slice(0,175)||'Audio';
  const ext=extension(track.extension,track.mime);
- return new File(chunks as BlobPart[],name+'.'+ext,{type:contentType.startsWith('audio/')?contentType:track.mime});
+ return new File(chunks as unknown as BlobPart[],name+'.'+ext,{type:contentType.startsWith('audio/')?contentType:track.mime});
 }
