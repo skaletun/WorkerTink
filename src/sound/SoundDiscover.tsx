@@ -16,7 +16,7 @@ export async function searchCommons(term:string,signal?:AbortSignal):Promise<Res
  });
 }
 export default function SoundDiscover(){
- const {controller,busy,offline,library,online}=useSound();
+ const {controller,busy,online}=useSound();
  const [query,setQuery]=useState(''),[submitted,setSubmitted]=useState(''),[results,setResults]=useState<Result[]>([]),[loading,setLoading]=useState(false),[error,setError]=useState(''),[adding,setAdding]=useState('');
  useEffect(()=>{if(!submitted)return;const abort=new AbortController();setLoading(true);setError('');setResults([]);
   searchCommons(submitted,abort.signal).then(setResults).catch(e=>{if(!abort.signal.aborted)setError(String(e instanceof Error?e.message:e))}).finally(()=>{if(!abort.signal.aborted)setLoading(false)});
@@ -47,7 +47,7 @@ export default function SoundDiscover(){
   {!loading&&submitted&&!results.length&&!error&&<p role="status">Аудиозаписей по запросу не найдено.</p>}
   <div className="sound-discover-results">{results.map(track=><article className="sound-discover-result" key={track.url}>
    <div><strong>{track.title}</strong><small>{track.author} · {track.license} · {(track.size/1024/1024).toFixed(1)} МБ</small><a href={track.page} target="_blank" rel="noopener noreferrer">Источник и условия лицензии ↗</a></div>
-   <button className="sound-button" disabled={Boolean(busy)||Boolean(adding)||offline.size>100000||track.size>100*1024*1024} onClick={()=>void add(track)}>{adding===track.url?'Добавляем…':library.tracks.some(t=>t.fileName===track.title+'.'+(track.url.split('.').pop()?.toLowerCase()||'ogg'))?'Добавить ещё':'Добавить в медиатеку'}</button>
+   <button className="sound-button" disabled={Boolean(busy)||Boolean(adding)||track.size>100*1024*1024} onClick={()=>void add(track)}>{adding===track.url?'Добавляем…':'Добавить в медиатеку'}</button>
   </article>)}</div>
  </section>;
 }
