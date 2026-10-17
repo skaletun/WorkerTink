@@ -34,7 +34,7 @@ async function json(url:string,opts:SearchOptions):Promise<ObjectMap>{
 }
 function buildUrl(base:string,params:Record<string,string|number>):string{const u=new URL(base);for(const [k,v] of Object.entries(params))u.searchParams.set(k,String(v));return u.href}
 function valid(track:DiscoveryTrack):boolean{return Boolean(track.title&&safeUrl(track.page)&&track.size!==0&&(safeUrl(track.url)||safeUrl(track.previewUrl)))}
-function uniques(tracks:DiscoveryTrack[]):DiscoveryTrack[]{const seen=new Set<string>();return tracks.filter(t=>{if(!valid(t))return false;const key=t.url.split('#')[0];if(seen.has(key))return false;seen.add(key);return true})}
+function uniques(tracks:DiscoveryTrack[]):DiscoveryTrack[]{const seen=new Set<string>();return tracks.filter(t=>{if(!valid(t))return false;const key=(t.url||t.previewUrl||t.page).split('#')[0];if(seen.has(key))return false;seen.add(key);return true})}
 /** Official Audius public read-only search; downloadable is determined by each artist. */
 export async function searchAudius(term:string,opts:SearchOptions={}):Promise<SearchPage>{
  const url=buildUrl('https://api.audius.co/v1/tracks/search',{
