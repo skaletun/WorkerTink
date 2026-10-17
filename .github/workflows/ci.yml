@@ -28,6 +28,8 @@ jobs:
         run: npm run build
       - name: Install Chromium for messenger visual regression
         run: npx playwright install --with-deps chromium
+      - name: Validate deployment launcher and core responsive navigation
+        run: npx playwright test tests/visual/wtinker.visual.spec.cjs --grep 'atlas zero rebuild|8.1.0 regression'
       - name: Validate WTSound audio, disabled transfer, EQ and offline PWA
         run: npx playwright test tests/visual/wtsound.visual.spec.cjs
       - name: Save WTSound chromium visual evidence
