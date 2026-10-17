@@ -270,3 +270,11 @@ body:has(.sound-player) .atlas-main{padding-bottom:0}
 }
 @media(max-height:640px){.sound-fullscreen-body{gap:12px}.sound-full-art{width:min(34dvh,280px)}}
 @media(prefers-reduced-motion:reduce){.sound-fullscreen *,.sound-player-top *{scroll-behavior:auto}}
+
+.sound-discover-preview-controls{display:flex!important;align-items:center;gap:9px;width:100%;max-width:530px}
+.sound-discover-preview-controls audio{flex:1;min-width:0;max-width:100%}
+.sound-discover-preview-controls>button{display:grid;place-items:center;flex:0 0 35px;height:38px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--ink)}
+.sound-discover-preview-controls>button:disabled{opacity:.4}
+.sound-discover-preview-seek{display:flex!important;align-items:center;gap:10px;width:100%;font-size:11px;color:var(--muted)}
+.sound-discover-preview-seek input{flex:1;width:100%;min-width:60px;accent-color:var(--sound-accent)}
+.sound-discover-preview-seek input:disabled{opacity:.5}
