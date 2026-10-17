@@ -5,15 +5,15 @@ type Events={state:(playing:boolean,buffering:boolean)=>void;time:(position:numb
 export class SoundEngine{
  readonly audio:HTMLAudioElement;
  private context:AudioContext|null=null;private source:MediaElementAudioSourceNode|null=null;private filters:BiquadFilterNode[]=[];private gain:GainNode|null=null;private limiter:DynamicsCompressorNode|null=null;
- private url='';private epoch=0;private objectURLs:string[]=[];private pendingSeek=0;private cleanups:(()=>void)[]=[];private disposed=false;
+ private url='';private priming=false;private epoch=0;private objectURLs:string[]=[];private pendingSeek=0;private cleanups:(()=>void)[]=[];private disposed=false;
  constructor(private events:Events){
   this.audio=document.createElement('audio');this.audio.preload='auto';this.audio.setAttribute('playsinline','');this.audio.setAttribute('data-wtsound-audio','');document.body.append(this.audio);
   const on=(name:string,fn:EventListener)=>{this.audio.addEventListener(name,fn);this.cleanups.push(()=>this.audio.removeEventListener(name,fn))};
   on('playing',()=>this.state(false));on('pause',()=>this.state(false));on('waiting',()=>this.state(true));on('stalled',()=>this.state(true));
-  on('timeupdate',()=>{this.events.time(this.audio.currentTime,this.audio.duration);this.position()});
-  on('loadedmetadata',()=>{if(this.pendingSeek){this.audio.currentTime=Math.min(this.pendingSeek,Math.max(0,this.audio.duration-0.01));this.pendingSeek=0}this.events.time(this.audio.currentTime,this.audio.duration);this.position()});
-  on('durationchange',()=>{this.events.time(this.audio.currentTime,this.audio.duration);this.position()});
-  on('ended',()=>this.events.ended());on('error',()=>{if(this.audio.error){this.state(false);this.events.error(this.audio.error.code===4?'Формат аудио не поддерживается этим браузером':'Не удалось воспроизвести трек. Проверьте файл или загрузите его заново')}});
+  on('timeupdate',()=>{if(this.priming)return;this.events.time(this.audio.currentTime,this.audio.duration);this.position()});
+  on('loadedmetadata',()=>{if(this.priming)return;if(this.pendingSeek){this.audio.currentTime=Math.min(this.pendingSeek,Math.max(0,this.audio.duration-0.01));this.pendingSeek=0}this.events.time(this.audio.currentTime,this.audio.duration);this.position()});
+  on('durationchange',()=>{if(this.priming)return;this.events.time(this.audio.currentTime,this.audio.duration);this.position()});
+  on('ended',()=>{if(!this.priming)this.events.ended()});on('error',()=>{if(this.audio.error){this.state(false);this.events.error(this.audio.error.code===4?'Формат аудио не поддерживается этим браузером':'Не удалось воспроизвести трек. Проверьте файл или загрузите его заново')}});
   const media=navigator.mediaSession;
   if(media){
    const actions:Partial<Record<MediaSessionAction,(details:MediaSessionActionDetails)=>void>>={play:()=>{void this.play().catch(e=>this.events.error(String(e.message||e)))},pause:()=>this.pause(),nexttrack:events.next,previoustrack:events.previous,seekto:d=>this.seek(d.seekTime||0),seekbackward:d=>this.seek(this.audio.currentTime-(d.seekOffset||10)),seekforward:d=>this.seek(this.audio.currentTime+(d.seekOffset||10)),stop:()=>{this.pause();this.seek(0)}};
@@ -28,7 +28,7 @@ export class SoundEngine{
   if(this.audio.src)return;
   // Bless this persistent media element synchronously in the initiating gesture.
   // The real file can then arrive from IndexedDB without losing iOS activation.
-  this.audio.src='data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQIAAAAAAA==';
+  this.priming=true;this.audio.src='data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQIAAAAAAA==';
   void this.audio.play().catch(()=>{});
  }
  private state(buffering:boolean){this.events.state(!this.audio.paused,buffering);if(navigator.mediaSession)navigator.mediaSession.playbackState=this.audio.paused?'paused':'playing'}
@@ -42,7 +42,7 @@ export class SoundEngine{
   // Inline bytes bypass that network path while keeping the original codec/data.
   const source=needsInlineMedia()?await inlineBlob(blob):URL.createObjectURL(blob);
   if(epoch!==this.epoch||this.disposed){if(source.startsWith('blob:'))URL.revokeObjectURL(source);return}
-  this.audio.pause();this.url=source;if(source.startsWith('blob:'))this.objectURLs.push(source);this.pendingSeek=position;this.audio.src=source;for(const old of previousURLs)URL.revokeObjectURL(old);
+  this.audio.pause();this.url=source;if(source.startsWith('blob:'))this.objectURLs.push(source);this.pendingSeek=position;this.audio.src=source;this.priming=false;for(const old of previousURLs)URL.revokeObjectURL(old);
   if(navigator.mediaSession&&typeof MediaMetadata!=='undefined'){let cover='';if(artwork){cover=needsInlineMedia()?await inlineBlob(artwork):URL.createObjectURL(artwork);if(cover.startsWith('blob:'))this.objectURLs.push(cover)}if(epoch!==this.epoch||this.disposed)return;navigator.mediaSession.metadata=new MediaMetadata({title:track.title,artist:track.artist,album:track.album,artwork:cover?[{src:cover,type:artwork!.type}]:[]})}
   if(autoplay){try{await this.play()}catch(error){if(epoch===this.epoch&&!this.disposed)throw error}}
  }
