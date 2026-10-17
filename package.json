@@ -19,7 +19,7 @@
     "desktop:linux": "electron-builder --linux AppImage deb --publish never",
     "desktop": "electron-builder --publish never",
     "visual:audit": "playwright test --config=playwright.config.cjs",
-    "test:sound": "node --experimental-strip-types tests/wtsound.test.mjs && node --experimental-sqlite tests/wtsound-api.test.mjs"
+    "test:sound": "node --experimental-strip-types tests/wtsound.test.mjs && node --experimental-strip-types tests/wtsound-discovery.test.mjs && node --experimental-sqlite tests/wtsound-api.test.mjs"
   },
   "dependencies": {
     "@number-flow/react": "^0.5.4",
