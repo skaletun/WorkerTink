@@ -155,7 +155,7 @@ export default function SoundDiscover(){
        {track.license&&track.catalog!=='audius'&&<span>{track.license}</span>}
        {blocked&&<span className="sound-discover-stream-only">Только прослушивание</span>}
        <a className="sound-discover-origin" href={track.page} target="_blank" rel="noopener noreferrer" title="Открыть оригинальную запись">Источник ↗</a>
-       {track.licenseUrl&&<a className="sound-discover-origin" href={track.licenseUrl} target="_blank" rel="noopener noreferrer" title="Условия лицензии">Лицензия ↗</a>
+       {track.licenseUrl&&<a className="sound-discover-origin" href={track.licenseUrl} target="_blank" rel="noopener noreferrer" title="Условия лицензии">Лицензия ↗</a>}
       </div>
      </div>
      <span className="sound-discover-duration">{formatDuration(track.duration)||'—'}</span>
