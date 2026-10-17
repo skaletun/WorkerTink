@@ -14,6 +14,10 @@ WTSound is integrated into the authenticated WTinker app at `?tab=sound`, the bo
 - Transactional library mutations prevent two tabs from overwriting each other's additions; BroadcastChannel refreshes library changes and pauses a second active player in the same account.
 - Account-scoped cloud audio endpoints backed by optional R2, with authenticated access, bounded uploads, MIME validation and no publicly exposed audio URLs. Uploads are idempotent by track ID and file hash. Limits: 100 MB for local files; 50 MB per cloud file, 10,000 cloud tracks and 5 GB per account.
 
+## Open music discovery
+
+The «Поиск музыки» tab searches Wikimedia Commons audio files through its public MediaWiki API. Results display source attribution and license metadata and link to the original file page. «Добавить в медиатеку» downloads the audio and passes it to the existing local IndexedDB upload pipeline; the audio is not proxied through the Directory API. Search and initial download require internet. Remote hosts must permit browser cross-origin fetching; blocked files report an error rather than pretending the import succeeded. Wikimedia Commons is not a commercial streaming catalog; users are responsible for complying with the listed licenses and attribution requirements.
+
 ## Playlist transfer — В разработке
 
 Playlist transfer is disabled by product decision. Both entry points display «В разработке» and are native disabled buttons. Link and file import forms are removed. Authenticated `POST /sound/import` always returns HTTP 503 with «Перенос музыки — В разработке» before reading the request body, querying rate limits or contacting providers. Capabilities report `vk: false` and `yandex: false`, even if a VK token is configured.
