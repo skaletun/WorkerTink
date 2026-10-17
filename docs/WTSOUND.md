@@ -20,6 +20,22 @@ In iOS WebKit, `<input type="file" accept="audio/*">` can mistakenly filter for 
 
 On iPhone, use WTSound → «Загрузить треки» → «Обзор» / «Выбрать файл» → «Файлы», then select an actual `.mp3`, `.wav`, or `.m4a` file from «На iPhone» or iCloud Drive. Files locked inside an external streaming service (including protected Apple Music tracks) cannot be accessed as ordinary local files. The automated Playwright test uses an iPhone-like mobile viewport in Chromium and WebKit to validate the file inputs, chooser triggers, two uploads and missing-track attachment. Real iOS native picker behavior still requires confirmation on a physical iPhone.
 
+## Player v3: iPhone usability, playlists and background audio
+
+- The **mini-player** lives at the **top** of WTinker under its primary header (not above the bottom navigation). It provides a transport, seek bar and an explicit hide button. Hiding leaves a compact restore pill, and the preference is saved locally.
+- Tapping the current track opens a **full-viewport, safe-area-aware player**. It has large art, timeline scrubbing, shuffle/repeat, previous/pause/next, favourites, queue navigation and EQ settings. It never relies on a narrow dialog for playback controls; Escape/close collapses the overlay.
+- Each local track row, including **Моя коллекция**, has a dedicated **Добавить в плейлист** control. Pick an existing list or create a new one **with the chosen track already included**. The old selector that required pre-created playlists is removed.
+- The **Альбомы** navigation section, album group pages and album labels were removed; album tags remain in saved metadata for backwards compatibility with existing files and playlist imports, rather than destructively rewriting IndexedDB.
+- Discovery previews gain previous/next controls, a scrub bar where the server provides a seekable duration, and retain their original links.
+
+### iOS/background reliability and limits
+
+Long playback is less susceptible to app-induced interruptions: the player keeps a single persistent HTMLAudioElement/MediaSession and does not clear its source while reading the next track; it preserves playback position on page hide and when the app is backgrounded; database time checkpoints are throttled from every 5 seconds to 60 seconds in the foreground, reducing IndexedDB activity. Resume uses the saved position directly instead of briefly starting at 0 and seeking later. Small next-track files are opportunistically prefetched from IndexedDB. Hardware previous/next, position and repeat are routed through the same controller.
+
+**WebKit limitation:** iOS standalone PWAs have documented [background auto-next/playback restrictions](https://bugs.webkit.org/show_bug.cgi?id=261858), [AudioContext interruptions](https://bugs.webkit.org/show_bug.cgi?id=291892), and [resume limitations](https://bugs.webkit.org/show_bug.cgi?id=243258). No script, wakelock, or service worker can guarantee uninterrupted music after iOS kills/suspends a web app. To avoid a known failure mode, WTSound does not construct an AudioContext/equalizer chain on iPhone; equalizer is labelled unavailable on iOS, while it remains available elsewhere. For multi-hour offline playback, install the latest iOS update, download tracks locally, keep WTSound open in standalone mode, and verify actual long-duration behavior on a physical device (screen locked, 30+ min, track changes, headphones). Use a native audio app for guaranteed OS-level background scheduling.
+
+Validation: full unit tests + production build, Playwright Chrome/WebKit regression covering top mini-player, fullscreen seek/skip, new playlist actions, no Albums tab, iPhone file selection and music discovery. Browsers cannot simulate OS suspension or promise uninterrupted lock-screen playback on a physical iPhone.
+
 ## Music discovery — music-first search
 
 WTSound's discovery screen uses a **music-first** search inspired by open-source player designs:
