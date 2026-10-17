@@ -14,11 +14,22 @@ WTSound is integrated into the authenticated WTinker app at `?tab=sound`, the bo
 - Transactional library mutations prevent two tabs from overwriting each other's additions; BroadcastChannel refreshes library changes and pauses a second active player in the same account.
 - Account-scoped cloud audio endpoints backed by optional R2, with authenticated access, bounded uploads, MIME validation and no publicly exposed audio URLs. Uploads are idempotent by track ID and file hash. Limits: 100 MB for local files; 50 MB per cloud file, 10,000 cloud tracks and 5 GB per account.
 
-## Open music discovery
+## Music discovery and local import
 
-The «Поиск музыки» tab searches Wikimedia Commons audio files through its public MediaWiki API. Results display source attribution and license metadata and link to the original file page. «Добавить в медиатеку» downloads the audio and passes it to the existing local IndexedDB upload pipeline; the audio is not proxied through the Directory API. Search and initial download require internet. Remote hosts must permit browser cross-origin fetching; blocked files report an error rather than pretending the import succeeded. Wikimedia Commons is not a commercial streaming catalog; users are responsible for complying with the listed licenses and attribution requirements.
+The WTSound **Поиск музыки** area now searches four legal/open-catalog sources:
 
-Jamendo search is optionally enabled by setting the build-time environment variable `VITE_JAMENDO_CLIENT_ID` to an application client ID obtained from https://developer.jamendo.com/. Never use Jamendo's public test ID in production. Only tracks with `audiodownload_allowed=true` and a download URL are shown. Jamendo's API terms and track Creative Commons license conditions apply. Search results and downloads depend on the remote API and browser CORS support. The UI offers a source selector; no copyrighted commercial streaming catalog is bypassed.
+- **Wikimedia Commons** — public MediaWiki API, audio file pages, license metadata and original files.
+- **Openverse** — anonymous public audio API, aggregating openly licensed files from multiple providers (including Freesound, Jamendo and others). Results show the original page and attribution, if indexed.
+- **Internet Archive** — advanced-search items followed by per-item metadata requests; only entries that **explicitly declare a Creative Commons or CC0/public-domain URL** and have an original downloadable audio file under 100 MB are offered. An archive entry alone is not proof of download permission.
+- **Jamendo** — optional official v3 API; shows only tracks with `audiodownload_allowed === true`, with CC licensing and the original track link.
+
+**Setup:** Commons, Openverse and Archive need no keys. Jamendo requires a production client ID created at https://developer.jamendo.com/; set `VITE_JAMENDO_CLIENT_ID` as a **build-time Vite environment variable** and rebuild/redeploy. Do not ship Jamendo's documentation/test ID to production. The selector disables Jamendo when no ID is configured. Do not put client secrets or OAuth tokens into a `VITE_*` variable.
+
+The combined search fans out across configured sources with partial-error handling, supports per-provider selection and pagination, displays original page, CC license and artist attribution, and allows on-demand audio previews. A user-initiated download streams the audio with a strict 100 MB cap, validates HTTPS redirects and content type, and supports progress and cancellation before the existing music-metadata/IDB storage pipeline. SHA-256 hash deduplication is reused, and the UI confirms whether a track was imported or already existed. The media's catalog title, artist, album, license, attribution and source link are saved locally and shown in the track menu.
+
+**Constraints:** The app is a personal library, not a licensed streaming aggregation service. Individual licenses can require credit, share-alike, noncommercial use or prohibit derivatives; verify the original page before reuse. Indexed links and remote downloads may change or block CORS; WTSound reports this and links to the official source rather than bypassing access restrictions. There is no unrestricted backend download proxy, scraping, DRM bypass or hidden credentials. First-time search/download requires connectivity; audio copied into IndexedDB remains available offline according to storage policy. No new npm dependencies are needed: built-in `fetch` and the existing `music-metadata` dependency handle metadata and local audio.
+
+**Validation:** `npm run test:sound` runs `tests/wtsound-discovery.test.mjs` with mocked APIs to verify licenses, rejected download permissions, pagination, failure isolation and size/type limits. Existing WTSound Playwright and broader CI suites remain required. Production Jamendo and browser CORS still require a real API ID and deployment verification.
 
 ## Playlist transfer — В разработке
 
