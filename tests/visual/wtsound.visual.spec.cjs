@@ -209,6 +209,9 @@ test('WTSound top mini-player, fullscreen seek, track switching and restored pos
  await expect(full.locator('.sound-full-art')).toBeVisible();
  await full.getByRole('slider',{name:'Позиция воспроизведения'}).fill('22');
  await expect.poll(()=>page.locator('audio[data-wtsound-audio]').evaluate(a=>a.currentTime)).toBeGreaterThan(21);
+ await page.evaluate(()=>window.dispatchEvent(new Event('pagehide')));
+ const checkpoint=await page.evaluate(()=>JSON.parse(localStorage.getItem('wtsound:resume:WTINKID-845321')||'null'));
+ expect(checkpoint?.position).toBeGreaterThan(20);
  await full.getByRole('button',{name:'Следующий трек'}).click();
  await expect(full).toContainText('Two');
  await full.getByRole('button',{name:'Предыдущий трек'}).click();
