@@ -168,3 +168,5 @@
  .sound-discover-empty{padding:38px 20px}
 }
 @media(prefers-reduced-motion:reduce){.sound-discover-skeleton span{animation:none}.sound-discover-result{transition:none}}
+
+.sound-discover-origin{display:inline-flex;color:var(--muted);font-size:10px;font-weight:650;text-decoration:none;text-underline-offset:3px}.sound-discover-origin:hover{text-decoration:underline;color:var(--ink)}
