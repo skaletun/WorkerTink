@@ -1,11 +1,19 @@
 import type {SVGProps} from 'react';
 
 export type IconName=
-  |'home'|'social'|'people'|'communities'|'chat'|'friends'|'profile'|'calendar'|'pay'|'absence'|'work'|'notifications'|'settings'|'admin'|'users'
+  |'sound'|'shuffle'|'repeat'|'previous'|'next'|'queue'|'equalizer'|'up'|'down'|'home'|'social'|'people'|'communities'|'chat'|'friends'|'profile'|'calendar'|'pay'|'absence'|'work'|'notifications'|'settings'|'admin'|'users'
   |'search'|'bell'|'bellOff'|'lock'|'shield'|'image'|'video'|'paperclip'|'attachment'|'send'|'message'|'mail'|'comment'|'heart'|'share'
   |'more'|'plus'|'smile'|'mic'|'play'|'pause'|'refresh'|'download'|'close'|'check'|'chevronLeft'|'chevronRight'|'externalLink'|'chevronDown'|'star'|'pin';
 
 const paths:Record<IconName,string[]>={
+ sound:['M9 18V5l12-2v13','M9 8l12-2','M5 22a4 3 0 1 0 0-6 4 3 0 0 0 0 6','M17 20a4 3 0 1 0 0-6 4 3 0 0 0 0 6'],
+ shuffle:['m3 5 4 0 10 14h4','m17 15 4 4-4 4','M3 19h4l10-14h4','m17 1 4 4-4 4'],
+ repeat:['m17 2 4 4-4 4','M3 11V8a2 2 0 0 1 2-2h16','m7 22-4-4 4-4','M21 13v3a2 2 0 0 1-2 2H3'],
+ previous:['M5 4v16','m19 4-12 8 12 8Z'],
+ next:['M19 4v16','m5 4 12 8-12 8Z'],
+ queue:['M4 5h16','M4 10h16','M4 15h8','M4 20h8','m16 15 5 3-5 3Z'],
+ equalizer:['M5 3v6','M5 13v8','M12 3v10','M12 17v4','M19 3v2','M19 9v12','M3 9h4v4H3Z','M10 13h4v4h-4Z','M17 5h4v4h-4Z'],
+ up:['m6 15 6-6 6 6'],down:['m6 9 6 6 6-6'],
  home:['M3 11 12 3l9 8v9H3v-9Z','M9 20v-6h6v6'],
  social:['M4 6h16v10H8l-4 4V6Z','M8 10h8','M8 13h5'],
  users:['M16 21v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1','M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8','M16 11h6','M19 8v6'],

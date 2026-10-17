@@ -1,5 +1,8 @@
-import {precacheAndRoute,cleanupOutdatedCaches} from 'workbox-precaching';
+import {precacheAndRoute,cleanupOutdatedCaches,createHandlerBoundToURL} from 'workbox-precaching';
+import {registerRoute,NavigationRoute} from 'workbox-routing';
 precacheAndRoute(self.__WB_MANIFEST||[]);
+// Restore the cached shell for client routes and query-string tabs while offline.
+registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html')));
 cleanupOutdatedCaches();
 
 // An obsolete client can contain a pre-update E2E guard that deadlocks and

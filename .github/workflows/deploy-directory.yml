@@ -30,6 +30,20 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Configure optional WTSound R2 binding
+        env:
+          WTSOUND_R2_BUCKET: ${{ vars.WTSOUND_R2_BUCKET }}
+        run: |
+          node --input-type=module <<'JS'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          const bucket=process.env.WTSOUND_R2_BUCKET?.trim();
+          if(bucket){
+            if(!/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/.test(bucket))throw new Error('Invalid WTSound bucket name');
+            const config=JSON.parse(readFileSync('wrangler.jsonc','utf8'));
+            config.r2_buckets=[...(config.r2_buckets||[]).filter(item=>item.binding!=='SOUND_BUCKET'),{binding:'SOUND_BUCKET',bucket_name:bucket}];
+            writeFileSync('wrangler.jsonc',JSON.stringify(config,null,2)+'\n');
+          }
+          JS
       - run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

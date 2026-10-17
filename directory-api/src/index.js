@@ -1,3 +1,4 @@
+import {handleSound} from './sound.js';
 import {handleE2ETransfer} from './e2eTransfer.js';
 const ID_RE = /^WTINKID-\d{6}$/i;
 const displayId = (value) => { const match = String(value || '').match(/^(?:WTINKID)-(\d{6})$/i); return match ? `WTinkID-${match[1]}` : String(value || ''); };
@@ -21,7 +22,7 @@ function json(data, status = 200, origin = '*') {
       'content-type': 'application/json; charset=utf-8',
       'cache-control': 'no-store',
       'access-control-allow-origin': origin,
-      'access-control-allow-headers': 'Content-Type, Authorization',
+      'access-control-allow-headers': 'Content-Type, Authorization, X-WTSound-Metadata',
       'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'vary': 'Origin'
     }
@@ -29,7 +30,7 @@ function json(data, status = 200, origin = '*') {
 }
 
 function binary(data, status = 200, origin = '*', contentType = 'application/octet-stream') {
-  return new Response(data, {status, headers: {'content-type': contentType, 'cache-control': 'no-store', 'access-control-allow-origin': origin, 'access-control-allow-headers': 'Content-Type, Authorization', 'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS', 'vary': 'Origin'}});
+  return new Response(data, {status, headers: {'content-type': contentType, 'cache-control': 'no-store', 'access-control-allow-origin': origin, 'access-control-allow-headers': 'Content-Type, Authorization, X-WTSound-Metadata', 'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS', 'vary': 'Origin'}});
 }
 
 function bytesToBase64(bytes) {
@@ -469,7 +470,7 @@ async function handle(request, env) {
     status: 204,
     headers: {
       'access-control-allow-origin': origin,
-      'access-control-allow-headers': 'Content-Type, Authorization',
+      'access-control-allow-headers': 'Content-Type, Authorization, X-WTSound-Metadata',
       'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'access-control-max-age': '86400',
       'vary': 'Origin'
@@ -478,6 +479,8 @@ async function handle(request, env) {
 
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '') || '/';
+
+  if(path.startsWith('/sound/'))return handleSound(request,env,{path,origin,authProfile,json});
 
   if (request.method === 'GET' && path === '/health') {
     const row = await env.DB.prepare('SELECT COUNT(*) AS count FROM profiles').first();

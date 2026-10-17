@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {DatabaseSync} from 'node:sqlite';
+import {fetchProviderPlaylist,handleSound,parseProviderURL} from '../directory-api/src/sound.js';
+const db=new DatabaseSync(':memory:');db.exec('CREATE TABLE profiles(wtink_id TEXT PRIMARY KEY)');db.exec("INSERT INTO profiles VALUES('ALICE'),('BOB')");db.exec(readFileSync(new URL('../directory-api/migrations/0031_wtsound.sql',import.meta.url),'utf8'));
+const bucket=new Map();const env={DB:{prepare(sql){const statement=db.prepare(sql);return {bind(...args){return {first:async()=>statement.get(...args),all:async()=>({results:statement.all(...args)}),run:async()=>statement.run(...args)}}}}},SOUND_BUCKET:{async put(key,body){bucket.set(key,body)},async get(key){return bucket.has(key)?{body:bucket.get(key)}:null},async delete(key){bucket.delete(key)}}};
+const json=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{'Content-Type':'application/json'}});
+const authProfile=async request=>{const id=request.headers.get('Authorization');return ['ALICE','BOB'].includes(id)?{wtink_id:id}:null};
+async function call(method,path,actor='ALICE',body,headers={}){return handleSound(new Request('https://example.org'+path,{method,headers:{Authorization:actor,...headers},body}),env,{path,origin:'https://app.example',authProfile,json})}
+assert.equal((await call('GET','/sound/capabilities','')).status,401);
+assert.equal((await (await call('GET','/sound/capabilities')).json()).cloud,true);
+for(const url of ['https://music.yandex.ru.evil.test/users/a/playlists/1','https://music.yandex.ru@evil.test/users/a/playlists/1','http://music.yandex.ru/users/a/playlists/1','https://127.0.0.1/users/a/playlists/1','https://music.yandex.ru:999/users/a/playlists/1'])assert.throws(()=>parseProviderURL('yandex',url));
+assert.equal(parseProviderURL('yandex','https://music.yandex.ru/users/test/playlists/12').url,'https://api.music.yandex.net/users/test/playlists/12');
+assert.equal(parseProviderURL('vk','https://vk.com/music/playlist/-123_456').ownerId,'-123');
+const ym=await fetchProviderPlaylist('yandex','https://music.yandex.ru/users/test/playlists/12',{},async url=>{assert.ok(String(url).startsWith('https://api.music.yandex.net/'));return json({result:{title:'Real list',trackCount:1,tracks:[{track:{id:1,title:'Track',artists:[{name:'Artist'}],durationMs:5000}}]}})});
+assert.equal(ym.tracks[0].duration,5);assert.equal(ym.tracks[0].sourceId,'1');
+await assert.rejects(()=>fetchProviderPlaylist('yandex','https://music.yandex.ru/users/test/playlists/12',{},async()=>json({result:{trackCount:2,tracks:[{track:{title:'A',artist:'B'}}]}})),/неполный/);
+await assert.rejects(()=>fetchProviderPlaylist('vk','https://vk.com/music/playlist/1_2',{}),/не настроен/);
+let requests=0;const vk=await fetchProviderPlaylist('vk','https://vk.com/music/playlist/1_2',{WTSOUND_VK_TOKEN:'server-secret'},async(url,opts)=>{assert.equal(url,'https://api.vk.com/method/audio.get');assert.equal(opts.method,'POST');assert.equal(opts.body.get('access_token'),'server-secret');requests++;return json({response:{count:1001,items:Array.from({length:requests===1?1000:1},(_,i)=>({id:i,title:'T',artist:'A'}))}})});assert.equal(vk.tracks.length,1001);assert.equal(requests,2);
+const id='11111111-1111-4111-8111-111111111111';const path=`/sound/tracks/${id}`;
+const metadata=encodeURIComponent(JSON.stringify({title:'Track',artist:'Artist',fileHash:'a'.repeat(64)}));
+let response=await call('PUT',path+'/audio','ALICE',new Uint8Array([1,2,3]),{'Content-Type':'audio/wav','X-WTSound-Metadata':metadata});assert.equal(response.status,201,await response.text());
+response=await call('GET','/sound/tracks','BOB');assert.equal((await response.json()).tracks.length,0);
+assert.equal((await call('GET',path+'/audio','BOB')).status,404);assert.equal((await call('DELETE',path,'BOB')).status,404);
+response=await call('GET',path+'/audio');assert.equal(response.status,200);assert.deepEqual([...new Uint8Array(await response.arrayBuffer())],[1,2,3]);
+assert.equal(response.headers.get('cache-control'),'private, no-store');
+response=await call('PUT',path+'/audio','ALICE','bad',{'Content-Type':'text/html','X-WTSound-Metadata':metadata});assert.equal(response.status,400);
+response=await call('PUT',path+'/audio','ALICE','bad',{'Content-Type':'audio/wav','Content-Length':String(51*1024*1024),'X-WTSound-Metadata':metadata});assert.equal(response.status,413);
+assert.equal((await call('DELETE',path)).status,200);assert.equal(bucket.size,0);assert.equal((await call('GET',path+'/audio')).status,404);
+console.log('WTSound provider adapters, SSRF boundaries, pagination, private cloud audio ACL: OK');
+for(let i=0;i<5;i++){const response=await call('POST','/sound/import','ALICE',JSON.stringify({provider:'vk',url:'https://vk.com/music/playlist/1_2'}),{'Content-Type':'application/json'});assert.equal(response.status,503)}
+assert.equal((await call('POST','/sound/import','ALICE',JSON.stringify({provider:'vk',url:'https://vk.com/music/playlist/1_2'}),{'Content-Type':'application/json'})).status,429);
+console.log('WTSound authenticated import rate limit: OK');

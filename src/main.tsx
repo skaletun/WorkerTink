@@ -4,6 +4,7 @@ import App from './App';
 import UpdateGate from './UpdateGate';
 import PullToRefresh from './PullToRefresh';
 import './ui.css';
+import './sound/sound.css';
 import './styles/144-device-transfer.css';
 import './styles/145-offline-outbox.css';
 import './styles/146-group-offline.css';
