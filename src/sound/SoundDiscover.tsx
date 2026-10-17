@@ -154,6 +154,8 @@ export default function SoundDiscover(){
        {track.genre&&<span>{track.genre}</span>}
        {track.license&&track.catalog!=='audius'&&<span>{track.license}</span>}
        {blocked&&<span className="sound-discover-stream-only">Только прослушивание</span>}
+       <a className="sound-discover-origin" href={track.page} target="_blank" rel="noopener noreferrer" title="Открыть оригинальную запись">Источник ↗</a>
+       {track.licenseUrl&&<a className="sound-discover-origin" href={track.licenseUrl} target="_blank" rel="noopener noreferrer" title="Условия лицензии">Лицензия ↗</a>
       </div>
      </div>
      <span className="sound-discover-duration">{formatDuration(track.duration)||'—'}</span>
@@ -180,6 +182,6 @@ export default function SoundDiscover(){
    })}
   </div>
   {request&&hasMore&&<button className="sound-button sound-discover-more" type="button" disabled={loading||!online||Boolean(adding)} onClick={()=>setRequest({...request,page:request.page+1})}>{loading?'Загружаем…':'Показать ещё'}</button>}
-  {request&&visible.length>0&&<p className="sound-discover-rights">Записи принадлежат авторам. Возможность прослушивания не означает разрешения на скачивание или повторное использование. Условия смотри на странице <a href={visible[0].page} target="_blank" rel="noopener noreferrer">источника</a> каждого трека.</p>}
+  {request&&visible.length>0&&<p className="sound-discover-rights">Возможность слушать трек не означает разрешения на скачивание и повторное использование. Проверяй условия на странице каждого источника.</p>}
  </section>;
 }
