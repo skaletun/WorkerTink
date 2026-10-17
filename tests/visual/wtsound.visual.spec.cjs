@@ -203,7 +203,7 @@ test('WTSound top mini-player, fullscreen seek, track switching and restored pos
  expect(pos.top).toBeLessThan(190);expect(pos.top).toBeGreaterThanOrEqual(0);
  await mini.getByRole('slider',{name:'Перемотать мини-плеер'}).fill('15');
  await expect.poll(()=>page.locator('audio[data-wtsound-audio]').evaluate(a=>a.currentTime)).toBeGreaterThan(14);
- await mini.getByRole('button',{name:'Развернуть плеер на весь экран'}).click().catch(async()=>mini.getByRole('button',{name:/Открыть плеер:/}).click());
+ await mini.getByRole('button',{name:/Открыть плеер: One/}).click();
  const full=page.getByRole('dialog',{name:'Полноэкранный плеер WTSound'});
  await expect(full).toBeVisible();
  await expect(full.locator('.sound-full-art')).toBeVisible();
