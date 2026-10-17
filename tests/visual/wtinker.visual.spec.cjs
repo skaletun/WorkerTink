@@ -145,7 +145,7 @@ test('WTinker bug-archive interaction states',async({browser})=>{
 });
 
 test('atlas zero rebuild: all application routes, orbital selector, launcher, mobile and themes',async({browser})=>{
- const routes=['home','social','people','communities','chat','work','calendar','pay','absence','friends','notifications','profile','settings','admin'];
+ const routes=['home','social','sound','people','communities','chat','work','calendar','pay','absence','friends','notifications','profile','settings','admin'];
  for(const theme of ['light','dark'])for(const viewport of [{width:1440,height:900},{width:390,height:844}]){
   const context=await browser.newContext({viewport,colorScheme:theme});
   const page=await context.newPage();const errors=[];
@@ -161,7 +161,8 @@ test('atlas zero rebuild: all application routes, orbital selector, launcher, mo
   expect(await page.locator('.atlas-orbit-ring-core strong').innerText()).not.toBe(initial);
   await page.screenshot({path:`visual-audit-artifacts/atlas-${theme}-${viewport.width}-home.png`,fullPage:true});
   await page.getByRole('button',{name:'Все разделы'}).click();
-  await expect(page.locator('.atlas-launcher-items button')).toHaveCount(14);
+  await expect(page.locator('.atlas-launcher-items button')).toHaveCount(routes.length);
+  await expect(page.locator('.atlas-launcher-items button').filter({hasText:'WTSound'})).toHaveCount(1);
   expect(await page.locator('.atlas-launcher-header h2').evaluate(el=>getComputedStyle(el).color)).toBe('rgb(22, 27, 18)');
   await page.screenshot({path:`visual-audit-artifacts/atlas-${theme}-${viewport.width}-launcher.png`,fullPage:true});
   await page.locator('.atlas-launcher-items button').filter({hasText:'Календарь'}).first().click();
