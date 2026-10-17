@@ -18,6 +18,8 @@ WTSound is integrated into the authenticated WTinker app at `?tab=sound`, the bo
 
 The «Поиск музыки» tab searches Wikimedia Commons audio files through its public MediaWiki API. Results display source attribution and license metadata and link to the original file page. «Добавить в медиатеку» downloads the audio and passes it to the existing local IndexedDB upload pipeline; the audio is not proxied through the Directory API. Search and initial download require internet. Remote hosts must permit browser cross-origin fetching; blocked files report an error rather than pretending the import succeeded. Wikimedia Commons is not a commercial streaming catalog; users are responsible for complying with the listed licenses and attribution requirements.
 
+Jamendo search is optionally enabled by setting the build-time environment variable `VITE_JAMENDO_CLIENT_ID` to an application client ID obtained from https://developer.jamendo.com/. Never use Jamendo's public test ID in production. Only tracks with `audiodownload_allowed=true` and a download URL are shown. Jamendo's API terms and track Creative Commons license conditions apply. Search results and downloads depend on the remote API and browser CORS support. The UI offers a source selector; no copyrighted commercial streaming catalog is bypassed.
+
 ## Playlist transfer — В разработке
 
 Playlist transfer is disabled by product decision. Both entry points display «В разработке» and are native disabled buttons. Link and file import forms are removed. Authenticated `POST /sound/import` always returns HTTP 503 with «Перенос музыки — В разработке» before reading the request body, querying rate limits or contacting providers. Capabilities report `vk: false` and `yandex: false`, even if a VK token is configured.
