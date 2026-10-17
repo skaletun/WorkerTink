@@ -28,7 +28,7 @@ jobs:
         run: npm run build
       - name: Install Chromium for messenger visual regression
         run: npx playwright install --with-deps chromium
-      - name: Validate WTSound audio, imports, EQ and offline PWA
+      - name: Validate WTSound audio, disabled transfer, EQ and offline PWA
         run: npx playwright test tests/visual/wtsound.visual.spec.cjs
       - name: Save WTSound chromium visual evidence
         if: always()

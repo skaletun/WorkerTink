@@ -28,6 +28,15 @@ response=await call('PUT',path+'/audio','ALICE','bad',{'Content-Type':'text/html
 response=await call('PUT',path+'/audio','ALICE','bad',{'Content-Type':'audio/wav','Content-Length':String(51*1024*1024),'X-WTSound-Metadata':metadata});assert.equal(response.status,413);
 assert.equal((await call('DELETE',path)).status,200);assert.equal(bucket.size,0);assert.equal((await call('GET',path+'/audio')).status,404);
 console.log('WTSound provider adapters, SSRF boundaries, pagination, private cloud audio ACL: OK');
-for(let i=0;i<5;i++){const response=await call('POST','/sound/import','ALICE',JSON.stringify({provider:'vk',url:'https://vk.com/music/playlist/1_2'}),{'Content-Type':'application/json'});assert.equal(response.status,503)}
-assert.equal((await call('POST','/sound/import','ALICE',JSON.stringify({provider:'vk',url:'https://vk.com/music/playlist/1_2'}),{'Content-Type':'application/json'})).status,429);
-console.log('WTSound authenticated import rate limit: OK');
+// Disabling transfer must cover stale clients too and make no provider calls.
+const oldFetch=globalThis.fetch;globalThis.fetch=()=>{throw new Error('Disabled transfer contacted a provider')};
+env.WTSOUND_VK_TOKEN='configured-but-disabled';
+try{
+ const caps=await (await call('GET','/sound/capabilities')).json();assert.equal(caps.vk,false);assert.equal(caps.yandex,false);
+ for(const body of [JSON.stringify({provider:'vk',url:'https://vk.com/music/playlist/1_2'}),JSON.stringify({provider:'yandex',url:'https://music.yandex.ru/users/a/playlists/1'}),'not-json']){
+  const response=await call('POST','/sound/import','ALICE',body,{'Content-Type':'application/json'});assert.equal(response.status,503);assert.match((await response.json()).error,/В разработке/);
+ }
+ assert.equal((await call('POST','/sound/import','', '{}')).status,401);
+ assert.equal(db.prepare('SELECT COUNT(*) AS count FROM sound_import_limits').get().count,0);
+}finally{globalThis.fetch=oldFetch}
+console.log('WTSound transfer disabled for both providers, no upstream or database import work: OK');

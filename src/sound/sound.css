@@ -13,3 +13,5 @@
 .sound-app .sound-search input[type=search]{border:0;background:transparent;box-shadow:none;outline-offset:-4px;min-width:0;width:100%;font-weight:400}.sound-app .sound-search:focus-within{outline:2px solid #f06c32;outline-offset:2px}
 
 @media(max-width:700px){.sound-header-actions .sound-button{font-size:10px!important;padding:8px 10px;gap:6px}.sound-header-actions .sound-icon-button{width:32px;height:36px;padding:6px}.sound-header-actions{flex-wrap:nowrap;gap:5px}.sound-track:has(.sound-track-reorder){flex-wrap:wrap}.sound-track:has(.sound-track-reorder)>.sound-track-copy{flex-basis:calc(100% - 60px)}.sound-track-reorder{margin-left:50px}.sound-player{bottom:calc(69px + env(safe-area-inset-bottom,0px))}}
+
+.sound-transfer-disabled{opacity:.65}.sound-transfer-disabled>span{display:grid;gap:2px;text-align:left}.sound-transfer-disabled small{font-size:10px;font-weight:500;color:var(--muted)}.sound-shortcuts>button:disabled{opacity:.65}

@@ -65,13 +65,8 @@ async function uploadBody(request,limit){
 export async function handleSound(request,env,{path,origin,authProfile,json}){
  const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
  try{
-  if(path==='/sound/capabilities'&&request.method==='GET')return json({cloud:Boolean(env.SOUND_BUCKET),vk:Boolean(env.WTSOUND_VK_TOKEN),yandex:true},200,origin);
-  if(path==='/sound/import'&&request.method==='POST'){
-   const input=await readLimited(request,4096);parseProviderURL(input.provider,input.url);
-   const window=Math.floor(Date.now()/60000);const rate=await env.DB.prepare('INSERT INTO sound_import_limits(owner_id,window,attempts) VALUES(?1,?2,1) ON CONFLICT(owner_id) DO UPDATE SET attempts=CASE WHEN window=?2 THEN attempts+1 ELSE 1 END,window=?2 RETURNING attempts').bind(owner.wtink_id,window).first();
-   if(rate.attempts>5)return json({error:'Слишком много переносов. Повторите через минуту'},429,origin);
-   return json(await fetchProviderPlaylist(input.provider,input.url,env),200,origin);
-  }
+  if(path==='/sound/capabilities'&&request.method==='GET')return json({cloud:Boolean(env.SOUND_BUCKET),vk:false,yandex:false},200,origin);
+  if(path==='/sound/import'&&request.method==='POST')return json({error:'Перенос музыки — В разработке'},503,origin);
   if(path==='/sound/tracks'&&request.method==='GET'){
    const rows=await env.DB.prepare('SELECT id,metadata,size,mime,created_at FROM sound_tracks WHERE owner_id=?1 ORDER BY created_at DESC LIMIT 10000').bind(owner.wtink_id).all();
    return json({tracks:(rows.results||[]).map(row=>({...JSON.parse(row.metadata),id:row.id,size:row.size,mime:row.mime,addedAt:row.created_at,liked:false,plays:0,lastPlayed:0,cloud:true}))},200,origin);

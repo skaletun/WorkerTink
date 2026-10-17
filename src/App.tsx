@@ -212,7 +212,7 @@ useEffect(()=>{
 >
  <div className={`wt-page-content ${tab==='chat'?'wt-page-chat':''}`}>
  <div className="tab-stage" key={tab}>
- {tab==='sound'&&<Suspense fallback={<p role="status">Открываем WTSound…</p>}><SoundView token={state.directoryToken}/></Suspense>}
+ {tab==='sound'&&<Suspense fallback={<p role="status">Открываем WTSound…</p>}><SoundView/></Suspense>}
  {tab==='home'&&<HomeView state={state} patch={patch} onNotice={setNotice} go={navigate}/>}
  {tab==='social'&&<NetworkView token={state.directoryToken} profile={state.profile} onNotice={setNotice} onChat={openChat} onProfile={openProfile} initialArea="feed" initialGroupSlug={cleanRoute.match(/^\/community\/([^/]+)/)?.[1]}/>} {tab==='people'&&<NetworkView token={state.directoryToken} profile={state.profile} onNotice={setNotice} onChat={openChat} onProfile={openProfile} initialArea="people"/>} {tab==='communities'&&<NetworkView token={state.directoryToken} profile={state.profile} onNotice={setNotice} onChat={openChat} onProfile={openProfile} initialArea="groups"/>}
  {tab==='work'&&<WorkHubView state={state} calc={calc} view={view} onNetwork={()=>navigate('social')} onNavigate={next=>navigate(next)} onEditWork={()=>{navigate('settings');setSettingsEntry('work')}} token={state.directoryToken} onNotice={setNotice}/>}{tab==='calendar'&&<CalendarView state={state} view={view} days={monthDays} calc={calc} shiftMonth={n=>setView(new Date(view.getFullYear(),view.getMonth()+n,1))} onPay={()=>navigate('pay')} onAbsence={()=>navigate('absence')} onEdit={setEditorDate}/>}

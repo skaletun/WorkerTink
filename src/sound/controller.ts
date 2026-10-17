@@ -5,7 +5,7 @@ import {SoundEngine} from './engine.ts';
 import {cloudTracks,deleteCloud,downloadCloud,soundCapabilities,uploadCloud} from './api.ts';
 export type SoundState={library:Library;ready:boolean;playing:boolean;buffering:boolean;time:number;duration:number;offline:Set<string>;error:string;busy:string;cloud:boolean;providers:{vk:boolean;yandex:boolean};online:boolean};
 export class SoundController{
- private state:SoundState={library:emptyLibrary(),ready:false,playing:false,buffering:false,time:0,duration:0,offline:new Set(),error:'',busy:'',cloud:false,providers:{vk:false,yandex:true},online:navigator.onLine};
+ private state:SoundState={library:emptyLibrary(),ready:false,playing:false,buffering:false,time:0,duration:0,offline:new Set(),error:'',busy:'',cloud:false,providers:{vk:false,yandex:false},online:navigator.onLine};
  private listeners=new Set<()=>void>();private engine:SoundEngine|null=null;private writes:Promise<unknown>=Promise.resolve();private mutation=0;private epoch=0;private loadEpoch=0;private lastCheckpoint=0;private channel:BroadcastChannel|null=null;
  constructor(readonly owner:string,private token:string){}
  subscribe=(fn:()=>void)=>{this.listeners.add(fn);return()=>{this.listeners.delete(fn)}};
