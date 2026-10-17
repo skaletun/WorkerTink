@@ -46,10 +46,10 @@ export default function SoundView(){
  {playlistTarget&&<SoundDialog title={`Добавить в плейлист: ${playlistTarget.title}`} close={()=>setPlaylistTarget(null)}>
   <div className="sound-playlist-picker">
    <p>Выбери плейлист из списка или создай новый для этой песни.</p>
-   <div className="sound-playlist-picker-list" role="list" aria-label="Ваши плейлисты">
+   <div className="sound-playlist-picker-list" role="group" aria-label="Ваши плейлисты">
     {library.playlists.map(p=>{
      const included=p.trackIds.includes(playlistTarget.id);
-     return <button type="button" role="listitem" key={p.id} disabled={included}
+     return <button type="button" key={p.id} disabled={included}
       onClick={()=>act(async()=>{await controller.addToPlaylist(p.id,playlistTarget.id);setMessage(`Добавлено в «${p.title}»`);setPlaylistTarget(null)})}>
       <Icon name={included?'check':'queue'}/><span><b>{p.title}</b><small>{included?'Уже в плейлисте':p.trackIds.length+' треков'}</small></span><Icon name={included?'check':'plus'}/>
      </button>;
