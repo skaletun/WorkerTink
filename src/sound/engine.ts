@@ -1,5 +1,4 @@
-import {inlineBlob,needsInlineMedia,isWebKit} from './binary.ts';
-const isiOS=()=>isWebKit()&&/iPhone|iPad|iPod/i.test(navigator.userAgent);
+import {inlineBlob,needsInlineMedia} from './binary.ts';
 import {BANDS,type Equalizer,type Track} from './model.ts';
 type Events={state:(playing:boolean,buffering:boolean)=>void;time:(position:number,duration:number)=>void;ended:()=>void;error:(message:string)=>void;next:()=>void;previous:()=>void};
 export class SoundEngine{
@@ -19,7 +18,7 @@ export class SoundEngine{
    const actions:Partial<Record<MediaSessionAction,(details:MediaSessionActionDetails)=>void>>={play:()=>{void this.play().catch(e=>this.events.error(String(e.message||e)))},pause:()=>this.pause(),nexttrack:events.next,previoustrack:events.previous,seekto:d=>this.seek(d.seekTime||0),seekbackward:d=>this.seek(this.audio.currentTime-(d.seekOffset||10)),seekforward:d=>this.seek(this.audio.currentTime+(d.seekOffset||10)),stop:()=>{this.pause();this.seek(0)}};
    for(const [action,handler] of Object.entries(actions)){try{media.setActionHandler(action as MediaSessionAction,handler);this.cleanups.push(()=>{try{media.setActionHandler(action as MediaSessionAction,null)}catch{}})}catch{}}
   }
-  const visible=()=>{if(document.visibilityState==='visible'&&!this.audio.paused&&this.context?.state==='suspended')void this.context.resume().catch(()=>{})};
+  const visible=()=>{if(document.visibilityState==='visible'&&!this.audio.paused&&this.context&&this.context.state!=='running')void this.context.resume().catch(()=>{})};
   document.addEventListener('visibilitychange',visible);this.cleanups.push(()=>document.removeEventListener('visibilitychange',visible));
  }
  unlock(){
@@ -48,16 +47,13 @@ export class SoundEngine{
  }
  async play(){
   const nav=navigator as Navigator&{audioSession?:{type:string}};if(nav.audioSession){try{nav.audioSession.type='playback'}catch{}}
-  if(this.context&&this.context.state!=='running'&&!isiOS())await this.context.resume();
+  if(this.context&&this.context.state!=='running')await this.context.resume();
   await this.audio.play();
  }
  pause(){this.audio.pause()}
  seek(position:number){if(!Number.isFinite(position)||position<0)return;const duration=this.audio.duration;if(Number.isFinite(duration)&&duration>0&&this.audio.readyState>=1){this.audio.currentTime=Math.max(0,Math.min(position,duration));this.pendingSeek=0}else this.pendingSeek=position;this.position()}
  volume(value:number){this.audio.volume=value}
  equalizer(eq:Equalizer){
-  // Safari PWAs can interrupt/silence MediaElementAudioSourceNode after screen lock.
-  // Keep the native HTMLMediaElement audio path on iOS for background playback.
-  if(isiOS())return;
   if(!eq.enabled&&!this.context)return;
   if(!this.context){
    this.context=new AudioContext();this.source=this.context.createMediaElementSource(this.audio);this.gain=this.context.createGain();this.limiter=this.context.createDynamicsCompressor();
@@ -68,7 +64,8 @@ export class SoundEngine{
   const now=this.context.currentTime;const headroom=eq.enabled?Math.max(0,...eq.gains)+3:0;
   this.gain!.gain.setTargetAtTime(10**(((eq.enabled?eq.preamp:0)-headroom)/20),now,0.025);
   this.filters.forEach((filter,i)=>filter.gain.setTargetAtTime(eq.enabled?eq.gains[i]:0,now,0.025));
-  if(!this.audio.paused&&this.context.state==='suspended')void this.context.resume().catch(()=>{});
+  // Resume synchronously from the toggle gesture, including before the first track.
+  if(this.context.state!=='running')void this.context.resume().catch(error=>this.events.error('Не удалось включить обработку звука: '+String(error.message||error)));
  }
  dispose(){this.disposed=true;++this.epoch;this.audio.pause();this.audio.removeAttribute('src');this.audio.load();this.audio.remove();this.cleanups.forEach(fn=>fn());for(const url of this.objectURLs)URL.revokeObjectURL(url);if(this.context)void this.context.close().catch(()=>{});if(navigator.mediaSession){navigator.mediaSession.metadata=null;navigator.mediaSession.playbackState='none'}}
 }
