@@ -240,3 +240,32 @@ test('WTSound close during pending cloud track load cannot resurrect playback',a
  await expect(page.locator('.sound-player')).toHaveCount(0);await expect(page.locator('audio[data-wtsound-audio]')).toHaveCount(0);
  await page.reload();await expect(page.getByRole('region',{name:'WTSound'})).toBeVisible();await expect(page.locator('.sound-player')).toHaveCount(0);await context.close();
 });
+
+test('WTSound iPhone equalizer processes audio, persists and resumes after suspension',async({browser})=>{
+ const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block',userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 Version/18.5 Mobile/15E148 Safari/604.1'});await setup(context);
+ // Measure the actual output signal rather than only checking the saved toggle.
+ await context.addInitScript(()=>{
+  const Native=window.AudioContext;
+  window.AudioContext=class extends Native{createMediaElementSource(audio){if(audio.hasAttribute('data-wtsound-audio'))window.eqContext=this;return super.createMediaElementSource(audio)}};
+  const connect=AudioNode.prototype.connect;
+  AudioNode.prototype.connect=function(destination,...args){
+   if(destination instanceof AudioDestinationNode&&this.context===window.eqContext&&!window.eqMeter){window.eqMeter=this.context.createAnalyser();connect.call(this,window.eqMeter);connect.call(window.eqMeter,destination);return destination}
+   return connect.call(this,destination,...args);
+  };
+  window.eqRms=()=>{const meter=window.eqMeter;if(!meter)return 0;const values=new Float32Array(meter.fftSize);meter.getFloatTimeDomainData(values);return Math.sqrt(values.reduce((sum,v)=>sum+v*v,0)/values.length)};
+ });
+ const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));await page.goto('/?tab=sound');
+ await page.getByLabel('Аудиофайлы').setInputFiles({name:'Artist - Signal.wav',mimeType:'audio/wav',buffer:wav(60,1000)});
+ const open=()=>page.locator('.sound-header').getByRole('button',{name:'Эквалайзер',exact:true}).click();await open();
+ const toggle=page.getByLabel('Эквалайзер включён');await expect(toggle).toBeEnabled();await toggle.check();
+ await expect.poll(()=>page.evaluate(()=>window.eqContext?.state)).toBe('running');
+ await page.getByRole('dialog').getByRole('button',{name:'Закрыть',exact:true}).click();await page.getByRole('button',{name:'Слушать: Signal',exact:true}).click();
+ await expect.poll(()=>page.evaluate(()=>window.eqRms())).toBeGreaterThan(.005);const flat=await page.evaluate(()=>window.eqRms());
+ await open();await page.getByLabel('1000 Гц',{exact:true}).fill('-12');
+ await expect.poll(()=>page.evaluate(()=>window.eqRms())).toBeLessThan(flat*.4);
+ await page.reload();await open();await expect(toggle).toBeChecked();await expect(page.getByLabel('1000 Гц',{exact:true})).toHaveValue('-12');
+ await page.getByRole('dialog').getByRole('button',{name:'Закрыть',exact:true}).click();await page.locator('.sound-player').getByRole('button',{name:'Воспроизвести',exact:true}).click();
+ await expect.poll(()=>page.evaluate(()=>window.eqContext?.state)).toBe('running');await expect.poll(()=>page.evaluate(()=>window.eqRms())).toBeGreaterThan(.001);
+ await page.evaluate(()=>window.eqContext.suspend());await page.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));await expect.poll(()=>page.evaluate(()=>window.eqContext.state)).toBe('running');
+ await open();await toggle.uncheck();await expect.poll(()=>page.evaluate(()=>window.eqRms())).toBeGreaterThan(flat);expect(errors).toEqual([]);await context.close();
+});
