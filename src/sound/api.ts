@@ -8,3 +8,11 @@ export async function uploadCloud(token:string,track:Track,blob:Blob){
 export async function downloadCloud(token:string,id:string){const response=await fetch(`${DIRECTORY_URL}/sound/tracks/${encodeURIComponent(id)}/audio`,{headers:{Authorization:`Bearer ${token}`}});if(!response.ok)throw new Error('Не удалось скачать трек из облака');return response.blob()}
 export const cloudTracks=(token:string)=>request<{tracks:Track[]}>('/sound/tracks',{headers:{Authorization:`Bearer ${token}`}});
 export const deleteCloud=(token:string,id:string)=>request('/sound/tracks/'+encodeURIComponent(id),{method:'DELETE',headers:{Authorization:`Bearer ${token}`}});
+
+export const catalogLoader=(token:string):import('./discovery.ts').CatalogLoader=>async(catalog,term,page,signal)=>{
+ const params=new URLSearchParams({source:catalog,q:term,page:String(page),country:'US'});
+ const response=await fetch(`${DIRECTORY_URL}/sound/search?${params}`,{signal,headers:{Authorization:`Bearer ${token}`}});
+ const data=await response.json().catch(()=>({error:'Поиск временно недоступен'}));
+ if(!response.ok)throw new Error(data.error||'Поиск временно недоступен');
+ return data;
+};

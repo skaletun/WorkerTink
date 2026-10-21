@@ -1,3 +1,4 @@
+import {fetchSoundCatalog,CatalogError} from './soundSearch.js';
 const MAX_IMPORT_BYTES=8_000_000,MAX_AUDIO_BYTES=50*1024*1024;
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const clean=(value,max=300)=>String(value||'').trim().slice(0,max);
@@ -65,6 +66,7 @@ async function uploadBody(request,limit){
 export async function handleSound(request,env,{path,origin,authProfile,json}){
  const owner=await authProfile(request,env);if(!owner)return json({error:'UNAUTHORIZED'},401,origin);
  try{
+  if(path==='/sound/search'&&request.method==='GET')return json(await fetchSoundCatalog(new URL(request.url).searchParams),200,origin);
   if(path==='/sound/capabilities'&&request.method==='GET')return json({cloud:Boolean(env.SOUND_BUCKET),vk:false,yandex:false},200,origin);
   if(path==='/sound/import'&&request.method==='POST')return json({error:'Перенос музыки — В разработке'},503,origin);
   if(path==='/sound/tracks'&&request.method==='GET'){
@@ -102,5 +104,5 @@ export async function handleSound(request,env,{path,origin,authProfile,json}){
    await env.SOUND_BUCKET.delete(row.object_key);await env.DB.prepare('DELETE FROM sound_tracks WHERE owner_id=?1 AND id=?2').bind(owner.wtink_id,id).run();return json({ok:true},200,origin);
   }
   return json({error:'METHOD_NOT_ALLOWED'},405,origin);
- }catch(e){return json({error:e instanceof SoundError?e.message:'Музыкальный сервис временно недоступен'},e instanceof SoundError?e.status:500,origin)}
+ }catch(e){return json({error:e instanceof SoundError||e instanceof CatalogError?e.message:'Музыкальный сервис временно недоступен'},e instanceof SoundError||e instanceof CatalogError?e.status:500,origin)}
 }
