@@ -1,82 +1,33 @@
 import assert from 'node:assert/strict';
-import {searchCommons,searchJamendo,searchOpenverse,searchArchive,searchAudius,searchMusic,searchArchives,searchAll,safeUrl,downloadDiscoveryTrack,MAX_REMOTE_BYTES} from '../src/sound/discovery.ts';
-
-const reply=(body,status=200,headers={})=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json',...headers}});
-const commons={query:{pages:{'42':{title:'File:Signal.ogg',imageinfo:[{url:'https://upload.wikimedia.org/commons/a/signal.ogg',mime:'audio/ogg',size:1200,descriptionurl:'https://commons.wikimedia.org/wiki/File:Signal.ogg',extmetadata:{Artist:{value:'<b>Musician &amp; Band</b>'},LicenseShortName:{value:'CC BY-SA 4.0'},LicenseUrl:{value:'https://creativecommons.org/licenses/by-sa/4.0/'}}}]},'43':{title:'File:Photo.png',imageinfo:[{url:'https://upload.wikimedia.org/a.png',mime:'image/png'}]}}},continue:{gsroffset:20}};
-const jamendo={headers:{status:'success'},results:[{id:'1',name:'Music',artist_name:'Band',album_name:'Album',audiodownload_allowed:true,audiodownload:'https://storage.jamendo.com/download/1/',license_ccurl:'https://creativecommons.org/licenses/by/4.0/'},{id:'2',name:'No Download',audiodownload_allowed:false,audiodownload:'',artist_name:'Band'}]};
-const openverse={results:[{id:'uuid',title:'Recording',creator:'Composer',url:'https://example.org/song.mp3',foreign_landing_url:'https://example.org/about',license:'by',license_url:'https://creativecommons.org/licenses/by/4.0/',filetype:'mp3',filesize:1080,mature:false,attribution:'Composer CC BY'},{id:'unsafe',title:'Malicious',creator:'No',url:'https://localhost/private.mp3',foreign_landing_url:'https://example.org/abc',license:'cc0'}],next:'https://api.openverse.org/v1/audio/?page=2'};
-const audius={data:[
- {id:'D7KyD',title:'Evening Lights',user:{name:'Night Drive'},permalink:'/nightdrive/evening-lights',duration:203,genre:'Electronic',artwork:{'480x480':'https://audius.example/cover.jpg'},is_downloadable:true,license:'CC BY'},
- {id:'A2Z4p',title:'Streaming Only',user:{name:'Independent'},permalink:'/independent/streaming-only',is_downloadable:false},
- {id:'C3X2s',title:'Follower-Only Download',user:{name:'Limited'},permalink:'/limited/follower-only',is_downloadable:true,download_conditions:{type:'follow'}},
- {id:'P1234',title:'Paid Track',user:{name:'Paywall'},permalink:'/paywall/paid',is_downloadable:true,is_stream_gated:true}
-]};
-const archiveSearch={response:{numFound:2,docs:[{identifier:'record-cc',title:'Live Set'},{identifier:'record-no-license',title:'Unlicensed'}]}};
-const archiveLicensed={metadata:{title:'Live Set',creator:'Artist',licenseurl:'http://creativecommons.org/licenses/by/4.0/'},files:[{name:'set.mp3',source:'original',size:'102400',format:'MP3'},{name:'spectrogram.png',source:'original',size:'1024',format:'JPEG'}]};
-const archiveNotLicensed={metadata:{licenseurl:'https://example.com/terms'},files:[{name:'track.mp3',source:'original',size:'1024'}]};
-const requests=[];
-const fetcher=async input=>{const u=new URL(String(input));requests.push(u.href);
- if(u.hostname==='api.audius.co')return reply(audius);
- if(u.hostname==='commons.wikimedia.org')return reply(commons);
- if(u.hostname==='api.jamendo.com')return reply(jamendo);
- if(u.hostname==='api.openverse.org')return reply(openverse);
- if(u.pathname==='/advancedsearch.php')return reply(archiveSearch);
- if(u.pathname==='/metadata/record-cc')return reply(archiveLicensed);
- if(u.pathname==='/metadata/record-no-license')return reply(archiveNotLicensed);
- throw new Error('Unexpected request '+u.href);
-};
-assert.equal(safeUrl('javascript:alert(1)'),'');
-assert.equal(safeUrl('http://example.com/a.mp3'),'');
-assert.equal(safeUrl('https://127.0.0.1/foo'),'');
-assert.equal(safeUrl('https://example.com/music.mp3'),'https://example.com/music.mp3');
-const commonsResult=await searchCommons('signal',{fetcher,page:2});
-assert.equal(commonsResult.tracks.length,1);assert.equal(commonsResult.tracks[0].artist,'Musician & Band');assert.equal(commonsResult.hasMore,true);
-assert.equal(new URL(requests[0]).searchParams.get('gsroffset'),'20');
-const jamendoResult=await searchJamendo('music',{fetcher,jamendoClientId:'own-id'});
-assert.equal(jamendoResult.tracks.length,1,'Downloads disabled by artist must be excluded');
-assert.equal(jamendoResult.tracks[0].album,'Album');
-assert.equal(new URL(requests[1]).searchParams.get('type'),'single albumtrack');
-await assert.rejects(searchJamendo('music',{fetcher}),/VITE_JAMENDO_CLIENT_ID/);
-const openverseResult=await searchOpenverse('song',{fetcher});
-assert.equal(openverseResult.tracks.length,1);assert.equal(openverseResult.tracks[0].license,'BY');assert.equal(openverseResult.hasMore,true);
-const archiveResult=await searchArchive('live set',{fetcher});
-assert.equal(archiveResult.tracks.length,1,'Archive entries without a verifiable CC license must be excluded');
-assert.equal(archiveResult.tracks[0].licenseUrl,'https://creativecommons.org/licenses/by/4.0/');
-assert.match(archiveResult.tracks[0].url,/archive.org\/download\/record-cc\/set.mp3$/);
-const audiusResult=await searchAudius('night drive',{fetcher,page:1});
-assert.equal(audiusResult.tracks.length,3,'Stream-gated Audius tracks are omitted');
-assert.equal(audiusResult.tracks[0].title,'Evening Lights');
-assert.equal(audiusResult.tracks[0].artist,'Night Drive');
-assert.equal(audiusResult.tracks[0].duration,203);
-assert.equal(audiusResult.tracks[0].artwork,'https://audius.example/cover.jpg');
-assert.equal(audiusResult.tracks[0].downloadable,true);
-assert.match(audiusResult.tracks[0].url,/\/tracks\/D7KyD\/download$/);
-assert.match(audiusResult.tracks[0].previewUrl,/\/tracks\/D7KyD\/stream$/);
-assert.equal(audiusResult.tracks[1].downloadable,false);
-assert.equal(audiusResult.tracks[1].url,'','Streaming-only Audius track has no download URL');
-assert.equal(audiusResult.tracks[2].downloadable,false,'Follow-gated download is never offered');
-assert.equal(new URL(requests.find(u=>u.includes('/tracks/search'))).searchParams.get('sort_method'),'relevant');
-const musicResult=await searchMusic('music',{fetcher});
-assert.equal(musicResult.tracks.length,3,'Music search defaults to Audius without Jamendo key');
-assert.equal(musicResult.tracks.every(t=>t.catalog==='audius'),true);
-const archivesResult=await searchArchives('music',{fetcher});
-assert.equal(archivesResult.tracks.length,3,'Archive results are separate from music results');
-await assert.rejects(downloadDiscoveryTrack(audiusResult.tracks[1],{fetcher:async()=>{throw Error('Must not download')}}),/не разрешил скачивание/);
-const all=await searchAll('music',{fetcher});
-assert.equal(all.tracks.length,6,'All sources combine the new music provider with archival catalogs');
-assert.deepEqual(all.errors,[]);
-const partial=await searchAll('music',{fetcher:async(url,opts)=>{
- if(String(url).includes('api.openverse.org'))return reply({},429);
- return fetcher(url,opts);
-}});
-assert.equal(partial.tracks.length,5);
-assert.match(partial.errors.join(' '),/Openverse/);
-const track=commonsResult.tracks[0];
-const audio=new Uint8Array([79,103,103,83,0,1,2,3]);
-const download=await downloadDiscoveryTrack(track,{fetcher:async()=>new Response(audio,{headers:{'content-type':'audio/ogg','content-length':String(audio.byteLength)}})});
-assert.equal(download.size,audio.byteLength);assert.match(download.name,/Musician & Band - Signal.ogg$/);
-assert.equal(download.type,'audio/ogg');
-await assert.rejects(downloadDiscoveryTrack({...track,size:MAX_REMOTE_BYTES+1},{fetcher:async()=>{throw Error('should not fetch')}}),/100 МБ/);
-await assert.rejects(downloadDiscoveryTrack(track,{fetcher:async()=>new Response(audio,{headers:{'content-length':String(MAX_REMOTE_BYTES+1)}})}),/100 МБ/);
-await assert.rejects(downloadDiscoveryTrack(track,{fetcher:async()=>new Response('<html></html>',{headers:{'content-type':'text/html'}})}),/не аудиофайл/);
-console.log('WTSound multi-catalog discovery, licensing, pagination, partial failures and bounded downloads: OK');
+import {parseCatalog,searchCatalog,searchSources,safeUrl,CATALOGS} from '../src/sound/discovery.ts';
+import {fetchSoundCatalog} from '../directory-api/src/soundSearch.js';
+assert.deepEqual(CATALOGS,['deezer','itunes']);
+for(const url of ['http://example.org','https://user:pass@example.org','https://127.0.0.1/a','https://10.1.2.3','https://localhost','https://[::1]','javascript:alert(1)'])assert.equal(safeUrl(url),'');
+const deezer={data:[{id:1,title:'Faint',artist:{name:'Linkin Park'},album:{title:'Meteora',cover_big:'https://cdn-images.dzcdn.net/images/cover/demo/500x500.jpg'},link:'https://www.deezer.com/track/1',preview:'https://cdnt-preview.dzcdn.net/api/1/sample.mp3',duration:162,explicit_lyrics:true},{id:2,title:'Missing preview',artist:{name:'Artist'},link:'https://www.deezer.com/track/2',preview:'https://evil.example/a.mp3'},{id:3,title:'Unsafe',artist:{name:'Artist'},link:'https://deezer.com.evil.example/track/3'}],total:41};
+const appleTrack=i=>({kind:'song',trackId:100+i,trackName:'Song '+i,artistName:'Artist',collectionName:'Album',trackViewUrl:'https://music.apple.com/us/album/song/100?i='+i,previewUrl:'https://audio-ssl.itunes.apple.com/sample.m4a',artworkUrl100:'https://is1-ssl.mzstatic.com/image/100x100bb.jpg',trackTimeMillis:161000,releaseDate:'2024-01-01',trackExplicitness:'explicit'});
+const apple={resultCount:41,results:Array.from({length:41},(_,i)=>appleTrack(i))};
+const dz=parseCatalog('deezer',deezer);assert.equal(dz.tracks.length,2);assert.equal(dz.tracks[0].artist,'Linkin Park');assert.equal(dz.tracks[0].duration,162);assert.equal(dz.tracks[0].explicit,true);assert.equal(dz.tracks[1].previewUrl,'');assert.equal(dz.hasMore,true);
+const it=parseCatalog('itunes',apple,2);assert.equal(it.tracks.length,20);assert.equal(it.tracks[0].id,'itunes:120');assert.equal(it.tracks[0].year,2024);assert.equal(it.hasMore,true);
+assert.equal(parseCatalog('itunes',{results:[{...appleTrack(1),kind:'music-video'}]}).tracks.length,0);
+assert.throws(()=>parseCatalog('deezer',{error:{code:4}}));
+let calls=0;const load=async(catalog,q,page,signal)=>{calls++;assert.equal(q,'Linkin Park');assert.equal(page,1);return catalog==='deezer'?deezer:apple};
+const all=await searchSources('Linkin Park',CATALOGS,{load});assert.equal(all.tracks.length,22);assert.equal(all.tracks[0].catalog,'deezer');assert.equal(all.tracks[1].catalog,'itunes');assert.deepEqual(all.errors,[]);
+const before=calls;assert.deepEqual(await searchCatalog('deezer','x',{load}),{tracks:[],hasMore:false});assert.equal(calls,before);
+const partial=await searchSources('music',CATALOGS,{load:async c=>{if(c==='deezer')throw new Error('offline');return apple}});assert.equal(partial.tracks.length,20);assert.match(partial.errors[0],/Deezer/);
+const abort=new AbortController();abort.abort();await assert.rejects(searchSources('music',CATALOGS,{signal:abort.signal,load:async()=>deezer}),{name:'AbortError'});
+// The server constructs provider URLs itself; never follow client or provider next URLs.
+for(const source of CATALOGS){
+ const data=await fetchSoundCatalog(new URLSearchParams({source,q:'Faint & Linkin Park',page:'2'}),async(url,opts)=>{
+  const u=new URL(url);assert.equal(opts.redirect,'error');assert.equal(opts.headers.Authorization,undefined);
+  if(source==='deezer'){assert.equal(u.origin,'https://api.deezer.com');assert.equal(u.searchParams.get('index'),'20');assert.equal(u.searchParams.get('q'),'Faint & Linkin Park')}
+  else{assert.equal(u.origin,'https://itunes.apple.com');assert.equal(u.searchParams.get('limit'),'41');assert.equal(u.searchParams.get('entity'),'song')}
+  return Response.json(source==='deezer'?deezer:apple);
+ });assert.ok(data);
+}
+for(const params of [{source:'https://evil.example',q:'music'},{source:'deezer',q:'x'},{source:'deezer',q:'music',page:'0'},{source:'itunes',q:'music',page:'11'},{source:'itunes',q:'music',country:'INVALID'}])await assert.rejects(fetchSoundCatalog(new URLSearchParams(params),()=>{throw Error('Must not fetch')}),e=>e.status===400);
+await assert.rejects(fetchSoundCatalog(new URLSearchParams({source:'deezer',q:'music'}),async()=>Response.json({}, {status:429})),e=>e.status===429);
+await assert.rejects(fetchSoundCatalog(new URLSearchParams({source:'deezer',q:'music'}),async()=>new Response('bad json')),/результаты/);
+await assert.rejects(fetchSoundCatalog(new URLSearchParams({source:'deezer',q:'music'}),async()=>new Response('x',{headers:{'content-length':String(3*1024*1024)}})),/слишком большой/);
+const huge=new ReadableStream({start(c){c.enqueue(new Uint8Array(2*1024*1024+1));c.close()}});
+await assert.rejects(fetchSoundCatalog(new URLSearchParams({source:'deezer',q:'music'}),async()=>new Response(huge)),/слишком большой/);
+console.log('WTSound Deezer/iTunes catalogs, preview boundaries, pagination, partial failure, cancellation and server URL/size validation: OK');

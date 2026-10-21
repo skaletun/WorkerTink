@@ -2,6 +2,8 @@ import {emptyLibrary,mergeImport,trackKey,type Equalizer,type ImportResult,type 
 import {audioIds,ensureSpace,persistStorage,readAudio,readArtwork,readLibrary,removeAudio,removeArtwork,writeArtwork,writeAudio,updateLibrary} from './storage.ts';
 import {inspectAudio} from './metadata.ts';
 import {SoundEngine} from './engine.ts';
+import {searchSources,type Catalog,type DiscoveryTrack} from './discovery.ts';
+import {catalogLoader} from './api.ts';
 import {cloudTracks,deleteCloud,downloadCloud,soundCapabilities,uploadCloud} from './api.ts';
 export type SoundState={library:Library;ready:boolean;playing:boolean;buffering:boolean;time:number;duration:number;offline:Set<string>;error:string;busy:string;cloud:boolean;providers:{vk:boolean;yandex:boolean};online:boolean};
 export class SoundController{
@@ -50,6 +52,24 @@ export class SoundController{
  private shuffled(ids:string[]){const result=[...ids];for(let i=result.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[result[i],result[j]]=[result[j],result[i]]}return result}
  private async primeNext(){const library=this.state.library;const i=library.queueIndex+1;const id=library.queue[i]||(library.repeat==='all'?library.queue[0]:undefined);if(!id||id===library.currentId)return;const track=library.tracks.find(t=>t.id===id);if(!track||!this.state.offline.has(id)||Number(track.size||0)>20*1024*1024)return;const blob=await readAudio(this.owner,id);if(blob&&blob.size<=20*1024*1024&&this.state.library.currentId!==id)this.prepared={id,blob,artwork:(await readArtwork(this.owner,id))||null}}
  async resume(){try{if(!this.engine?.audio.src){const {currentId,queueIndex,position}=this.state.library;if(!currentId)return;await this.play(currentId,undefined,queueIndex,position)}else await this.engine.play()}catch(e){this.report(e)}}
+ async stop(){
+  ++this.loadEpoch;this.prepared=null;this.engine?.dispose();this.engine=null;
+  this.emit({playing:false,buffering:false,time:0,duration:0,error:''});
+  try{localStorage.removeItem('wtsound:resume:'+this.owner)}catch{}
+  await this.mutate(l=>({...l,currentId:'',position:0}));
+ }
+ search=(term:string,sources:readonly Catalog[],page:number,signal:AbortSignal)=>searchSources(term,sources,{page,signal,load:catalogLoader(this.token)});
+ async saveCatalog(track:DiscoveryTrack){
+  let savedId='';
+  await this.mutate(l=>{
+   const existing=l.tracks.find(t=>t.source?.id===track.id||trackKey(t)===trackKey(track)&&(!t.duration||!track.duration||Math.abs(t.duration-track.duration)<3));
+   if(existing){savedId=existing.id;return l}
+   const item:Track={id:crypto.randomUUID(),title:track.title,artist:track.artist,album:track.album,duration:track.duration,genre:track.genre,year:track.year,addedAt:Date.now(),liked:false,plays:0,lastPlayed:0,artwork:track.artwork,source:{provider:track.catalog,id:track.id,url:track.page}};
+   savedId=item.id;return {...l,tracks:[item,...l.tracks]};
+  });
+  return savedId;
+ }
+ pause=()=>{this.engine?.pause();if(this.state.playing)this.emit({playing:false});this.checkpoint()};
  toggle=()=>{if(this.state.playing){this.engine?.pause();this.checkpoint()}else void this.resume()};
  seek=(value:number)=>{const duration=this.state.duration||this.state.library.tracks.find(t=>t.id===this.state.library.currentId)?.duration||0;const time=Math.max(0,Math.min(Number.isFinite(value)?value:0,duration||value));this.engine?.seek(time);this.emit({time});this.checkpoint()};
  private adjacent(direction:number,manual=false){const {library}=this.state;for(let step=1;step<=library.queue.length;step++){let index=library.queueIndex+step*direction;if(index<0||index>=library.queue.length){if(library.repeat==='off'&&!manual)return null;index=(index%library.queue.length+library.queue.length)%library.queue.length}const id=library.queue[index],track=library.tracks.find(t=>t.id===id);if(track&&this.playable(track))return {id,index}}return null}
@@ -76,7 +96,7 @@ export class SoundController{
      if(duplicate&&this.state.offline.has(duplicate.id)&&!targetId){skipped++;continue}
      const target=targetId?this.state.library.tracks.find(t=>t.id===targetId):undefined;
      const match=target||duplicate||this.state.library.tracks.find(t=>!t.fileHash&&trackKey(t)===trackKey(track)&&(!t.duration||!track.duration||Math.abs(t.duration-track.duration)<3));
-     const saved:Track=match?{...track,...(target?{title:target.title,artist:target.artist,album:target.album||track.album}:{}),id:match.id,liked:match.liked,source:match.source||track.source,license:match.license||track.license,licenseUrl:match.licenseUrl||track.licenseUrl,attribution:match.attribution||track.attribution,plays:match.plays,lastPlayed:match.lastPlayed,cloud:match.cloud}:track;
+     const saved:Track=match?{...track,...(target?{title:target.title,artist:target.artist,album:target.album||track.album}:{}),id:match.id,liked:match.liked,artwork:track.artwork||match.artwork,source:match.source||track.source,license:match.license||track.license,licenseUrl:match.licenseUrl||track.licenseUrl,attribution:match.attribution||track.attribution,plays:match.plays,lastPlayed:match.lastPlayed,cloud:match.cloud}:track;
      await writeAudio(this.owner,saved.id,files[i]);if(cover)await writeArtwork(this.owner,saved.id,cover);
      await this.mutate(l=>({...l,tracks:[saved,...l.tracks.filter(t=>t.id!==saved.id)]}));this.emit({offline:new Set([...this.state.offline,saved.id])});added++;
     }catch(e){failed.push(e instanceof Error?e.message:String(e))}

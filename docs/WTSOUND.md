@@ -5,7 +5,7 @@ WTSound is integrated into the authenticated WTinker app at `?tab=sound`, the bo
 ## Implemented
 
 - Personal music library; batch audio uploads; SHA-256 duplicate detection; embedded artist, title, album, genre, year, duration and cover extraction.
-- Home, collection, favorites, playlists, albums, artists and downloads views; search; sorting; recent listening and a shuffled stream of the user's own available recordings.
+- Home, collection, favorites, playlists, artists and downloads views; search; sorting; recent listening and a shuffled stream of the user's own available recordings.
 - Playlist creation, naming, description, ordering, membership, deletion and JSON export. Imported playlists preserve the original sequence, including unavailable recordings.
 - Persistent queue, seeking, previous/next, shuffle, repeat all/one/off and volume. A compact player and an expanded now-playing dialog share the same audio element.
 - Ten-band Web Audio equalizer (32 Hz–16 kHz), eight presets, manual gains, preamp, automatic headroom and a peak compressor. Settings persist per account.
@@ -36,33 +36,19 @@ Long playback is less susceptible to app-induced interruptions: the player keeps
 
 Validation: full unit tests + production build, Playwright Chrome/WebKit regression covering top mini-player, fullscreen seek/skip, new playlist actions, no Albums tab, iPhone file selection and music discovery. Browsers cannot simulate OS suspension or promise uninterrupted lock-screen playback on a physical iPhone.
 
-## Music discovery — music-first search
+## Music search
 
-WTSound's discovery screen uses a **music-first** search inspired by open-source player designs:
+The previous five discovery adapters have been removed. Search uses Deezer and iTunes song catalogs, with artist, album, artwork, duration, release year where provided, and explicit-content indicators. Select either catalog or search both. Results are interleaved and paginated; one failed provider does not discard the other provider's results. New queries cancel old requests.
 
-- [Nuclear](https://github.com/nukeop/nuclear): provider metadata adapters, separate search categories (artists/tracks/albums), independent source capabilities, and queue-oriented search.
-- [MusicFree](https://github.com/maotoumao/MusicFree): a standardized provider-plugin interface with searching/streaming independent from the presentation layer and pagination owned by the UI.
-- [Feishin](https://github.com/jeffvli/feishin) and Navidrome: private/self-hosted library search; useful as UI references, but not public global discovery sources.
+Authenticated `GET /sound/search?source=deezer|itunes&q=...&page=1&country=US` calls fixed official provider endpoints from the Directory Worker. No browser CORS proxy, third-party script or developer key is required. Query length, page range, response size (2 MB), redirects and a ten-second timeout are enforced. App authorization is never forwarded to providers. iTunes uses a growing limit with local slicing because its Search API has no offset, up to 200 results. Deezer uses index/limit.
 
-The default **Музыка** mode searches **Audius** and optional **Jamendo**. This prioritizes actual songs with artists and cover art rather than archival field recordings. The secondary **Свободные записи** mode searches **Openverse**, **Wikimedia Commons** and **Internet Archive** (useful for audio samples, recordings and Creative Commons / public-domain resources). **Везде** searches all configured sources. Source selection and paging remain available.
+The catalogs provide metadata and promotional audio excerpts, not downloadable full songs. Previews are explicitly labeled, streamed only on request, linked to the original service, and never downloaded or cached. There is no automatic preview queue. Starting a preview pauses library playback; starting library playback closes the preview. Saving a result stores metadata and the source link without importing the excerpt as a song. Saved records can be added to playlists and attached to a user-supplied audio file for full/offline playback. Existing local/cloud audio is preserved.
 
-### Audius (no key required for read-only search)
+Official references: https://developers.deezer.com/ and https://developer.apple.com/library/archive/documentation/AudioVideo/Conceptual/iTuneSearchAPI/ . Catalog and preview availability depend on provider/territory.
 
-The official `https://api.audius.co/v1/tracks/search` endpoint supports query, pagination and relevance sorting. Results map track title, user name, cover art, duration, genre, stream and artist permalink to WTSound's normalized discovery result. Streaming-only records stay visible for online preview. Download is enabled **only** if the Audius response explicitly has `is_downloadable === true` and no download access gate. The app uses the official `/tracks/{id}/download` endpoint only for that case; it never treats stream URLs as downloadable content or bypasses purchase/follow gates. The official source page is provided with each result. Individual track rights remain with creators; Audius is **not** automatically a Creative Commons library.
+## Closing and collapsing
 
-Official API documentation: https://docs.audius.co/api/ and https://docs.audius.co/sdk/tracks/.
-
-### Other sources and attribution
-
-Jamendo is optional and requires a build-time `VITE_JAMENDO_CLIENT_ID` created at https://developer.jamendo.com/. Only tracks with `audiodownload_allowed === true` are included. Jamendo album artwork, public preview audio, album and duration are displayed.
-
-Wikimedia Commons uses MediaWiki file pages and their license/artist metadata. Openverse is an aggregator that returns audio metadata, thumbnails, and license URLs. Internet Archive requires an explicit, original item-level CC/CC0 license and a downloadable audio file below 100 MB. Archive recordings can be non-musical and are **not** included in the default song search.
-
-Search results now have cover art or a music-note fallback, clear hierarchy for title/artist, source/genre/license cues, track duration, touch-sized controls and responsive mobile/desktop layouts. A single inline preview player is shown for the selected result. Downloads stream with a hard 100 MB limit, abort control and explicit errors for CORS-restricted origins. WTSound imports through its existing SHA-256 deduplicated IndexedDB storage pipeline, retaining title, artist, album, license, attribution and original source page.
-
-These integrations use documented/public API endpoints and do not install arbitrary remote plugins, scrape streaming pages, extract protected content, or download unlicensed commercial streams. Generic YouTube/SoundCloud/Bandcamp scrapers from community players were reviewed but not embedded into the PWA. Some remote preview/download hosts restrict CORS and some sources have regional service restrictions or rate limits. Actual third-party APIs and iOS playback must be verified on a real device after deployment.
-
-Validation: `npm run test:sound` covers provider normalization, artwork, Audius download gates, partial source failures, audio response/type/size validation and pagination; Playwright WTSound coverage includes mocked Audius search and mobile track cards, alongside the existing imports and offline playback.
+Collapse keeps playback running and displays a compact restore control at the top center of the viewport. A separate close button is available in compact, collapsed and full-screen modes. Closing invalidates pending playback loads, disposes the audio engine and Media Session state, clears the active track and resume checkpoint, and persists the closed state. Audio, playlists and queue contents remain available. Selecting a track opens the player again.
 
 ## Playlist transfer — В разработке
 

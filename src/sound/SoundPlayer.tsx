@@ -28,6 +28,7 @@ export default function SoundPlayer({openLibrary}:{openLibrary:()=>void}){
  const canChange=library.queue.filter(id=>library.tracks.some(t=>t.id===id&&controller.playable(t))).length>1;
  const action=(job:Promise<unknown>)=>{void job.catch(controller.report)};
  const toggleCollapsed=()=>setCollapsed(v=>!v);
+ const stop=()=>{close();setCollapsed(false);action(controller.stop())};
  const back=()=>{if(canChange)action(controller.previous())};
  const next=()=>{if(canChange)action(controller.next())};
  const seekControl=<div className="sound-seek sound-seek-large">
@@ -63,14 +64,15 @@ export default function SoundPlayer({openLibrary}:{openLibrary:()=>void}){
      <span>{formatTime(time)} / {formatTime(durationValue)}</span>
     </div>
     <button type="button" className="sound-mini-expand" aria-label="Развернуть плеер на весь экран" onClick={()=>setExpanded(true)}><Icon name="chevronDown" size={20}/></button>
-    <button type="button" className="sound-mini-collapse" aria-label="Скрыть мини-плеер" onClick={toggleCollapsed}><Icon name="close" size={18}/></button>
+    <button type="button" className="sound-mini-collapse" aria-label="Скрыть мини-плеер" onClick={toggleCollapsed}><Icon name="chevronDown" size={18}/></button>
    </>}
+   <button type="button" className="sound-mini-close" aria-label="Закрыть плеер и остановить музыку" onClick={stop}><Icon name="close" size={18}/></button>
   </aside>
   {expanded&&<div className="sound-fullscreen" role="dialog" aria-modal="true" aria-label="Полноэкранный плеер WTSound">
    <header className="sound-fullscreen-head">
     <button type="button" aria-label="Свернуть полноэкранный плеер" onClick={close}><Icon name="chevronDown" size={25}/></button>
     <span><Icon name="sound" size={17}/> WTSOUND <small>СЕЙЧАС ИГРАЕТ</small></span>
-    <button type="button" aria-label="Открыть библиотеку" onClick={()=>{close();openLibrary()}}><Icon name="queue" size={24}/></button>
+    <button type="button" aria-label="Закрыть плеер и остановить музыку" onClick={stop}><Icon name="close" size={24}/></button>
    </header>
    <main className="sound-fullscreen-body">
     <div className="sound-full-art"><Cover track={current}/></div>

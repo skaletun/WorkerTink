@@ -65,31 +65,6 @@ test('WTSound large collections use bounded rendering and search every track',as
  await page.getByRole('navigation',{name:'Разделы WTSound'}).getByRole('button',{name:'Моя коллекция',exact:true}).click();await expect(page.locator('.sound-track')).toHaveCount(100);await page.getByRole('button',{name:'Показать ещё · 1',exact:true}).click();await expect(page.locator('.sound-track')).toHaveCount(101);await page.getByRole('searchbox',{name:'Поиск музыки'}).fill('Song 0101');await expect(page.locator('.sound-track')).toHaveCount(1);await expect(page.locator('.sound-track')).toContainText('Song 0101');await context.close();
 });
 
-test('WTSound discovers a CC audio file, imports locally and keeps attribution',async({browser})=>{
- const context=await browser.newContext({viewport:{width:900,height:800},serviceWorkers:'block'});
- await setup(context);
- await context.route('https://api.openverse.org/v1/audio/**',route=>route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({next:null,results:[{id:'openverse-demo',title:'Free Sample',creator:'Demo Artist',url:'https://assets.example.net/demo.wav',foreign_landing_url:'https://assets.example.net/credits',license:'by',license_url:'https://creativecommons.org/licenses/by/4.0/',filetype:'wav',filesize:90000,mature:false,attribution:'Demo Artist · CC BY 4.0'}]})}));
- await context.route('https://assets.example.net/demo.wav',route=>route.fulfill({status:200,contentType:'audio/wav',headers:{'access-control-allow-origin':'*'},body:wav(1)}));
- const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto('/?tab=sound');
- await page.locator('.sound-navigation').getByRole('button',{name:'Поиск музыки'}).click();
- await page.getByRole('combobox',{name:'Источник поиска'}).selectOption('openverse');
- await page.getByRole('searchbox',{name:'Название, исполнитель или жанр'}).fill('demo');
- await page.locator('.sound-discover-form').getByRole('button',{name:'Найти'}).click();
- await expect(page.locator('.sound-discover-result')).toHaveCount(1);
- await expect(page.locator('.sound-discover-result')).toContainText('Demo Artist');
- await page.getByRole('button',{name:'Добавить в медиатеку'}).click();
- await expect(page.locator('.sound-discover-result')).toContainText('Добавлено ✓',{timeout:20000});
- await page.locator('.sound-navigation').getByRole('button',{name:'Моя коллекция'}).click();
- await expect(page.locator('.sound-track')).toHaveCount(1);
- await expect(page.locator('.sound-track')).toContainText('Free Sample');
- await page.getByRole('button',{name:'Действия: Free Sample'}).click();
- await expect(page.getByRole('link',{name:'Источник записи'})).toHaveAttribute('href','https://assets.example.net/credits');
- await expect(page.getByRole('link',{name:'Условия лицензии'})).toHaveAttribute('href','https://creativecommons.org/licenses/by/4.0/');
- expect(errors).toEqual([]);
- await context.close();
-});
-
 test('WTSound iPhone Files picker accepts MP3 and WAV in collection and missing-audio attachment',async({browser,browserName})=>{
  const context=await browser.newContext({
   viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true,serviceWorkers:'block',
@@ -124,35 +99,6 @@ test('WTSound iPhone Files picker accepts MP3 and WAV in collection and missing-
  await expect(page.getByRole('button',{name:'Слушать: Missing Song'})).toBeEnabled();
  expect(errors).toEqual([]);
  await context.close();
-});
-
-test('WTSound music-first results show Audius artwork, artist, access rights and original links',async({browser})=>{
- const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});await setup(context);
- const artwork='https://assets.example.net/audius-cover.png';
- await context.route('https://api.audius.co/v1/tracks/search**',route=>route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({data:[
-  {id:'audius-down',title:'Night Drive',user:{name:'Electronic Artist'},permalink:'/artist/night-drive',genre:'Electronic',duration:181,artwork:{'480x480':artwork},is_downloadable:true,license:'CC BY'},
-  {id:'audius-stream',title:'Listen Only',user:{name:'Another Artist'},permalink:'/another/listen-only',is_downloadable:false}
- ]})}));
- await context.route(artwork,route=>route.fulfill({status:200,contentType:'image/png',headers:{'access-control-allow-origin':'*'},body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==','base64')}));
- const page=await context.newPage();const errors=[];page.on('pageerror',error=>errors.push(String(error)));
- await page.goto('/?tab=sound');
- await page.locator('.sound-navigation').getByRole('button',{name:'Поиск музыки'}).click();
- await expect(page.getByRole('button',{name:'Музыка',exact:true})).toHaveAttribute('aria-pressed','true');
- await page.getByRole('searchbox',{name:'Название, исполнитель или жанр'}).fill('night');
- await page.locator('.sound-discover-form').getByRole('button',{name:'Найти музыку'}).click();
- await expect(page.locator('.sound-discover-result')).toHaveCount(2);
- const first=page.locator('.sound-discover-result').first(),second=page.locator('.sound-discover-result').nth(1);
- await expect(first).toContainText('Electronic Artist');
- await expect(first).toContainText('3:01');
- await expect(first.locator('.sound-discover-cover img')).toHaveAttribute('src',artwork);
- await expect(first.getByRole('link',{name:'Источник'})).toHaveAttribute('href','https://audius.co/artist/night-drive');
- await expect(first.getByRole('button',{name:/Добавить в медиатеку/})).toBeEnabled();
- await expect(second).toContainText('Только прослушивание');
- await expect(second.getByRole('button',{name:/Без скачивания/})).toBeDisabled();
- await second.getByRole('button',{name:'Предпрослушивание: Listen Only'}).click();
- await expect(second.locator('audio')).toHaveAttribute('src','https://api.audius.co/v1/tracks/audius-stream/stream');
- await expect(page.getByRole('button',{name:'Свободные записи'})).toBeVisible();
- expect(errors).toEqual([]);await context.close();
 });
 
 test('WTSound collection playlists support one-tap add, create-and-add and no Albums section',async({browser})=>{
@@ -226,4 +172,57 @@ test('WTSound top mini-player, fullscreen seek, track switching and restored pos
  await page.reload();
  await expect(mini).toContainText('One');
  expect(errors).toEqual([]);await context.close();
+});
+
+for(const theme of ['light','dark'])for(const width of [390,1440])test(`WTSound collapse is centered and close persists ${theme} ${width}`,async({browser,browserName})=>{
+ const context=await browser.newContext({viewport:{width,height:900},colorScheme:theme,serviceWorkers:'block'});await setup(context,theme);
+ const page=await context.newPage();await page.goto('/?tab=sound');
+ await page.getByLabel('Аудиофайлы').setInputFiles({name:'Artist - Close.wav',mimeType:'audio/wav',buffer:wav(30)});
+ const play=page.getByRole('button',{name:'Слушать: Close',exact:true});await expect(play).toBeEnabled();await play.click();
+ await expect.poll(()=>page.locator('audio[data-wtsound-audio]').evaluate(a=>!a.paused)).toBe(true);
+ const mini=page.getByRole('complementary',{name:'Мини-плеер WTSound'});
+ await mini.getByRole('button',{name:'Скрыть мини-плеер'}).click();await expect(mini.getByRole('button',{name:'Показать мини-плеер'})).toBeVisible();
+ const bounds=await mini.boundingBox();expect(Math.abs(bounds.x+bounds.width/2-width/2)).toBeLessThan(2);expect(bounds.y).toBeLessThan(120);
+ await expect.poll(()=>page.locator('audio[data-wtsound-audio]').evaluate(a=>!a.paused)).toBe(true);
+ fs.mkdirSync('visual-audit-artifacts',{recursive:true});await page.screenshot({path:`visual-audit-artifacts/wtsound-collapsed-${browserName}-${theme}-${width}.png`});
+ await mini.getByRole('button',{name:'Закрыть плеер и остановить музыку'}).click();await expect(mini).toHaveCount(0);await expect(page.locator('audio[data-wtsound-audio]')).toHaveCount(0);
+ await page.reload();await expect(play).toBeEnabled();await expect(mini).toHaveCount(0);
+ // Closing is also available in expanded and regular modes; reopening the same track works.
+ await play.click();await expect(mini.getByRole('button',{name:'Скрыть мини-плеер'})).toBeVisible();
+ await mini.getByRole('button',{name:'Открыть плеер: Close',exact:true}).click();
+ const full=page.getByRole('dialog',{name:'Полноэкранный плеер WTSound'});await expect(full).toBeVisible();
+ await page.screenshot({path:`visual-audit-artifacts/wtsound-fullscreen-${browserName}-${theme}-${width}.png`});
+ await full.getByRole('button',{name:'Закрыть плеер и остановить музыку'}).click();await expect(full).toHaveCount(0);await expect(mini).toHaveCount(0);await expect(page.locator('audio[data-wtsound-audio]')).toHaveCount(0);
+ expect(await page.evaluate(()=>document.body.style.overflow)).not.toBe('hidden');
+ await play.click();await mini.getByRole('button',{name:'Закрыть плеер и остановить музыку'}).click();await expect(mini).toHaveCount(0);await expect(page.locator('.sound-track')).toHaveCount(1);
+ await context.close();
+});
+
+for(const theme of ['light','dark'])for(const width of [390,1440])test(`WTSound commercial search saves metadata, attaches full audio and keeps preview separate ${theme} ${width}`,async({browser,browserName})=>{
+ const context=await browser.newContext({viewport:{width,height:1000},colorScheme:theme,serviceWorkers:'block'});await setup(context,theme);
+ const apple={kind:'song',trackId:22,artistName:'Linkin Park',trackName:'Faint',collectionName:'Meteora',trackTimeMillis:162000,trackViewUrl:'https://music.apple.com/us/album/faint/1?i=22',previewUrl:'https://audio-ssl.itunes.apple.com/preview.wav',artworkUrl100:'https://is1-ssl.mzstatic.com/cover.jpg'};
+ await context.route('**/sound/search?**',async route=>{
+  const u=new URL(route.request().url());expect(route.request().headers().authorization).toBe('Bearer sound-test-token');
+  if(u.searchParams.get('source')==='deezer')return route.fulfill({status:502,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({error:'Deezer unavailable'})});
+  if(u.searchParams.get('q')==='slow'){await new Promise(r=>setTimeout(r,300));}
+  return route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({results:[apple]})});
+ });
+ await context.route(apple.previewUrl,r=>r.fulfill({status:200,contentType:'audio/wav',body:wav(1)}));
+ await context.route(apple.artworkUrl100,r=>r.fulfill({status:200,contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==','base64')}));
+ const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));await page.goto('/?tab=sound');
+ await page.getByLabel('Аудиофайлы').setInputFiles({name:'Artist - Original.wav',mimeType:'audio/wav',buffer:wav(30)});await page.getByRole('button',{name:'Слушать: Original',exact:true}).click();
+ const nav=page.getByRole('navigation',{name:'Разделы WTSound'});await nav.getByRole('button',{name:'Поиск музыки'}).click();
+ await expect(page.getByLabel('Источник поиска').locator('option')).toHaveCount(3);
+ const query=page.getByRole('searchbox',{name:'Название или исполнитель'});await query.fill('slow');await page.getByRole('button',{name:'Найти музыку'}).click();
+ await query.fill('Linkin Park Faint');await page.getByRole('button',{name:'Найти музыку'}).click();
+ const result=page.locator('.sound-discover-result');await expect(result).toHaveCount(1);await expect(result).toContainText('Meteora');await expect(result).toContainText('2:42');
+ await expect(page.getByRole('status').filter({hasText:'Один из каталогов'})).toBeVisible();await expect(page.locator('.sound-discover-summary')).toContainText('Linkin Park Faint');
+ await result.getByRole('button',{name:'Предпрослушивание: Faint'}).click();await expect(result.locator('audio')).toBeVisible();await expect.poll(()=>page.locator('audio[data-wtsound-audio]').evaluate(a=>a.paused)).toBe(true);
+ await result.getByRole('button',{name:'В коллекцию',exact:true}).click();await expect(result.getByRole('button',{name:'В коллекции',exact:true})).toBeDisabled();
+ await page.screenshot({path:`visual-audit-artifacts/wtsound-search-${browserName}-${theme}-${width}.png`,fullPage:true});
+ await nav.getByRole('button',{name:'Моя коллекция',exact:true}).click();const saved=page.locator('.sound-track').filter({hasText:'Faint'});await expect(saved).toContainText('Нужен аудиофайл');await expect(page.getByRole('button',{name:'Слушать: Faint',exact:true})).toBeDisabled();
+ await page.getByRole('button',{name:'Добавить в плейлист: Faint',exact:true}).click();const picker=page.getByRole('dialog');await picker.getByPlaceholder('Название плейлиста').fill('Found songs');await picker.getByRole('button',{name:'Создать и добавить'}).click();
+ await page.getByRole('button',{name:'Действия: Faint',exact:true}).click();await expect(page.getByRole('link',{name:'Источник записи'})).toHaveAttribute('href',apple.trackViewUrl);
+ await page.getByRole('dialog').locator('input[type=file]').setInputFiles({name:'full-song.wav',mimeType:'audio/wav',buffer:wav(25,330)});await expect(page.getByRole('dialog')).toHaveCount(0);await expect(page.getByRole('button',{name:'Слушать: Faint',exact:true})).toBeEnabled();
+ await page.reload();await expect(page.getByRole('button',{name:'Слушать: Faint',exact:true})).toBeEnabled();expect(errors).toEqual([]);await context.close();
 });
