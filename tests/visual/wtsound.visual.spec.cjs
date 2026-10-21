@@ -178,11 +178,11 @@ for(const theme of ['light','dark'])for(const width of [390,1440])test(`WTSound 
  const context=await browser.newContext({viewport:{width,height:900},colorScheme:theme,serviceWorkers:'block'});await setup(context,theme);
  const page=await context.newPage();await page.goto('/?tab=sound');
  await page.getByLabel('Аудиофайлы').setInputFiles({name:'Artist - Close.wav',mimeType:'audio/wav',buffer:wav(30)});
- const play=page.getByRole('button',{name:'Слушать: Close',exact:true});await expect(play).toBeEnabled();await play.click();
+ const play=page.getByRole('button',{name:'Слушать: Close',exact:true}).first();await expect(play).toBeEnabled();await play.click();
  await expect.poll(()=>page.locator('audio[data-wtsound-audio]').evaluate(a=>!a.paused)).toBe(true);
  const mini=page.getByRole('complementary',{name:'Мини-плеер WTSound'});
  await mini.getByRole('button',{name:'Скрыть мини-плеер'}).click();await expect(mini.getByRole('button',{name:'Показать мини-плеер'})).toBeVisible();
- const bounds=await mini.boundingBox();expect(Math.abs(bounds.x+bounds.width/2-width/2)).toBeLessThan(2);expect(bounds.y).toBeLessThan(120);
+ await expect.poll(async()=>{const b=await mini.boundingBox();return Math.abs(b.x+b.width/2-width/2)}).toBeLessThan(2);const bounds=await mini.boundingBox();expect(bounds.y).toBeLessThan(120);
  await expect.poll(()=>page.locator('audio[data-wtsound-audio]').evaluate(a=>!a.paused)).toBe(true);
  fs.mkdirSync('visual-audit-artifacts',{recursive:true});await page.screenshot({path:`visual-audit-artifacts/wtsound-collapsed-${browserName}-${theme}-${width}.png`});
  await mini.getByRole('button',{name:'Закрыть плеер и остановить музыку'}).click();await expect(mini).toHaveCount(0);await expect(page.locator('audio[data-wtsound-audio]')).toHaveCount(0);
@@ -194,7 +194,7 @@ for(const theme of ['light','dark'])for(const width of [390,1440])test(`WTSound 
  await page.screenshot({path:`visual-audit-artifacts/wtsound-fullscreen-${browserName}-${theme}-${width}.png`});
  await full.getByRole('button',{name:'Закрыть плеер и остановить музыку'}).click();await expect(full).toHaveCount(0);await expect(mini).toHaveCount(0);await expect(page.locator('audio[data-wtsound-audio]')).toHaveCount(0);
  expect(await page.evaluate(()=>document.body.style.overflow)).not.toBe('hidden');
- await play.click();await mini.getByRole('button',{name:'Закрыть плеер и остановить музыку'}).click();await expect(mini).toHaveCount(0);await expect(page.locator('.sound-track')).toHaveCount(1);
+ await play.click();await mini.getByRole('button',{name:'Закрыть плеер и остановить музыку'}).click();await expect(mini).toHaveCount(0);await expect(page.getByRole('button',{name:'Слушать: Close',exact:true}).first()).toBeEnabled();
  await context.close();
 });
 
@@ -225,4 +225,18 @@ for(const theme of ['light','dark'])for(const width of [390,1440])test(`WTSound 
  await page.getByRole('button',{name:'Действия: Faint',exact:true}).click();await expect(page.getByRole('link',{name:'Источник записи'})).toHaveAttribute('href',apple.trackViewUrl);
  await page.getByRole('dialog').locator('input[type=file]').setInputFiles({name:'full-song.wav',mimeType:'audio/wav',buffer:wav(25,330)});await expect(page.getByRole('dialog')).toHaveCount(0);await expect(page.getByRole('button',{name:'Слушать: Faint',exact:true})).toBeEnabled();
  await page.reload();await expect(page.getByRole('button',{name:'Слушать: Faint',exact:true})).toBeEnabled();expect(errors).toEqual([]);await context.close();
+});
+
+test('WTSound close during pending cloud track load cannot resurrect playback',async({browser})=>{
+ const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});await setup(context);
+ let release;const blocked=new Promise(resolve=>{release=resolve});let started;const began=new Promise(resolve=>{started=resolve});
+ await context.route('**/sound/tracks/*/audio',async r=>{started();await blocked;await r.fulfill({status:200,contentType:'audio/wav',headers:{'access-control-allow-origin':'*'},body:wav(5)})});
+ const page=await context.newPage();await page.goto('/?tab=sound');await expect(page.getByRole('region',{name:'WTSound'})).toBeVisible();
+ await seedSavedTracks(page,[{id:'11111111-1111-4111-8111-111111111111',title:'Slow',artist:'Artist',cloud:true},{id:'22222222-2222-4222-8222-222222222222',title:'Ready',artist:'Artist'}]);
+ await page.getByRole('button',{name:'Действия: Ready',exact:true}).click();await page.getByRole('dialog').locator('input[type=file]').setInputFiles({name:'Ready.wav',mimeType:'audio/wav',buffer:wav(20)});await expect(page.getByRole('dialog')).toHaveCount(0);
+ await page.getByRole('button',{name:'Слушать: Ready',exact:true}).click();await expect(page.locator('.sound-player')).toContainText('Ready');
+ await page.getByRole('button',{name:'Слушать: Slow',exact:true}).click();await began;
+ await page.locator('.sound-player').getByRole('button',{name:'Закрыть плеер и остановить музыку'}).click();release();
+ await expect(page.locator('.sound-player')).toHaveCount(0);await expect(page.locator('audio[data-wtsound-audio]')).toHaveCount(0);
+ await page.reload();await expect(page.getByRole('region',{name:'WTSound'})).toBeVisible();await expect(page.locator('.sound-player')).toHaveCount(0);await context.close();
 });

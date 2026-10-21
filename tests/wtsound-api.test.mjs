@@ -40,3 +40,16 @@ try{
  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM sound_import_limits').get().count,0);
 }finally{globalThis.fetch=oldFetch}
 console.log('WTSound transfer disabled for both providers, no upstream or database import work: OK');
+// The catalog endpoint reuses account authentication and never forwards its token.
+{
+ const oldFetch=globalThis.fetch;let requested=0;
+ globalThis.fetch=async(url,options)=>{requested++;assert.equal(new URL(url).origin,'https://api.deezer.com');assert.equal(options.headers.Authorization,undefined);return Response.json({data:[],total:0})};
+ try{
+  const query='/sound/search?source=deezer&q=Faint&page=1';
+  const request=actor=>new Request('https://example.org'+query,{headers:{Authorization:actor}});
+  const options={path:'/sound/search',origin:'https://app.example',authProfile,json};
+  assert.equal((await handleSound(request(''),env,options)).status,401);assert.equal(requested,0);
+  const response=await handleSound(request('ALICE'),env,options);assert.equal(response.status,200);assert.deepEqual(await response.json(),{data:[],total:0});assert.equal(requested,1);
+ }finally{globalThis.fetch=oldFetch}
+}
+console.log('WTSound catalog API requires authentication and keeps account tokens private: OK');

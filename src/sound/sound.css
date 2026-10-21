@@ -173,9 +173,9 @@
 
 /* WTSound player v3: unobtrusive top player + immersive safe-area-aware player */
 .sound-player.sound-player-top{position:fixed;top:calc(env(safe-area-inset-top,0px) + 65px);bottom:auto!important;left:auto;right:16px;width:min(760px,calc(100vw - 32px));max-width:none;margin:0;min-height:0;z-index:390;display:grid;grid-template-columns:minmax(155px,1fr) auto minmax(140px,200px) auto auto auto;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);box-shadow:0 10px 34px #0003;backdrop-filter:blur(16px)}
-.sound-player.sound-player-top.is-collapsed{left:50%;right:auto;transform:translateX(-50%);display:flex;width:auto;min-height:0;max-width:220px;padding:0;border-radius:999px;overflow:hidden}
+.sound-player.sound-player-top.is-collapsed{left:50%;right:auto;transform:translateX(-50%);display:flex;width:max-content;min-height:0;max-width:calc(100vw - 24px);gap:2px;padding:0;border-radius:999px;overflow:hidden}
 .sound-player.sound-player-top.is-expanded{visibility:hidden;pointer-events:none}
-.sound-mini-restore{display:flex;align-items:center;gap:8px;padding:10px 15px;border:0;background:var(--surface);color:var(--ink);border-radius:999px;white-space:nowrap;font-size:12px;font-weight:700}
+.sound-mini-restore{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:10px 15px;border:0;background:var(--surface);color:var(--ink);border-radius:999px;white-space:nowrap;font-size:12px;font-weight:700}
 .sound-mini-restore svg:first-child{color:var(--sound-accent)}
 .sound-mini-restore svg:last-child{transform:rotate(180deg)}
 .sound-player.sound-player-top .sound-player-info{max-width:none;min-width:0;display:flex;align-items:center;gap:9px;flex:1}
@@ -251,7 +251,7 @@ body:has(.sound-player) .atlas-main{padding-bottom:0}
  .sound-mini-controls{gap:0}
  .sound-mini-controls .sound-icon-button{width:33px;height:36px}
  .sound-mini-expand,.sound-mini-collapse,.sound-mini-close{width:27px;height:34px}
- .sound-player.sound-player-top.is-collapsed{width:auto;padding:0}
+ .sound-player.sound-player-top.is-collapsed{width:max-content;padding:0}
  .sound-fullscreen-body{gap:20px;padding:20px 0 26px}
  .sound-full-art{width:min(100%,min(39dvh,340px))}
 }

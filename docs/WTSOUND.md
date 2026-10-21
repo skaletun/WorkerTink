@@ -23,10 +23,10 @@ On iPhone, use WTSound → «Загрузить треки» → «Обзор» 
 ## Player v3: iPhone usability, playlists and background audio
 
 - The **mini-player** lives at the **top** of WTinker under its primary header (not above the bottom navigation). It provides a transport, seek bar and an explicit hide button. Hiding leaves a compact restore pill, and the preference is saved locally.
-- Tapping the current track opens a **full-viewport, safe-area-aware player**. It has large art, timeline scrubbing, shuffle/repeat, previous/pause/next, favourites, queue navigation and EQ settings. It never relies on a narrow dialog for playback controls; Escape/close collapses the overlay.
+- Tapping the current track opens a **full-viewport, safe-area-aware player**. It has large art, timeline scrubbing, shuffle/repeat, previous/pause/next, favourites, queue navigation and EQ settings. It never relies on a narrow dialog for playback controls; Escape or the collapse control collapses the overlay; the close button stops playback.
 - Each local track row, including **Моя коллекция**, has a dedicated **Добавить в плейлист** control. Pick an existing list or create a new one **with the chosen track already included**. The old selector that required pre-created playlists is removed.
 - The **Альбомы** navigation section, album group pages and album labels were removed; album tags remain in saved metadata for backwards compatibility with existing files and playlist imports, rather than destructively rewriting IndexedDB.
-- Discovery previews gain previous/next controls, a scrub bar where the server provides a seekable duration, and retain their original links.
+- Catalog previews use native audio controls and retain their original service links; they are separate from the full-track playback queue.
 
 ### iOS/background reliability and limits
 
